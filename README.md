@@ -1,2 +1,2 @@
 # universite
- course searching tool
+ University and College course searching tool
