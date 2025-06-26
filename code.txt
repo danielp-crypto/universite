@@ -1,0 +1,163 @@
+<link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+
+
+<script>
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('chat-input');
+  const messages = document.getElementById('chat-messages');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const userMsg = input.value.trim();
+    if (!userMsg) return;
+
+    // Append user's message
+    appendMessage(userMsg, 'user');
+
+    // Simulate bot response (replace this with real API call)
+    setTimeout(() => {
+      appendMessage("I'm just a sample bot response. Connect me to an API!", 'bot');
+    }, 800);
+
+    input.value = '';
+  });
+
+  function appendMessage(message, sender) {
+    const div = document.createElement('div');
+    div.className = 'mb-3';
+
+    const bubble = document.createElement('div');
+    bubble.className = `p-2 rounded d-inline-block ${sender === 'user' ? 'bg-primary text-white ms-auto' : 'bg-light'}`;
+    bubble.textContent = message;
+
+    if (sender === 'user') {
+      div.classList.add('text-end');
+    }
+
+    div.appendChild(bubble);
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+</script>
+
+<!-- Centered Chatbot Container -->
+<div id="chatbot" style="
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 600px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  z-index: 9999;
+  border: 1px solid #ddd;
+  overflow: hidden;
+">
+
+  <!-- Header -->
+  <div style="
+    background: #0d6efd;
+    color: white;
+    padding: 16px;
+    font-size: 1.25rem;
+    font-weight: bold;
+    text-align: center;
+  ">
+    AI Chatbot
+  </div>
+
+  <!-- Chat Messages -->
+  <div id="chat-messages" style="
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    font-size: 14px;
+    background: #f8f9fa;
+  "></div>
+
+  <!-- Input Area -->
+  <div style="
+    display: flex;
+    padding: 12px;
+    border-top: 1px solid #ccc;
+    background: #fff;
+  ">
+    <input type="text" id="chat-input" placeholder="Type your message..." style="
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      font-size: 14px;
+      outline: none;
+    ">
+    <button onclick="sendChat()" style="
+      margin-left: 10px;
+      background: #0d6efd;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      ➤
+    </button>
+  </div>
+--------------------------------
+openAI key: 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
+
+pip install openai
+
+from openai import OpenAI
+
+client = OpenAI(
+  api_key="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"
+)
+
+completion = client.chat.completions.create(
+  model="gpt-4o-mini",
+  store=True,
+  messages=[
+    {"role": "user", "content": "write a haiku about ai"}
+  ]
+)
+
+print(completion.choices[0].message);
+------
+hugging face token name:univ
+api token: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
+token2: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
+grokey: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
+GitHub token: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
+$env:GITHUB_TOKEN = "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"
+AWS:chmod 400 Bleedingedge.pem
+ssh -i f:/universite/Bleedingedge.pem ec2-user@51.20.135.14
+chmod 400 ~\universite\Bleedingedge.pem
+chmod 400 f:/universite/Bleedingedge.pem
+cd /home/ec2-user/venv
+https://www.python.org/ftp/python/3.10.13/Python-3.10.13.tgz
+cd your-uploaded-folder
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
+http://51.20.135.14:5000
+
+https://github.com/danielp-crypto/universite
+
+
+
+
+
+
+
+

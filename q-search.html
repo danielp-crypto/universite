@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
+ <meta name="description" content="Universite connects learners  with universities, colleges and Online courses. The platform also uses AI as a a tutor and learning assistant to help students succeed with their studies.">
+  <title>Universite - course search</title>
+  <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+
+      <style>
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #f2f4f8;
+      }
+
+      .sidebar-nav {
+        background-color: #ffffff;
+        padding: 1rem;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        color: #343a40;
+        text-decoration: none;
+        border-radius: 0.375rem;
+        transition: background 0.2s, color 0.2s;
+      }
+
+      .nav-link:hover {
+        color: #0d6efd;
+        background-color: #e7f1ff;
+      }
+
+      .nav-link.active {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+        font-weight: 600;
+      }
+
+      .nav-icon-label {
+        display: none;
+      }
+
+      @media (min-width: 768px) {
+        .nav-icon-label {
+          display: inline;
+          margin-left: 12px;
+        }
+        .mobile-nav {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+      }
+
+      .mobile-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+      }
+
+
+    </style>
+
+</head>
+<body>
+
+<div class="d-flex flex-column flex-md-row">
+  <!-- Navigation -->
+  <nav class="sidebar-nav d-flex flex-row flex-md-column mobile-nav align-items-center align-items-md-start">
+  <!-- Logo -->
+  <div class="logo mb-3 me-3 me-md-0 text-center text-md-start">
+    <a href="#.html">
+      <img src="assets/images/icon-ring-removebg-preview.png" alt="Universite Logo" style="height: 40px;">
+    </a>
+  </div>
+
+  <!-- Menu Items -->
+  <a href="q-search.html" class="nav-link active"><i class="fa fa-search fa-fw"></i><span class="nav-icon-label">Courses</span></a>
+  <a href="profile.html" class="nav-link"><i class="fa fa-user-circle fa-fw"></i><span class="nav-icon-label">Profile</span></a>
+  <a href="settings.html" class="nav-link"><i class="fa fa-cog fa-fw"></i><span class="nav-icon-label">Settings</span></a>
+</nav>
+
+
+  <!-- Main content -->
+  <main class="flex-fill p-4">
+    <h4>Universite</h4>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 20px; font-family: Arial, sans-serif;">
+      <div class="card shadow rounded w-100 w-md-75 mx-auto" style="height: 500px; display: flex; flex-direction: column;">
+
+        <section class="content5 cid-course-search-section" id="courseSearchSection" style="background-color: #f9fafb; padding: 4rem 0;">
+          <div class="container">
+            <div class="row justify-content-center mb-4">
+              <div class="col-12 col-lg-8 text-center">
+                <h5 class="mbr-section-title mbr-fonts-style display-5"><strong>Explore Courses</strong></h5>
+                <p class="mbr-text mbr-fonts-style mt-3 display-7">Search for available courses or check out what we recommend for you.</p>
+                <input
+                  type="text"
+                  class="form-control mt-4 rounded-pill px-4 py-3"
+                  id="courseSearch"
+                  placeholder="Search for a course..."
+                  oninput="filterCourses()"
+                />
+              </div>
+            </div>
+
+            <div class="row" id="courseList">
+              <!-- Filtered course list will appear here -->
+            </div>
+
+            <div class="row mt-5">
+              <div class="col-12">
+                <h5 class="mbr-section-title mbr-fonts-style display-5"><strong>Recommended for You</strong></h5>
+                <div class="row mt-4" id="recommendedCourses">
+                  <!-- Recommended courses go here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <script>
+          const allCourses = [
+            "Introduction to AI",
+            "Web Development Bootcamp",
+            "Data Structures in JavaScript",
+            "Digital Marketing Essentials",
+            "Advanced React",
+            "UI/UX Design Principles",
+            "Python for Beginners",
+            "Machine Learning with Python"
+          ];
+
+          const recommended = [
+            "Machine Learning Basics",
+            "Python for Data Science",
+            "React + Firebase Project",
+            "REST APIs with Node.js"
+          ];
+
+          function filterCourses() {
+            const query = document.getElementById('courseSearch').value.toLowerCase();
+            const filtered = allCourses.filter(course => course.toLowerCase().includes(query));
+            displayCourses(filtered);
+          }
+
+          function displayCourses(courses) {
+            const container = document.getElementById('courseList');
+            container.innerHTML = courses.map(course => `
+              <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card shadow-sm border-0 rounded-lg h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">${course}</h5>
+                    <p class="card-text">Learn more about ${course} and enhance your skills.</p>
+                    <a href="#" class="btn btn-primary btn-sm mt-2">View Course</a>
+                  </div>
+                </div>
+              </div>
+            `).join('');
+          }
+
+          function displayRecommendations() {
+            const container = document.getElementById('recommendedCourses');
+            container.innerHTML = recommended.map(course => `
+              <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card border-0 shadow rounded-lg h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">${course}</h5>
+                    <p class="card-text">Highly rated by students like you.</p>
+                    <a href="#" class="btn btn-outline-primary btn-sm mt-2">Learn More</a>
+                  </div>
+                </div>
+              </div>
+            `).join('');
+          }
+
+          // Load default view on page load
+          document.addEventListener("DOMContentLoaded", function () {
+            displayCourses(allCourses);
+            displayRecommendations();
+          });
+        </script>
+
+
+</div>
+
+</body>
+</html>

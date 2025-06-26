@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
+ <meta name="description" content="Universite connects learners  with universities, colleges and Online courses. The platform also uses AI as a a tutor and learning assistant to help students succeed with their studies.">
+  <title>Universite - profile</title>
+  <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-uP3wQ94UXBykOwB5r1K6qU7zTh+VwjxOduYbX7Z3UXvwK+2bce7DHtsKTYShP98vOqk7czNo7Qbs0wZJoKUrw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+  body {
+      background-color:  #f2f4f8;
+    }
+    .sidebar-nav {
+        background-color: #ffffff;
+      padding: 1rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem;
+      color: #343a40;
+      text-decoration: none;
+      border-radius: 0.375rem;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: #0d6efd;
+      background-color: #e7f1ff;
+    }
+
+    .nav-link.active {
+      background-color: #e7f1ff;
+      color: #0d6efd;
+      font-weight: 600;
+    }
+
+    .nav-icon-label {
+      display: none;
+    }
+
+    @media (min-width: 768px) {
+      .nav-icon-label {
+        display: inline;
+        margin-left: 12px;
+      }
+      .mobile-nav {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+      }
+    }
+
+    .mobile-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    }
+
+    .fa-fw {
+      width: 1.25em;
+      text-align: center;
+    }
+    .profile-card {
+      background: white;
+      border-radius: 1px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      padding: 2rem;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .edit-btn {
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="d-flex flex-column flex-md-row">
+  <!-- Navigation -->
+  <nav class="sidebar-nav d-flex flex-row flex-md-column mobile-nav align-items-center align-items-md-start">
+  <!-- Logo -->
+  <div class="logo mb-3 me-3 me-md-0 text-center text-md-start">
+    <a href="#.html">
+      <img src="assets/images/icon-ring-removebg-preview.png" alt="Universite Logo" style="height: 40px;">
+    </a>
+  </div>
+
+  <!-- Menu Items -->
+  <a href="q-search.html" class="nav-link"><i class="fa fa-search fa-fw"></i><span class="nav-icon-label">Courses</span></a>
+  <a href="profile.html" class="nav-link active"><i class="fa fa-user-circle fa-fw"></i><span class="nav-icon-label">Profile</span></a>
+  <a href="settings.html" class="nav-link"><i class="fa fa-cog fa-fw"></i><span class="nav-icon-label">Settings</span></a>
+  </nav>
+
+
+  <!-- Main content -->
+  <main class="flex-fill p-4">
+    <h4>Universite</h4>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 20px; font-family: Arial, sans-serif;">
+
+      <div class="container my-5">
+      <div class="profile-card">
+        <h2 class="mb-4 text-center">User Profile</h2>
+
+        <!-- Personal Info Section -->
+        <div class="mb-5">
+          <div class="section-header">
+            <h4>Personal Information</h4>
+            <button class="btn btn-outline-primary btn-sm edit-btn">Edit</button>
+          </div>
+          <hr>
+          <p><strong>Full Name:</strong> John Doe</p>
+          <p><strong>Email:</strong> john@example.com</p>
+          <p><strong>Phone:</strong> +123 456 7890</p>
+          <p><strong>Date of Birth:</strong> Jan 1, 2000</p>
+        </div>
+
+        <!-- Preferred Courses Section -->
+        <div class="mb-3">
+          <div class="section-header">
+            <h4>Preferred Courses</h4>
+            <button class="btn btn-outline-primary btn-sm edit-btn">Edit</button>
+          </div>
+          <hr>
+          <ul>
+            <li>Computer Science Fundamentals</li>
+            <li>AI & Machine Learning</li>
+            <li>Data Analysis</li>
+          </ul>
+        </div>
+</div>
+      </div>
+    </div>
+
+</div>
+
+  </main>
+</div>
+
+<script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+</div>
+
+</body>
+</html>

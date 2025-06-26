@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
+ <meta name="description" content="Universite connects learners  with universities, colleges and Online courses. The platform also uses AI as a a tutor and learning assistant to help students succeed with their studies.">
+  <title>Universite - chatbot</title>
+  <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+
+      <style>
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #f2f4f8;
+      }
+
+      .sidebar-nav {
+        background-color: #ffffff;
+        padding: 1rem;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        color: #343a40;
+        text-decoration: none;
+        border-radius: 0.375rem;
+        transition: background 0.2s, color 0.2s;
+      }
+
+      .nav-link:hover {
+        color: #0d6efd;
+        background-color: #e7f1ff;
+      }
+
+      .nav-link.active {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+        font-weight: 600;
+      }
+
+      .nav-icon-label {
+        display: none;
+      }
+
+      @media (min-width: 768px) {
+        .nav-icon-label {
+          display: inline;
+          margin-left: 12px;
+        }
+        .mobile-nav {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+      }
+
+      .mobile-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+      }
+
+      .chat-card {
+        max-width: 800px;
+        width: 100%;
+        height: 600px;
+        border-radius: 1rem;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        background-color: #ffffff;
+      }
+
+      .card-header {
+        background-color: #0d6efd;
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+        padding: 1rem;
+      }
+
+      #chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: #f8f9fa;
+      }
+
+      .chat-bubble {
+        max-width: 75%;
+        padding: 0.75rem 1rem;
+        border-radius: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: inline-block;
+        line-height: 1.4;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .chat-user {
+        background-color: #0d6efd;
+        color: white;
+        align-self: flex-end;
+        margin-left: auto;
+      }
+
+      .chat-bot {
+        background-color: #e2e3e5;
+        color: #333;
+        align-self: flex-start;
+        margin-right: auto;
+      }
+
+      .text-end .chat-bubble {
+        border-bottom-right-radius: 0.5rem;
+      }
+
+      .text-start .chat-bubble {
+        border-bottom-left-radius: 0.5rem;
+      }
+
+      .card-footer {
+        padding: 1rem;
+        background-color: #fff;
+        border-top: 1px solid #dee2e6;
+      }
+
+      #chat-input {
+        border-radius: 999px;
+      }
+
+      #chat-form button {
+        border-radius: 999px;
+      }
+      .typing-bubble {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  width: auto;
+  padding: 0.5rem 1rem;
+  height: 40px;
+}
+
+.typing-bubble .dot {
+  width: 8px;
+  height: 8px;
+  background-color: #6c757d;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+
+.typing-bubble .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-bubble .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%, 80%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+.inline-code {
+  background-color: #f1f1f1;
+  font-family: monospace;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.95em;
+}
+
+.chat-bubble strong {
+  font-weight: 600;
+}
+
+.chat-bubble em {
+  font-style: italic;
+}
+@media (max-width: 767px) {
+  .chat-card,
+  .card.shadow {
+    width: 100%;
+    height: 90vh;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-header {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .card-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  #chat-messages {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .chat-bubble {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .typing-bubble {
+    padding: 0.5rem 0.75rem;
+  }
+
+  #chat-input {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  #chat-form button {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+  }
+
+  small.text-muted {
+    font-size: 0.75rem;
+    text-align: center;
+    display: block;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+    text-align: center;
+    margin-top: 1rem;
+  }
+}
+
+    </style>
+
+</head>
+<body>
+
+<div class="d-flex flex-column flex-md-row">
+  <!-- Navigation -->
+  <nav class="sidebar-nav d-flex flex-row flex-md-column mobile-nav align-items-center align-items-md-start">
+  <!-- Logo -->
+  <div class="logo mb-3 me-3 me-md-0 text-center text-md-start">
+    <a href="#">
+      <img src="assets/images/icon-ring-removebg-preview.png" alt="Universite Logo" style="height: 40px;">
+    </a>
+  </div>
+
+  <!-- Menu Items -->
+  <a href="q-search.html" class="nav-link"><i class="fa fa-search fa-fw"></i><span class="nav-icon-label">Courses</span></a>
+  <a href="profile.html" class="nav-link"><i class="fa fa-user-circle fa-fw"></i><span class="nav-icon-label">Profile</span></a>
+  <a href="settings.html" class="nav-link"><i class="fa fa-cog fa-fw"></i><span class="nav-icon-label">Settings</span></a>
+  <a href="chatbot.html" class="nav-link active"><i class="fa fa-comment-medical fa-fw"></i><span class="nav-icon-label">AI Chat</span></a>
+  <a href="history.html" class="nav-link"><i class="fa fa-comments fa-fw"></i><span class="nav-icon-label">Chat History</span></a>
+</nav>
+
+
+  <!-- Main content -->
+  <main class="flex-fill p-4">
+    <h4>Universite</h4>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 20px; font-family: Arial, sans-serif;">
+      <div class="card shadow rounded w-100 w-md-75 mx-auto" style="height: 500px; display: flex; flex-direction: column;">
+
+        <!-- Chat header -->
+        <div class="card-header bg-primary text-white">
+          <label class=" mbr-fonts-style mb-4 display-7">AI Chat Assistant</label>
+        </div>
+
+        <!-- Chat messages -->
+        <div id="chat-messages" class="card-body overflow-auto" style="flex: 1; padding: 1rem;">
+          <!-- Example messages -->
+          <div class="mb-3">
+            <div class=" mbr-text mbr-fonts-style">Hello.I'm here to help answer questions about university/college applications,admissions and financial aid.If you are confused just tell me what you are interested in studying and we can take it from there.</div>
+          </div>
+        </div>
+
+        <!-- Chat input -->
+        <div class="card-footer bg-white">
+  <form id="chat-form" class="d-flex">
+    <input type="text" id="chat-input" class="form-control me-2" placeholder="Ask anything" autocomplete="off" required />
+    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+  </form>
+  <small class="text-muted d-block mt-2 text-center">
+    ⚠️ This AI assistant may make mistakes. Always verify important information.
+  </small>
+
+</div>
+      </div>
+
+  </div>
+
+  </main>
+</div>
+
+<script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('chat-input');
+  const messages = document.getElementById('chat-messages');
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    let userMsg = input.value.trim();
+    if (!userMsg) return;
+
+    userMsg = sanitizeInput(userMsg);
+    appendMessage(userMsg, 'user');
+    input.value = '';
+
+    appendTypingIndicator();
+
+    try {
+      const response = await fetch("http://localhost:5000/chat", {  // Use relative path
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: userMsg })
+      });
+
+      removeTypingIndicator();
+
+      const data = await response.json();
+
+      if (data.reply) {
+        appendMessage(data.reply, 'bot');
+      } else {
+        appendMessage("⚠️ No reply from the server.", 'bot');
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      removeTypingIndicator();
+      appendMessage("❌ Error connecting to the chatbot server.", 'bot');
+    }
+  });
+
+  function appendMessage(message, sender) {
+  const div = document.createElement('div');
+  div.className = sender === 'user' ? 'text-end d-flex justify-content-end' : 'text-start d-flex justify-content-start';
+
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${sender === 'user' ? 'chat-user' : 'chat-bot'}`;
+  bubble.innerHTML = formatMessageHTML(message);
+
+
+  div.appendChild(bubble);
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+
+function appendTypingIndicator() {
+const div = document.createElement('div');
+div.className = 'text-start d-flex justify-content-start';
+div.id = 'typing-indicator';
+
+const bubble = document.createElement('div');
+bubble.className = 'chat-bubble chat-bot typing-bubble';
+
+bubble.innerHTML = `
+  <span class="dot"></span>
+  <span class="dot"></span>
+  <span class="dot"></span>
+`;
+
+div.appendChild(bubble);
+messages.appendChild(div);
+messages.scrollTop = messages.scrollHeight;
+}
+
+
+  function removeTypingIndicator() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) indicator.remove();
+  }
+
+  function sanitizeInput(input) {
+    const div = document.createElement('div');
+    div.textContent = input;
+    return div.innerHTML;
+  }
+
+  function formatMessageHTML(message) {
+  // Basic safe formatting — supports bold, italic, line breaks, lists, code
+  const div = document.createElement('div');
+  div.textContent = message;
+
+  // Replace line breaks with <br>
+  let html = div.innerHTML.replace(/\n/g, '<br>');
+
+  // Optional: support **bold**, *italic*, `inline code`
+  html = html
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')      // bold
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')                  // italic
+    .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>');  // inline code
+
+  return html;
+}
+
+</script>
+
+
+</div>
+
+</body>
+</html>
