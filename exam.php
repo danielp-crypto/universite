@@ -33,35 +33,19 @@ $interests = $interestStmt->fetch();
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
-  <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
-  <meta property="og:title" content="Find Online & University Courses for Students">
-  <meta property="og:description" content="Browse both online courses and in-person college programs. Discover the best course for your goals and enroll with confidence.">
-  <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
-  <meta property="og:url" content="https://universite.co.za">
-  <meta property="og:type" content="website">
-
-
-
-  <title>Find Online & University Courses for Students | Compare & Enroll</title>
+  <title>Mock Exam Generator</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       min-height: 100vh;
-      background: #f9fafb;
-      margin: 0;
+      background: linear-gradient(135deg, #f3f4f6 0%, #e0e7ef 100%);
     }
-    .container {
-      display: flex;
-    }
+    .container { display: flex; }
     nav {
       background-color: #1f2937;
       color: white;
@@ -76,373 +60,264 @@ $interests = $interestStmt->fetch();
       gap: 1.5rem;
       z-index: 1000;
     }
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-      text-align: center;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #374151;
-    }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      transition: background 0.3s, transform 0.2s;
-      cursor: pointer;
-      font-size: 1rem;
-      background-color: transparent;
-    }
-    .nav-item:hover {
-      background-color: #374151;
-      transform: translateX(4px);
-    }
-    .nav-item i {
-      font-size: 1.2rem;
-      color: #60a5fa;
-    }
-    .nav-item.active {
-      background-color: #2563eb;
-      font-weight: bold;
-    }
-    .nav-item.active i {
-      color: #fff;
-    }
+    .sidebar { display: flex; flex-direction: column; gap: 1rem; }
+    .logo { font-size: 1.5rem; font-weight: bold; text-align: center; padding-bottom: 1rem; border-bottom: 1px solid #374151; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background 0.3s, transform 0.2s; cursor: pointer; font-size: 1rem; background-color: transparent; }
+    .nav-item:hover { background-color: #374151; transform: translateX(4px); }
+    .nav-item i { font-size: 1.2rem; color: #60a5fa; }
+    .nav-item.active { background-color: #2563eb; font-weight: bold; }
+    .nav-item.active i { color: #fff; }
     .main {
       margin-left: 250px;
       padding: 2rem;
       flex: 1;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    @media (max-width: 900px) {
+      .main { padding: 1rem; }
+      .exam-card { padding: 1.2rem 0.5rem; width: 100%; }
     }
     @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-      nav {
-        width: 100%;
-        height: auto;
-        position: fixed;
-        top: 0;
-        left: 0;
-      }
-      .sidebar {
-        flex-direction: row;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        padding: 0.5rem;
-      }
-      .logo {
-        display: none;
-      }
-      .main {
-        margin-left: 0;
-        margin-top: 120px; /* leave space for fixed top nav */
-      }
+      .container { flex-direction: column; }
+      nav { width: 100%; height: auto; position: fixed; top: 0; left: 0; padding: 0.5rem 1rem; z-index: 1000; }
+      .sidebar { flex-direction: row; justify-content: space-around; flex-wrap: wrap; padding: 0.5rem; }
+      .logo { display: none; }
+      .main { margin-left: 0; margin-top: 120px; padding: 1rem; }
     }
-    .profile-card {
-        background: white;
-        border-radius: 1px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.05);
-        padding: 2rem;
-        font-family: 'Inter', sans-serif;
-
+    .exam-card {
+      width: 100%;
+      margin: 2.5rem 0;
+      background: #fff;
+      padding: 2.5rem 2rem 2rem 2rem;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(31,41,55,0.10);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        max-width: 800px;
- margin: auto;
- background-color: var(--white);
- border-radius: var(--radius);
- box-shadow: var(--shadow);
- padding: 2rem;
- display: flex;
- flex-direction: column;
- align-items: center;
- text-align: center;
+    .exam-card h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2563eb;
+      margin-bottom: 1.5rem;
+      text-align: center;
     }
-
-    .edit-button {
-  background-color:#2563eb ;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.edit-button:hover {
-  background-color: #4338ca;
-  transform: translateY(-1px);
-}
-
-.edit-button:active {
-  transform: scale(0.98);
-}
+    .form-group { width: 100%; margin-bottom: 1.2rem; }
+    label { display: block; font-weight: 600; margin-bottom: 0.4rem; color: #1e293b; }
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      max-width: 100%;
+      padding: 1rem;
+      border: 1.5px solid #60a5fa;
+      border-radius: 10px;
+      font-size: 1.08rem;
+      background: #f8fafc;
+      margin-bottom: 0.5rem;
+      transition: border 0.2s;
+      resize: vertical;
+    }
+    textarea:focus { border: 1.5px solid #2563eb; outline: none; background: #fff; }
+    .file-upload-zone {
+      border: 2px dashed #60a5fa;
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      color: #2563eb;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .file-upload-zone.dragover { background: #e0f2fe; border-color: #2563eb; }
+    .file-upload-zone i { font-size: 2.2rem; color: #60a5fa; margin-bottom: 0.3rem; display: block; }
+    .file-upload-label { font-weight: 600; color: #1e293b; margin-bottom: 0.2rem; }
+    .file-upload-info { font-size: 0.98rem; color: #2563eb; margin-top: 0.2rem; }
+    .file-upload-selected { color: #059669; font-size: 1rem; margin-top: 0.3rem; font-weight: 500; }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      border: 1.5px solid #cbd5e1;
+      font-size: 1.05rem;
+      background: #f8fafc;
+      transition: border 0.2s;
+      margin-bottom: 0.2rem;
+    }
+    input[type="number"]:focus { border: 1.5px solid #2563eb; outline: none; background: #fff; }
+    button#generateBtn {
+      width: 100%;
+      padding: 1.1rem;
+      background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 1.13rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      margin-top: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+    button#generateBtn:active { transform: scale(0.98); }
+    button#generateBtn[disabled] { opacity: 0.7; cursor: not-allowed; }
+    .spinner {
+      border: 3px solid #e0e7ff;
+      border-top: 3px solid #2563eb;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 0.7rem;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .exam-output { margin-top: 2rem; width: 100%; }
+    .question-card {
+      background: #ecf0f1;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border-left: 5px solid #3498db;
+    }
+    .question-card h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+    .question-card p { margin: 0; color: #2c3e50; }
     a {text-decoration:none;color:white;}
     a:visited {
-  color: inherit; /* Inherits color from parent element */
-  text-decoration: none; /* Optional: remove underline */
-}
-li {
-  margin-bottom: 0.6rem;
-  line-height: 1.5;
-  color: #374151; /* cool dark gray */
-  font-size: 1rem;
-
-  padding-left: 1.2rem;
-}
-
-/* Paragraph */
-p {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #4b5563; /* medium gray */
-  margin: 0.75rem 0;
-}
-
-/* Heading 4 */
-h4 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #1f2937; /* darker gray */
-  letter-spacing: 0.02em;
-}
-@media only screen and (max-width: 768px) {
-  /* Make sidebar responsive */
-  nav {
-    width: 100%;
-    height: auto;
-    position: fixed;
-    top: 0;
-    left: 0;
-    padding: 0.5rem 1rem;
-    z-index: 1000;
-  }
-
-  .sidebar {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    padding: 0.5rem 0;
-  }
-
-  .nav-item {
-    font-size: 0.85rem;
-    padding: 0.5rem 0.75rem;
-    flex: 1 1 30%;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .main {
-    margin-left: 0;
-    margin-top: 200px; /* Leave space for fixed nav */
-    padding: 1rem;
-  }
-
-  /* Make cards stack nicely */
-  .card-body {
-    flex: 1 1 100%;
-    padding: 1rem;
-  }
-
-  .row.g-4 {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .col-12,
-  .col-md-6 {
-    width: 100%;
-  }
-
-  /* Pagination buttons stack vertically if too narrow */
-  .pagination {
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .page-link {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-  }
-
-  form {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  input[type="text"] {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  button {
-    width: 100%;
-  }
-
-  /* Image scaling */
-  nav .logo img {
-    height: 3rem;
-    margin: 0 auto;
-  }
-}
-.cont {
-  max-width: 700px;
-  margin: auto;
-  background: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.05);
-}
-
-h1 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 2rem;
-}
-
-.form-group {
-  margin-bottom: 1.2rem;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 0.4rem;
-}
-
-input, select {
-  width: 100%;
-  padding: 0.6rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-button {
-  background-color: #3498db;
-  color: white;
-  padding: 0.8rem 1.2rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-  font-size: 1rem;
-  transition: background 0.2s ease;
-}
-
-button:hover {
-  background-color: #2980b9;
-}
-
-.exam-output {
-  margin-top: 2rem;
-}
-
-.question-card {
-  background: #ecf0f1;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 6px;
-  border-left: 5px solid #3498db;
-}
-
-.question-card h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-}
-
-.question-card p {
-  margin: 0;
-  color: #2c3e50;
-}
+    color: inherit; /* Inherits color from parent element */
+    text-decoration: none; /* Optional: remove underline */
+    }
   </style>
 </head>
 <body>
-  <div class="cont">
+  <div class="container">
     <nav>
       <div class="logo">  <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" style="height: 5rem;"></div>
       <div class="sidebar">
-
         <a href="profile.php" class="nav-item active"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?>
-    </a>
-
+        </a>
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
         <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
       </div>
     </nav>
-
     <main class="main">
-      <div class="cont">
-         <h1>Mock Exam</h1>
-
-         <div class="form-group">
-           <label for="topic">Topic or subject:</label>
-           <input type="text" id="topic" placeholder="e.g. World War II" />
-         </div>
-
-         <div class="form-group">
-           <label for="numQuestions">Number of Questions:</label>
-           <input type="number" id="numQuestions" min="1" max="50" value="5" />
-         </div>
-
-         <div class="form-group">
-           <label for="difficulty">Difficulty:</label>
-           <select id="difficulty">
-             <option value="easy">Easy</option>
-             <option value="medium" selected>Medium</option>
-             <option value="hard">Hard</option>
-           </select>
-         </div>
-
-         <button id="generateBtn">Generate Exam</button>
-
-         <div id="examOutput" class="exam-output"></div>
-       </div>
+      <div class="exam-card">
+        <h1>Mock Exam Generator</h1>
+        <div class="form-group">
+          <label for="examText">Paste your study text here:</label>
+          <textarea id="examText" placeholder="Paste your notes, textbook content, or any text..."></textarea>
+        </div>
+        <div id="fileUploadZone" class="file-upload-zone" tabindex="0">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <span class="file-upload-label">Upload or drag & drop a .txt or .pdf file</span>
+          <span class="file-upload-info">Accepted: .txt, .pdf &bull; Max 25MB</span>
+          <span id="fileSelected" class="file-upload-selected" style="display:none;"></span>
+          <input type="file" id="fileInput" accept=".txt,.pdf" style="display:none;" />
+        </div>
+        <div class="form-group">
+          <label for="numQuestions">Number of Questions:</label>
+          <input type="number" id="numQuestions" min="1" max="50" value="5" />
+        </div>
+        <button id="generateBtn">Generate Exam</button>
+        <div id="examOutput" class="exam-output"></div>
+      </div>
     </main>
   </div>
   <script>
-  document.getElementById('generateBtn').addEventListener('click', () => {
-  const topic = document.getElementById('topic').value.trim();
-  const num = parseInt(document.getElementById('numQuestions').value, 10);
-  const difficulty = document.getElementById('difficulty').value;
-  const output = document.getElementById('examOutput');
+    const fileInput = document.getElementById('fileInput');
+    const fileUploadZone = document.getElementById('fileUploadZone');
+    const fileSelected = document.getElementById('fileSelected');
+    const examText = document.getElementById('examText');
+    let uploadedText = '';
 
-  output.innerHTML = '';
-
-  if (!topic || isNaN(num) || num < 1 || num > 50) {
-    alert('Please enter a valid topic and number of questions.');
-    return;
-  }
-
-  // Simulate generated questions
-  for (let i = 1; i <= num; i++) {
-    const question = `Q${i}: What is a key point about ${topic}? (Difficulty: ${difficulty})`;
-    const answer = `Answer: This is a sample answer for ${topic} question ${i}.`;
-
-    const card = document.createElement('div');
-    card.className = 'question-card';
-    card.innerHTML = `<h3>${question}</h3><p>${answer}</p>`;
-
-    output.appendChild(card);
-  }
-});
-</script>
+    // File upload zone drag & drop and click
+    fileUploadZone.addEventListener('click', () => fileInput.click());
+    fileUploadZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+    fileUploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fileUploadZone.classList.add('dragover');
+    });
+    fileUploadZone.addEventListener('dragleave', (e) => {
+      fileUploadZone.classList.remove('dragover');
+    });
+    fileUploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileUploadZone.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        showSelectedFile();
+        fileInput.dispatchEvent(new Event('change'));
+      }
+    });
+    fileInput.addEventListener('change', showSelectedFile);
+    function showSelectedFile() {
+      if (fileInput.files && fileInput.files.length > 0) {
+        fileSelected.textContent = fileInput.files[0].name + ' selected';
+        fileSelected.style.display = '';
+      } else {
+        fileSelected.textContent = '';
+        fileSelected.style.display = 'none';
+      }
+    }
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.name.endsWith('.pdf')) {
+        // PDF handling
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+          const typedarray = new Uint8Array(event.target.result);
+          const pdf = await pdfjsLib.getDocument({data: typedarray}).promise;
+          let textContent = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const txt = await page.getTextContent();
+            textContent += txt.items.map(item => item.str).join(' ') + '\n';
+          }
+          uploadedText = textContent;
+          examText.value = textContent;
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        // TXT
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          uploadedText = event.target.result;
+          examText.value = uploadedText;
+        };
+        reader.readAsText(file);
+      }
+    });
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      const text = examText.value.trim();
+      const num = parseInt(document.getElementById('numQuestions').value, 10);
+      const output = document.getElementById('examOutput');
+      output.innerHTML = '';
+      if (!text || isNaN(num) || num < 1 || num > 50) {
+        alert('Please paste text or upload a file, and enter a valid number of questions.');
+        return;
+      }
+      // Simulate generated questions
+      for (let i = 1; i <= num; i++) {
+        const question = `Q${i}: What is a key point from your material?`;
+        const answer = `Answer: This is a sample answer for question ${i}.`;
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        card.innerHTML = `<h3>${question}</h3><p>${answer}</p>`;
+        output.appendChild(card);
+      }
+    });
+  </script>
 </body>
 </html>
