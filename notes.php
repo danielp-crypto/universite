@@ -459,5 +459,43 @@ button:hover {
       </div>
     </main>
   </div>
+<script>
+// Drag and drop functionality for the drop zone
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = dropZone.querySelector('.file-info');
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', (e) => {
+  dropZone.classList.remove('dragover');
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    fileInput.files = e.dataTransfer.files;
+    fileInfo.textContent = e.dataTransfer.files[0].name + ' selected';
+  }
+});
+
+// Also update file-info when file is selected via click
+fileInput.addEventListener('change', (e) => {
+  if (fileInput.files && fileInput.files.length > 0) {
+    fileInfo.textContent = fileInput.files[0].name + ' selected';
+  } else {
+    fileInfo.textContent = '.pdf • Max 25MB';
+  }
+});
+
+// Optional: clicking the drop zone opens the file dialog
+dropZone.addEventListener('click', () => {
+  fileInput.click();
+});
+</script>
 </body>
 </html>
