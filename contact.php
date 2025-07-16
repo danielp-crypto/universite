@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html  >
 <head>
-  <!-- Site made with Mobirise Website Builder v6.0.1, https://mobirise.com -->
+
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
-  <meta name="description" content="Universite connects learners  with universities, colleges and Online courses. The platform also uses AI as a tutor and learning assistant to help students succeed with their studies.">
+  <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
+  <meta property="og:title" content="Find Online & University Courses for Students">
+  <meta property="og:description" content="Browse both online courses and in-person college programs. Discover the best course for your goals and enroll with confidence.">
+  <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
+  <meta property="og:url" content="https://universite.co.za">
+  <meta property="og:type" content="website">
 
 
-  <title>Universite - contacts</title>
+
+  <title>Find Online & University Courses for Students | Compare & Enroll</title>
   <link rel="stylesheet" href="assets/web/assets/mobirise-icons2/mobirise2.css">
   <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="assets/bootstrap/css/bootstrap-grid.min.css">
@@ -29,49 +35,15 @@
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,500,600,700,800,900,200i,300i,400i,500i,600i,700i,800i,900i&display=swap"></noscript>
   <link rel="preload" href="https://fonts.googleapis.com/css?family=Quicksand:300,400,500,600,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Quicksand:300,400,500,600,700&display=swap"></noscript>
-  <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css?v=pR60Qm"><link rel="stylesheet" href="assets/mobirise/css/mbr-additional.css?v=pR60Qm" type="text/css">
+  <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc"><link rel="stylesheet" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc" type="text/css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 
 
 
 </head>
 <body>
-
-  <section data-bs-version="5.1" class="menu menu2 cid-uOxXG5eD6m" once="menu" id="menu02-0">
-
-
-	<nav class="navbar navbar-dropdown navbar-fixed-top navbar-expand-lg">
-		<div class="container">
-			<div class="navbar-brand">
-				<span class="navbar-logo">
-					<a href="index.html">
-						<img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite - home" style="height: 5rem;">
-					</a>
-				</span>
-
-			</div>
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbarSupportedContent" data-bs-target="#navbarSupportedContent" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-				<div class="hamburger">
-					<span></span>
-					<span></span>
-					<span></span>
-					<span></span>
-				</div>
-			</button>
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<ul class="navbar-nav nav-dropdown" data-app-modern-menu="true"><li class="nav-item">
-						<a class="nav-link link text-white text-primary display-4" href="index.html">Home</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link link text-white text-primary display-4" href="posts/blog.html" aria-expanded="false">Student Advice</a>
-					</li>
-          </ul>
-
-				<div class="navbar-buttons mbr-section-btn"><a class="btn btn-secondary-outline display-4" href="login.html">Login</a> <a class="btn btn-warning display-4" href="signup.html">Sign Up</a></div>
-			</div>
-		</div>
-	</nav>
-</section>
+<?php include_once "nav.php"; ?>
 
 <section data-bs-version="5.1" class="contacts01 cid-uOzhgInEi1" id="contacts01-m">
 
@@ -109,7 +81,7 @@
                             <strong>Email</strong>
                         </h6>
                         <p class="mbr-text mbr-fonts-style display-7">
-                            <a href="mailto:info@universite.co.za" class="text-primary">info@universite.co.za</a>
+                            <a href="mailto:hello@universite.co.za" class="text-primary">hello@universite.co.za</a>
                         </p>
                     </div>
                 </div>
@@ -141,58 +113,4 @@
         </div>
     </div>
 </section>
-
-<section data-bs-version="5.1" class="footer1 cid-uOxXHxv5EN" once="footers" id="footer01-1">
-
-
-
-
-	<div class="container">
-		<div class="row mbr-white">
-			<div class="col-12 col-md-6 col-lg-3">
-				<h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
-					<strong>Company</strong>
-				</h5>
-				<ul class="list mbr-fonts-style display-4">
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="#header01-3">About</a></li>
-          <li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="contact.html">Contacts</a></li>
-					<li class="mbr-text item-wrap"><br></li>
-				</ul>
-			</div>
-			<div class="col-12 col-md-6 col-lg-3">
-				<h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7"><strong>Legal</strong></h5>
-				<ul class="list mbr-fonts-style display-4">
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="privacy.html">Privacy Policy</a></li>
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="terms.html">Terms of Service</a></li>
-				</ul>
-			</div>
-			<div class="col-12 col-md-6 col-lg-3">
-				<h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
-					<strong>Support</strong>
-				</h5>
-				<ul class="list mbr-fonts-style display-4">
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="#list01-a">FAQ</a></li>
-				</ul>
-			</div>
-			<div class="col-12 col-md-6 col-lg-3">
-				<h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7"><strong>Social</strong></h5>
-				<ul class="list mbr-fonts-style display-4">
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="https://www.facebook.com/profile.php?id=100065663762125" target="_blank">Facebook</a>
-</li>
-				</ul>
-			</div>
-
-			<div class="col-12 mt-4">
-				<p class="mbr-text mb-0 mbr-fonts-style copyright align-center display-7">
-					© Copyright 2025 Universite - All Rights Reserved
-				</p>
-			</div>
-		</div>
-	</div>
-</section><section class="display-7" style="padding: 0;align-items: center;justify-content: center;flex-wrap: wrap;    align-content: center;display: flex;position: relative;height: 4rem;"><a href="https://mobiri.se/" style="flex: 1 1;height: 4rem;position: absolute;width: 100%;z-index: 1;"><img alt="" style="height: 4rem;" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="></a><p style="margin: 0;text-align: center;" class="display-7">&#8204;</p><a style="z-index:1" href="https://mobirise.com/builder/ai-website-creator.html">AI Website Creator</a></section><script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>  <script src="assets/smoothscroll/smooth-scroll.js"></script>  <script src="assets/ytplayer/index.js"></script>  <script src="assets/dropdown/js/navbar-dropdown.js"></script>  <script src="assets/mbr-switch-arrow/mbr-switch-arrow.js"></script>  <script src="assets/theme/js/script.js"></script>
-
-
- <div id="scrollToTop" class="scrollToTop mbr-arrow-up"><a style="text-align: center;"><i class="mbr-arrow-up-icon mbr-arrow-up-icon-cm cm-icon cm-icon-smallarrow-up"></i></a></div>
-    <input name="animation" type="hidden">
-  </body>
-</html>
+<?php include_once "footer.php"; ?>

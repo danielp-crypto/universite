@@ -140,7 +140,8 @@ grokey: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
 GitHub token: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
 $env:GITHUB_TOKEN = "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"
 AWS:chmod 400 Bleedingedge.pem
-ssh -i f:/universite/Bleedingedge.pem ec2-user@51.20.135.14
+ssh -i f:/universite/Bleedingedge.pem ec2-user@16.16.227.97   4rw<7_)gegqL  NewSecurePassword123! google auth:435540089443-31su8foduuhrbgkhtktjbjqis3g1cvsm.apps.googleusercontent.com oAuth:435540089443-trqmc9iaq288jmvkb9t304tsmrlshikg.apps.googleusercontent.com
+
 chmod 400 ~\universite\Bleedingedge.pem
 chmod 400 f:/universite/Bleedingedge.pem
 cd /home/ec2-user/venv

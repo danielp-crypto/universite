@@ -1,7 +1,15 @@
 <!DOCTYPE html>
 <html  >
 <head>
-  <!-- Site made with Mobirise Website Builder v6.0.1, https://mobirise.com -->
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
+  <script>
+   window.dataLayer = window.dataLayer || [];
+   function gtag(){dataLayer.push(arguments);}
+   gtag('js', new Date());
+
+   gtag('config', 'G-YTT2QHLQC7');
+  </script>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
@@ -10,7 +18,7 @@
   <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
   <meta property="og:title" content="Find Online & University Courses for Students">
   <meta property="og:description" content="Browse both online courses and in-person college programs. Discover the best course for your goals and enroll with confidence.">
-  <meta property="og:image" content="https://universite.co.za//assets/images/course-platform-preview.jpg">
+  <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
   <meta property="og:url" content="https://universite.co.za">
   <meta property="og:type" content="website">
 
@@ -43,42 +51,7 @@
 
 </head>
 <body>
-
-  <section data-bs-version="5.1" class="menu menu2 cid-uOxXG5eD6m" once="menu" id="menu02-0">
-
-
-	<nav class="navbar navbar-dropdown navbar-fixed-top navbar-expand-lg">
-		<div class="container">
-			<div class="navbar-brand">
-				<span class="navbar-logo">
-					<a href="index.html">
-						<img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite - home" style="height: 5rem;">
-					</a>
-				</span>
-
-			</div>
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbarSupportedContent" data-bs-target="#navbarSupportedContent" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-				<div class="hamburger">
-					<span></span>
-					<span></span>
-					<span></span>
-					<span></span>
-				</div>
-			</button>
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<ul class="navbar-nav nav-dropdown" data-app-modern-menu="true"><li class="nav-item">
-						<a class="nav-link link text-white text-primary display-4" href="index.html">Home</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link link text-white text-primary display-4" href="posts/blog.html" aria-expanded="false">Student Advice</a>
-					</li>
-          </ul>
-
-				<div class="navbar-buttons mbr-section-btn"><a class="btn btn-secondary-outline display-4" href="login.html">Login</a> <a class="btn btn-warning display-4" href="signup.html">Sign Up</a></div>
-			</div>
-		</div>
-	</nav>
-</section>
+<?php include_once "nav.php"; ?>
 
 <section data-bs-version="5.1" class="header1 cid-uOyIHRT0l9" id="header01-3">
 
@@ -93,7 +66,7 @@
 			</div>
 			<div class="col-12 col-lg col-md-12">
 				<div class="text-wrapper align-left">
-					<h1 class="mbr-section-title mbr-fonts-style mb-4 display-2"><strong>Empowering students to discover their path</strong></h1>
+					<h1 class="mbr-section-title mbr-fonts-style mb-4 display-2"><strong>Empowering learners to discover their path</strong></h1>
 					<p class="mbr-text mbr-fonts-style mb-4 display-7">Universite is a platform designed to help students find the right courses tailored to their interests and career goals. Our mission is to simplify the search and connect learners with high-quality educational content.</p>
 
 				</div>
@@ -115,7 +88,7 @@
                     <div class="card-box align-center">
 
 
-                        <div class="mbr-section-btn mt-4"><a class="btn btn-warning display-7" href="login.html">Login/Sign up</a></div>
+                        <div class="mbr-section-btn mt-4"><a class="btn btn-warning display-7" href="https://www.universite.co.za/login.php">Login/Sign up</a></div>
                     </div>
                 </div>
             </div>
@@ -124,28 +97,28 @@
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
                 <div class="item-wrapper">
                     <div class="title mb-3">
-                        <span class="num mbr-fonts-style display-1"><strong>1000</strong></span>
+                        <span class="num mbr-fonts-style display-1"><strong>Courses</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">courses to choose from</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">University/college and online courses to choose from </p>
                 </div>
             </div>
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
                 <div class="item-wrapper">
                     <div class="title mb-3">
-                        <span class="num mbr-fonts-style display-1"><strong>200+</strong></span>
+                        <span class="num mbr-fonts-style display-1"><strong>Marketplace</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Searches a day</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">All your dorm essentials in one place</p>
                 </div>
             </div>
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
                 <div class="item-wrapper">
                     <div class="title mb-3">
-                        <span class="num mbr-fonts-style display-1"><strong>300</strong></span>
+                        <span class="num mbr-fonts-style display-1"><strong>AI</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Course providers and institutions</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Get 24/7 tutoring and career guidance</p>
                 </div>
             </div>
         </div>
@@ -162,8 +135,8 @@
         <p class="mbr-text mbr-fonts-style mb-4 display-7">
           Search across 1000+ university, college, and online programs.
         </p>
-        <form class="d-flex justify-content-center mb-4">
-          <input type="text" class="form-control w-75 me-2" placeholder="Type a course name, subject, or institution">
+        <form class="d-flex justify-content-center mb-4" action="explore.php" autocomplete="on">
+          <input type="text" class="form-control w-75 me-2" placeholder="I want to study..." name="myCourse" id="auto" spellcheck="true" required>
           <button type="submit" class="btn btn-warning"><i class="fas fa-search me-2"></i></button>
         </form>
       </div>
@@ -176,28 +149,28 @@
         </h4>
         <div class="row justify-content-center">
           <div class="col-6 col-md-3 mb-3">
-            <a href="#" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7" >Business Administration</a>
+            <a href="https://www.universite.co.za/explore.php?myCourse=administration" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7" >Admin</a>
           </div>
           <div class="col-6 col-md-3 mb-3">
-            <a href="#" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Computer Science</a>
+            <a href="https://www.universite.co.za/explore.php?myCourse=computer science" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Computer Science</a>
           </div>
           <div class="col-6 col-md-3 mb-3">
-            <a href="#" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Data Science</a>
+            <a href="https://www.universite.co.za/explore.php?myCourse=accounting" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Accounting</a>
           </div>
           <div class="col-6 col-md-3 mb-3">
-            <a href="#" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Nursing</a>
+            <a href="https://www.universite.co.za/explore.php?myCourse=nursing" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Nursing</a>
           </div>
           <div class="col-6 col-md-3 mb-3">
-            <a href="#" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Engineering</a>
+            <a href="https://www.universite.co.za/explore.php?myCourse=engineering" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Engineering</a>
           </div>
           <div class="col-6 col-md-3 mb-3">
-            <a href="#" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Psychology</a>
+            <a href="https://www.universite.co.za/explore.php?myCourse=psychology" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Psychology</a>
           </div>
           <div class="col-6 col-md-3 mb-3">
-            <a href="#" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Marketing</a>
+            <a href="https://www.universite.co.za/explore.php?myCourse=marketing" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Marketing</a>
           </div>
           <div class="col-6 col-md-3 mb-3">
-            <a href="#" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Education</a>
+            <a href="https://www.universite.co.za/explore.php?myCourse=education" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Education</a>
           </div>
         </div>
       </div>
@@ -230,7 +203,7 @@
 							</div>
 							<h5 class="card-title mbr-fonts-style mb-3 display-7">Universite helped me discover courses that matched my career goals perfectly!</h5>
 							<p class="card-text mbr-fonts-style mb-0 display-7">
-								Jennifer J. Omalley
+								Jane Zulu
 							</p>
 						</div>
 					</div>
@@ -247,7 +220,7 @@
 							</div>
 							<h5 class="card-title mbr-fonts-style mb-3 display-7">This is a great research tool,all the information in one place.</h5>
 							<p class="card-text mbr-fonts-style mb-0 display-7">
-								Christian T. Jackson
+								Christopher De jager
 							</p>
 						</div>
 					</div>
@@ -264,7 +237,7 @@
 							</div>
 							<h5 class="card-title mbr-fonts-style mb-3 display-7">I never thought applying to university could be such a breeze. Highly recommended!</h5>
 							<p class="card-text mbr-fonts-style mb-0 display-7">
-								Connie L. Raymond
+								Michael Selelo
 							</p>
 						</div>
 					</div>
@@ -288,7 +261,7 @@
 			</div>
 		<div class="row mt-0 mt-md-5">
 			<div class="col-12 align-center">
-				<div class="mbr-section-btn"><a class="btn btn-warning-outline display-7" href="signup.html">Signup</a></div>
+				<div class="mbr-section-btn"><a class="btn btn-warning-outline display-7" href="https://www.universite.co.za/signup.php">Signup</a></div>
 			</div>
 		</div>
 	</div>
@@ -377,57 +350,4 @@
 	</div>
 </section>
 
-<section data-bs-version="5.1" class="footer1 cid-uOxXHxv5EN" once="footers" id="footer01-1">
-
-
-
-
-	<div class="container">
-		<div class="row mbr-white">
-			<div class="col-12 col-md-6 col-lg-3">
-				<h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
-					<strong>Company</strong>
-				</h5>
-				<ul class="list mbr-fonts-style display-4">
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="#header01-3">About</a></li>
-          <li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="contact.html">Contacts</a></li>
-					<li class="mbr-text item-wrap"><br></li>
-				</ul>
-			</div>
-			<div class="col-12 col-md-6 col-lg-3">
-				<h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7"><strong>Legal</strong></h5>
-				<ul class="list mbr-fonts-style display-4">
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="privacy.html">Privacy Policy</a></li>
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="terms.html">Terms of Service</a></li>
-				</ul>
-			</div>
-			<div class="col-12 col-md-6 col-lg-3">
-				<h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
-					<strong>Support</strong>
-				</h5>
-				<ul class="list mbr-fonts-style display-4">
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="#list01-a">FAQ</a></li>
-				</ul>
-			</div>
-			<div class="col-12 col-md-6 col-lg-3">
-				<h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7"><strong>Social</strong></h5>
-				<ul class="list mbr-fonts-style display-4">
-					<li class="mbr-text item-wrap"><a class="mbr-text item-wrap" href="https://www.facebook.com/profile.php?id=100065663762125" target="_blank">Facebook</a>
-</li>
-				</ul>
-			</div>
-
-			<div class="col-12 mt-4">
-				<p class="mbr-text mb-0 mbr-fonts-style copyright align-center display-7">
-					© Copyright 2025 Universite - All Rights Reserved
-				</p>
-			</div>
-		</div>
-	</div>
-</section><section class="display-7" style="padding: 0;align-items: center;justify-content: center;flex-wrap: wrap;    align-content: center;display: flex;position: relative;height: 4rem;"><a href="https://mobiri.se/" style="flex: 1 1;height: 4rem;position: absolute;width: 100%;z-index: 1;"><img alt="" style="height: 4rem;" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="></a><p style="margin: 0;text-align: center;" class="display-7">&#8204;</p><a style="z-index:1" href="https://mobirise.com/builder/ai-website-creator.html">AI Website Creator</a></section><script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>  <script src="assets/smoothscroll/smooth-scroll.js"></script>  <script src="assets/ytplayer/index.js"></script>  <script src="assets/dropdown/js/navbar-dropdown.js"></script>  <script src="assets/mbr-switch-arrow/mbr-switch-arrow.js"></script>  <script src="assets/theme/js/script.js"></script>
-
-
- <div id="scrollToTop" class="scrollToTop mbr-arrow-up"><a style="text-align: center;"><i class="mbr-arrow-up-icon mbr-arrow-up-icon-cm cm-icon cm-icon-smallarrow-up"></i></a></div>
-    <input name="animation" type="hidden">
-  </body>
-</html>
+<?php include_once "footer.php"; ?>
