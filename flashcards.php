@@ -337,9 +337,52 @@ h4 {
   transform: rotateY(180deg);
   background-color: #fef9c3;
 }
-
-  </style>
+  .file-upload-zone {
+    border: 2px dashed #60a5fa;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    color: #2563eb;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .file-upload-zone.dragover {
+    background: #e0f2fe;
+    border-color: #2563eb;
+  }
+  .file-upload-zone i {
+    font-size: 2.2rem;
+    color: #60a5fa;
+    margin-bottom: 0.3rem;
+    display: block;
+  }
+  .file-upload-label {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.2rem;
+  }
+  .file-upload-info {
+    font-size: 0.98rem;
+    color: #2563eb;
+    margin-top: 0.2rem;
+  }
+  .file-upload-selected {
+    color: #059669;
+    font-size: 1rem;
+    margin-top: 0.3rem;
+    font-weight: 500;
+  }
+</style>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -358,9 +401,16 @@ h4 {
     </nav>
 
     <main class="main">
-      <h1 class="text-3xl font-bold text-blue-700 mb-6">Learn faster Flashcards</h1>
+      <h5 class="text-3xl font-bold text-blue-700 mb-6">Learn faster with flashcards</h5>
 
   <div class="flex flex-col items-center w-full">
+    <div id="fileUploadZone" class="file-upload-zone" tabindex="0">
+      <i class="fas fa-cloud-upload-alt"></i>
+      <span class="file-upload-label">Upload or drag & drop a .txt, .csv, or .pdf file</span>
+      <span class="file-upload-info">Accepted: .txt, .csv, .pdf &bull; Max 25MB</span>
+      <span id="fileSelected" class="file-upload-selected" style="display:none;"></span>
+      <input type="file" id="fileInput" accept=".txt,.csv,.pdf" style="display:none;" />
+    </div>
     <textarea id="input" class="w-full max-w-2xl p-4 border-2 border-blue-300 rounded-xl mb-4 shadow focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" placeholder="Enter a topic, notes, or questions..."></textarea>
     <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-xl shadow-lg transition-all mb-2">
       ✨ Generate Flashcards
@@ -375,6 +425,9 @@ h4 {
        <script>
   const generateBtn = document.getElementById('generateBtn');
   const flashcardContainer = document.getElementById('flashcardContainer');
+  const fileInput = document.getElementById('fileInput');
+  const fileUploadZone = document.getElementById('fileUploadZone');
+  const fileSelected = document.getElementById('fileSelected');
 
   generateBtn.addEventListener('click', () => {
     const inputText = document.getElementById('input').value.trim();
@@ -413,6 +466,116 @@ h4 {
       flashcardContainer.appendChild(wrapper);
     });
   });
+
+  // File upload zone drag & drop and click
+  fileUploadZone.addEventListener('click', () => fileInput.click());
+  fileUploadZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  fileUploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    fileUploadZone.classList.add('dragover');
+  });
+  fileUploadZone.addEventListener('dragleave', (e) => {
+    fileUploadZone.classList.remove('dragover');
+  });
+  fileUploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileUploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      fileInput.files = e.dataTransfer.files;
+      showSelectedFile();
+      fileInput.dispatchEvent(new Event('change'));
+    }
+  });
+  fileInput.addEventListener('change', showSelectedFile);
+  function showSelectedFile() {
+    if (fileInput.files && fileInput.files.length > 0) {
+      fileSelected.textContent = fileInput.files[0].name + ' selected';
+      fileSelected.style.display = '';
+    } else {
+      fileSelected.textContent = '';
+      fileSelected.style.display = 'none';
+    }
+  }
+
+  // File upload functionality
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.name.endsWith('.pdf')) {
+      // PDF handling
+      const reader = new FileReader();
+      reader.onload = async function(event) {
+        const typedarray = new Uint8Array(event.target.result);
+        const pdf = await pdfjsLib.getDocument({data: typedarray}).promise;
+        let textContent = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const txt = await page.getTextContent();
+          textContent += txt.items.map(item => item.str).join(' ') + '\n';
+        }
+        parseAndDisplayFlashcards(textContent, file.name);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      // TXT or CSV
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        parseAndDisplayFlashcards(event.target.result, file.name);
+      };
+      reader.readAsText(file);
+    }
+  });
+
+  function parseAndDisplayFlashcards(content, filename) {
+    let flashcards = [];
+    if (filename.endsWith('.csv')) {
+      // Parse CSV: assume first column is question, second is answer
+      const lines = content.split(/\r?\n/);
+      for (const line of lines) {
+        const [question, answer] = line.split(',');
+        if (question && answer) flashcards.push({ question: question.trim(), answer: answer.trim() });
+      }
+    } else {
+      // Parse TXT or PDF text: Q: ...\nA: ...\n or question|answer per line
+      const lines = content.split(/\r?\n/);
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.includes('|')) {
+          const [question, answer] = line.split('|');
+          if (question && answer) flashcards.push({ question: question.trim(), answer: answer.trim() });
+        } else if (line.startsWith('Q:')) {
+          const question = line.replace('Q:', '').trim();
+          const answerLine = lines[i + 1];
+          if (answerLine && answerLine.startsWith('A:')) {
+            const answer = answerLine.replace('A:', '').trim();
+            flashcards.push({ question, answer });
+          }
+        }
+      }
+    }
+    flashcardContainer.innerHTML = '';
+    if (flashcards.length === 0) {
+      flashcardContainer.innerHTML = '<div class="text-red-500">No valid flashcards found in file.</div>';
+      return;
+    }
+    flashcards.forEach(({ question, answer }) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flashcard-wrapper w-full h-48';
+      const card = document.createElement('div');
+      card.className = 'flashcard w-full h-full cursor-pointer relative rounded-xl';
+      card.innerHTML = `
+        <div class="flashcard-inner">
+          <div class="flashcard-front">${question}</div>
+          <div class="flashcard-back">${answer}</div>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        card.classList.toggle('flipped');
+      });
+      wrapper.appendChild(card);
+      flashcardContainer.appendChild(wrapper);
+    });
+  }
 </script>
 
        </script>
