@@ -45,7 +45,7 @@ $interests = $interestStmt->fetch();
 
 
 
-  <title>Find Online & University Courses for Students | Compare & Enroll</title>
+  <title>AI Notes | Universite</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     * {
@@ -56,8 +56,7 @@ $interests = $interestStmt->fetch();
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       min-height: 100vh;
-      background: #f9fafb;
-      margin: 0;
+      background: linear-gradient(135deg, #f3f4f6 0%, #e0e7ef 100%);
     }
     .container {
       display: flex;
@@ -118,6 +117,10 @@ $interests = $interestStmt->fetch();
       margin-left: 250px;
       padding: 2rem;
       flex: 1;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
     }
     @media (max-width: 768px) {
       .container {
@@ -129,6 +132,8 @@ $interests = $interestStmt->fetch();
         position: fixed;
         top: 0;
         left: 0;
+        padding: 0.5rem 1rem;
+        z-index: 1000;
       }
       .sidebar {
         flex-direction: row;
@@ -141,276 +146,163 @@ $interests = $interestStmt->fetch();
       }
       .main {
         margin-left: 0;
-        margin-top: 120px; /* leave space for fixed top nav */
+        margin-top: 120px;
+        padding: 1rem;
       }
     }
-    .profile-card {
-        background: white;
-        border-radius: 1px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.05);
-        padding: 2rem;
-        font-family: 'Inter', sans-serif;
-
+    /* AI Notes Card Styles (as previously applied) */
+    .cont {
+      width: 100%;
+      margin: 2.5rem 0;
+      background: #fff;
+      padding: 2.5rem 2rem 2rem 2rem;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(31,41,55,0.10);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        max-width: 800px;
- margin: auto;
- background-color: var(--white);
- border-radius: var(--radius);
- box-shadow: var(--shadow);
- padding: 2rem;
- display: flex;
- flex-direction: column;
- align-items: center;
- text-align: center;
+    .cont h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 2rem;
+      text-align: center;
+      letter-spacing: 0.01em;
     }
-
-    .edit-button {
-  background-color:#2563eb ;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.edit-button:hover {
-  background-color: #4338ca;
-  transform: translateY(-1px);
-}
-
-.edit-button:active {
-  transform: scale(0.98);
-}
+    .form-field {
+      width: 100%;
+      margin-bottom: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .drop-zone {
+      border: 2px dashed #60a5fa;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 1.2rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      color: #2563eb;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+    .drop-zone.dragover {
+      background: #e0f2fe;
+      border-color: #2563eb;
+    }
+    .drop-zone i {
+      font-size: 1.7rem;
+      color: #60a5fa;
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+    .file-info {
+      font-size: 0.98rem;
+      color: #2563eb;
+      margin-top: 0.3rem;
+    }
+    input[type="url"] {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      border: 1.5px solid #cbd5e1;
+      font-size: 1.05rem;
+      background: #f8fafc;
+      transition: border 0.2s;
+      margin-bottom: 0.2rem;
+    }
+    input[type="url"]:focus {
+      border: 1.5px solid #2563eb;
+      outline: none;
+      background: #fff;
+    }
+    button#generateBtn {
+      width: 100%;
+      padding: 1.1rem;
+      background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 1.13rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      margin-top: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+    button#generateBtn:active {
+      transform: scale(0.98);
+    }
+    button#generateBtn[disabled] {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    .spinner {
+      border: 3px solid #e0e7ff;
+      border-top: 3px solid #2563eb;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 0.7rem;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .or-divider {
+      width: 100%;
+      text-align: center;
+      color: #b0b3b8;
+      font-weight: 600;
+      margin: 1.2rem 0 1.2rem 0;
+      position: relative;
+      font-size: 0.98rem;
+    }
+    .or-divider:before, .or-divider:after {
+      content: '';
+      display: inline-block;
+      width: 38%;
+      height: 1px;
+      background: #e5e7eb;
+      vertical-align: middle;
+      margin: 0 0.5rem;
+    }
+    .generated-notes {
+      background: #f8fafc;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(37,99,235,0.06);
+      padding: 1.1rem 1rem;
+      margin-top: 0.5rem;
+      min-height: 60px;
+      font-size: 1.03rem;
+      color: #334155;
+      line-height: 1.6;
+      max-height: 220px;
+      overflow-y: auto;
+      width: 100%;
+      display: none;
+    }
+    .generated-notes.active {
+      display: block;
+    }
+    @media (max-width: 500px) {
+      .cont {
+        padding: 1.2rem 0.5rem;
+        width: 100%;
+      }
+    }
     a {text-decoration:none;color:white;}
     a:visited {
-  color: inherit; /* Inherits color from parent element */
-  text-decoration: none; /* Optional: remove underline */
-}
-li {
-  margin-bottom: 0.6rem;
-  line-height: 1.5;
-  color: #374151; /* cool dark gray */
-  font-size: 1rem;
-
-  padding-left: 1.2rem;
-}
-
-/* Paragraph */
-p {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #4b5563; /* medium gray */
-  margin: 0.75rem 0;
-}
-
-/* Heading 4 */
-h4 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #1f2937; /* darker gray */
-  letter-spacing: 0.02em;
-}
-@media only screen and (max-width: 768px) {
-  /* Make sidebar responsive */
-  nav {
-    width: 100%;
-    height: auto;
-    position: fixed;
-    top: 0;
-    left: 0;
-    padding: 0.5rem 1rem;
-    z-index: 1000;
-  }
-
-  .sidebar {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    padding: 0.5rem 0;
-  }
-
-  .nav-item {
-    font-size: 0.85rem;
-    padding: 0.5rem 0.75rem;
-    flex: 1 1 30%;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .main {
-    margin-left: 0;
-    margin-top: 200px; /* Leave space for fixed nav */
-    padding: 1rem;
-  }
-
-  /* Make cards stack nicely */
-  .card-body {
-    flex: 1 1 100%;
-    padding: 1rem;
-  }
-
-  .row.g-4 {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .col-12,
-  .col-md-6 {
-    width: 100%;
-  }
-
-  /* Pagination buttons stack vertically if too narrow */
-  .pagination {
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .page-link {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-  }
-
-  form {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  input[type="text"] {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  button {
-    width: 100%;
-  }
-
-  /* Image scaling */
-  nav .logo img {
-    height: 3rem;
-    margin: 0 auto;
-  }
-}
-h1 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.drop-zone {
-  border: 2px dashed #ccc;
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  transition: 0.3s ease;
-  background: #fafafa;
-  margin-bottom: 1rem;
-  cursor: pointer;
-}
-
-.drop-zone.dragover {
-  background: #eaf6ff;
-  border-color: #4a90e2;
-}
-
-.file-info {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-input[type="file"] {
-  display: none;
-}
-
-.or-divider {
-  text-align: center;
-  margin: 1rem 0;
-  color: #999;
-}
-
-input[type="url"] {
-  width: 100%;
-  padding: 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  margin-bottom: 1rem;
-  font-size: 1rem;
-}
-
-button {
-  width: 100%;
-  padding: 1rem;
-  background: #4a90e2;
-  border: none;
-  border-radius: 10px;
-  color: white;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-button:hover {
-  background: #357ab8;
-}
-
-.terms {
-  margin-top: 1rem;
-  font-size: 0.8rem;
-  color: #777;
-  text-align: center;
-}
-
-.how-it-works {
-  margin-top: 3rem;
-}
-
-.how-it-works h2 {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.steps {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.step {
-  background: #f1f5f9;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-}
-
-.step h3 {
-  margin-top: 0;
-  color: #333;
-}
-
-.step p {
-  margin: 0.5rem 0 0;
-  color: #555;
-}
-* {
-  box-sizing: border-box;
-}
-.cont {
-  max-width: 700px;
-  margin: auto;
-  background: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-}
+    color: inherit; /* Inherits color from parent element */
+    text-decoration: none; /* Optional: remove underline */
+    }
   </style>
 </head>
 <body>
@@ -418,84 +310,86 @@ button:hover {
     <nav>
       <div class="logo">  <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" style="height: 5rem;"></div>
       <div class="sidebar">
-
         <a href="profile.php" class="nav-item active"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?>
-    </a>
-
+        </a>
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
         <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
       </div>
     </nav>
-
     <main class="main">
       <div class="cont">
-        <h1>📘 Get instant notes from AI</h1>
-
-        <label class="drop-zone" id="dropZone">
-          <p>📂 Drag & drop to upload</p>
-          <p class="file-info">.pdf • Max 25MB</p>
-          <input type="file" id="fileInput" accept=".pdf,.docx,.pptx" />
-        </label>
-
-        <div class="or-divider">or</div>
-
-        <input type="url" id="linkInput" placeholder="Paste any website link or upload a file" />
-
-        <button id="generateBtn">Generate</button>
-
-
-
-        <div class="how-it-works">
-          <h2>✨ How it works</h2>
-          <div class="steps">
-            <div class="step">
-              <h3>📁 Upload your notes</h3>
-              <p>Upload your study materials in PDF, Word, or PowerPoint format to get started.</p>
-            </div>
-
-          </div>
+        <h1>AI Notes</h1>
+        <div class="form-field">
+          <label class="drop-zone" id="dropZone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Drag & drop to upload</span>
+            <span class="file-info">.pdf, .docx, .pptx • Max 25MB</span>
+            <input type="file" id="fileInput" accept=".pdf,.docx,.pptx" style="display:none;" />
+          </label>
         </div>
+        <div class="or-divider">or</div>
+        <div class="form-field">
+          <input type="url" id="linkInput" placeholder="Paste any website link or upload a file" />
+        </div>
+        <button id="generateBtn">Generate</button>
+        <div class="generated-notes" id="generatedNotes"></div>
       </div>
     </main>
   </div>
-<script>
-// Drag and drop functionality for the drop zone
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const fileInfo = dropZone.querySelector('.file-info');
+  <script>
+  // Drag and drop functionality for the drop zone
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const fileInfo = dropZone.querySelector('.file-info');
+  const generateBtn = document.getElementById('generateBtn');
+  const generatedNotes = document.getElementById('generatedNotes');
 
-dropZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropZone.classList.add('dragover');
-});
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
 
-dropZone.addEventListener('dragleave', (e) => {
-  dropZone.classList.remove('dragover');
-});
+  dropZone.addEventListener('dragleave', (e) => {
+    dropZone.classList.remove('dragover');
+  });
 
-dropZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-    fileInput.files = e.dataTransfer.files;
-    fileInfo.textContent = e.dataTransfer.files[0].name + ' selected';
-  }
-});
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      fileInput.files = e.dataTransfer.files;
+      fileInfo.textContent = e.dataTransfer.files[0].name + ' selected';
+    }
+  });
 
-// Also update file-info when file is selected via click
-fileInput.addEventListener('change', (e) => {
-  if (fileInput.files && fileInput.files.length > 0) {
-    fileInfo.textContent = fileInput.files[0].name + ' selected';
-  } else {
-    fileInfo.textContent = '.pdf • Max 25MB';
-  }
-});
+  // Also update file-info when file is selected via click
+  fileInput.addEventListener('change', (e) => {
+    if (fileInput.files && fileInput.files.length > 0) {
+      fileInfo.textContent = fileInput.files[0].name + ' selected';
+    } else {
+      fileInfo.textContent = '.pdf, .docx, .pptx • Max 25MB';
+    }
+  });
 
-// Optional: clicking the drop zone opens the file dialog
-dropZone.addEventListener('click', () => {
-  fileInput.click();
-});
-</script>
+  // Clicking the drop zone opens the file dialog
+  dropZone.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  // Generate button loading spinner and fake notes display
+  generateBtn.addEventListener('click', () => {
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = 'Generating... <span class="spinner"></span>';
+    generatedNotes.classList.remove('active');
+    // Simulate AI note generation
+    setTimeout(() => {
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = 'Generate';
+      generatedNotes.innerHTML = '<b>AI Notes Example:</b><br>- Key concept 1 explained.<br>- Important fact 2 summarized.<br>- Main takeaway 3 highlighted.';
+      generatedNotes.classList.add('active');
+    }, 1800);
+  });
+  </script>
 </body>
 </html>
