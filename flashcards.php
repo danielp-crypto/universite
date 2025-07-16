@@ -358,13 +358,14 @@ h4 {
     </nav>
 
     <main class="main">
-      <h1 class="text-3xl font-bold text-blue-700 mb-6">AI Flashcard Maker</h1>
+      <h1 class="text-3xl font-bold text-blue-700 mb-6">Learn faster Flashcards</h1>
 
-  <textarea id="input" class="w-full max-w-2xl p-4 border-2 border-blue-300 rounded-xl mb-4 shadow focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" placeholder="Enter a topic, notes, or questions..."></textarea>
-
-  <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-xl shadow-lg transition-all">
-    ✨ Generate Flashcards
-  </button>
+  <div class="flex flex-col items-center w-full">
+    <textarea id="input" class="w-full max-w-2xl p-4 border-2 border-blue-300 rounded-xl mb-4 shadow focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" placeholder="Enter a topic, notes, or questions..."></textarea>
+    <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-xl shadow-lg transition-all mb-2">
+      ✨ Generate Flashcards
+    </button>
+  </div>
 
   <div id="flashcardContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10 w-full max-w-5xl px-2">
     <!-- Flashcards will be inserted here -->
