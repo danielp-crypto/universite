@@ -514,7 +514,67 @@ margin-left: 0;
 margin-top: 150px; /* adjust if needed */
 }
 }
-  </style>
+  .example-prompts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0 1rem 0;
+    margin-bottom: 0.5rem;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .prompt-chip {
+    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.45rem 1rem;
+    font-size: 0.98rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+    transition: background 0.2s, transform 0.2s;
+    outline: none;
+    white-space: normal;
+    max-width: 100%;
+    word-break: break-word;
+  }
+  .prompt-chip:hover, .prompt-chip:focus {
+    background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+    transform: translateY(-2px) scale(1.04);
+  }
+  .btn-nicer {
+    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.12);
+    transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-nicer:hover, .btn-nicer:focus {
+    background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+    transform: scale(1.05);
+    color: #fff;
+  }
+}
+@media (max-width: 600px) {
+  .example-prompts {
+    gap: 0.3rem;
+    padding: 0.3rem 0 0.7rem 0;
+  }
+  .prompt-chip {
+    font-size: 0.92rem;
+    padding: 0.35rem 0.7rem;
+  }
+}
+</style>
 </head>
 <body><br>
   <div class="container">
@@ -627,6 +687,13 @@ margin-top: 150px; /* adjust if needed */
 
         }
 
+  // Example prompts click handler
+  document.getElementById('examplePrompts').addEventListener('click', function(e) {
+    if (e.target.classList.contains('prompt-chip')) {
+      input.value = e.target.textContent;
+      input.focus();
+    }
+  });
 
       </script>
       <main class="main">
@@ -641,10 +708,17 @@ margin-top: 150px; /* adjust if needed */
             <div class="chat-bot chat-bubble">Hello! How can I help you today? Are you looking for information about college admissions, financial aid, study tips, or help with coursework? Let me know what you need, and I'll do my best to assist you!</div>
           </div>
 
-          <!-- Chat Input -->
+          <!-- Example Prompts -->
+          <div class="example-prompts" id="examplePrompts">
+            <button type="button" class="prompt-chip">How do I apply for financial aid?</button>
+            <button type="button" class="prompt-chip">What are the top universities for engineering?</button>
+            <button type="button" class="prompt-chip">How do I write a personal statement?</button>
+            <button type="button" class="prompt-chip">What scholarships are available for international students?</button>
+            <button type="button" class="prompt-chip">Explain the difference between a college and a university.</button>
+          </div>
           <form id="chat-form" class="chat-input-bar">
             <input type="text" id="chat-input" placeholder="Ask anything..." required />
-            <button type="submit"><i class="fas fa-paper-plane"></i></button>
+            <button type="submit" class="btn-nicer"><i class="fas fa-paper-plane"></i></button>
           </form>
         </div>
       </main>
