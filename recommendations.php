@@ -423,7 +423,7 @@ h3,h2 {font-family: 'Montserrat', sans-serif;}
       
       <a href="recommendations.php" class="nav-item active"><i class="fas fa-book"></i> Courses</a>
       <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
-      <a href="notifications.php" class="nav-item"><i class="fas fa-store"></i> Notifications<?php if ($count > 0): ?>
+      <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
         <span class="badge"><?= $count ?></span>
     <?php endif; ?></a>
       <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
