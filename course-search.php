@@ -51,6 +51,29 @@ $sql = "SELECT class, campus, certification, programme, duration, aps, instituti
         ORDER BY aps ASC
         LIMIT $offset, $total_records_per_page";
 $result = $con->query($sql);
+// Fetch user-specific and broadcast notifications
+$notifStmt = $pdo->prepare("
+    SELECT * FROM notifications
+    WHERE user_email IS NULL OR user_email = ?
+    ORDER BY created_at DESC
+");
+$notifStmt->execute([$email]);
+$notifications = $notifStmt->fetchAll();
+?>
+<?php
+require 'db.php';
+session_start();
+
+$email = $_SESSION['user_email'] ?? null;
+
+$count = 0;
+
+if ($email) {
+    // Count unread or total (choose one)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0");
+    $stmt->execute([$email]);
+    $count = $stmt->fetchColumn();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -345,7 +368,14 @@ $result = $con->query($sql);
         margin: 0 auto;
       }
     }
-
+    .badge {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 3px 8px;
+    font-size: 12px;
+    vertical-align: middle;
+}
   </style>
 </head>
 <body>
@@ -358,6 +388,9 @@ $result = $con->query($sql);
 
         <a href="recommendations.php" class="nav-item active"><i class="fas fa-book"></i> Courses</a>
         <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
+        <a href="notifications.php" class="nav-item"><i class="fas fa-store"></i> Notifications<?php if ($count > 0): ?>
+        <span class="badge"><?= $count ?></span>
+    <?php endif; ?></a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
       </div>
     </nav>
