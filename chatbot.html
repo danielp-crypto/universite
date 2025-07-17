@@ -237,8 +237,52 @@
     margin-top: 1rem;
   }
 }
-
-    </style>
+  .example-prompts {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.5rem 0 1rem 0;
+    margin-bottom: 0.5rem;
+    justify-content: center;
+  }
+  .prompt-chip {
+    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+    transition: background 0.2s, transform 0.2s;
+    outline: none;
+    white-space: nowrap;
+  }
+  .prompt-chip:hover, .prompt-chip:focus {
+    background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+    transform: translateY(-2px) scale(1.04);
+  }
+  .btn-nicer {
+    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.12);
+    transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-nicer:hover, .btn-nicer:focus {
+    background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+    transform: scale(1.05);
+    color: #fff;
+  }
+</style>
 
 </head>
 <body>
@@ -283,15 +327,21 @@
 
         <!-- Chat input -->
         <div class="card-footer bg-white">
-  <form id="chat-form" class="d-flex">
-    <input type="text" id="chat-input" class="form-control me-2" placeholder="Ask anything" autocomplete="off" required />
-    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
-  </form>
-  <small class="text-muted d-block mt-2 text-center">
-    ⚠️ This AI assistant may make mistakes. Always verify important information.
-  </small>
-
-</div>
+          <div class="example-prompts" id="examplePrompts">
+            <button type="button" class="prompt-chip">How do I apply for financial aid?</button>
+            <button type="button" class="prompt-chip">What are the top universities for engineering?</button>
+            <button type="button" class="prompt-chip">How do I write a personal statement?</button>
+            <button type="button" class="prompt-chip">What scholarships are available for international students?</button>
+            <button type="button" class="prompt-chip">Explain the difference between a college and a university.</button>
+          </div>
+          <form id="chat-form" class="d-flex">
+            <input type="text" id="chat-input" class="form-control me-2" placeholder="Ask anything" autocomplete="off" required />
+            <button type="submit" class="btn-nicer"><i class="fas fa-paper-plane"></i></button>
+          </form>
+          <small class="text-muted d-block mt-2 text-center">
+            ⚠️ This AI assistant may make mistakes. Always verify important information.
+          </small>
+        </div>
       </div>
 
   </div>
@@ -404,6 +454,13 @@ messages.scrollTop = messages.scrollHeight;
   return html;
 }
 
+  // Example prompts click handler
+  document.getElementById('examplePrompts').addEventListener('click', function(e) {
+    if (e.target.classList.contains('prompt-chip')) {
+      input.value = e.target.textContent;
+      input.focus();
+    }
+  });
 </script>
 
 
