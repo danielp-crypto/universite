@@ -26,6 +26,30 @@ $interestStmt = $pdo->prepare("SELECT option1, option2, option3 FROM options WHE
 $interestStmt->execute([$student['student_id']]); // correct
 
 $interests = $interestStmt->fetch();
+// Fetch user-specific and broadcast notifications
+$notifStmt = $pdo->prepare("
+    SELECT * FROM notifications
+    WHERE user_email IS NULL OR user_email = ?
+    ORDER BY created_at DESC
+");
+$notifStmt->execute([$email]);
+$notifications = $notifStmt->fetchAll();
+
+?>
+<?php
+require 'db.php';
+session_start();
+
+$email = $_SESSION['user_email'] ?? null;
+
+$count = 0;
+
+if ($email) {
+    // Count unread or total (choose one)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0");
+    $stmt->execute([$email]);
+    $count = $stmt->fetchColumn();
+}
 ?>
 
 <!DOCTYPE html>
@@ -301,7 +325,14 @@ h4 {
     margin: 0 auto;
   }
 }
-
+.badge {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 3px 8px;
+    font-size: 12px;
+    vertical-align: middle;
+}
   </style>
 </head>
 <body>
@@ -310,18 +341,43 @@ h4 {
       <div class="logo">  <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" style="height: 5rem;"></div>
       <div class="sidebar">
 
-        <a href="profile.php" class="nav-item active"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?>
+        <a href="profile.php" class="nav-item"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?>
     </a>
 
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
         <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
-        <a href="notifications.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
+        <a href="notifications.php" class="nav-item active"><i class="fas fa-store"></i> Notifications<?php if ($count > 0): ?>
+        <span class="badge"><?= $count ?></span>
+    <?php endif; ?></a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
       </div>
     </nav>
 
     <main class="main">
-
+      <h2 style="text-align:center; margin-bottom:2rem;">Notifications from Admin</h2>
+      <?php
+        // Fetch all notifications (latest first)
+        $notifStmt = $pdo->query("SELECT message, created_at FROM notifications ORDER BY created_at DESC");
+        $notifications = $notifStmt->fetchAll();
+        if ($notifications) {
+          foreach ($notifications as $notif) {
+      ?>
+        <div style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(31,41,55,0.08); padding: 1.5rem 2rem; margin-bottom: 1.5rem; max-width: 600px; margin-left:auto; margin-right:auto; border-left: 5px solid #2563eb;">
+          <div style="font-size: 1.1rem; color: #1f2937; margin-bottom: 0.5rem;">
+            <i class="fas fa-bullhorn" style="color:#2563eb; margin-right:0.5rem;"></i>
+            <?= nl2br(htmlspecialchars($notif['message'])) ?>
+          </div>
+          <div style="font-size: 0.95rem; color: #6b7280; text-align: right;">
+            <i class="far fa-clock" style="margin-right:0.3rem;"></i>
+            <?= date('F j, Y, g:i a', strtotime($notif['created_at'])) ?>
+          </div>
+        </div>
+      <?php
+          }
+        } else {
+      ?>
+        <div style="text-align:center; color:#6b7280;">No notifications at this time.</div>
+      <?php } ?>
     </main>
   </div>
 </body>
