@@ -10,6 +10,14 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_email'])) {
 }
 
 $email = $_SESSION['user_email'];
+// Mark all user-relevant notifications as read
+$markAsReadStmt = $pdo->prepare("
+    UPDATE notifications 
+    SET is_read = 1 
+    WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0
+");
+$markAsReadStmt->execute([$email]);
+
 
 $stmt = $pdo->prepare("SELECT * FROM student_info WHERE mail = ?");
 $stmt->execute([$email]);
@@ -26,7 +34,15 @@ $interestStmt = $pdo->prepare("SELECT option1, option2, option3 FROM options WHE
 $interestStmt->execute([$student['student_id']]); // correct
 
 $interests = $interestStmt->fetch();
-// Fetch user-specific and broadcast notifications
+// Mark all user-specific and broadcast notifications as read
+$markAsReadStmt = $pdo->prepare("
+    UPDATE notifications 
+    SET is_read = 1 
+    WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0
+");
+$markAsReadStmt->execute([$email]);
+
+// Fetch notifications to display
 $notifStmt = $pdo->prepare("
     SELECT * FROM notifications
     WHERE user_email IS NULL OR user_email = ?
@@ -34,6 +50,7 @@ $notifStmt = $pdo->prepare("
 ");
 $notifStmt->execute([$email]);
 $notifications = $notifStmt->fetchAll();
+
 
 ?>
 <?php
@@ -346,7 +363,7 @@ h4 {
 
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
         <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
-        <a href="notifications.php" class="nav-item active"><i class="fas fa-store"></i> Notifications<?php if ($count > 0): ?>
+        <a href="notifications.php" class="nav-item active"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
         <span class="badge"><?= $count ?></span>
     <?php endif; ?></a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
