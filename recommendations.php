@@ -431,32 +431,106 @@ h3,h2 {font-family: 'Montserrat', sans-serif;}
   </nav>
 
   <main class="main">
-    <form action="course-search.php" method="get">
+    <style>
+      .rec-header {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+        letter-spacing: -1px;
+        text-align: left;
+      }
+      .rec-count {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+      }
+      .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+      .rec-card {
+        background: #fff;
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 24px rgba(37,99,235,0.08);
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow 0.2s, transform 0.2s;
+        position: relative;
+        min-height: 340px;
+      }
+      .rec-card:hover {
+        box-shadow: 0 8px 32px rgba(37,99,235,0.16);
+        transform: translateY(-4px) scale(1.01);
+      }
+      .rec-card h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2563eb;
+        margin-bottom: 0.5rem;
+      }
+      .rec-card p {
+        margin: 0.3rem 0;
+        font-size: 1.02rem;
+        color: #374151;
+      }
+      .rec-card .rec-apply-btn {
+        margin-top: 1.2rem;
+        background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.7rem 1.7rem;
+        font-size: 1.08rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+        transition: background 0.2s, transform 0.2s;
+        text-align: center;
+        display: inline-block;
+        text-decoration: none;
+      }
+      .rec-card .rec-apply-btn:hover, .rec-card .rec-apply-btn:focus {
+        background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+        transform: scale(1.05);
+        color: #fff;
+        text-decoration: none;
+      }
+      @media (max-width: 900px) {
+        .rec-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+        .rec-card { padding: 1.2rem 0.7rem 1rem 0.7rem; min-height: 0; }
+        .rec-header { font-size: 1.3rem; }
+      }
+      @media (max-width: 600px) {
+        .rec-header { font-size: 1.1rem; }
+        .rec-card { border-radius: 0.7rem; }
+        .rec-card .rec-apply-btn { width: 100%; padding: 0.8rem 0; font-size: 1rem; }
+      }
+    </style>
+    <form action="course-search.php" method="get" style="margin-bottom: 2rem;">
       <input type="text" name="myCourse" placeholder="Search for a course">
       <button type="submit">Search</button>
     </form>
 
-    <h2>Recommended For You</h2>
-
+    <div class="rec-header">Recommended For You</div>
     <?php if ($courses): ?>
-      <p>About <?= $total_records ?> course(s) found</p>
-      <div class="row g-4">
+      <div class="rec-count">About <?= $total_records ?> course(s) found</div>
+      <div class="rec-grid">
         <?php foreach ($courses as $row): ?>
-          <div class="col-12 col-md-6">
-            <div class="card h-100 shadow-sm">
-              <div class="card-body">
-                <h3><?= htmlspecialchars($row["programme"]) ?></h3>
-                <p><strong>Qualification:</strong> <?= htmlspecialchars($row["certification"]) ?></p>
-                <p><strong>Duration:</strong> <?= htmlspecialchars($row["duration"]) ?></p>
-                <p><strong>Study Mode:</strong> <?= htmlspecialchars($row["class"]) ?></p>
-                <p><strong>Institution:</strong> <?= htmlspecialchars($row["institution"]) ?></p>
-                <p><strong>Campus:</strong> <?= htmlspecialchars($row["campus"]) ?></p>
-                <p><strong>Minimum APS:</strong> <?= htmlspecialchars($row["aps"]) ?></p>
-                <p><strong>Requirements:</strong><br><?= nl2br(htmlspecialchars($row["subjects"])) ?></p>
-                <p><strong>Closing Date:</strong> <?= htmlspecialchars($row["date"]) ?></p>
-                <a href="https://www.universite.co.za/applyFrame.php?school=<?= urlencode($row["institution"]) ?>" class="btn btn-primary mt-2">Apply</a>
-              </div>
-            </div>
+          <div class="rec-card">
+            <h3><?= htmlspecialchars($row["programme"]) ?></h3>
+            <p><strong>Qualification:</strong> <?= htmlspecialchars($row["certification"]) ?></p>
+            <p><strong>Duration:</strong> <?= htmlspecialchars($row["duration"]) ?></p>
+            <p><strong>Study Mode:</strong> <?= htmlspecialchars($row["class"]) ?></p>
+            <p><strong>Institution:</strong> <?= htmlspecialchars($row["institution"]) ?></p>
+            <p><strong>Campus:</strong> <?= htmlspecialchars($row["campus"]) ?></p>
+            <p><strong>Minimum APS:</strong> <?= htmlspecialchars($row["aps"]) ?></p>
+            <p><strong>Requirements:</strong><br><?= nl2br(htmlspecialchars($row["subjects"])) ?></p>
+            <p><strong>Closing Date:</strong> <?= htmlspecialchars($row["date"]) ?></p>
+            <a href="https://www.universite.co.za/applyFrame.php?school=<?= urlencode($row["institution"]) ?>" class="rec-apply-btn">Apply</a>
           </div>
         <?php endforeach; ?>
       </div>
