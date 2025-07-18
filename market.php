@@ -328,56 +328,225 @@ if ($email) {
     </nav>
 
     <main class="main">
-      <div class="container-custom">
-        <h1>Marketplace</h1>
-
-        <form method="GET">
+      <style>
+        .market-header {
+          font-size: 2.3rem;
+          font-weight: 800;
+          color: #1f2937;
+          margin-bottom: 0.2rem;
+          letter-spacing: -1px;
+          text-align: left;
+        }
+        .market-sub {
+          color: #6b7280;
+          font-size: 1.15rem;
+          margin-bottom: 2rem;
+        }
+        .market-card {
+          background: #fff;
+          border-radius: 1.5rem;
+          box-shadow: 0 4px 24px rgba(37,99,235,0.08);
+          padding: 2.2rem 2rem 2rem 2rem;
+          margin-bottom: 2.5rem;
+          max-width: 900px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .market-search-form {
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        .market-search-form input[type="text"] {
+          flex: 1;
+          padding: 0.9rem 1.2rem;
+          border-radius: 999px;
+          border: 1px solid #d1d5db;
+          font-size: 1.1rem;
+        }
+        .market-search-form button {
+          padding: 0.9rem 2rem;
+          background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+          color: #fff;
+          border: none;
+          border-radius: 999px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s, transform 0.2s;
+        }
+        .market-search-form button:hover, .market-search-form button:focus {
+          background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+          transform: scale(1.05);
+        }
+        .market-categories {
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+          margin-bottom: 1.5rem;
+          flex-wrap: wrap;
+        }
+        .market-cat-btn {
+          background: linear-gradient(90deg, #60a5fa 0%, #2563eb 100%);
+          color: #fff;
+          border: none;
+          border-radius: 999px;
+          padding: 0.7rem 1.7rem;
+          font-size: 1.08rem;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+          transition: background 0.2s, transform 0.2s;
+          margin-bottom: 0.5rem;
+        }
+        .market-cat-btn:hover, .market-cat-btn:focus {
+          background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
+          transform: scale(1.05);
+        }
+        .market-products {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 2rem;
+          margin-bottom: 2rem;
+        }
+        .market-product-card {
+          background: #fff;
+          border-radius: 1.2rem;
+          box-shadow: 0 4px 24px rgba(37,99,235,0.10);
+          padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          transition: box-shadow 0.2s, transform 0.2s;
+          min-height: 260px;
+        }
+        .market-product-card:hover {
+          box-shadow: 0 8px 32px rgba(37,99,235,0.16);
+          transform: translateY(-4px) scale(1.01);
+        }
+        .market-product-card img {
+          max-width: 100%;
+          max-height: 180px;
+          border-radius: 0.7rem;
+          margin-bottom: 1rem;
+          object-fit: contain;
+          background: #f3f4f6;
+        }
+        .market-product-title {
+          font-size: 1.13rem;
+          font-weight: 700;
+          color: #2563eb;
+          margin-bottom: 0.5rem;
+          text-align: center;
+        }
+        .market-product-link {
+          margin-top: 1rem;
+          background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+          color: #fff;
+          border: none;
+          border-radius: 999px;
+          padding: 0.6rem 1.5rem;
+          font-size: 1.02rem;
+          font-weight: 600;
+          cursor: pointer;
+          text-align: center;
+          text-decoration: none;
+          transition: background 0.2s, transform 0.2s;
+          display: inline-block;
+        }
+        .market-product-link:hover, .market-product-link:focus {
+          background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+          transform: scale(1.05);
+          color: #fff;
+          text-decoration: none;
+        }
+        .market-pagination-wrapper {
+          text-align: center;
+          margin: 30px 0 0 0;
+        }
+        .market-pagination {
+          display: inline-flex;
+          list-style: none;
+          gap: 0.5rem;
+        }
+        .market-pagination a, .market-pagination .current-page {
+          padding: 10px 16px;
+          border-radius: 999px;
+          border: 1px solid #2563eb;
+          background-color: #fff;
+          color: #2563eb;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 1.05rem;
+          transition: background 0.2s, color 0.2s;
+        }
+        .market-pagination a:hover {
+          background-color: #2563eb;
+          color: #fff;
+        }
+        .market-pagination .current-page {
+          background-color: #e9ecef;
+          color: #333;
+          cursor: default;
+        }
+        @media (max-width: 900px) {
+          .market-card { padding: 1.2rem 0.7rem 1rem 0.7rem; }
+          .market-products { grid-template-columns: 1fr; gap: 1.2rem; }
+        }
+        @media (max-width: 600px) {
+          .market-header { font-size: 1.3rem; }
+          .market-card { border-radius: 0.7rem; }
+          .market-search-form input[type="text"] { font-size: 1rem; padding: 0.7rem 1rem; }
+          .market-search-form button { font-size: 1rem; padding: 0.7rem 0.7rem; }
+          .market-cat-btn { width: 100%; padding: 0.8rem 0; font-size: 1rem; }
+          .market-product-card { border-radius: 0.7rem; padding: 1rem 0.5rem; }
+          .market-product-title { font-size: 1rem; }
+          .market-product-link { width: 100%; padding: 0.8rem 0; font-size: 1rem; }
+        }
+      </style>
+      <div class="market-header">Marketplace</div>
+      <div class="market-sub">Find and compare textbooks, electronics, furniture, and more from trusted sources.</div>
+      <div class="market-card">
+        <form method="GET" class="market-search-form">
           <input type="text" name="search" value="<?= htmlspecialchars($searchQuery) ?>" placeholder="Search for textbooks, stationery, electronics..." required>
           <button type="submit">Search</button>
         </form>
-
-        <div class="text-center">
-          <h2>Categories</h2><br>
-
-          <button class="category-button" onclick="location.href='?search=textbooks'">Books</button>
-          <button class="category-button" onclick="location.href='?search=laptops'">Laptops</button>
-          <button class="category-button" onclick="location.href='?search=furniture'">Furniture</button>
-
+        <div class="market-categories">
+          <button class="market-cat-btn" onclick="location.href='?search=textbooks'">Books</button>
+          <button class="market-cat-btn" onclick="location.href='?search=laptops'">Laptops</button>
+          <button class="market-cat-btn" onclick="location.href='?search=furniture'">Furniture</button>
         </div>
-
-        <?php if (!empty($products['items'])): ?>
-          <div class="products">
-            <?php foreach ($products['items'] as $item): ?>
-              <div class="product">
-                <?php if (!empty($item['pagemap']['cse_image'][0]['src'])): ?>
-                  <img loading="lazy" src="<?= htmlspecialchars($item['pagemap']['cse_image'][0]['src']) ?>" alt="Product Image">
-                <?php endif; ?>
-                <div class="product-title"><?= htmlspecialchars($item['title']) ?></div>
-                <a href="<?= htmlspecialchars($item['link']) ?>" class="product-link" target="_blank" rel="noopener noreferrer">View Product</a>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php elseif (isset($products['error'])): ?>
-          <p class="text-danger text-center"><?= htmlspecialchars($products['error']) ?></p>
-        <?php elseif (!empty($searchQuery)): ?>
-          <p class="text-center">No products found. Try a different search.</p>
-        <?php endif; ?>
-
-        <?php if (!empty($products['items'])): ?>
-          <div class="pagination-wrapper">
-            <ul class="pagination">
-              <?php if ($currentPage > 1): ?>
-                <li><a href="?search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage - 1 ?>">&laquo; Prev</a></li>
-              <?php endif; ?>
-              <li><span class="current-page">Page <?= $currentPage ?></span></li>
-              <?php if (!empty($products['queries']['nextPage'][0]['startIndex'])): ?>
-                <li><a href="?search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage + 1 ?>">Next &raquo;</a></li>
-              <?php endif; ?>
-            </ul>
-          </div>
-        <?php endif; ?>
-
       </div>
+      <?php if (!empty($products['items'])): ?>
+        <div class="market-products">
+          <?php foreach ($products['items'] as $item): ?>
+            <div class="market-product-card">
+              <?php if (!empty($item['pagemap']['cse_image'][0]['src'])): ?>
+                <img loading="lazy" src="<?= htmlspecialchars($item['pagemap']['cse_image'][0]['src']) ?>" alt="Product Image">
+              <?php endif; ?>
+              <div class="market-product-title"><?= htmlspecialchars($item['title']) ?></div>
+              <a href="<?= htmlspecialchars($item['link']) ?>" class="market-product-link" target="_blank" rel="noopener noreferrer">View Product</a>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php elseif (isset($products['error'])): ?>
+        <p class="text-danger text-center"><?= htmlspecialchars($products['error']) ?></p>
+      <?php elseif (!empty($searchQuery)): ?>
+        <p class="text-center">No products found. Try a different search.</p>
+      <?php endif; ?>
+      <?php if (!empty($products['items'])): ?>
+        <div class="market-pagination-wrapper">
+          <ul class="market-pagination">
+            <?php if ($currentPage > 1): ?>
+              <li><a href="?search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage - 1 ?>">&laquo; Prev</a></li>
+            <?php endif; ?>
+            <li><span class="current-page">Page <?= $currentPage ?></span></li>
+            <?php if (!empty($products['queries']['nextPage'][0]['startIndex'])): ?>
+              <li><a href="?search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage + 1 ?>">Next &raquo;</a></li>
+            <?php endif; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
     </main>
   </div>
 </body>
