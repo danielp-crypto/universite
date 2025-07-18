@@ -353,45 +353,84 @@ h4 {
     </nav>
 
     <main class="main">
-      <div class="mb-5">
-        <div class="section-header">
-          <section classs="profile-card">
-          <h4>Personal Information</h4>
-          <button class="edit-button" onclick="location.href='studentinfo-edit.php'">Edit</button>
+      <div class="profile-main-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; background: #f3f4f6; padding: 2rem 0;">
+        <div class="profile-card-ui" style="background: #fff; border-radius: 1.25rem; box-shadow: 0 4px 24px rgba(37,99,235,0.08); padding: 2.5rem 2.5rem 2rem 2.5rem; max-width: 900px; width: 90vw; margin-bottom: 2rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <h2 style="font-size: 2rem; font-weight: 700; color: #1f2937; margin: 0; letter-spacing: -1px;">Personal Information</h2>
+            <button class="edit-button" style="margin-left: 1rem; background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%); color: #fff; border: none; border-radius: 999px; padding: 0.5rem 1.2rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.2s; box-shadow: 0 2px 8px rgba(37,99,235,0.10);" onclick="location.href='studentinfo-edit.php'">Edit</button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 1.1rem;">
+            <div><span style="font-weight: 600; color: #374151;">Full Name:</span> <span style="color: #374151;"><?= htmlspecialchars($student['name'] . ' ' . $student['surname']) ?></span></div>
+            <div><span style="font-weight: 600; color: #374151;">Email:</span> <span style="color: #374151;"><?= htmlspecialchars($student['mail']) ?></span></div>
+            <div><span style="font-weight: 600; color: #374151;">Phone:</span> <span style="color: #374151;"><?= htmlspecialchars($student['cell']) ?></span></div>
+            <div><span style="font-weight: 600; color: #374151;">Date of Birth:</span> <span style="color: #374151;"><?= htmlspecialchars($student['age'] ?? 'N/A') ?></span></div>
+            <div><span style="font-weight: 600; color: #374151;">Country:</span> <span style="color: #374151;"><?= htmlspecialchars($student['location']) ?></span></div>
+            <div><span style="font-weight: 600; color: #374151;">Category:</span> <span style="color: #374151;"><?= htmlspecialchars($student['user_type']) ?></span></div>
+          </div>
         </div>
-        <hr>
-        <p><strong>Full Name:</strong> <?= htmlspecialchars($student['name'] . ' ' . $student['surname']) ?></p>
-        <p><strong>Email:</strong> <?= htmlspecialchars($student['mail']) ?></p>
-        <p><strong>Phone:</strong> <?= htmlspecialchars($student['cell']) ?></p>
-        <p><strong>Date of Birth:</strong> <?= htmlspecialchars($student['age'] ?? 'N/A') ?></p>
-        <p><strong>Country:</strong> <?= htmlspecialchars($student['location']) ?></p>
-        <p><strong>Category:</strong> <?= htmlspecialchars($student['user_type']) ?></p>
-      </div>
-
-      <!-- Preferred Courses Section -->
-      <div class="mb-3">
-        <div class="section-header">
-          <h4>Preferred Courses</h4>
-
-          <button class="edit-button" onclick="location.href='interests-edit.php'">Edit</button>
-        </div>
-        <hr><br>
-        <ol>
-          <?php if (!empty($interests)): ?>
-            <?php if (!empty($interests['option1'])): ?>
-              <li><?= htmlspecialchars($interests['option1']) ?></li>
+        <div class="profile-card-ui" style="background: #fff; border-radius: 1.25rem; box-shadow: 0 4px 24px rgba(37,99,235,0.08); padding: 2.5rem 2.5rem 2rem 2.5rem; max-width: 900px; width: 90vw;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <h2 style="font-size: 2rem; font-weight: 700; color: #1f2937; margin: 0; letter-spacing: -1px;">Preferred Courses</h2>
+            <button class="edit-button" style="margin-left: 1rem; background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%); color: #fff; border: none; border-radius: 999px; padding: 0.5rem 1.2rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.2s; box-shadow: 0 2px 8px rgba(37,99,235,0.10);" onclick="location.href='interests-edit.php'">Edit</button>
+          </div>
+          <ol style="padding-left: 1.2rem; color: #374151; font-size: 1.1rem;">
+            <?php if (!empty($interests)): ?>
+              <?php if (!empty($interests['option1'])): ?>
+                <li><?= htmlspecialchars($interests['option1']) ?></li>
+              <?php endif; ?>
+              <?php if (!empty($interests['option2'])): ?>
+                <li><?= htmlspecialchars($interests['option2']) ?></li>
+              <?php endif; ?>
+              <?php if (!empty($interests['option3'])): ?>
+                <li><?= htmlspecialchars($interests['option3']) ?></li>
+              <?php endif; ?>
+            <?php else: ?>
+              <li>No course preferences selected.</li>
             <?php endif; ?>
-            <li><?= htmlspecialchars($interests['option2']) ?></li>
-            <li><?= htmlspecialchars($interests['option3']) ?></li>
-          <?php else: ?>
-            <li>No course preferences selected.</li>
-          <?php endif; ?>
-        </ol>
-      </section>
+          </ol>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
+      <style>
+        @media (max-width: 900px) {
+          .profile-card-ui { max-width: 98vw !important; width: 98vw !important; }
+        }
+        @media (max-width: 600px) {
+          .profile-main-wrapper { padding: 0.5rem 0; }
+          .profile-card-ui {
+            padding: 1rem 0.5rem 1rem 0.5rem !important;
+            max-width: 99vw !important;
+            width: 99vw !important;
+            border-radius: 0.7rem !important;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+          }
+          .profile-card-ui h2 {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.7rem !important;
+          }
+          .profile-card-ui div[style*='display: flex; align-items: center; justify-content: space-between;'] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.5rem !important;
+          }
+          .edit-button {
+            width: 100%;
+            margin: 0.5rem 0 0 0 !important;
+            padding: 0.6rem 0 !important;
+            font-size: 0.98rem !important;
+          }
+          .profile-card-ui div[style*='display: flex; flex-direction: column; gap: 1.1rem;'] {
+            gap: 0.7rem !important;
+          }
+          .profile-card-ui ol {
+            font-size: 1rem !important;
+            padding-left: 1rem !important;
+          }
+        }
+        .edit-button:hover, .edit-button:focus {
+          background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%) !important;
+          transform: scale(1.05);
+        }
+      </style>
     </main>
   </div>
 </body>
