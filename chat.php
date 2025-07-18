@@ -20,6 +20,61 @@ if (!$student) {
     exit;
 }
 ?>
+<?php
+// Database connection
+$host = "localhost";
+$user = "root";
+$password = "NewSecurePassword123!";
+$dbname = "mydb";
+
+$con = new mysqli($host, $user, $password, $dbname);
+if ($con->connect_error) {
+    die("Connection failed: " . $con->connect_error);
+}
+
+// Search and pagination
+$myCourse = isset($_GET['myCourse']) ? $con->real_escape_string($_GET['myCourse']) : '';
+$current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$total_records_per_page = 10;
+$offset = ($current_page - 1) * $total_records_per_page;
+
+// Get total
+$count_sql = "SELECT COUNT(*) AS total FROM courses WHERE programme LIKE '%$myCourse%'";
+$count_result = $con->query($count_sql);
+$total_rows = $count_result->fetch_assoc()['total'];
+$total_pages = ceil($total_rows / $total_records_per_page);
+
+// Fetch data
+$sql = "SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
+        FROM courses
+        WHERE programme LIKE '%$myCourse%'
+        ORDER BY aps ASC
+        LIMIT $offset, $total_records_per_page";
+$result = $con->query($sql);
+// Fetch user-specific and broadcast notifications
+$notifStmt = $pdo->prepare("
+    SELECT * FROM notifications
+    WHERE user_email IS NULL OR user_email = ?
+    ORDER BY created_at DESC
+");
+$notifStmt->execute([$email]);
+$notifications = $notifStmt->fetchAll();
+?>
+<?php
+require 'db.php';
+session_start();
+
+$email = $_SESSION['user_email'] ?? null;
+
+$count = 0;
+
+if ($email) {
+    // Count unread or total (choose one)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0");
+    $stmt->execute([$email]);
+    $count = $stmt->fetchColumn();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -574,6 +629,14 @@ margin-top: 150px; /* adjust if needed */
     padding: 0.35rem 0.7rem;
   }
 }
+.badge {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 3px 8px;
+    font-size: 12px;
+    vertical-align: middle;
+}
 </style>
 </head>
 <body><br>
@@ -588,6 +651,9 @@ margin-top: 150px; /* adjust if needed */
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
         <a href="chat.php" class="nav-item active"><i class="fas fa-robot"></i> AI chat</a>
         <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
+        <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
+        <span class="badge"><?= $count ?></span>
+    <?php endif; ?></a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
       </div>
     </nav>
@@ -714,7 +780,7 @@ margin-top: 150px; /* adjust if needed */
             <button type="button" class="prompt-chip">What are the top universities for engineering?</button>
             <button type="button" class="prompt-chip">How do I write a personal statement?</button>
             <button type="button" class="prompt-chip">What scholarships are available for international students?</button>
-            <button type="button" class="prompt-chip">Explain the difference between a college and a university.</button>
+            
           </div>
           <form id="chat-form" class="chat-input-bar">
             <input type="text" id="chat-input" placeholder="Ask anything..." required />
