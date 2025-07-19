@@ -46,7 +46,7 @@ $total_pages = ceil($total_rows / $total_records_per_page);
 
 // Fetch data
 $sql = "SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
-        FROM courses
+        FROM sa_courses
         WHERE programme LIKE '%$myCourse%'
         ORDER BY aps ASC
         LIMIT $offset, $total_records_per_page";
