@@ -49,7 +49,7 @@ $like2 = "%$course2%";
 $like3 = "%$course3%";
 
 // Count total matching records
-$count_stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?");
+$count_stmt = $pdo->prepare("SELECT COUNT(*) FROM sa_courses WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?");
 $count_stmt->execute([$like1, $like2, $like3]);
 $total_records = $count_stmt->fetchColumn();
 $total_pages = ceil($total_records / $total_per_page);
@@ -57,7 +57,7 @@ $total_pages = ceil($total_records / $total_per_page);
 // Fetch paginated course results
 $data_stmt = $pdo->prepare("
     SELECT class, campus, certification, programme, duration, aps, institution, subjects, date
-    FROM courses
+    FROM sa_courses
     WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?
     ORDER BY institution ASC
     LIMIT ?, ?
