@@ -1,34 +1,30 @@
 <?php
-// Database connection
-$host = "localhost";
-$user = "root";
-$password = "NewSecurePassword123!";
-$dbname = "mydb";
-
-$con = new mysqli($host, $user, $password, $dbname);
-if ($con->connect_error) {
-    die("Connection failed: " . $con->connect_error);
-}
-
+require 'db.php';
 // Search and pagination
-$myCourse = isset($_GET['myCourse']) ? $con->real_escape_string($_GET['myCourse']) : '';
+$myCourse = isset($_GET['myCourse']) ? $_GET['myCourse'] : '';
 $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $total_records_per_page = 10;
 $offset = ($current_page - 1) * $total_records_per_page;
 
 // Get total
-$count_sql = "SELECT COUNT(*) AS total FROM courses WHERE programme LIKE '%$myCourse%'";
-$count_result = $con->query($count_sql);
-$total_rows = $count_result->fetch_assoc()['total'];
+$count_sql = "SELECT COUNT(*) AS total FROM courses WHERE programme LIKE :myCourse";
+$count_stmt = $pdo->prepare($count_sql);
+$count_stmt->execute([':myCourse' => "%$myCourse%"]);
+$total_rows = $count_stmt->fetch()['total'];
 $total_pages = ceil($total_rows / $total_records_per_page);
 
 // Fetch data
 $sql = "SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
         FROM courses
-        WHERE programme LIKE '%$myCourse%'
+        WHERE programme LIKE :myCourse
         ORDER BY aps ASC
-        LIMIT $offset, $total_records_per_page";
-$result = $con->query($sql);
+        LIMIT :offset, :total_records_per_page";
+$data_stmt = $pdo->prepare($sql);
+$data_stmt->bindValue(':myCourse', "%$myCourse%", PDO::PARAM_STR);
+$data_stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$data_stmt->bindValue(':total_records_per_page', $total_records_per_page, PDO::PARAM_INT);
+$data_stmt->execute();
+$result = $data_stmt->fetchAll();
 ?>
   <!DOCTYPE html>
   <html  >
@@ -186,9 +182,9 @@ $result = $con->query($sql);
         <h2 class="mbr-section-title mbr-fonts-style align-center display-5">
             Courses Matching: <?= htmlspecialchars($myCourse) ?>
         </h2>
-        <?php if ($result && $result->num_rows > 0): ?>
+        <?php if ($result && count($result) > 0): ?>
             <div class="row">
-                <?php while ($row = $result->fetch_assoc()): ?>
+                <?php foreach ($result as $row): ?>
                     <div class="col-md-6 col-lg-6 mb-4">
                         <div class="card p-3 h-100 shadow-sm rounded border-0">
                             <div class="card-body">
@@ -207,7 +203,7 @@ $result = $con->query($sql);
                             </div>
                         </div>
                     </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </div>
 
             <div class="d-flex justify-content-center mt-4">
@@ -235,5 +231,5 @@ $result = $con->query($sql);
     </div>
 </section>
 
-<?php $con->close(); ?>
+<?php $pdo->close(); ?>
 <?php include_once "footer.php"; ?>
