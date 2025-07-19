@@ -7,7 +7,7 @@ $total_records_per_page = 10;
 $offset = ($current_page - 1) * $total_records_per_page;
 
 // Get total
-$count_sql = "SELECT COUNT(*) AS total FROM courses WHERE programme LIKE :myCourse";
+$count_sql = "SELECT COUNT(*) AS total FROM sa_courses WHERE programme LIKE :myCourse";
 $count_stmt = $pdo->prepare($count_sql);
 $count_stmt->execute([':myCourse' => "%$myCourse%"]);
 $total_rows = $count_stmt->fetch()['total'];
@@ -15,7 +15,7 @@ $total_pages = ceil($total_rows / $total_records_per_page);
 
 // Fetch data
 $sql = "SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
-        FROM courses
+        FROM sa_courses
         WHERE programme LIKE :myCourse
         ORDER BY aps ASC
         LIMIT :offset, :total_records_per_page";
