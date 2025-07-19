@@ -40,62 +40,35 @@ if (empty($course1) && empty($course2) && empty($course3)) {
 
 // Pagination setup
 $page_no = isset($_GET['page_no']) ? (int) $_GET['page_no'] : 1;
-$total_per_page = 10;
+$total_per_page = 4;
 $offset = ($page_no - 1) * $total_per_page;
-
-// Add search functionality
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Prepare LIKE terms
 $like1 = "%$course1%";
 $like2 = "%$course2%";
 $like3 = "%$course3%";
-$searchLike = "%$search%";
 
 // Count total matching records
-if ($search !== '') {
-    $count_stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE (programme LIKE ? OR programme LIKE ? OR programme LIKE ?) AND programme LIKE ?");
-    $count_stmt->execute([$like1, $like2, $like3, $searchLike]);
-} else {
-    $count_stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?");
-    $count_stmt->execute([$like1, $like2, $like3]);
-}
+$count_stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?");
+$count_stmt->execute([$like1, $like2, $like3]);
 $total_records = $count_stmt->fetchColumn();
 $total_pages = ceil($total_records / $total_per_page);
 
 // Fetch paginated course results
-if ($search !== '') {
-    $data_stmt = $pdo->prepare("
-        SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
-        FROM courses
-        WHERE (programme LIKE ? OR programme LIKE ? OR programme LIKE ?) AND programme LIKE ?
-        ORDER BY aps ASC
-        LIMIT ?, ?
-    ");
-    $data_stmt->bindValue(1, $like1, PDO::PARAM_STR);
-    $data_stmt->bindValue(2, $like2, PDO::PARAM_STR);
-    $data_stmt->bindValue(3, $like3, PDO::PARAM_STR);
-    $data_stmt->bindValue(4, $searchLike, PDO::PARAM_STR);
-    $data_stmt->bindValue(5, $offset, PDO::PARAM_INT);
-    $data_stmt->bindValue(6, $total_per_page, PDO::PARAM_INT);
-    $data_stmt->execute();
-} else {
-    $data_stmt = $pdo->prepare("
-        SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
-        FROM courses
-        WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?
-        ORDER BY aps ASC
-        LIMIT ?, ?
-    ");
-    $data_stmt->bindValue(1, $like1, PDO::PARAM_STR);
-    $data_stmt->bindValue(2, $like2, PDO::PARAM_STR);
-    $data_stmt->bindValue(3, $like3, PDO::PARAM_STR);
-    $data_stmt->bindValue(4, $offset, PDO::PARAM_INT);
-    $data_stmt->bindValue(5, $total_per_page, PDO::PARAM_INT);
-    $data_stmt->execute();
-}
+$data_stmt = $pdo->prepare("
+    SELECT class, campus, certification, programme, duration, aps, institution, subjects, date
+    FROM courses
+    WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?
+    ORDER BY institution ASC
+    LIMIT ?, ?
+");
+$data_stmt->bindValue(1, $like1, PDO::PARAM_STR);
+$data_stmt->bindValue(2, $like2, PDO::PARAM_STR);
+$data_stmt->bindValue(3, $like3, PDO::PARAM_STR);
+$data_stmt->bindValue(4, $offset, PDO::PARAM_INT);
+$data_stmt->bindValue(5, $total_per_page, PDO::PARAM_INT);
+$data_stmt->execute();
 $courses = $data_stmt->fetchAll(PDO::FETCH_ASSOC);
-
 // Fetch user-specific and broadcast notifications
 $notifStmt = $pdo->prepare("
     SELECT * FROM notifications
@@ -104,114 +77,485 @@ $notifStmt = $pdo->prepare("
 ");
 $notifStmt->execute([$email]);
 $notifications = $notifStmt->fetchAll();
+?>
+<?php
+require 'db.php';
+session_start();
 
-// Notification count
+$email = $_SESSION['user_email'] ?? null;
+
 $count = 0;
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0");
-$stmt->execute([$email]);
-$count = $stmt->fetchColumn();
+
+if ($email) {
+    // Count unread or total (choose one)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0");
+    $stmt->execute([$email]);
+    $count = $stmt->fetchColumn();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Recommended Courses | Universite</title>
+  <title>Find Online & University Courses for Students | Compare & Enroll</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Personalized course recommendations for students.">
+  <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
   <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; background: #f9fafb; margin: 0; }
-    .container { display: flex; }
-    nav { background-color: #1f2937; color: white; padding: 1rem; height: 100vh; position: fixed; top: 0; left: 0; width: 250px; display: flex; flex-direction: column; gap: 1.5rem; z-index: 1000; }
-    .sidebar { display: flex; flex-direction: column; gap: 1rem; }
-    .logo { font-size: 1.5rem; font-weight: bold; text-align: center; padding-bottom: 1rem; border-bottom: 1px solid #374151; }
-    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background 0.3s, transform 0.2s; cursor: pointer; font-size: 1rem; background-color: transparent; }
-    .nav-item:hover { background-color: #374151; transform: translateX(4px); }
-    .nav-item i { font-size: 1.2rem; color: #60a5fa; }
-    .nav-item.active { background-color: #2563eb; font-weight: bold; }
-    .nav-item.active i { color: #fff; }
-    .main { margin-left: 250px; padding: 2rem; flex: 1; }
-    @media (max-width: 768px) {
-      .container { flex-direction: column; }
-      nav { width: 100%; height: auto; position: fixed; top: 0; left: 0; }
-      .sidebar { flex-direction: row; justify-content: space-around; flex-wrap: wrap; padding: 0.5rem; }
-      .logo { display: none; }
-      .main { margin-left: 0; margin-top: 120px; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    background: #f9fafb;
+    margin: 0;
+  }
+  .container {
+    display: flex;
+  }
+  nav {
+    background-color: #1f2937;
+    color: white;
+    padding: 1rem;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    z-index: 1000;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #374151;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: background 0.3s, transform 0.2s;
+    cursor: pointer;
+    font-size: 1rem;
+    background-color: transparent;
+  }
+  .nav-item:hover {
+    background-color: #374151;
+    transform: translateX(4px);
+  }
+  .nav-item i {
+    font-size: 1.2rem;
+    color: #60a5fa;
+  }
+  .nav-item.active {
+    background-color: #2563eb;
+    font-weight: bold;
+  }
+  .nav-item.active i {
+    color: #fff;
+  }
+  .main {
+    margin-left: 250px;
+    padding: 2rem;
+    flex: 1;
+  }
+  @media (max-width: 768px) {
+    .container {
+      flex-direction: column;
     }
-    a {text-decoration:none;color:white;}
-    a:visited { color: inherit; text-decoration: none; }
-    form { margin-bottom: 2rem; display: flex; gap: 0.5rem; max-width: 600px; }
-    input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-    button { background-color: #2563eb; color: white; border: none; padding: 0.75rem 1rem; border-radius: 6px; font-size: 1rem; cursor: pointer; }
-    .results { display: flex; flex-wrap: wrap; gap: 1rem; }
-    .card { background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex: 1 1 calc(50% - 1rem); display: flex; flex-direction: column; transition: box-shadow 0.2s, transform 0.2s; }
-    .card:hover { box-shadow: 0 8px 24px rgba(37,99,235,0.16); transform: translateY(-4px) scale(1.03); }
-    .card h3 { margin-top: 0; font-size: 1.2rem; color: #1f2937; }
-    .card p { margin: 0.3rem 0; font-size: 0.95rem; color: #4b5563; }
-    .card a { margin-top: auto; align-self: flex-start; color: #2563eb; font-weight: bold; text-decoration: none; }
-    .pagination { margin-top: 2rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
-    .pagination a, .pagination span { padding: 0.5rem 0.75rem; background: #e5e7eb; border-radius: 6px; text-decoration: none; color: #1f2937; font-weight: 500; }
-    .pagination .current { background: #2563eb; color: white; }
-    .badge { background-color: red; color: white; border-radius: 50%; padding: 3px 8px; font-size: 12px; vertical-align: middle; }
-    @media (max-width: 768px) { .card { flex: 1 1 100%; } form { flex-direction: column; } }
+    nav {
+      width: 100%;
+      height: auto;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+    .sidebar {
+      flex-direction: row;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      padding: 0.5rem;
+    }
+    .logo {
+      display: none;
+    }
+    .main {
+      margin-left: 0;
+      margin-top: 120px; /* leave space for fixed top nav */
+    }
+  }
+  a {text-decoration:none;color:white;}
+  a:visited {
+  color: inherit; /* Inherits color from parent element */
+  text-decoration: none; /* Optional: remove underline */
+  }
+  form {
+      margin: 1rem 0;
+      display: flex;
+      gap: 0.5rem;
+  }
+  input[type="text"] {
+      padding: 0.5rem;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+  }
+  button {
+      padding: 0.5rem 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+  }
+
+  .card-body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+  }
+
+  .card-body {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      flex: 1 1 calc(50% - 1rem);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+  }
+
+  .card-body h3 {
+      margin: 0;
+      color: #333;
+  }
+
+  .card-body p {
+      margin: 0.3rem 0;
+      font-size: 0.95rem;
+  }
+
+  .card-body a {
+      margin-top: 0.5rem;
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+  }
+  /* Pagination container */
+.pagination {
+display: flex;
+list-style: none;
+padding-left: 0;
+margin-top: 1rem;
+gap: 0.5rem;
+flex-wrap: wrap;
+}
+
+/* Pagination item */
+.page-item {
+display: inline;
+}
+
+/* Pagination links */
+.page-link {
+color: #2563eb; /* Tailwind blue-600 */
+background-color: white;
+border: 1px solid #d1d5db; /* Tailwind gray-300 */
+padding: 0.5rem 1rem;
+border-radius: 6px;
+font-size: 0.95rem;
+text-decoration: none;
+transition: all 0.2s ease;
+}
+
+.page-link:hover {
+background-color: #2563eb;
+color: white;
+border-color: #2563eb;
+text-decoration: none;
+}
+
+.page-item.disabled .page-link {
+color: #9ca3af; /* Tailwind gray-400 */
+background-color: #f3f4f6; /* Tailwind gray-100 */
+border-color: #e5e7eb; /* Tailwind gray-200 */
+pointer-events: none;
+cursor: default;
+}
+
+.page-item.active .page-link {
+background-color: #1e40af; /* Tailwind blue-800 */
+color: white;
+border-color: #1e40af;
+font-weight: 600;
+}
+@media only screen and (max-width: 768px) {
+/* Make sidebar responsive */
+nav {
+  width: 100%;
+  height: auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 0.5rem 1rem;
+  z-index: 1000;
+}
+
+.sidebar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  padding: 0.5rem 0;
+}
+
+.nav-item {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  flex: 1 1 30%;
+  justify-content: center;
+  text-align: center;
+}
+
+.main {
+  margin-left: 0;
+  margin-top: 200px; /* Leave space for fixed nav */
+  padding: 1rem;
+}
+
+/* Make cards stack nicely */
+.card-body {
+  flex: 1 1 100%;
+  padding: 1rem;
+}
+
+.row.g-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.col-12,
+.col-md-6 {
+  width: 100%;
+}
+
+/* Pagination buttons stack vertically if too narrow */
+.pagination {
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.page-link {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+form {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+input[type="text"] {
+  width: 100%;
+  max-width: 100%;
+}
+
+button {
+  width: 100%;
+}
+
+/* Image scaling */
+nav .logo img {
+  height: 3rem;
+  margin: 0 auto;
+}
+}
+.card {
+background-color: #ffffff;
+
+
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+
+
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+}
+h3,h2 {font-family: 'Montserrat', sans-serif;}
+.badge {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 3px 8px;
+    font-size: 12px;
+    vertical-align: middle;
+}
   </style>
 </head>
 <body>
-  <div class="container">
-    <nav>
-      <div class="logo">  <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" style="height: 5rem;"></div>
-      <div class="sidebar">
-        <a href="profile.php" class="nav-item"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?></a>
-        <a href="recommendations.php" class="nav-item active"><i class="fas fa-book"></i> Courses</a>
-        <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
-        <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
+<div class="container">
+  <nav>
+    <div class="logo">
+      <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" style="height: 5rem;">
+    </div>
+    <div class="sidebar">
+      <a href="profile.php" class="nav-item"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?></a>
+      
+      <a href="recommendations.php" class="nav-item active"><i class="fas fa-book"></i> Courses</a>
+      <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
+      <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
         <span class="badge"><?= $count ?></span>
     <?php endif; ?></a>
-        <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
+      <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
+    </div>
+  </nav>
+
+  <main class="main">
+    <style>
+      .rec-header {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+        letter-spacing: -1px;
+        text-align: left;
+      }
+      .rec-count {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+      }
+      .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+      .rec-card {
+        background: #fff;
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 24px rgba(37,99,235,0.08);
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow 0.2s, transform 0.2s;
+        position: relative;
+        min-height: 340px;
+      }
+      .rec-card:hover {
+        box-shadow: 0 8px 32px rgba(37,99,235,0.16);
+        transform: translateY(-4px) scale(1.01);
+      }
+      .rec-card h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2563eb;
+        margin-bottom: 0.5rem;
+      }
+      .rec-card p {
+        margin: 0.3rem 0;
+        font-size: 1.02rem;
+        color: #374151;
+      }
+      .rec-card .rec-apply-btn {
+        margin-top: 1.2rem;
+        background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.7rem 1.7rem;
+        font-size: 1.08rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+        transition: background 0.2s, transform 0.2s;
+        text-align: center;
+        display: inline-block;
+        text-decoration: none;
+      }
+      .rec-card .rec-apply-btn:hover, .rec-card .rec-apply-btn:focus {
+        background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+        transform: scale(1.05);
+        color: #fff;
+        text-decoration: none;
+      }
+      @media (max-width: 900px) {
+        .rec-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+        .rec-card { padding: 1.2rem 0.7rem 1rem 0.7rem; min-height: 0; }
+        .rec-header { font-size: 1.3rem; }
+      }
+      @media (max-width: 600px) {
+        .rec-header { font-size: 1.1rem; }
+        .rec-card { border-radius: 0.7rem; }
+        .rec-card .rec-apply-btn { width: 100%; padding: 0.8rem 0; font-size: 1rem; }
+      }
+    </style>
+    <form action="course-search.php" method="get" style="margin-bottom: 2rem;">
+      <input type="text" name="myCourse" placeholder="Search for a course">
+      <button type="submit">Search</button>
+    </form>
+
+    <div class="rec-header">Recommended For You</div>
+    <?php if ($courses): ?>
+      <div class="rec-count">About <?= $total_records ?> course(s) found</div>
+      <div class="rec-grid results">
+        <?php foreach ($courses as $row): ?>
+          <div class="rec-card card">
+            <h3 style="color:#000;"><?= htmlspecialchars($row["programme"]) ?></h3>
+            <p><strong>Qualification:</strong> <?= htmlspecialchars($row["certification"]) ?></p>
+            <p><strong>Duration:</strong> <?= htmlspecialchars($row["duration"]) ?></p>
+            <p><strong>Study Mode:</strong> <?= htmlspecialchars($row["class"]) ?></p>
+            <p><strong>Institution:</strong> <?= htmlspecialchars($row["institution"]) ?></p>
+            <p><strong>Campus:</strong> <?= htmlspecialchars($row["campus"]) ?></p>
+            <p><strong>Minimum APS:</strong> <?= htmlspecialchars($row["aps"]) ?></p>
+            <p><strong>Requirements:</strong><br><?= nl2br(htmlspecialchars($row["subjects"])) ?></p>
+            <p><strong>Closing Date:</strong> <?= htmlspecialchars($row["date"]) ?></p>
+            <a href="https://www.universite.co.za/applyFrame.php?school=<?= urlencode($row["institution"]) ?>" class="rec-apply-btn" style="margin-top:auto;align-self:flex-start;color:#2563eb;font-weight:bold;text-decoration:none;background:none;border:none;padding:0;">Apply Now</a>
+          </div>
+        <?php endforeach; ?>
       </div>
-    </nav>
-    <main class="main">
-      <h1>Recommended Courses</h1>
-      <form method="get" action="" style="margin-bottom: 2rem; display: flex; gap: 0.5rem; max-width: 600px;">
-        <input type="text" name="search" placeholder="Search recommended courses" value="<?= htmlspecialchars($search) ?>" style="flex:1; padding:0.75rem; border:1px solid #ccc; border-radius:6px; font-size:1rem;">
-        <button type="submit" style="background-color:#2563eb; color:white; border:none; padding:0.75rem 1rem; border-radius:6px; font-size:1rem; cursor:pointer;">Search</button>
-      </form>
-      <?php if ($courses && count($courses) > 0): ?>
-        <p><?= $total_records ?> course(s) found.</p>
-        <div class="results">
-          <?php foreach ($courses as $row): ?>
-            <div class="card">
-              <h3><?= htmlspecialchars($row['programme']) ?></h3>
-              <p><strong>Institution:</strong> <?= htmlspecialchars($row['institution']) ?></p>
-              <p><strong>Qualification:</strong> <?= htmlspecialchars($row['certification']) ?></p>
-              <p><strong>Duration:</strong> <?= htmlspecialchars($row['duration']) ?></p>
-              <p><strong>APS:</strong> <?= htmlspecialchars($row['aps']) ?></p>
-              <p><strong>Campus:</strong> <?= htmlspecialchars($row['campus']) ?></p>
-              <p><strong>Mode:</strong> <?= htmlspecialchars($row['class']) ?></p>
-              <p><strong>Requirements:</strong><br><?= nl2br(htmlspecialchars($row['subjects'])) ?></p>
-              <p><strong>Closing Date:</strong> <?= htmlspecialchars($row['date']) ?></p>
-              <?php if (!empty($row['link'])): ?>
-                <a href="<?= htmlspecialchars($row['link']) ?>" target="_blank">Apply Now</a>
-              <?php endif; ?>
-            </div>
-          <?php endforeach; ?>
-        </div>
-        <div class="pagination">
+    <?php else: ?>
+      <p>No course recommendations found based on your preferences.</p>
+      <p><a href="interests-edit.php">Click here to update your preferences.</a></p>
+    <?php endif; ?>
+
+    <!-- Pagination UI -->
+    <div class="mt-4">
+      <section aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
           <?php if ($page_no > 1): ?>
-            <a href="?page_no=<?= $page_no - 1 ?><?= $search !== '' ? '&search=' . urlencode($search) : '' ?>">Previous</a>
+            <li class="page-item"><a class="page-link" href="?page_no=<?= $page_no - 1 ?>">Previous</a></li>
           <?php endif; ?>
-          <span class="current">Page <?= $page_no ?> of <?= $total_pages ?></span>
+
+          <li class="page-item disabled"><a class="page-link">Page <?= $page_no ?> of <?= $total_pages ?></a></li>
+
           <?php if ($page_no < $total_pages): ?>
-            <a href="?page_no=<?= $page_no + 1 ?><?= $search !== '' ? '&search=' . urlencode($search) : '' ?>">Next</a>
+            <li class="page-item"><a class="page-link" href="?page_no=<?= $page_no + 1 ?>">Next</a></li>
           <?php endif; ?>
-        </div>
-      <?php else: ?>
-        <p>No course recommendations found based on your preferences.</p>
-        <p><a href="interests-edit.php">Click here to update your preferences.</a></p>
-      <?php endif; ?>
-    </main>
-  </div>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
 </body>
 </html>
