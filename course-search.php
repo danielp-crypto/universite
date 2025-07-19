@@ -39,7 +39,7 @@ $total_records_per_page = 10;
 $offset = ($current_page - 1) * $total_records_per_page;
 
 // Get total
-$count_sql = "SELECT COUNT(*) AS total FROM courses WHERE programme LIKE '%$myCourse%'";
+$count_sql = "SELECT COUNT(*) AS total FROM sa_courses WHERE programme LIKE '%$myCourse%'";
 $count_result = $con->query($count_sql);
 $total_rows = $count_result->fetch_assoc()['total'];
 $total_pages = ceil($total_rows / $total_records_per_page);
