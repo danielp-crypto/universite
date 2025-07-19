@@ -240,6 +240,11 @@ if ($email) {
       flex: 1 1 calc(50% - 1rem);
       display: flex;
       flex-direction: column;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      box-shadow: 0 8px 24px rgba(37,99,235,0.16);
+      transform: translateY(-4px) scale(1.03);
     }
     .card h3 {
       margin-top: 0;
