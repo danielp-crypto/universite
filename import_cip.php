@@ -5,7 +5,7 @@ error_reporting(E_ALL);
 
 require 'db2.php'; // Make sure this connects with PDO and sets utf8mb4 charset
 
-$csvFilePath = 'CIPCode2010.csv';
+$csvFilePath = 'CIPCode2020.csv';
 
 if (!file_exists($csvFilePath)) {
     die("❌ CSV file not found at path: $csvFilePath\n");
