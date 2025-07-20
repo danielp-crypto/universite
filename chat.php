@@ -650,7 +650,6 @@ margin-top: 150px; /* adjust if needed */
 
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
         <a href="chat.php" class="nav-item active"><i class="fas fa-robot"></i> AI chat</a>
-        <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
         <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
         <span class="badge"><?= $count ?></span>
     <?php endif; ?></a>

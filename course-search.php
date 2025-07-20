@@ -392,7 +392,6 @@ if ($email) {
         <a href="profile.php" class="nav-item"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?></a>
 
         <a href="recommendations.php" class="nav-item active"><i class="fas fa-book"></i> Courses</a>
-        <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
         <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
         <span class="badge"><?= $count ?></span>
     <?php endif; ?></a>

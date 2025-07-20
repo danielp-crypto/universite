@@ -368,7 +368,6 @@ h3,h2 {font-family: 'Montserrat', sans-serif;}
 
         <a href="settings.php"class="nav-item"><i class="fas fa-cog"></i> Settings</a>
         <a href="matcher.php" class="nav-item active"><i class="fas fa-book"></i> Courses</a>
-        <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
       </div>
     </nav>

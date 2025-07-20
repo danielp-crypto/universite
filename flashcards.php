@@ -395,7 +395,6 @@ h4 {
     </a>
 
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
-        <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
       </div>
     </nav>

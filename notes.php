@@ -313,7 +313,6 @@ $interests = $interestStmt->fetch();
         <a href="profile.php" class="nav-item active"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?>
         </a>
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
-        <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
         <a href="logout.php" class="nav-item"><i class="fas fa-sign-out-alt"></i> Sign out</a>
       </div>
     </nav>
