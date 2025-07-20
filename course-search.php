@@ -403,7 +403,7 @@ if ($email) {
       <h1>Search Courses</h1>
 
         <form action="course-search.php" method="get">
-          <input type="text" name="myCourse" placeholder="e.g. Engineering" value="<?= htmlspecialchars($myCourse) ?>" />
+          <input type="text" name="myCourse" placeholder="e.g. Engineering" value="<?= htmlspecialchars($myCourse) ?>" required />
           <button type="submit">Search</button>
         </form>
 

@@ -422,7 +422,7 @@ h3,h2 {font-family: 'Montserrat', sans-serif;}
       <a href="profile.php" class="nav-item"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?></a>
       
       <a href="recommendations.php" class="nav-item active"><i class="fas fa-book"></i> Courses</a>
-      <a href="market.php" class="nav-item"><i class="fas fa-store"></i> Marketplace</a>
+      
       <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
         <span class="badge"><?= $count ?></span>
     <?php endif; ?></a>
@@ -511,9 +511,19 @@ h3,h2 {font-family: 'Montserrat', sans-serif;}
       }
     </style>
     <form action="course-search.php" method="get" style="margin-bottom: 2rem;">
-      <input type="text" name="myCourse" placeholder="Search for a course">
+      <input type="text" name="myCourse" placeholder="Search for a course" required>
       <button type="submit">Search</button>
     </form>
+    <script>
+      function validateSearchInput(form) {
+        var input = form.myCourse.value.trim();
+        if (!input) {
+          alert('Please enter a course name to search.');
+          return false;
+        }
+        return true;
+      }
+    </script>
 
     <div class="rec-header">Recommended For You</div>
     <?php if ($courses): ?>
