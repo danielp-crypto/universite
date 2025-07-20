@@ -97,28 +97,28 @@
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
                 <div class="item-wrapper">
                     <div class="title mb-3">
-                        <span class="num mbr-fonts-style display-1"><strong>Courses</strong></span>
+                        <span class="num mbr-fonts-style display-2"><strong>Smart Course Search</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">University/college and online courses to choose from </p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Search and filter courses by subject, level, provider, and more.</p>
                 </div>
             </div>
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
                 <div class="item-wrapper">
                     <div class="title mb-3">
-                        <span class="num mbr-fonts-style display-1"><strong>Marketplace</strong></span>
+                        <span class="num mbr-fonts-style display-2"><strong>AI Tutor Support</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">All your dorm essentials in one place</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Ask questions and get instant help with concepts using your AI tutor.</p>
                 </div>
             </div>
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
                 <div class="item-wrapper">
                     <div class="title mb-3">
-                        <span class="num mbr-fonts-style display-1"><strong>AI</strong></span>
+                        <span class="num mbr-fonts-style display-2"><strong>Personalized Learning</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Get 24/7 tutoring and career guidance</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Track progress and get course recommendations tailored to you.</p>
                 </div>
             </div>
         </div>
