@@ -13,7 +13,7 @@ if ($q !== '') {
       i.CITY,
       i.STABBR,
       c.CIPCODE,
-      COALESCE(cc.CIPTITLE, '[No Title Found]') AS CIPTITLE,
+      cc.CIPTITLE,
       c.AWLEVEL,
       a.ACTEN50,
       a.ACTMT50,
@@ -22,9 +22,9 @@ if ($q !== '') {
     JOIN institutions i ON i.UNITID = c.UNITID
     LEFT JOIN admissions a ON i.UNITID = a.UNITID
     LEFT JOIN cip_codes cc 
-      ON REPLACE(TRIM(LOWER(c.CIPCODE)), '.', '') = REPLACE(TRIM(LOWER(cc.CIPCODE)), '.', '')
+      ON REPLACE(TRIM(c.CIPCODE), '.', '') = REPLACE(TRIM(cc.CIPCODE), '.', '')
     WHERE 
-      REPLACE(LOWER(c.CIPCODE), '.', '') LIKE REPLACE(LOWER(:codeQuery), '.', '')
+      REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery, '.', '')
       OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery)
     ORDER BY i.INSTNM
     LIMIT 100
@@ -102,7 +102,7 @@ function format_adm_conditions($row) {
         <tr>
           <td><?= htmlspecialchars($row['INSTNM']) ?></td>
           <td><?= htmlspecialchars($row['CITY']) ?>, <?= htmlspecialchars($row['STABBR']) ?></td>
-          <td><?= htmlspecialchars($row['CIPTITLE']) ?></td>
+          <td><?= htmlspecialchars($row['CIPTITLE'] ?? '[No Title Found]') ?></td>
           <td><?= htmlspecialchars($row['CIPCODE']) ?></td>
           <td><?= format_awlevel($row['AWLEVEL']) ?></td>
           <td><?= htmlspecialchars($row['ACTEN50']) ?></td>
@@ -117,5 +117,7 @@ function format_adm_conditions($row) {
   <?php endif; ?>
 </body>
 </html>
+
+
 
 
