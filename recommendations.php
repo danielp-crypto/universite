@@ -29,6 +29,9 @@ $course1 = $interests['option1'] ?? '';
 $course2 = $interests['option2'] ?? '';
 $course3 = $interests['option3'] ?? '';
 
+// Fetch user location
+$location = strtolower(trim($student['location'] ?? ''));
+
 // Redirect or notify if no preferences
 if (empty($course1) && empty($course2) && empty($course3)) {
     echo "<div style='padding: 2rem; font-family: sans-serif;'>
@@ -48,27 +51,103 @@ $like1 = "%$course1%";
 $like2 = "%$course2%";
 $like3 = "%$course3%";
 
-// Count total matching records
-$count_stmt = $pdo->prepare("SELECT COUNT(*) FROM sa_courses WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?");
-$count_stmt->execute([$like1, $like2, $like3]);
-$total_records = $count_stmt->fetchColumn();
-$total_pages = ceil($total_records / $total_per_page);
+$courses = [];
+$total_records = 0;
+$total_pages = 1;
+$international = false;
+$results = [];
 
-// Fetch paginated course results
-$data_stmt = $pdo->prepare("
-    SELECT class, campus, certification, programme, duration, aps, institution, subjects, date
-    FROM sa_courses
-    WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?
-    ORDER BY institution ASC
-    LIMIT ?, ?
-");
-$data_stmt->bindValue(1, $like1, PDO::PARAM_STR);
-$data_stmt->bindValue(2, $like2, PDO::PARAM_STR);
-$data_stmt->bindValue(3, $like3, PDO::PARAM_STR);
-$data_stmt->bindValue(4, $offset, PDO::PARAM_INT);
-$data_stmt->bindValue(5, $total_per_page, PDO::PARAM_INT);
-$data_stmt->execute();
-$courses = $data_stmt->fetchAll(PDO::FETCH_ASSOC);
+if ($location === 'south africa') {
+    // South African logic (current)
+    $count_stmt = $pdo->prepare("SELECT COUNT(*) FROM sa_courses WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?");
+    $count_stmt->execute([$like1, $like2, $like3]);
+    $total_records = $count_stmt->fetchColumn();
+    $total_pages = ceil($total_records / $total_per_page);
+
+    $data_stmt = $pdo->prepare("
+        SELECT class, campus, certification, programme, duration, aps, institution, subjects, date
+        FROM sa_courses
+        WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?
+        ORDER BY institution ASC
+        LIMIT ?, ?
+    ");
+    $data_stmt->bindValue(1, $like1, PDO::PARAM_STR);
+    $data_stmt->bindValue(2, $like2, PDO::PARAM_STR);
+    $data_stmt->bindValue(3, $like3, PDO::PARAM_STR);
+    $data_stmt->bindValue(4, $offset, PDO::PARAM_INT);
+    $data_stmt->bindValue(5, $total_per_page, PDO::PARAM_INT);
+    $data_stmt->execute();
+    $courses = $data_stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    // International logic (now using all three interests)
+    $international = true;
+    // Count total matching records
+    $count_sql = "
+    SELECT COUNT(DISTINCT c.CIPCODE, i.INSTNM)
+    FROM courses c
+    JOIN institutions i ON i.UNITID = c.UNITID
+    LEFT JOIN cip_codes cc 
+      ON REPLACE(TRIM(c.CIPCODE), '.', '') = REPLACE(TRIM(cc.CIPCODE), '.', '')
+    WHERE 
+      REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery1, '.', '')
+      OR REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery2, '.', '')
+      OR REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery3, '.', '')
+      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery1)
+      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery2)
+      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery3)
+    ";
+    $count_stmt = $pdo->prepare($count_sql);
+    $count_stmt->execute([
+        ':codeQuery1' => $like1,
+        ':codeQuery2' => $like2,
+        ':codeQuery3' => $like3,
+        ':titleQuery1' => $like1,
+        ':titleQuery2' => $like2,
+        ':titleQuery3' => $like3,
+    ]);
+    $total_records = (int)$count_stmt->fetchColumn();
+    $total_pages = max(1, ceil($total_records / $total_per_page));
+
+    // Now fetch paginated results
+    $sql = "
+    SELECT DISTINCT
+      i.INSTNM,
+      i.CITY,
+      i.STABBR,
+      c.CIPCODE,
+      cc.CIPTITLE,
+      c.AWLEVEL,
+      a.ACTEN50,
+      a.ACTMT50,
+      a.ADMCON1, a.ADMCON2, a.ADMCON3, a.ADMCON4, a.ADMCON5, a.ADMCON6, a.ADMCON7, a.ADMCON8, a.ADMCON9
+    FROM courses c
+    JOIN institutions i ON i.UNITID = c.UNITID
+    LEFT JOIN admissions a ON i.UNITID = a.UNITID
+    LEFT JOIN cip_codes cc 
+      ON REPLACE(TRIM(c.CIPCODE), '.', '') = REPLACE(TRIM(cc.CIPCODE), '.', '')
+    WHERE 
+      REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery1, '.', '')
+      OR REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery2, '.', '')
+      OR REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery3, '.', '')
+      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery1)
+      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery2)
+      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery3)
+    ORDER BY i.INSTNM
+    LIMIT :offset, :limit
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':codeQuery1', $like1, PDO::PARAM_STR);
+    $stmt->bindValue(':codeQuery2', $like2, PDO::PARAM_STR);
+    $stmt->bindValue(':codeQuery3', $like3, PDO::PARAM_STR);
+    $stmt->bindValue(':titleQuery1', $like1, PDO::PARAM_STR);
+    $stmt->bindValue(':titleQuery2', $like2, PDO::PARAM_STR);
+    $stmt->bindValue(':titleQuery3', $like3, PDO::PARAM_STR);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->bindValue(':limit', $total_per_page, PDO::PARAM_INT);
+    $stmt->execute();
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 // Fetch user-specific and broadcast notifications
 $notifStmt = $pdo->prepare("
     SELECT * FROM notifications
@@ -526,27 +605,56 @@ h3,h2 {font-family: 'Montserrat', sans-serif;}
     </script>
 
     <div class="rec-header">Recommended For You</div>
-    <?php if ($courses): ?>
-      <div class="rec-count">About <?= $total_records ?> course(s) found</div>
-      <div class="rec-grid results">
-        <?php foreach ($courses as $row): ?>
-          <div class="rec-card card">
-            <h3 style="color:#000;"><?= htmlspecialchars($row["programme"]) ?></h3>
-            <p><strong>Qualification:</strong> <?= htmlspecialchars($row["certification"]) ?></p>
-            <p><strong>Duration:</strong> <?= htmlspecialchars($row["duration"]) ?></p>
-            <p><strong>Study Mode:</strong> <?= htmlspecialchars($row["class"]) ?></p>
-            <p><strong>Institution:</strong> <?= htmlspecialchars($row["institution"]) ?></p>
-            <p><strong>Campus:</strong> <?= htmlspecialchars($row["campus"]) ?></p>
-            <p><strong>Minimum APS:</strong> <?= htmlspecialchars($row["aps"]) ?></p>
-            <p><strong>Requirements:</strong><br><?= nl2br(htmlspecialchars($row["subjects"])) ?></p>
-            <p><strong>Closing Date:</strong> <?= htmlspecialchars($row["date"]) ?></p>
-            <a href="https://www.universite.co.za/applyFrame.php?school=<?= urlencode($row["institution"]) ?>" class="rec-apply-btn" style="margin-top:auto;align-self:flex-start;color:#2563eb;font-weight:bold;text-decoration:none;background:none;border:none;padding:0;">Apply Now</a>
-          </div>
-        <?php endforeach; ?>
-      </div>
+    <?php if ($location === 'south africa'): ?>
+      <?php if ($courses): ?>
+        <div class="rec-count">About <?= $total_records ?> course(s) found</div>
+        <div class="rec-grid results">
+          <?php foreach ($courses as $row): ?>
+            <div class="rec-card card">
+              <h3 style="color:#000;"><?= htmlspecialchars($row["programme"]) ?></h3>
+              <p><strong>Qualification:</strong> <?= htmlspecialchars($row["certification"]) ?></p>
+              <p><strong>Duration:</strong> <?= htmlspecialchars($row["duration"]) ?></p>
+              <p><strong>Study Mode:</strong> <?= htmlspecialchars($row["class"]) ?></p>
+              <p><strong>Institution:</strong> <?= htmlspecialchars($row["institution"]) ?></p>
+              <p><strong>Campus:</strong> <?= htmlspecialchars($row["campus"]) ?></p>
+              <p><strong>Minimum APS:</strong> <?= htmlspecialchars($row["aps"]) ?></p>
+              <p><strong>Requirements:</strong><br><?= nl2br(htmlspecialchars($row["subjects"])) ?></p>
+              <p><strong>Closing Date:</strong> <?= htmlspecialchars($row["date"]) ?></p>
+              <a href="https://www.universite.co.za/applyFrame.php?school=<?= urlencode($row["institution"]) ?>" class="rec-apply-btn" style="margin-top:auto;align-self:flex-start;color:#2563eb;font-weight:bold;text-decoration:none;background:none;border:none;padding:0;">Apply Now</a>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php else: ?>
+        <p>No course recommendations found based on your preferences.</p>
+        <p><a href="interests-edit.php">Click here to update your preferences.</a></p>
+      <?php endif; ?>
     <?php else: ?>
-      <p>No course recommendations found based on your preferences.</p>
-      <p><a href="interests-edit.php">Click here to update your preferences.</a></p>
+      <?php if ($results): ?>
+        <div class="rec-count">About <?= $total_records ?>  course(s) found</div>
+        <div class="rec-grid results">
+          <?php foreach ($results as $row): ?>
+            <div class="rec-card card">
+              <h3><?= htmlspecialchars($row['CIPTITLE'] ?? '[No Title Found]') ?></h3>
+              <p><strong>Institution:</strong> <?= htmlspecialchars($row['INSTNM']) ?></p>
+              <p><strong>Location:</strong> <?= htmlspecialchars($row['CITY']) ?>, <?= htmlspecialchars($row['STABBR']) ?></p>
+              <p><strong>CIP Code:</strong> <?= htmlspecialchars($row['CIPCODE']) ?></p>
+              <p><strong>Award Level:</strong> <?= htmlspecialchars($row['AWLEVEL']) ?></p>
+              <p><strong>ACT English:</strong> <?= htmlspecialchars($row['ACTEN50']) ?></p>
+              <p><strong>ACT Math:</strong> <?= htmlspecialchars($row['ACTMT50']) ?></p>
+              <p><strong>Admission Requirements:</strong> <?php
+                $adm = [];
+                for ($i = 1; $i <= 9; $i++) {
+                  if (!empty($row["ADMCON$i"])) $adm[] = htmlspecialchars($row["ADMCON$i"]);
+                }
+                echo $adm ? implode(', ', $adm) : 'N/A';
+              ?></p>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php else: ?>
+        <p>No international course recommendations found based on your preferences.</p>
+        <p><a href="interests-edit.php">Click here to update your preferences.</a></p>
+      <?php endif; ?>
     <?php endif; ?>
 
     <!-- Pagination UI -->
