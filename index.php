@@ -124,59 +124,7 @@
         </div>
     </div>
 </section>
-<section data-bs-version="5.1" class="search-course-section cid-course-search" id="search-course">
 
-  <div class="container">
-    <div class="row justify-content-center mb-4">
-      <div class="col-12 col-md-10 text-center">
-        <h2 class="mbr-section-title mbr-fonts-style mb-4 display-2"><br>
-          <strong>Find the Right Course for You</strong>
-        </h2>
-        <p class="mbr-text mbr-fonts-style mb-4 display-7">
-          Search across 1000+ university, college, and online programs.
-        </p>
-        <form class="d-flex justify-content-center mb-4" action="explore.php" autocomplete="on">
-          <input type="text" class="form-control w-75 me-2" placeholder="I want to study..." name="myCourse" id="auto" spellcheck="true" required>
-          <button type="submit" class="btn btn-warning"><i class="fas fa-search me-2"></i></button>
-        </form>
-      </div>
-    </div>
-
-    <div class="row justify-content-center">
-      <div class="col-12 text-center">
-        <h4 class="mbr-section-subtitle mbr-fonts-style mb-4 display-5">
-          <strong>Popular Courses</strong>
-        </h4>
-        <div class="row justify-content-center">
-          <div class="col-6 col-md-3 mb-3">
-            <a href="https://www.universite.co.za/explore.php?myCourse=administration" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7" >Admin</a>
-          </div>
-          <div class="col-6 col-md-3 mb-3">
-            <a href="https://www.universite.co.za/explore.php?myCourse=computer science" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Computer Science</a>
-          </div>
-          <div class="col-6 col-md-3 mb-3">
-            <a href="https://www.universite.co.za/explore.php?myCourse=accounting" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Accounting</a>
-          </div>
-          <div class="col-6 col-md-3 mb-3">
-            <a href="https://www.universite.co.za/explore.php?myCourse=nursing" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Nursing</a>
-          </div>
-          <div class="col-6 col-md-3 mb-3">
-            <a href="https://www.universite.co.za/explore.php?myCourse=engineering" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Engineering</a>
-          </div>
-          <div class="col-6 col-md-3 mb-3">
-            <a href="https://www.universite.co.za/explore.php?myCourse=psychology" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Psychology</a>
-          </div>
-          <div class="col-6 col-md-3 mb-3">
-            <a href="https://www.universite.co.za/explore.php?myCourse=marketing" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Marketing</a>
-          </div>
-          <div class="col-6 col-md-3 mb-3">
-            <a href="https://www.universite.co.za/explore.php?myCourse=education" class="btn btn-outline-primary w-100  mbr-fonts-style mb-3 display-7">Education</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
  <section data-bs-version="5.1" class="people02 cid-uOz0kV7uO5" id="people02-9">
 
