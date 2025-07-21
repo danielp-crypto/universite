@@ -30,9 +30,20 @@ $count = $notifStmt->fetchColumn();
 
 // Search and pagination
 $myCourse = isset($_GET['myCourse']) ? trim($_GET['myCourse']) : '';
+$selectedInstitution = isset($_GET['institution']) ? trim($_GET['institution']) : '';
 $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $total_records_per_page = 10;
 $offset = ($current_page - 1) * $total_records_per_page;
+
+// Fetch institution list for filter
+$institutions = [];
+if ($location === 'south africa') {
+    $stmt = $pdo->query("SELECT DISTINCT institution FROM sa_courses ORDER BY institution");
+    $institutions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} else {
+    $stmt = $pdo->query("SELECT DISTINCT INSTNM FROM institutions ORDER BY INSTNM");
+    $institutions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
 
 $results = [];
 $total_rows = 0;
@@ -49,20 +60,20 @@ if ($location === 'south africa') {
         die("Connection failed: " . $con->connect_error);
     }
     $safeCourse = $con->real_escape_string($myCourse);
-    $count_sql = "SELECT COUNT(*) AS total FROM sa_courses WHERE programme LIKE '%$safeCourse%'";
+    $institutionFilter = $selectedInstitution ? " AND institution = '" . $con->real_escape_string($selectedInstitution) . "'" : "";
+    $count_sql = "SELECT COUNT(*) AS total FROM sa_courses WHERE programme LIKE '%$safeCourse%'$institutionFilter";
     $count_result = $con->query($count_sql);
     $total_rows = $count_result->fetch_assoc()['total'];
     $total_pages = max(1, ceil($total_rows / $total_records_per_page));
     $sql = "SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
             FROM sa_courses
-            WHERE programme LIKE '%$safeCourse%'
+            WHERE programme LIKE '%$safeCourse%'$institutionFilter
             ORDER BY aps ASC
             LIMIT $offset, $total_records_per_page";
     $result = $con->query($sql);
-}
-else {
+} else {
     // Use search.php logic (US/international) with pagination
-    // First, count total matching records
+    $institutionFilter = $selectedInstitution ? " AND i.INSTNM = :institution " : "";
     $count_sql = "
     SELECT COUNT(DISTINCT c.CIPCODE, i.INSTNM)
     FROM courses c
@@ -70,14 +81,19 @@ else {
     LEFT JOIN cip_codes cc 
       ON REPLACE(TRIM(c.CIPCODE), '.', '') = REPLACE(TRIM(cc.CIPCODE), '.', '')
     WHERE 
-      REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery, '.', '')
-      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery)
+      (REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery, '.', '')
+      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery))
+      $institutionFilter
     ";
     $count_stmt = $pdo->prepare($count_sql);
-    $count_stmt->execute([
+    $params = [
         ':codeQuery' => '%' . $myCourse . '%',
         ':titleQuery' => '%' . $myCourse . '%',
-    ]);
+    ];
+    if ($selectedInstitution) {
+        $params[':institution'] = $selectedInstitution;
+    }
+    $count_stmt->execute($params);
     $total_rows = (int)$count_stmt->fetchColumn();
     $total_pages = max(1, ceil($total_rows / $total_records_per_page));
 
@@ -99,14 +115,18 @@ else {
     LEFT JOIN cip_codes cc 
       ON REPLACE(TRIM(c.CIPCODE), '.', '') = REPLACE(TRIM(cc.CIPCODE), '.', '')
     WHERE 
-      REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery, '.', '')
-      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery)
+      (REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery, '.', '')
+      OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery))
+      $institutionFilter
     ORDER BY i.INSTNM
     LIMIT :offset, :limit
     ";
     $stmt = $pdo->prepare($sql);
     $stmt->bindValue(':codeQuery', '%' . $myCourse . '%');
     $stmt->bindValue(':titleQuery', '%' . $myCourse . '%');
+    if ($selectedInstitution) {
+        $stmt->bindValue(':institution', $selectedInstitution);
+    }
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->bindValue(':limit', $total_records_per_page, PDO::PARAM_INT);
     $stmt->execute();
@@ -425,6 +445,14 @@ function format_adm_conditions($row) {
     font-size: 12px;
     vertical-align: middle;
 }
+select[name="institution"]:focus {
+  outline: 2px solid #2563eb;
+  border-color: #2563eb;
+}
+select[name="institution"] {
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
   </style>
 </head>
 <body>
@@ -442,9 +470,16 @@ function format_adm_conditions($row) {
     </nav>
     <main class="main">
       <h1>Search Courses</h1>
-      <form action="course-search.php" method="get">
+      <form action="course-search.php" method="get" style="display: flex; gap: 0.5rem; max-width: 600px; align-items: center;">
         <input type="text" name="myCourse" placeholder="e.g. Engineering" value="<?= htmlspecialchars($myCourse) ?>" required />
-        <button type="submit">Search</button>
+        <select name="institution" style="padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; min-width: 180px; background: #fff; color: #333; height: 44px; margin-right: 0.5rem;">
+          <option value="">Filter by institution...</option>
+          <option value="" <?= $selectedInstitution === '' ? 'selected' : '' ?>>All Institutions</option>
+          <?php foreach ($institutions as $inst): ?>
+            <option value="<?= htmlspecialchars($inst) ?>" <?= $selectedInstitution === $inst ? 'selected' : '' ?>><?= htmlspecialchars($inst) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <button type="submit" style="padding: 0.75rem 1rem; border-radius: 6px; font-size: 1rem;">Search</button>
       </form>
       <?php if ($location === 'south africa'): ?>
         <?php if (isset($result) && $result->num_rows > 0): ?>
