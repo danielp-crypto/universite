@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require 'db2.php'; // Make sure this connects with PDO and sets utf8mb4 charset
+require 'db2.php'; // Ensure this file creates a valid PDO connection with UTF8MB4 charset
 
 $csvFilePath = 'CIPCode2020.csv';
 
@@ -19,12 +19,12 @@ try {
         throw new Exception("Failed to open CSV file.");
     }
 
-    // Skip header row
+    // Skip the header
     fgetcsv($csvFile);
 
-    // Clean function to fix Excel exported codes like ="01.0101"
+    // Helper to clean strange Excel formatting like ="01.0101"
     function clean($value) {
-        $value = preg_replace('/^="(.*)"$/', '$1', $value);
+        $value = preg_replace('/^=?"?([^"]+)"?$/', '$1', $value);
         return trim($value);
     }
 
@@ -33,14 +33,14 @@ try {
 
     $rowCount = 0;
     while (($row = fgetcsv($csvFile)) !== false) {
-        if (count($row) < 2) continue; // skip malformed rows
+        if (count($row) < 5) continue; // Make sure we have at least 5 columns
 
-        $cipcode = clean($row[0]);
-        $ciptile = clean($row[1]);
+        $cipcode = clean($row[1]);   // CIPCode is in column index 1
+        $ciptitle = clean($row[4]);  // CIPTitle is in column index 4
 
-        if ($cipcode === '' || $ciptile === '') continue; // skip empty rows
+        if ($cipcode === '' || $ciptitle === '') continue; // Skip blanks
 
-        $stmt->execute([$cipcode, $ciptile]);
+        $stmt->execute([$cipcode, $ciptitle]);
         $rowCount++;
     }
 
