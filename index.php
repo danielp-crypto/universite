@@ -106,19 +106,19 @@
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
                 <div class="item-wrapper">
                     <div class="title mb-3">
-                        <span class="num mbr-fonts-style display-2"><strong>AI Tutor Support</strong></span>
+                        <span class="num mbr-fonts-style display-2"><strong>AI Career Guidance & Support</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Ask questions and get instant help with concepts using your AI tutor.</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Ask questions and get instant help from our AI.</p>
                 </div>
             </div>
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
                 <div class="item-wrapper">
                     <div class="title mb-3">
-                        <span class="num mbr-fonts-style display-2"><strong>Personalized Learning</strong></span>
+                        <span class="num mbr-fonts-style display-2"><strong>Personalized Recommendations</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Track progress and get course recommendations tailored to you.</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Get course recommendations tailored to you.</p>
                 </div>
             </div>
         </div>
@@ -168,7 +168,7 @@
 							</div>
 							<h5 class="card-title mbr-fonts-style mb-3 display-7">This is a great research tool,all the information in one place.</h5>
 							<p class="card-text mbr-fonts-style mb-0 display-7">
-								Christopher De jager
+								Christopher jager
 							</p>
 						</div>
 					</div>
