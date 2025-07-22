@@ -473,7 +473,7 @@ select[name="institution"] {
       <form action="course-search.php" method="get" style="display: flex; gap: 0.5rem; max-width: 600px; align-items: center;">
         <input type="text" name="myCourse" placeholder="e.g. Engineering" value="<?= htmlspecialchars($myCourse) ?>" required />
         <select name="institution" style="padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; min-width: 180px; background: #fff; color: #333; height: 44px; margin-right: 0.5rem;">
-          <option value="">Filter by institution...</option>
+          <option value="" disabled selected>Filter by institution...</option>
           <option value="" <?= $selectedInstitution === '' ? 'selected' : '' ?>>All Institutions</option>
           <?php foreach ($institutions as $inst): ?>
             <option value="<?= htmlspecialchars($inst) ?>" <?= $selectedInstitution === $inst ? 'selected' : '' ?>><?= htmlspecialchars($inst) ?></option>
