@@ -371,7 +371,7 @@ h4 {
     </nav>
 
     <main class="main">
-      <h2 style="text-align:center; margin-bottom:2rem;">Notifications from Admin</h2>
+      <h2 style="text-align:center; margin-bottom:2rem;">Notifications</h2>
       <?php
         // Fetch all notifications (latest first)
         $notifStmt = $pdo->query("SELECT message, created_at FROM notifications ORDER BY created_at DESC");
