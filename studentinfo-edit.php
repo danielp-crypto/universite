@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mail = $_POST['mail'] ?? '';
     $cell = $_POST['cell'] ?? '';
     $age = $_POST['age'] ?? '';
+    $userData = $_POST['data'] ?? '';
     $category = $_POST['user-type'] ?? '';
     $location = $_POST['location'] ?? '';
 
