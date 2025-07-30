@@ -65,7 +65,7 @@ if ($location === 'south africa') {
     $total_pages = ceil($total_records / $total_per_page);
 
     $data_stmt = $pdo->prepare("
-        SELECT class, campus, certification, programme, duration, aps, institution, subjects, date
+        SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
         FROM sa_courses
         WHERE programme LIKE ? OR programme LIKE ? OR programme LIKE ?
         ORDER BY institution ASC
@@ -114,6 +114,7 @@ if ($location === 'south africa') {
       i.INSTNM,
       i.CITY,
       i.STABBR,
+      i.webaddr,
       c.CIPCODE,
       cc.CIPTITLE,
       c.AWLEVEL,
@@ -620,7 +621,9 @@ h3,h2 {font-family: 'Montserrat', sans-serif;}
               <p><strong>Minimum APS:</strong> <?= htmlspecialchars($row["aps"]) ?></p>
               <p><strong>Requirements:</strong><br><?= nl2br(htmlspecialchars($row["subjects"])) ?></p>
               <p><strong>Closing Date:</strong> <?= htmlspecialchars($row["date"]) ?></p>
-              <a href="https://www.universite.co.za/applyFrame.php?school=<?= urlencode($row["institution"]) ?>" class="rec-apply-btn" style="margin-top:auto;align-self:flex-start;color:#2563eb;font-weight:bold;text-decoration:none;background:none;border:none;padding:0;">Apply Now</a>
+              
+              <a style ='color:blue' href="<?= htmlspecialchars($row['link']) ?>" target="_blank">Apply Now</a>
+               
             </div>
           <?php endforeach; ?>
         </div>
@@ -648,6 +651,7 @@ h3,h2 {font-family: 'Montserrat', sans-serif;}
                 }
                 echo $adm ? implode(', ', $adm) : 'N/A';
               ?></p>
+              <a style ='color:blue' href="<?= htmlspecialchars($row['webaddr']) ?>" target="_blank">Apply Now</a>
             </div>
           <?php endforeach; ?>
         </div>

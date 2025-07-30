@@ -154,6 +154,8 @@ python app.py
 http://51.20.135.14:5000
 
 https://github.com/danielp-crypto/universite
+$ python -m uvicorn main:app --reload
+
 
 
 
