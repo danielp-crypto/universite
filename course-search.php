@@ -103,6 +103,7 @@ if ($location === 'south africa') {
       i.INSTNM,
       i.CITY,
       i.STABBR,
+      i.webaddr,
       c.CIPCODE,
       cc.CIPTITLE,
       c.AWLEVEL,
@@ -528,6 +529,9 @@ select[name="institution"] {
                 <p><strong>ACT English:</strong> <?= htmlspecialchars($row['ACTEN50']) ?></p>
                 <p><strong>ACT Math:</strong> <?= htmlspecialchars($row['ACTMT50']) ?></p>
                 <p><strong>Admission Requirements:</strong> <?= format_adm_conditions($row) ?></p>
+                <?php if (!empty($row['webaddr'])): ?>
+                  <a href="<?= htmlspecialchars($row['webaddr']) ?>" target="_blank">Apply Now</a>
+                <?php endif; ?>
               </div>
             <?php endforeach; ?>
           </div>
