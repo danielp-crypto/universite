@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+
 require 'db.php'; // Assume this contains $pdo = new PDO(...);
 
 // Check session
@@ -10,6 +11,17 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_email'])) {
 }
 
 $email = $_SESSION['user_email'];
+// Handle delete action
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+  $deleteStmt = $pdo->prepare("DELETE FROM saved_searches WHERE id = ? AND user_email = ?");
+  $deleteStmt->execute([$_POST['delete_id'], $email]);
+  // Optional: Redirect to avoid form re-submission
+  header("Location: mycourses.php");
+ 
+
+  exit;
+}
+
 
 $stmt = $pdo->prepare("SELECT * FROM student_info WHERE mail = ?");
 $stmt->execute([$email]);
@@ -414,6 +426,9 @@ h4 {
 
     <main class="main">
     <h1>Saved Course Searches</h1>
+    <?php if (isset($_GET['deleted'])): ?>
+  <p style="color: green;">Search deleted successfully.</p>
+<?php endif; ?>
 
 <?php if (empty($saved_searches)): ?>
   <p>You have no saved searches yet.</p>
@@ -472,6 +487,10 @@ h4 {
   ?>
 
   <h2 style="margin-top: 2rem;"><?= htmlspecialchars($course) ?><?= $institution ? " at " . htmlspecialchars($institution) : '' ?></h2>
+  <form method="POST" onsubmit="return confirm('Are you sure you want to delete this saved search?');" style="display:inline;">
+  <input type="hidden" name="delete_id" value="<?= htmlspecialchars($search['id']) ?>">
+  <button type="submit" class="edit-button" style="background-color: #dc2626;">Delete</button>
+</form>
 
   <?php if (count($results) > 0): ?>
     <div class="cards-grid">
