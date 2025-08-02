@@ -550,5 +550,33 @@ select[name="institution"] {
       <?php endif; ?>
     </main>
   </div>
+  <!-- jQuery (for autocomplete) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- jQuery UI for autocomplete -->
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+<script>
+$(function() {
+  $('input[name="myCourse"]').autocomplete({
+    source: function(request, response) {
+      $.ajax({
+        url: "autocomplete.php",
+        dataType: "json",
+        data: {
+          term: request.term
+        },
+        success: function(data) {
+          response(data);
+        }
+      });
+    },
+    minLength: 2, // Minimum characters before suggestions appear
+    delay: 200
+  });
+});
+</script>
+
 </body>
 </html>

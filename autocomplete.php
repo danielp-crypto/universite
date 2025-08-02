@@ -1,27 +1,40 @@
 <?php
+session_start();
 require 'db.php';
 
-$q = $_GET['q'] ?? '';
+$term = isset($_GET['term']) ? trim($_GET['term']) : '';
 
-if (strlen($q) < 2) {
-    echo json_encode([]);
-    exit;
+$suggestions = [];
+
+if ($term !== '') {
+    $term = strtolower($term);
+    
+    // Choose appropriate table depending on the user's region
+    if ($_SESSION['user_email']) {
+        $email = $_SESSION['user_email'];
+        $stmt = $pdo->prepare("SELECT location FROM student_info WHERE mail = ?");
+        $stmt->execute([$email]);
+        $location = strtolower($stmt->fetchColumn());
+
+        if ($location === 'south africa') {
+            $stmt = $pdo->prepare("SELECT DISTINCT programme FROM sa_courses WHERE programme LIKE ? LIMIT 10");
+            $stmt->execute(["%$term%"]);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT DISTINCT cc.CIPTITLE 
+                FROM courses c 
+                LEFT JOIN cip_codes cc 
+                  ON REPLACE(TRIM(c.CIPCODE), '.', '') = REPLACE(TRIM(cc.CIPCODE), '.', '')
+                WHERE LOWER(cc.CIPTITLE) LIKE ? 
+                LIMIT 10
+            ");
+            $stmt->execute(["%$term%"]);
+        }
+
+        $suggestions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
 }
 
-$results = [];
-
-try {
-    $stmt1 = $pdo->prepare("SELECT DISTINCT programme FROM sa_courses WHERE programme LIKE ? LIMIT 10");
-    $stmt1->execute(["%$q%"]);
-    $results = $stmt1->fetchAll(PDO::FETCH_COLUMN);
-
-    $stmt2 = $pdo->prepare("SELECT DISTINCT CIPTITLE FROM cip_codes WHERE LOWER(CIPTITLE) LIKE LOWER(?) LIMIT 10");
-    $stmt2->execute(["%$q%"]);
-    $intlResults = $stmt2->fetchAll(PDO::FETCH_COLUMN);
-
-    $allResults = array_unique(array_merge($results, $intlResults));
-
-    echo json_encode(array_values($allResults));
-} catch (PDOException $e) {
-    echo json_encode([]);
-}
+header('Content-Type: application/json');
+echo json_encode($suggestions);
+?>
