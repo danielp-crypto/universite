@@ -26,31 +26,39 @@ $interestStmt = $pdo->prepare("SELECT option1, option2, option3 FROM options WHE
 $interestStmt->execute([$student['student_id']]); // correct
 
 $interests = $interestStmt->fetch();
-// Fetch user-specific and broadcast notifications
-$notifStmt = $pdo->prepare("
-    SELECT * FROM notifications
-    WHERE user_email IS NULL OR user_email = ?
-    ORDER BY created_at DESC
-");
-$notifStmt->execute([$email]);
-$notifications = $notifStmt->fetchAll();
+$location = strtolower(trim($student['location'] ?? ''));
 
-?>
-<?php
-require 'db.php';
-session_start();
-
-$email = $_SESSION['user_email'] ?? null;
-
+// Get notification count
 $count = 0;
+$notifStmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0");
+$notifStmt->execute([$email]);
+$count = $notifStmt->fetchColumn();
 
-if ($email) {
-    // Count unread or total (choose one)
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_email IS NULL OR user_email = ?) AND is_read = 0");
-    $stmt->execute([$email]);
-    $count = $stmt->fetchColumn();
+// Fetch saved searches
+$stmt = $pdo->prepare("SELECT * FROM saved_searches WHERE user_email = ? ORDER BY created_at DESC");
+$stmt->execute([$email]);
+$saved_searches = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Helper functions
+function format_awlevel($level) {
+    $map = [
+        1 => 'Certificate', 2 => 'Associate', 3 => 'Associate+',
+        4 => 'Bachelor’s Prep', 5 => 'Bachelor’s', 6 => 'Post-Bachelor’s',
+        7 => 'Master’s', 8 => 'Post-Master’s', 17 => 'Doctoral',
+    ];
+    return $map[$level] ?? $level;
+}
+function format_adm_conditions($row) {
+    $conditions = [];
+    for ($i = 1; $i <= 9; $i++) {
+        if (!empty($row["ADMCON$i"])) {
+            $conditions[] = "ADMCON$i";
+        }
+    }
+    return $conditions ? implode(', ', $conditions) : 'N/A';
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -222,7 +230,7 @@ li {
   line-height: 1.5;
   color: #374151; /* cool dark gray */
   font-size: 1rem;
-  
+
   padding-left: 1.2rem;
 }
 
@@ -324,14 +332,66 @@ h4 {
     margin: 0 auto;
   }
 }
-.badge {
-    background-color: red;
-    color: white;
-    border-radius: 50%;
-    padding: 3px 8px;
-    font-size: 12px;
-    vertical-align: middle;
+/* Make cards stack nicely */
+.card-body {
+        flex: 1 1 100%;
+        padding: 1rem;
+      }
+
+      .row.g-4 {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .col-12,
+      .col-md-6 {
+        width: 100%;
+      }
+      .cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
 }
+
+.card {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  padding: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.card h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  color: #1f2937;
+}
+
+.card p {
+  font-size: 0.95rem;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+
+.card a {
+  margin-top: 1rem;
+  display: inline-block;
+  color: #2563eb;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.card a:hover {
+  text-decoration: underline;
+}
+ 
   </style>
 </head>
 <body>
@@ -340,11 +400,11 @@ h4 {
       <div class="logo">  <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" style="height: 5rem;"></div>
       <div class="sidebar">
 
-        <a href="profile.php" class="nav-item active"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?>
+        <a href="profile.php" class="nav-item"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?>
     </a>
 
         <a href="recommendations.php" class="nav-item"><i class="fas fa-book"></i> Courses</a>
-        <a href="mycourses.php" class="nav-item"><i class="fas fa-star"></i> Saved Searches</a>
+        <a href="mycourses.php" class="nav-item active"><i class="fas fa-star"></i> Saved Searches</a>
         <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
         <span class="badge"><?= $count ?></span>
     <?php endif; ?></a>
@@ -353,84 +413,104 @@ h4 {
     </nav>
 
     <main class="main">
-      <div class="profile-main-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; background: #f3f4f6; padding: 2rem 0;">
-        <div class="profile-card-ui" style="background: #fff; border-radius: 1.25rem; box-shadow: 0 4px 24px rgba(37,99,235,0.08); padding: 2.5rem 2.5rem 2rem 2.5rem; max-width: 900px; width: 90vw; margin-bottom: 2rem;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap;">
-            <h2 style="font-size: 2rem; font-weight: 700; color: #1f2937; margin: 0; letter-spacing: -1px;">Personal Information</h2>
-            <button class="edit-button" style="margin-left: 1rem; background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%); color: #fff; border: none; border-radius: 999px; padding: 0.5rem 1.2rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.2s; box-shadow: 0 2px 8px rgba(37,99,235,0.10);" onclick="location.href='studentinfo-edit.php'">Edit</button>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 1.1rem;">
-            <div><span style="font-weight: 600; color: #374151;">Full Name:</span> <span style="color: #374151;"><?= htmlspecialchars($student['name'] . ' ' . $student['surname']) ?></span></div>
-            <div><span style="font-weight: 600; color: #374151;">Email:</span> <span style="color: #374151;"><?= htmlspecialchars($student['mail']) ?></span></div>
-            <div><span style="font-weight: 600; color: #374151;">Phone:</span> <span style="color: #374151;"><?= htmlspecialchars($student['cell']) ?></span></div>
-            <div><span style="font-weight: 600; color: #374151;">Date of Birth:</span> <span style="color: #374151;"><?= htmlspecialchars($student['age'] ?? 'N/A') ?></span></div>
-            <div><span style="font-weight: 600; color: #374151;">Country:</span> <span style="color: #374151;"><?= htmlspecialchars($student['location']) ?></span></div>
-            <div><span style="font-weight: 600; color: #374151;">Category:</span> <span style="color: #374151;"><?= htmlspecialchars($student['user_type']) ?></span></div>
-          </div>
-        </div>
-        <div class="profile-card-ui" style="background: #fff; border-radius: 1.25rem; box-shadow: 0 4px 24px rgba(37,99,235,0.08); padding: 2.5rem 2.5rem 2rem 2.5rem; max-width: 900px; width: 90vw;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap;">
-            <h2 style="font-size: 2rem; font-weight: 700; color: #1f2937; margin: 0; letter-spacing: -1px;">Preferred Courses</h2>
-            <button class="edit-button" style="margin-left: 1rem; background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%); color: #fff; border: none; border-radius: 999px; padding: 0.5rem 1.2rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.2s; box-shadow: 0 2px 8px rgba(37,99,235,0.10);" onclick="location.href='interests-edit.php'">Edit</button>
-          </div>
-          <ol style="padding-left: 1.2rem; color: #374151; font-size: 1.1rem;">
-            <?php if (!empty($interests)): ?>
-              <?php if (!empty($interests['option1'])): ?>
-                <li><?= htmlspecialchars($interests['option1']) ?></li>
-              <?php endif; ?>
-              <?php if (!empty($interests['option2'])): ?>
-                <li><?= htmlspecialchars($interests['option2']) ?></li>
-              <?php endif; ?>
-              <?php if (!empty($interests['option3'])): ?>
-                <li><?= htmlspecialchars($interests['option3']) ?></li>
-              <?php endif; ?>
-            <?php else: ?>
-              <li>No course preferences selected.</li>
+    <h1>Saved Course Searches</h1>
+
+<?php if (empty($saved_searches)): ?>
+  <p>You have no saved searches yet.</p>
+<?php endif; ?>
+
+<?php foreach ($saved_searches as $search): ?>
+  <?php
+  $course = trim($search['query']);
+  $institution = trim($search['institution'] ?? '');
+  $results = [];
+
+  if ($location === 'south africa') {
+      $stmt = $pdo->prepare("
+        SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
+        FROM sa_courses
+        WHERE programme LIKE ?" . ($institution ? " AND institution = ?" : "") . "
+        ORDER BY aps ASC
+        LIMIT 10
+      ");
+      $params = ["%$course%"];
+      if ($institution) $params[] = $institution;
+      $stmt->execute($params);
+      $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  } else {
+      $sql = "
+        SELECT DISTINCT
+          i.INSTNM,
+          i.CITY,
+          i.STABBR,
+          i.webaddr,
+          c.CIPCODE,
+          cc.CIPTITLE,
+          c.AWLEVEL,
+          a.ACTEN50,
+          a.ACTMT50,
+          a.ADMCON1, a.ADMCON2, a.ADMCON3, a.ADMCON4, a.ADMCON5, a.ADMCON6, a.ADMCON7, a.ADMCON8, a.ADMCON9
+        FROM courses c
+        JOIN institutions i ON i.UNITID = c.UNITID
+        LEFT JOIN admissions a ON i.UNITID = a.UNITID
+        LEFT JOIN cip_codes cc 
+          ON REPLACE(TRIM(c.CIPCODE), '.', '') = REPLACE(TRIM(cc.CIPCODE), '.', '')
+        WHERE 
+          (REPLACE(c.CIPCODE, '.', '') LIKE REPLACE(:codeQuery, '.', '')
+          OR LOWER(cc.CIPTITLE) LIKE LOWER(:titleQuery))
+          " . ($institution ? " AND i.INSTNM = :institution" : "") . "
+        ORDER BY i.INSTNM
+        LIMIT 10
+      ";
+      $stmt = $pdo->prepare($sql);
+      $stmt->bindValue(':codeQuery', "%$course%");
+      $stmt->bindValue(':titleQuery', "%$course%");
+      if ($institution) $stmt->bindValue(':institution', $institution);
+      $stmt->execute();
+      $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+  ?>
+
+  <h2 style="margin-top: 2rem;"><?= htmlspecialchars($course) ?><?= $institution ? " at " . htmlspecialchars($institution) : '' ?></h2>
+
+  <?php if (count($results) > 0): ?>
+    <div class="cards-grid">
+      <?php foreach ($results as $row): ?>
+        <div class="card">
+          <?php if ($location === 'south africa'): ?>
+            
+            <h3><?= htmlspecialchars($row['programme']) ?></h3>
+            <p><strong>Institution:</strong> <?= htmlspecialchars($row['institution']) ?></p>
+            <p><strong>Qualification:</strong> <?= htmlspecialchars($row['certification']) ?></p>
+            <p><strong>Duration:</strong> <?= htmlspecialchars($row['duration']) ?></p>
+            <p><strong>APS:</strong> <?= htmlspecialchars($row['aps']) ?></p>
+            <p><strong>Campus:</strong> <?= htmlspecialchars($row['campus']) ?></p>
+            <p><strong>Mode:</strong> <?= htmlspecialchars($row['class']) ?></p>
+            <p><strong>Requirements:</strong><br><?= nl2br(htmlspecialchars($row['subjects'])) ?></p>
+            <p><strong>Closing Date:</strong> <?= htmlspecialchars($row['date']) ?></p>
+            <?php if (!empty($row['link'])): ?>
+              <a href="<?= htmlspecialchars($row['link']) ?>" target="_blank">Apply Now</a>
             <?php endif; ?>
-          </ol>
+          <?php else: ?>
+            <h3><?= htmlspecialchars($row['CIPTITLE'] ?? '[No Title Found]') ?></h3>
+            <p><strong>Institution:</strong> <?= htmlspecialchars($row['INSTNM']) ?></p>
+            <p><strong>Location:</strong> <?= htmlspecialchars($row['CITY']) ?>, <?= htmlspecialchars($row['STABBR']) ?></p>
+            <p><strong>CIP Code:</strong> <?= htmlspecialchars($row['CIPCODE']) ?></p>
+            <p><strong>Award Level:</strong> <?= format_awlevel($row['AWLEVEL']) ?></p>
+            <p><strong>ACT English:</strong> <?= htmlspecialchars($row['ACTEN50']) ?></p>
+            <p><strong>ACT Math:</strong> <?= htmlspecialchars($row['ACTMT50']) ?></p>
+            <p><strong>Admission Requirements:</strong> <?= format_adm_conditions($row) ?></p>
+            <?php if (!empty($row['webaddr'])): ?>
+              <a href="<?= htmlspecialchars($row['webaddr']) ?>" target="_blank">Apply Now</a>
+            <?php endif; ?>
+          <?php endif; ?>
         </div>
-      </div>
-      <style>
-        @media (max-width: 900px) {
-          .profile-card-ui { max-width: 98vw !important; width: 98vw !important; }
-        }
-        @media (max-width: 600px) {
-          .profile-main-wrapper { padding: 0.5rem 0; }
-          .profile-card-ui {
-            padding: 1rem 0.5rem 1rem 0.5rem !important;
-            max-width: 99vw !important;
-            width: 99vw !important;
-            border-radius: 0.7rem !important;
-            box-shadow: 0 2px 8px rgba(37,99,235,0.10);
-          }
-          .profile-card-ui h2 {
-            font-size: 1.1rem !important;
-            margin-bottom: 0.7rem !important;
-          }
-          .profile-card-ui div[style*='display: flex; align-items: center; justify-content: space-between;'] {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 0.5rem !important;
-          }
-          .edit-button {
-            width: 100%;
-            margin: 0.5rem 0 0 0 !important;
-            padding: 0.6rem 0 !important;
-            font-size: 0.98rem !important;
-          }
-          .profile-card-ui div[style*='display: flex; flex-direction: column; gap: 1.1rem;'] {
-            gap: 0.7rem !important;
-          }
-          .profile-card-ui ol {
-            font-size: 1rem !important;
-            padding-left: 1rem !important;
-          }
-        }
-        .edit-button:hover, .edit-button:focus {
-          background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%) !important;
-          transform: scale(1.05);
-        }
-      </style>
+      <?php endforeach; ?>
+    </div>
+  <?php else: ?>
+    <p>No courses found for this search.</p>
+  <?php endif; ?>
+<?php endforeach; ?>
     </main>
   </div>
 </body>

@@ -463,6 +463,7 @@ select[name="institution"] {
       <div class="sidebar">
         <a href="profile.php" class="nav-item"><i class="fas fa-user"></i><?= htmlspecialchars($student['name']) ?></a>
         <a href="recommendations.php" class="nav-item active"><i class="fas fa-book"></i> Courses</a>
+        <a href="mycourses.php" class="nav-item"><i class="fas fa-star"></i> Saved Searches</a>
         <a href="notifications.php" class="nav-item"><i class="fas fa-bell"></i> Notifications<?php if ($count > 0): ?>
         <span class="badge"><?= $count ?></span>
     <?php endif; ?></a>
@@ -482,6 +483,9 @@ select[name="institution"] {
         </select>
         <button type="submit" style="padding: 0.75rem 1rem; border-radius: 6px; font-size: 1rem;">Search</button>
       </form>
+      <button type="button" id="saveSearchBtn" style="background-color:#374151; color:white;">Save Search</button>
+<span id="saveStatus" style="margin-left: 1rem; color: #4b5563;"></span>
+
       <?php if ($location === 'south africa'): ?>
         <?php if (isset($result) && $result->num_rows > 0): ?>
           <p><?= $total_rows ?> course(s) found.</p>
@@ -574,6 +578,25 @@ $(function() {
     },
     minLength: 2, // Minimum characters before suggestions appear
     delay: 200
+  });
+});
+</script>
+<script>
+document.getElementById('saveSearchBtn').addEventListener('click', function () {
+  const course = document.querySelector('input[name="myCourse"]').value;
+  const institution = document.querySelector('select[name="institution"]').value;
+
+  fetch('save-search.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ course, institution })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById('saveStatus').textContent = data.message;
+  })
+  .catch(err => {
+    document.getElementById('saveStatus').textContent = "Failed to save search.";
   });
 });
 </script>
