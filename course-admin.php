@@ -1,11 +1,7 @@
 <?php
-session_start();
+
 require 'db.php';
 
-// Optional: restrict access to admin users only
-if (!isset($_SESSION['user_id']) || $_SESSION['user_email'] !== 'admin@example.com') {
-    die("Access denied. Only admins can upload courses.");
-}
 
 $message = "";
 
@@ -60,12 +56,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <input type="text" name="aps" id="aps" required>
 
     <label for="institution">Institution</label>
-    <input type="text" name="institution" id="institution" required>
+    <select name="institution" id="institution" required>
+    <option>SELECT A UNIVERSITY</option>
+      <option>cape peninsula university of technology</option>
+      <option>central university of technology</option>
+      <option>northwest university</option>
+      <option>tshwane university of technology</option>
+      <option>university of free state</option>
+      <option>university of johannesburg</option>
+      <option>university of pretoria</option>
+      <option>vaal university of technology</option>
+      <option>wits university</option>
+      <option>university of limpopo</option>
+      <option>university of cape town</option>
+      <option>university of venda</option>
+      <option>university of western cape</option>
+      <option>nelson mandela metropolitan university</option>
+      <option>sefatso makgatho university</option>
+      <option>walter sisulu university</option>
+      <option>durban university of technology</option>
+      <option>university of kwa zulu natal</option>
+      <option>university of zululand</option>
+      <option>rhoades university</option>
+      <option>mangosuthu university of technology</option>
+      <option>sol plaatjie university</option>
+      <option>stellenbosch university</option>
+    </select>
 
     <label for="campus">Campus</label>
-    <input type="text" name="campus" id="campus" required>
+    <input type="text" name="campus" id="campus">
 
-    <label for="subjects">Subjects</label>
+    <label for="subjects">Subjects and Requirements</label>
     <textarea name="subjects" id="subjects" rows="3" required></textarea>
 
     <label for="date">Date</label>
