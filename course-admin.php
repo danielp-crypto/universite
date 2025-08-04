@@ -41,7 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <h2>Enter Course into SA Courses Table</h2>
   <form action="" method="POST">
     <label for="class">Class</label>
-    <input type="text" name="class" id="class" required>
+    <select name="class" id="class" required>
+    <option>Full-time</option>
+    <option>Part-time</option>
+    <option>Distance</option>
+    <option>Online</option>
+    <option>Blended</option>
+    <option>Other</option>
+</select>
 
     <label for="certification">Certification</label>
     <input type="text" name="certification" id="certification" required>
