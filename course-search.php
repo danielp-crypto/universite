@@ -446,14 +446,39 @@ function format_adm_conditions($row) {
     font-size: 12px;
     vertical-align: middle;
 }
-select[name="institution"]:focus {
-  outline: 2px solid #2563eb;
-  border-color: #2563eb;
-}
-select[name="institution"] {
-  transition: border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-}
+.custom-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem 0.75rem 1rem;
+    font-size: 1rem;
+    color: #333;
+    width: 100%;
+    max-width: 300px;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='0,0 140,0 70,80' fill='%23666'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .custom-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  .custom-select option {
+    color: #333;
+    font-size: 1rem;
+    font-weight: 500;
+    background-color: #fff;
+  }
+
   </style>
 </head>
 <body>
@@ -474,13 +499,15 @@ select[name="institution"] {
       <h1>Search Courses</h1>
       <form action="course-search.php" method="get" style="display: flex; gap: 0.5rem; max-width: 600px; align-items: center;">
         <input type="text" name="myCourse" placeholder="e.g. Engineering" value="<?= htmlspecialchars($myCourse) ?>" required />
-        <select name="institution" style="padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; min-width: 180px; background: #fff; color: #333; height: 44px; margin-right: 0.5rem;">
-          <option value="" disabled selected>Filter by institution...</option>
-          <option value="" <?= $selectedInstitution === '' ? 'selected' : '' ?>>All Institutions</option>
-          <?php foreach ($institutions as $inst): ?>
-            <option value="<?= htmlspecialchars($inst) ?>" <?= $selectedInstitution === $inst ? 'selected' : '' ?>><?= htmlspecialchars($inst) ?></option>
-          <?php endforeach; ?>
-        </select>
+        <select name="institution" id="institutionSelect" class="custom-select">
+  <option value="" disabled <?= $selectedInstitution === '' ? 'selected' : '' ?>>Filter by institution...</option>
+  <option value="" <?= $selectedInstitution === '' ? 'selected' : '' ?>>All Institutions</option>
+  <?php foreach ($institutions as $inst): ?>
+    <option value="<?= htmlspecialchars($inst) ?>" <?= $selectedInstitution === $inst ? 'selected' : '' ?>>
+      <?= htmlspecialchars($inst) ?>
+    </option>
+  <?php endforeach; ?>
+</select>
         <button type="submit" style="padding: 0.75rem 1rem; border-radius: 6px; font-size: 1rem;">Search</button>
       </form>
       <button type="button" id="saveSearchBtn" style="background-color:#374151; color:white;">Save Search</button>
