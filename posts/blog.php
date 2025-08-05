@@ -114,14 +114,14 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="best-online-courses-for-beginners.html">Best Online Courses for Beginners in 2025</a>
+        <a href="best-online-courses-for-beginners.php">Best Online Courses for Beginners in 2025</a>
         <div class="date">Posted on June 24, 2025</div>
       </div>
     </div>
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="is-skillshare-worth-it-in-2025.html">Is Skillshare worth it in 2025?</a>
+        <a href="is-skillshare-worth-it-in-2025.php">Is Skillshare worth it in 2025?</a>
         <div class="date">Posted on June 01, 2025</div>
       </div>
     </div>
@@ -129,7 +129,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="coursera-plus-review-is-it-worth-the-money.html">Coursera Plus review: Is it worth the money?</a>
+        <a href="coursera-plus-review-is-it-worth-the-money.php">Coursera Plus review: Is it worth the money?</a>
         <div class="date">Posted on March 29, 2025</div>
       </div>
     </div>
@@ -137,7 +137,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="best-coding-bootcamps-online.html">Best coding bootcamps online</a>
+        <a href="best-coding-bootcamps-online.php">Best coding bootcamps online</a>
         <div class="date">Posted on April 30, 2025</div>
       </div>
     </div>
@@ -145,7 +145,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="udemy-course-reviews-what-to-expect.html">Udemy course reviews: What to expect</a>
+        <a href="udemy-course-reviews-what-to-expect.php">Udemy course reviews: What to expect</a>
         <div class="date">Posted on January 28, 2025</div>
       </div>
     </div>
@@ -153,7 +153,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="top-linkedin-learning-courses-for-professionals.html">Top LinkedIn Learning courses for professionals</a>
+        <a href="top-linkedin-learning-courses-for-professionals.php">Top LinkedIn Learning courses for professionals</a>
         <div class="date">Posted on January 30, 2025</div>
       </div>
     </div>
@@ -161,7 +161,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="best-affiliate-marketing-course-for-beginners.html">Best affiliate marketing course for beginners</a>
+        <a href="best-affiliate-marketing-course-for-beginners.php">Best affiliate marketing course for beginners</a>
         <div class="date">Posted on June 20, 2025</div>
       </div>
     </div>
@@ -169,7 +169,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="cheapest-online-learning-platforms-compared.html">Cheapest online learning platforms compared</a>
+        <a href="cheapest-online-learning-platforms-compared.php">Cheapest online learning platforms compared</a>
         <div class="date">Posted on May 27, 2025</div>
       </div>
     </div>
@@ -177,7 +177,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="best-ai-and-machine-learning-courses-in-2025.html">Best AI and machine learning courses in 2025</a>
+        <a href="best-ai-and-machine-learning-courses-in-2025.php">Best AI and machine learning courses in 2025</a>
         <div class="date">Posted on February 19, 2025</div>
       </div>
     </div>
@@ -185,7 +185,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="online-courses-for-graphic-designers.html">Online courses for graphic designers</a>
+        <a href="online-courses-for-graphic-designers.php">Online courses for graphic designers</a>
         <div class="date">Posted on April 16, 2025</div>
       </div>
     </div>
@@ -193,7 +193,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="Book Icon" class="icon" />
       <div class="post-content">
-        <a href="best-programming-courses-for-kids.html">Best programming courses for kids</a>
+        <a href="best-programming-courses-for-kids.php">Best programming courses for kids</a>
         <div class="date">Posted on June 30, 2025</div>
       </div>
     </div>
@@ -201,7 +201,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="top-business-and-entrepreneurship-courses-online.html">Top business and entrepreneurship courses online</a>
+        <a href="top-business-and-entrepreneurship-courses-online.php">Top business and entrepreneurship courses online</a>
         <div class="date">Posted on February 28, 2025</div>
       </div>
     </div>
@@ -209,7 +209,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="best-online-writing-courses-for-aspiring-authors.html">Best online writing courses for aspiring authors</a>
+        <a href="best-online-writing-courses-for-aspiring-authors.php">Best online writing courses for aspiring authors</a>
         <div class="date">Posted on May 09, 2025</div>
       </div>
     </div>
@@ -217,7 +217,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
       <div class="post-content">
-        <a href="photography-courses-online-top-picks.html">Photography courses online: Top picks</a>
+        <a href="photography-courses-online-top-picks.php">Photography courses online: Top picks</a>
         <div class="date">Posted on March 11, 2025</div>
       </div>
     </div>
@@ -227,7 +227,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="Logo Icon" class="icon" />
       <div class="post-content">
-        <a href="another-article.html">Udemy vs Coursera: Which is better?</a>
+        <a href="another-article.php">Udemy vs Coursera: Which is better?</a>
         <div class="date">Posted on June 20, 2025</div>
       </div>
     </div>
