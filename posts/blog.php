@@ -227,7 +227,7 @@
     <div class="post-item">
       <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="Logo Icon" class="icon" />
       <div class="post-content">
-        <a href="another-article.php">Udemy vs Coursera: Which is better?</a>
+        <a href="udemy-versus-coursera.php">Udemy vs Coursera: Which is better?</a>
         <div class="date">Posted on June 20, 2025</div>
       </div>
     </div>
