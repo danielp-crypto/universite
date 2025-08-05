@@ -24,10 +24,12 @@ echo ('
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav nav-dropdown" data-app-modern-menu="true"><li class="nav-item">
           <a class="nav-link link text-white text-primary display-4" href="https://www.universite.co.za/index.php">Home</a>
+        </li><li class="nav-item">
+          <a class="nav-link link text-white text-primary display-4" href="https://www.universite.co.za/blog.php">Blog</a>
         </li>
         </ul>
 
-      <div class="navbar-buttons mbr-section-btn"><a class="btn btn-secondary-outline display-4" href="login.php">Login</a> <a class="btn btn-warning display-4" href="https://www.universite.co.za/signup.php">Sign Up</a><a class="btn btn-warning display-4" href="https://www.universite.co.za/blog.php">Blog</a></div>
+      <div class="navbar-buttons mbr-section-btn"><a class="btn btn-secondary-outline display-4" href="login.php">Login</a> <a class="btn btn-warning display-4" href="https://www.universite.co.za/signup.php">Sign Up</a></div>
     </div>
   </div>
 </nav>
