@@ -27,7 +27,7 @@ echo ('
         </li>
         </ul>
 
-      <div class="navbar-buttons mbr-section-btn"><a class="btn btn-secondary-outline display-4" href="login.php">Login</a> <a class="btn btn-warning display-4" href="https://www.universite.co.za/signup.php">Sign Up</a></div>
+      <div class="navbar-buttons mbr-section-btn"><a class="btn btn-secondary-outline display-4" href="login.php">Login</a> <a class="btn btn-warning display-4" href="https://www.universite.co.za/signup.php">Sign Up</a><a class="btn btn-warning display-4" href="https://www.universite.co.za/blog.php">Blog</a></div>
     </div>
   </div>
 </nav>

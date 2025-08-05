@@ -56,17 +56,18 @@
       background: #f4f4f4;
       margin: 0;
       padding: 2rem;
-      color: #333;
+      color: #;
     }
     header {
       text-align: center;
       margin-bottom: 2rem;
+      margin-top: 8rem;
     }
     h1 {
       color: #2c3e50;
     }
     .post-list {
-      max-width: 800px;
+      max-width: 1100px;
       margin: 0 auto;
       background: #fff;
       padding: 2rem;
@@ -106,7 +107,7 @@
   <?php include_once "nav.php"; ?>
 
   <header>
-    <h1>Student advice</h1>
+    <h1>Blog</h1>
     <p>Top articles about online learning, affiliate picks, and course reviews</p>
   </header>
   <div class="post-list">
@@ -230,5 +231,5 @@
         <div class="date">Posted on June 20, 2025</div>
       </div>
     </div>
-  </div>
+  </div><br>
 <?php include_once "footer.php"; ?>
