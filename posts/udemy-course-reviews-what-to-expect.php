@@ -261,7 +261,7 @@
 
     <p>Just make sure to read course reviews, preview a few lessons, and buy during sales. For under $20, many Udemy courses deliver huge value — especially for beginner to intermediate learners.</p>
 
-    <a href="#" class="cta">Browse Top Udemy Courses Now</a>
+    <a href="https://www.udemy.com/?srsltid=AfmBOood5qr7bCjYpvf_qFU1LEuYRVU2do0GQVjMJ1RkAxjED4mlOC8l" class="cta">Browse Top Udemy Courses Now</a>
 
     <p class="disclaimer">Disclosure: This article may contain affiliate links. If you purchase through our links, we may earn a small commission — at no extra cost to you.</p>
   </main>

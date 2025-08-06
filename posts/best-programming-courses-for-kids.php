@@ -168,7 +168,7 @@
     <h2>🧑‍💻 Tips for Parents</h2>
     <p>You don’t need to be a tech expert to help your child learn to code. Choose age-appropriate platforms, set small goals (like creating a game or animation), and celebrate every success. Even 15–20 minutes a day can spark a lifelong passion.</p>
 
-    <a href="#" class="cta">Explore Kid-Friendly Coding Courses</a>
+    <a href="https://www.coursera.org/" class="cta">Explore Kid-Friendly Coding Courses</a>
 
     <h2>✅ Final Thoughts</h2>
     <p>The earlier kids start learning code, the more natural it becomes. These online programming courses in 2025 make coding fun, safe, and accessible — the perfect launchpad for young digital creators.</p>

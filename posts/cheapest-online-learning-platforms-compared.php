@@ -240,7 +240,7 @@
     <h2>🌟 Best Overall Value: Udemy</h2>
     <p><strong>Udemy</strong> often offers courses for as low as $11.99 during sales, with lifetime access. You can pick specific skills without committing to a subscription. It’s ideal for beginners on a tight budget.</p>
 
-    <a href="#" class="cta">Browse Cheap Courses on Udemy</a>
+    <a href="https://www.udemy.com/?srsltid=AfmBOood5qr7bCjYpvf_qFU1LEuYRVU2do0GQVjMJ1RkAxjED4mlOC8l" class="cta">Browse Cheap Courses on Udemy</a>
 
     <h2>✅ Final Thoughts</h2>
     <p>Affordable learning is more accessible than ever. Whether you have $12 or $300 to spend, there’s a platform tailored to your goals. Choose wisely, commit to learning, and the return on investment will be worth it.</p>

@@ -258,7 +258,7 @@
     <p>However, if you're looking for accredited certificates, job-focused programs, or deeply technical skills, other platforms like Coursera or edX may be better suited to your needs.</p>
 
     <p><strong>🔓 Start your free trial today and explore thousands of classes to see if it’s right for you!</strong></p>
-    <a href="#" class="cta">Start Free Trial on Skillshare</a>
+    <a href="https://www.skillshare.com/en/signup?srsltid=AfmBOoobXr3A_Xp2Hz6mdP5oWTgkoNFx8ijmaozQKhPSVDY6xDrkDeA-" class="cta">Start Free Trial on Skillshare</a>
 
     <p class="disclaimer">Disclosure: This article contains affiliate links. If you click and sign up, we may earn a small commission — at no extra cost to you.</p>
   </main>

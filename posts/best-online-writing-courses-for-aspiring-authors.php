@@ -159,7 +159,7 @@
     <h2>🔍 How to Choose the Right Course</h2>
     <p>Start with your goal: Do you want to write a novel, launch a blog, or self-publish a nonfiction book? Choose courses that align with your genre and stage of development. Look for reviews, course previews, and instructor credentials to ensure quality.</p>
 
-    <a href="#" class="cta">Browse Writing Courses Now</a>
+    <a href="https://www.coursera.org/" class="cta">Browse Writing Courses Now</a>
 
     <h2>✅ Final Thoughts</h2>
     <p>Writing is both an art and a craft. The best way to grow is by writing consistently—and learning from those who’ve mastered the process. These online writing courses can guide you, inspire you, and keep you moving toward that finished manuscript.</p>

@@ -260,7 +260,7 @@
 
     <p>However, if you’re only looking for one or two courses, you’re better off purchasing them individually or trying the free version first.</p>
 
-    <a href="#" class="cta">Start Coursera Plus Free Trial</a>
+    <a href="https://www.coursera.org/courseraplus" class="cta">Start Coursera Plus Free Trial</a>
 
     <p class="disclaimer">Disclosure: This page contains affiliate links. We may earn a commission if you choose to make a purchase — at no extra cost to you.</p>
   </main>

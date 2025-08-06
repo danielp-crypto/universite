@@ -260,7 +260,7 @@
       <li>Hands-on labs</li>
       <li>Shareable certificate</li>
     </ul>
-    <a href="#" class="cta">Start the course on Coursera</a>
+    <a href="https://www.coursera.org/" class="cta">Start the course on Coursera</a>
 
     <h2>💻 2. Python for Everybody (Coursera)</h2>
     <p><strong>Why It’s Great:</strong> Dr. Charles Severance’s legendary course helps absolute beginners learn Python, step by step.</p>
@@ -269,7 +269,7 @@
       <li>Real-world projects</li>
       <li>Free to audit</li>
     </ul>
-    <a href="#" class="cta">Enroll for free on Coursera</a>
+    <a href=""https://www.coursera.org/ class="cta">Enroll for free on Coursera</a>
 
     <h2>📊 3. The Complete Digital Marketing Guide (Udemy)</h2>
     <p><strong>Why It’s Great:</strong> Covers SEO, email marketing, Google Ads, and more — all in one course, with lifetime access.</p>
@@ -278,7 +278,7 @@
       <li>Updated for 2025</li>
       <li>One-time payment, frequent discounts</li>
     </ul>
-    <a href="#" class="cta">Check it out on Udemy</a>
+    <a href="https://www.udemy.com/" class="cta">Check it out on Udemy</a>
 
     <h2>🎨 4. Intro to Graphic Design (Skillshare)</h2>
     <p><strong>Why It’s Great:</strong> A fun and visual way to dip into graphic design, using tools like Canva, Photoshop, and Figma.</p>
@@ -287,7 +287,7 @@
       <li>Community feedback</li>
       <li>Great for creative beginners</li>
     </ul>
-    <a href="#" class="cta">Try free for 30 days</a>
+    <a href="https://www.skillshare.com/en/signup?srsltid=AfmBOoobXr3A_Xp2Hz6mdP5oWTgkoNFx8ijmaozQKhPSVDY6xDrkDeA-" class="cta">Try free for 30 days</a>
 
     <h2>💼 5. Productivity Masterclass by Thomas Frank (Skillshare)</h2>
     <p><strong>Why It’s Great:</strong> Master your time and tasks with this popular course from productivity guru Thomas Frank.</p>
@@ -296,7 +296,7 @@
       <li>Great for students and freelancers</li>
       <li>Included in free trial</li>
     </ul>
-    <a href="#" class="cta">Access it on Skillshare</a>
+    <a href="https://www.skillshare.com/en/signup" class="cta">Access it on Skillshare</a>
 
     <h2>🔎 How to Choose the Right Beginner Course</h2>
     <ul>

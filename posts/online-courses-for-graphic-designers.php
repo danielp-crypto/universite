@@ -170,7 +170,7 @@
     <h2>🔥 Editor’s Pick: Domestika for Creative Designers</h2>
     <p>Domestika's quality and affordability make it a favorite among designers in 2025. The courses are visually stunning, taught by real designers, and often available in multiple languages with subtitles.</p>
 
-    <a href="#" class="cta">Browse Domestika Courses</a>
+    <a href="https://www.domestika.org/en/courses" class="cta">Browse Domestika Courses</a>
 
     <h2>✅ Final Thoughts</h2>
     <p>The design world is constantly evolving — and so should your skills. Whether you're learning for fun, freelancing, or climbing the corporate ladder, investing in a quality graphic design course is worth it in 2025.</p>

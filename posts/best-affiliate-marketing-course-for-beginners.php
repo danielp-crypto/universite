@@ -248,7 +248,7 @@
     <h2>✅ Final Thoughts</h2>
     <p>If you're serious about building a real, long-term affiliate business in 2025, <strong>The Authority Site System</strong> is our top recommendation for beginners. It’s detailed, proven, and perfect for anyone with no prior experience.</p>
 
-    <a href="#" class="cta">Get Started with The Authority Site System</a>
+    <a href="https://www.authorityhacker.com/" class="cta">Get Started with The Authority Site System</a>
 
     <p class="disclaimer">Disclosure: This article contains affiliate links. If you purchase through our links, we may earn a commission — at no extra cost to you. We only recommend courses we truly believe in.</p>
   </main>

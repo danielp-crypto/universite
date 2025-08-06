@@ -159,7 +159,7 @@
     <h2>🔍 Tips for Beginners</h2>
     <p>Start with a course focused on your current gear. Practice what you learn immediately—shoot every day if you can. Share your photos online and ask for feedback to improve.</p>
 
-    <a href="#" class="cta">Explore Photography Courses</a>
+    <a href="https://www.coursera.org/" class="cta">Explore Photography Courses</a>
 
     <h2>✅ Final Thoughts</h2>
     <p>Photography is more than just clicking a button—it's about telling a story through visuals. These online courses will help you master the art and technique of photography no matter your experience level.</p>

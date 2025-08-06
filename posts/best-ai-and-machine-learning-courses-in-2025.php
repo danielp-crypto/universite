@@ -172,7 +172,7 @@
     <h2>⭐ Editor’s Pick for 2025: Coursera’s ML Specialization</h2>
     <p>Stanford’s Machine Learning Specialization by Andrew Ng remains the gold standard for foundational AI skills. It’s beginner-friendly, academic, and recognized globally.</p>
 
-    <a href="#" class="cta">Start Learning with Coursera</a>
+    <a href="https://www.coursera.org/" class="cta">Start Learning with Coursera</a>
 
     <h2>📈 Career Impact of Learning AI</h2>
     <p>AI and ML roles offer some of the highest-paying jobs in tech — from AI Engineers to Data Scientists and ML Researchers. Completing a high-quality course can dramatically improve your job prospects in 2025 and beyond.</p>
