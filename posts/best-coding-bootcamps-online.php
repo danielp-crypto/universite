@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Best Online Coding Bootcamps in 2025 (For All Budgets) | Universite</title>
   <meta name="description" content="Explore the best online coding bootcamps in 2025 for beginners, career changers, and job-ready developers. Compare cost, duration, job support, and more.">
   <meta property="og:title" content="Best Online Coding Bootcamps in 2025">

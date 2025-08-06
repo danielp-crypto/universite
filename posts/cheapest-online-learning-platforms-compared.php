@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Cheapest Online Learning Platforms Compared (2025) | Universite</title>
   <meta name="description" content="Discover the most affordable online learning platforms in 2025. We compare top options like Skillshare, Udemy, Coursera, and more.">
   <meta property="og:title" content="Cheapest Online Learning Platforms Compared (2025)">

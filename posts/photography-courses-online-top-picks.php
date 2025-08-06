@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Photography Courses Online: Top Picks for 2025 | Universite</title>
   <meta name="description" content="Explore the best photography courses online in 2025. Learn DSLR, mobile, portrait, landscape, and editing from top instructors.">
   <meta property="og:title" content="Photography Courses Online: Top Picks for 2025">

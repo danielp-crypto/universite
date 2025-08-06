@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Is Skillshare Worth It in 2025? | Universite</title>
   <meta name="description" content="Wondering if Skillshare is worth your time and money in 2025? Discover the pros, cons, and best use cases in this up-to-date guide.">
   <meta property="og:title" content="Is Skillshare Worth It in 2025?">

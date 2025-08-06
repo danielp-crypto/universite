@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Top Online Courses for Graphic Designers in 2025 | Universite</title>
   <meta name="description" content="Discover the best online courses for graphic designers in 2025. Learn Adobe, branding, UX/UI, and more on platforms like Skillshare, Coursera, and Domestika.">
   <meta property="og:title" content="Top Online Courses for Graphic Designers in 2025">

@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Coursera Plus Review: Is It Worth the Money in 2025? | Universite</title>
   <meta name="description" content="Is Coursera Plus worth it in 2025? Learn who should buy it, what it includes, and whether it saves you money. Full review and comparisons.">
   <meta property="og:title" content="Coursera Plus Review: Is It Worth the Money in 2025?">

@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Best Programming Courses for Kids in 2025 | Universite</title>
   <meta name="description" content="Discover the top online programming courses for kids in 2025. Fun, interactive, and beginner-friendly platforms to help children learn to code.">
   <meta property="og:title" content="Best Programming Courses for Kids in 2025">

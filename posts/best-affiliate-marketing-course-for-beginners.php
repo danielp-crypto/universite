@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Best Affiliate Marketing Course for Beginners (2025) | Universite</title>
   <meta name="description" content="Discover the best affiliate marketing course for beginners in 2025. Learn how to start earning passive income online with proven strategies.">
   <meta property="og:title" content="Best Affiliate Marketing Course for Beginners (2025)">

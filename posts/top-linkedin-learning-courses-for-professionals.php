@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Top LinkedIn Learning Courses for Professionals (2025 Update) | Universite</title>
   <meta name="description" content="Discover the best LinkedIn Learning courses for career growth, productivity, and upskilling in 2025. Curated picks for professionals in business, tech, and leadership.">
   <meta property="og:title" content="Top LinkedIn Learning Courses for Professionals (2025)">
