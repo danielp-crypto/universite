@@ -11,6 +11,7 @@
  gtag('config', 'G-YTT2QHLQC7');
 </script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Udemy vs Coursera: Which Platform Is Better in 2025? | Universite</title>
   <meta name="description" content="Trying to choose between Udemy and Coursera? Compare pricing, course quality, certificates, and learning style in this 2025 head-to-head breakdown.">
   <meta property="og:title" content="Udemy vs Coursera: Which Platform Is Better in 2025?">
