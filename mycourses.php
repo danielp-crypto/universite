@@ -212,26 +212,44 @@ function format_adm_conditions($row) {
     }
 
     .edit-button {
-  background-color:#2563eb ;
+  background-color: #3b82f6; /* Primary Blue */
   color: white;
   border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.5rem;
+  padding: 0.75rem; /* Equal padding for circle shape */
+  border-radius: 50%; /* Full circle */
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: background-color 0.2s ease, transform 0.2s ease;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .edit-button:hover {
-  background-color: #4338ca;
-  transform: translateY(-1px);
+  background-color: #2563eb; /* Darker on hover */
+  transform: scale(1.05);
 }
 
 .edit-button:active {
-  transform: scale(0.98);
+  transform: scale(0.95);
 }
+
+.edit-button:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .edit-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.875rem;
+  }
+}
+
     a {text-decoration:none;color:white;}
     a:visited {
   color: inherit; /* Inherits color from parent element */
@@ -425,7 +443,7 @@ h4 {
     </nav>
 
     <main class="main">
-    <h1>Saved Course Searches</h1>
+    <h2>Saved Course Searches</h2>
     <?php if (isset($_GET['deleted'])): ?>
   <p style="color: green;">Search deleted successfully.</p>
 <?php endif; ?>
@@ -486,10 +504,10 @@ h4 {
   }
   ?>
 
-  <h2 style="margin-top: 2rem;"><?= htmlspecialchars($course) ?><?= $institution ? " at " . htmlspecialchars($institution) : '' ?></h2>
+  <h4 style="margin-top: 2rem;"><?= htmlspecialchars($course) ?><?= $institution ? " at " . htmlspecialchars($institution) : '' ?></h4>
   <form method="POST" onsubmit="return confirm('Are you sure you want to delete this saved search?');" style="display:inline;">
   <input type="hidden" name="delete_id" value="<?= htmlspecialchars($search['id']) ?>">
-  <button type="submit" class="edit-button" style="background-color: #dc2626;">Delete</button>
+  <button type="submit" class="edit-button" style="background-color: #dc2626;"><i class="fa fa-trash" aria-hidden="true"></i></button>
 </form>
 
   <?php if (count($results) > 0): ?>
