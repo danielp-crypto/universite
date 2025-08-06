@@ -1,31 +1,21 @@
 <!DOCTYPE html>
-<html  >
+<html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
-<script>
- window.dataLayer = window.dataLayer || [];
- function gtag(){dataLayer.push(arguments);}
- gtag('js', new Date());
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YTT2QHLQC7');
+  </script>
 
- gtag('config', 'G-YTT2QHLQC7');
-</script>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
-  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
-  <link rel="shortcut icon" href="https://www.universite.co.za/assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
-  <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
-  <meta property="og:title" content="Find Online & University Courses for Students">
-  <meta property="og:description" content="Browse both online courses and in-person college programs. Discover the best course for your goals and enroll with confidence.">
-  <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
-  <meta property="og:url" content="https://universite.co.za">
-  <meta property="og:type" content="website">
-
-
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Find Online & University Courses for Students | Compare & Enroll</title>
-  <link rel="stylesheet" href="https://www.universite.co.za/assets/web/assets/mobirise-icons2/mobirise2.css">
+  <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
+<!-- Mobirise & Bootstrap CSS -->
+<link rel="stylesheet" href="https://www.universite.co.za/assets/web/assets/mobirise-icons2/mobirise2.css">
   <link rel="stylesheet" href="https://www.universite.co.za/assets/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://www.universite.co.za/assets/bootstrap/css/bootstrap-grid.min.css">
   <link rel="stylesheet" href="https://www.universite.co.za/assets/bootstrap/css/bootstrap-reboot.min.css">
@@ -44,65 +34,115 @@
   <link rel="preload" href="https://fonts.googleapis.com/css?family=Quicksand:300,400,500,600,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Quicksand:300,400,500,600,700&display=swap"></noscript>
   <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc"><link rel="stylesheet" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc" type="text/css">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="https://www.universite.co.za/assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
 
-
-
-</head>
+  <!-- Modern Styles -->
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 2rem;
-      color: #;
+    * {
+      box-sizing: border-box;
     }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f7f9fb;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
     header {
       text-align: center;
-      margin-bottom: 2rem;
-      margin-top: 8rem;
+      padding: 4rem 1rem 2rem;
+      background: linear-gradient(to right, #007bff, #00c6ff);
+      color: #fff;
     }
-    h1 {
-      color: #2c3e50;
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      margin-top: 4rem;
     }
+
+    header p {
+      font-size: 1.2rem;
+      opacity: 0.95;
+    }
+
     .post-list {
-      max-width: 1100px;
-      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+
+    .post-card {
       background: #fff;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .post-item {
-      margin-bottom: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.5rem;
     }
-    .post-item img.icon {
-      width: 32px;
-      height: 32px;
-      margin-right: 12px;
+
+    .post-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-card img.icon {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
       flex-shrink: 0;
     }
+
     .post-content {
-      display: flex;
-      flex-direction: column;
+      flex: 1;
     }
-    a {
-      text-decoration: none;
+
+    .post-content a {
       color: #007bff;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.3rem;
+      transition: color 0.2s;
+      text-decoration: none;
     }
-    a:hover {
+
+    .post-content a:hover {
+      color: #0056b3;
       text-decoration: underline;
     }
+
     .date {
       font-size: 0.9rem;
       color: #888;
     }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 2rem;
+      }
+
+      header p {
+        font-size: 1rem;
+      }
+    }
   </style>
 </head>
+
 <body>
   <?php include_once "nav.php"; ?>
 
@@ -110,126 +150,32 @@
     <h1>Blog</h1>
     <p>Top articles about online learning, affiliate picks, and course reviews</p>
   </header>
+
   <div class="post-list">
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="best-online-courses-for-beginners.php">Best Online Courses for Beginners in 2025</a>
-        <div class="date">Posted on June 24, 2025</div>
-      </div>
-    </div>
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="is-skillshare-worth-it-in-2025.php">Is Skillshare worth it in 2025?</a>
-        <div class="date">Posted on June 01, 2025</div>
-      </div>
-    </div>
     
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="coursera-plus-review-is-it-worth-the-money.php">Coursera Plus review: Is it worth the money?</a>
-        <div class="date">Posted on March 29, 2025</div>
-      </div>
-    </div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="best-online-courses-for-beginners.php">Best Online Courses for Beginners in 2025</a><div class="date">Posted on June 24, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="is-skillshare-worth-it-in-2025.php">Is Skillshare worth it in 2025?</a><div class="date">Posted on June 01, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="coursera-plus-review-is-it-worth-the-money.php">Coursera Plus review: Is it worth the money?</a><div class="date">Posted on March 29, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="best-coding-bootcamps-online.php">Best coding bootcamps online</a><div class="date">Posted on April 30, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="udemy-course-reviews-what-to-expect.php">Udemy course reviews: What to expect</a><div class="date">Posted on January 28, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="top-linkedin-learning-courses-for-professionals.php">Top LinkedIn Learning courses for professionals</a><div class="date">Posted on January 30, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="best-affiliate-marketing-course-for-beginners.php">Best affiliate marketing course for beginners</a><div class="date">Posted on June 20, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="cheapest-online-learning-platforms-compared.php">Cheapest online learning platforms compared</a><div class="date">Posted on May 27, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="best-ai-and-machine-learning-courses-in-2025.php">Best AI and machine learning courses in 2025</a><div class="date">Posted on February 19, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="online-courses-for-graphic-designers.php">Online courses for graphic designers</a><div class="date">Posted on April 16, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="best-programming-courses-for-kids.php">Best programming courses for kids</a><div class="date">Posted on June 30, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="top-business-and-entrepreneurship-courses-online.php">Top business and entrepreneurship courses online</a><div class="date">Posted on February 28, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="best-online-writing-courses-for-aspiring-authors.php">Best online writing courses for aspiring authors</a><div class="date">Posted on May 09, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="photography-courses-online-top-picks.php">Photography courses online: Top picks</a><div class="date">Posted on March 11, 2025</div></div></div>
+    <div class="post-card"><img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" class="icon"><div class="post-content"><a href="udemy-versus-coursera.php">Udemy vs Coursera: Which is better?</a><div class="date">Posted on June 20, 2025</div></div></div>
+
+  </div>
+
     
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="best-coding-bootcamps-online.php">Best coding bootcamps online</a>
-        <div class="date">Posted on April 30, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="udemy-course-reviews-what-to-expect.php">Udemy course reviews: What to expect</a>
-        <div class="date">Posted on January 28, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="top-linkedin-learning-courses-for-professionals.php">Top LinkedIn Learning courses for professionals</a>
-        <div class="date">Posted on January 30, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="best-affiliate-marketing-course-for-beginners.php">Best affiliate marketing course for beginners</a>
-        <div class="date">Posted on June 20, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="cheapest-online-learning-platforms-compared.php">Cheapest online learning platforms compared</a>
-        <div class="date">Posted on May 27, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="best-ai-and-machine-learning-courses-in-2025.php">Best AI and machine learning courses in 2025</a>
-        <div class="date">Posted on February 19, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="online-courses-for-graphic-designers.php">Online courses for graphic designers</a>
-        <div class="date">Posted on April 16, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="Book Icon" class="icon" />
-      <div class="post-content">
-        <a href="best-programming-courses-for-kids.php">Best programming courses for kids</a>
-        <div class="date">Posted on June 30, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="top-business-and-entrepreneurship-courses-online.php">Top business and entrepreneurship courses online</a>
-        <div class="date">Posted on February 28, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="best-online-writing-courses-for-aspiring-authors.php">Best online writing courses for aspiring authors</a>
-        <div class="date">Posted on May 09, 2025</div>
-      </div>
-    </div>
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="photography-courses-online-top-picks.php">Photography courses online: Top picks</a>
-        <div class="date">Posted on March 11, 2025</div>
-      </div>
-    </div>
-    
-    <!-- The rest continues below — too large for one message -->
-    
-    <div class="post-item">
-      <img src="https://www.universite.co.za/posts/images/icon-removebg-preview.png-128x128.png" alt="Logo Icon" class="icon" />
-      <div class="post-content">
-        <a href="udemy-versus-coursera.php">Udemy vs Coursera: Which is better?</a>
-        <div class="date">Posted on June 20, 2025</div>
-      </div>
-    </div>
-  </div><br>
-<?php include_once "footer.php"; ?>
+  </div>
+
+  <br><br>
+  <?php include_once "footer.php"; ?>
+</body>
+</html>
+
