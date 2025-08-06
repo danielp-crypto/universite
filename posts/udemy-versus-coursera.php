@@ -136,6 +136,36 @@
         font-size: 0.9rem;
       }
     }
+    .responsive-table {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #ddd; /* Optional: adds boundary on scroll */
+}
+
+.responsive-table table {
+  width: 100%;
+  min-width: 600px; /* Makes it scroll when screen is narrow */
+  border-collapse: collapse;
+}
+
+.responsive-table th,
+.responsive-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.responsive-table th {
+  background: #007bff;
+  color: white;
+}
+
+.responsive-table tr:nth-child(even) {
+  background: #f2f2f2;
+}
+
   </style>
 </head>
 

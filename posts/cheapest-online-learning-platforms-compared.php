@@ -135,6 +135,36 @@
         padding: 1.5rem;
       }
     }
+    .responsive-table {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #ddd; /* Optional: adds boundary on scroll */
+}
+
+.responsive-table table {
+  width: 100%;
+  min-width: 600px; /* Makes it scroll when screen is narrow */
+  border-collapse: collapse;
+}
+
+.responsive-table th,
+.responsive-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.responsive-table th {
+  background: #007bff;
+  color: white;
+}
+
+.responsive-table tr:nth-child(even) {
+  background: #f2f2f2;
+}
+
   </style>
 </head>
 
@@ -151,7 +181,7 @@
     <p>We’ve compared the most popular and budget-friendly platforms to help you choose the best one for your goals and your wallet.</p>
 
     <h2>💸 Top 5 Affordable Online Learning Platforms</h2>
-
+    <div class="responsive-table">
     <table>
       <thead>
         <tr>
@@ -188,7 +218,7 @@
         </tr>
       </tbody>
     </table>
-
+</div>
     <h2>🎯 How to Choose the Right Platform</h2>
     <ul>
       <li><strong>Skillshare</strong> is best for creatives (design, writing, photography).</li>
