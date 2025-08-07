@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   </style>
 </head>
-<body style="background-color: #f2f4f8;">
+<body style="background-color: #f2f4f8;font-family: 'Poppins', sans-serif;">
   <?php include_once "nav.php"; ?><br><br>
   <div class="signup-container">
     <h2>Sign Up with Google or Apple</h2>
