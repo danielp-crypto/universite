@@ -31,6 +31,8 @@ $count = $notifStmt->fetchColumn();
 // Search and pagination
 $myCourse = isset($_GET['myCourse']) ? trim($_GET['myCourse']) : '';
 $selectedInstitution = isset($_GET['institution']) ? trim($_GET['institution']) : '';
+$selectedQualification = isset($_GET['qualification']) ? trim($_GET['qualification']) : '';
+
 $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $total_records_per_page = 10;
 $offset = ($current_page - 1) * $total_records_per_page;
@@ -61,13 +63,31 @@ if ($location === 'south africa') {
     }
     $safeCourse = $con->real_escape_string($myCourse);
     $institutionFilter = $selectedInstitution ? " AND institution = '" . $con->real_escape_string($selectedInstitution) . "'" : "";
-    $count_sql = "SELECT COUNT(*) AS total FROM sa_courses WHERE programme LIKE '%$safeCourse%'$institutionFilter";
+    $qualificationFilter = "";
+if ($selectedQualification) {
+    $selectedQualification = strtolower($selectedQualification); // normalize
+    switch ($selectedQualification) {
+        case "certificate":
+            $qualificationFilter = " AND LOWER(certification) LIKE '%certificate%'";
+            break;
+        case "diploma":
+            $qualificationFilter = " AND LOWER(certification) LIKE '%diploma%'";
+            break;
+        case "degree": // catch all bachelor-level degrees
+            $qualificationFilter = " AND (LOWER(certification) LIKE '%bachelor%' OR LOWER(certification) LIKE '%degree%')";
+            break;
+    }
+}
+
+
+
+    $count_sql = "SELECT COUNT(*) AS total FROM sa_courses WHERE programme LIKE '%$safeCourse%'$institutionFilter$qualificationFilter";
     $count_result = $con->query($count_sql);
     $total_rows = $count_result->fetch_assoc()['total'];
     $total_pages = max(1, ceil($total_rows / $total_records_per_page));
     $sql = "SELECT class, campus, certification, programme, duration, aps, institution, subjects, date, link
             FROM sa_courses
-            WHERE programme LIKE '%$safeCourse%'$institutionFilter
+            WHERE programme LIKE '%$safeCourse%'$institutionFilter$qualificationFilter
             ORDER BY aps ASC
             LIMIT $offset, $total_records_per_page";
     $result = $con->query($sql);
@@ -158,6 +178,7 @@ function format_adm_conditions($row) {
     }
     return $conditions ? implode(', ', $conditions) : 'N/A';
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -508,6 +529,13 @@ function format_adm_conditions($row) {
     </option>
   <?php endforeach; ?>
 </select>
+<select name="qualification" id="qualificationSelect" class="custom-select">
+  <option value="" <?= !isset($_GET['qualification']) || $_GET['qualification'] === '' ? 'selected' : '' ?>>All Qualifications</option>
+  <option value="Certificate" <?= (isset($_GET['qualification']) && $_GET['qualification'] === 'Certificate') ? 'selected' : '' ?>>Certificate</option>
+  <option value="Diploma" <?= (isset($_GET['qualification']) && $_GET['qualification'] === 'Diploma') ? 'selected' : '' ?>>Diploma</option>
+  <option value="Degree" <?= (isset($_GET['qualification']) && $_GET['qualification'] === 'bachelor') ? 'selected' : '' ?>>Degree</option>
+</select>
+
         <button type="submit" style="padding: 0.75rem 1rem; border-radius: 6px; font-size: 1rem;">Search</button>
       </form>
       <button type="button" id="saveSearchBtn" style="background-color:#374151; color:white;">Save Search</button>
