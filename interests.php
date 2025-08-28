@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insertStmt->execute([$student_id, $option1, $option2, $option3]);
     }
 
-    header("Location: profile.php");
+    header("Location: recommendations.php");
     exit;
 }
 ?>

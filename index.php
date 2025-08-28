@@ -24,7 +24,7 @@
 
 
 
-  <title>Find Online & University Courses for Students | Compare & Enroll</title>
+  <title>Find Online courses & University Courses for Students | Compare & Enroll</title>
   <link rel="stylesheet" href="assets/web/assets/mobirise-icons2/mobirise2.css">
   <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="assets/bootstrap/css/bootstrap-grid.min.css">

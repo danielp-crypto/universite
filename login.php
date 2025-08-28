@@ -173,7 +173,7 @@
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                window.location.href = "profile.php";
+                window.location.href = "recommendations.php";
             } else {
                 alert("Google login failed");
             }
