@@ -55,9 +55,9 @@
         <div class="row justify-content-center">
             <div class="col-12 content-head">
                 <div class="mbr-section-head mb-5">
-                    <h3 class="mbr-section-title mbr-fonts-style align-center mb-0 display-2">
+                    <h1 class="mbr-section-title mbr-fonts-style align-center mb-0 display-2">
                         <strong>Contacts</strong>
-                    </h3>
+                    </h1>
 
                 </div>
             </div>

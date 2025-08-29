@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body style="background-color: #f2f4f8;font-family: 'Poppins', sans-serif;">
   <?php include_once "nav.php"; ?><br><br>
   <div class="signup-container">
-    <h2>Sign Up with Google or Apple</h2>
+    <h1>Sign Up with Google or Apple</h1>
 
     <div class="social-login-buttons">
       <!-- Google Sign-In -->

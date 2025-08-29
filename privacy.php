@@ -59,9 +59,9 @@
             <img src="assets/images/mbr-1811x1920.png" alt="lecture animation">
           </div>
           <div class="card-content-text">
-            <h3 class="card-title mbr-fonts-style mbr-white mt-3 mb-4 display-2">
+            <h1 class="card-title mbr-fonts-style mbr-white mt-3 mb-4 display-2">
             <strong>Privacy Policy</strong>
-          </h3>
+          </h1>
           <p class="mbr-text mbr-fonts-style display-7">Welcome to <strong>Universite</strong>. Your privacy is important to us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services, including our AI-powered chatbot.</p>
 
           <div class="row card-box align-left">

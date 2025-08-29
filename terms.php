@@ -54,9 +54,9 @@
             <img src="assets/images/mbr-1811x1920.png" alt="lecture animation">
           </div>
           <div class="card-content-text">
-            <h3 class="card-title mbr-fonts-style mbr-white mt-3 mb-4 display-2">
+            <h1 class="card-title mbr-fonts-style mbr-white mt-3 mb-4 display-2">
               <strong>Terms of Service</strong>
-            </h3>
+            </h1>
             <p class="mbr-text mbr-fonts-style display-7">
               Welcome to <strong>Universite</strong>. These Terms of Service ("Terms") govern your access to and use of our website, services, and AI-powered tools. By accessing or using Universite, you agree to be bound by these Terms.
             </p>

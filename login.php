@@ -138,7 +138,7 @@
   <section class="container py-5" id="login-section" style="top:80px;">
     <div class="row justify-content-center">
       <div class="col-md-6 col-lg-5">
-    <h2>Login with Google or Apple</h2>
+    <h1>Login with Google or Apple</h1>
 
     <div class="social-login-buttons">
     <!-- Google Sign-In -->
