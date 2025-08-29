@@ -12,7 +12,7 @@
 </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
-  <title>Udemy Course Reviews: What to Expect Before You Buy (2025 Guide) | Universite</title>
+  <title>Udemy Course Reviews: What to Expect (2025 Guide) | Universite</title>
   <meta name="description" content="Are Udemy courses worth it in 2025? We break down what to expect from Udemy classes — real reviews, pricing, quality, and best tips for getting the most out of them.">
   <meta property="og:title" content="Udemy Course Reviews: What to Expect Before You Buy">
   <meta property="og:description" content="Learn how Udemy courses work, what real students say, and whether they're worth it for your goals in 2025.">
