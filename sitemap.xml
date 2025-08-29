@@ -9,288 +9,38 @@
 
 <url>
   <loc>https://universite.co.za/</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
+  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
   <priority>1.00</priority>
 </url>
 <url>
   <loc>https://universite.co.za/index.php</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
+  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://universite.co.za/login.php</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
+  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://universite.co.za/signup.php</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
+  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://universite.co.za/contact.php</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
+  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://universite.co.za/privacy.php</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
+  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://universite.co.za/terms.php</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
+  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
   <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/reset-password.php</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=2</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.51</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=2</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.51</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=2</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.51</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=2</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.51</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=1</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=3</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=1</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=3</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=1</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=3</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=1</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=3</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=4</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.33</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=4</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.33</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=4</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.33</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=4</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.33</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=5</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.26</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=5</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.26</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=5</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.26</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=5</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.26</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=6</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.21</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=6</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.21</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=6</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.21</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=6</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.21</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=7</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.17</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=7</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.17</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=7</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.17</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=7</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.17</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=8</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.13</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=8</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.13</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=8</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.13</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=8</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.13</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=9</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.11</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=9</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.11</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=9</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.11</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=9</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.11</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=10</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.09</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=10</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.09</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=10</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.09</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=10</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.09</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=textbooks&amp;page=11</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.07</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=stationery&amp;page=11</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.07</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=laptop&amp;page=11</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.07</priority>
-</url>
-<url>
-  <loc>https://universite.co.za/marketplace.php?search=furniture&amp;page=11</loc>
-  <lastmod>2025-07-05T20:45:55+00:00</lastmod>
-  <priority>0.07</priority>
 </url>
 
 

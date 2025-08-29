@@ -7,7 +7,7 @@ echo ('
   <div class="container">
     <div class="navbar-brand">
       <span class="navbar-logo">
-        <a href="index.php">
+        <a href="https://www.universite.co.za/index.php">
           <img src="https://www.universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" style="height: 5rem;">
         </a>
       </span>
