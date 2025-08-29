@@ -12,7 +12,7 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Find Online & University Courses for Students | Compare & Enroll</title>
+  <title>Blog | Universite – Course Reviews & Comparisons</title>
   <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
 <!-- Mobirise & Bootstrap CSS -->
 <link rel="stylesheet" href="https://www.universite.co.za/assets/web/assets/mobirise-icons2/mobirise2.css">

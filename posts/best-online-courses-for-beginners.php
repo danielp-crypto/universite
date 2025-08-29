@@ -16,13 +16,13 @@
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <link rel="shortcut icon" href="https://www.universite.co.za/assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
-  <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
+  <meta name="description" content="Discover the top beginner-friendly online courses in 2025. Compare platforms like Coursera, Udemy, and edX to find the perfect starting point.">
   <meta property="og:title" content="Find Online & University Courses for Students">
   <meta property="og:description" content="Browse both online courses and in-person college programs. Discover the best course for your goals and enroll with confidence.">
   <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
   <meta property="og:url" content="https://universite.co.za">
   <meta property="og:type" content="website">
-  <title>Best Online Courses for Beginners in 2025 | Universite</title>
+  <title>Best Online Courses for Beginners (2025) | Universite</title>
   
   <!-- Mobirise & Bootstrap CSS -->
   <link rel="stylesheet" href="https://www.universite.co.za/assets/web/assets/mobirise-icons2/mobirise2.css">

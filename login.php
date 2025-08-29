@@ -15,13 +15,13 @@
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
-  <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
+  <meta name="description" content="Sign in to Universite to compare online and university courses, track your favorites, and get personalized recommendations.">
   <meta property="og:title" content="Find Online & University Courses for Students">
   <meta property="og:description" content="Browse both online courses and in-person college programs. Discover the best course for your goals and enroll with confidence.">
   <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
   <meta property="og:url" content="https://universite.co.za">
   <meta property="og:type" content="website">
-    <title>OAuth Login</title>
+    <title>Login | Universite – Access Your Course Dashboard</title>
     <link rel="stylesheet" href="assets/web/assets/mobirise-icons2/mobirise2.css">
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap-grid.min.css">
