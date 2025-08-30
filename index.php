@@ -10,14 +10,8 @@
 <link rel="alternate" href="https://universite.co.za/" hreflang="en" />
 <link rel="alternate" href="https://universite.co.za/" hreflang="x-default" />
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
-  <script>
-   window.dataLayer = window.dataLayer || [];
-   function gtag(){dataLayer.push(arguments);}
-   gtag('js', new Date());
-
-   gtag('config', 'G-YTT2QHLQC7');
-  </script>
+  <script src="assets/js/index.min.js"></script>
+  <script src="assets/js/index.min.js"></script>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">

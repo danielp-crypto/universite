@@ -29,13 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <title>Manual Course Entry</title>
-  <style>
-    body { font-family: Arial; margin: 40px; }
-    form { border: 1px solid #ccc; padding: 20px; max-width: 600px; }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    input, textarea { width: 100%; padding: 8px; margin-top: 4px; }
-    .msg { color: green; margin-top: 10px; }
-  </style>
+  <link rel="stylesheet" href="assets/css/course-admin.min.css">
 </head>
 <body>
   <h2>Enter Course into SA Courses Table</h2>

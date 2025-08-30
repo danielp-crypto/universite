@@ -30,14 +30,8 @@ $result = $data_stmt->fetchAll();
   <html  >
   <head>
     <!-- Google tag (gtag.js) -->
-   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
-   <script>
-     window.dataLayer = window.dataLayer || [];
-     function gtag(){dataLayer.push(arguments);}
-     gtag('js', new Date());
-
-     gtag('config', 'G-YTT2QHLQC7');
-   </script> 
+   <script src="assets/js/explore.min.js"></script>
+   <script src="assets/js/explore.min.js"></script> 
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
@@ -74,103 +68,7 @@ $result = $data_stmt->fetchAll();
     <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc"><link rel="stylesheet" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <style>
-        body {
-            font-family: "Segoe UI", sans-serif;
-            margin: 0;
-            padding: 0 1rem;
-            background-color: #f9f9f9;
-        }
-        h2 {
-            margin-top: 1rem;
-        }
-        form {
-            margin: 1rem 0;
-            display: flex;
-            gap: 0.5rem;
-        }
-        input[type="text"] {
-            padding: 0.5rem;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            padding: 0.5rem 1rem;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .cards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .card {
-            background: white;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            flex: 1 1 calc(50% - 1rem);
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .card:hover {
-            box-shadow: 0 8px 24px rgba(37,99,235,0.16);
-            transform: translateY(-4px) scale(1.03);
-        }
-
-        .card h3 {
-            margin: 0;
-            color: #333;
-        }
-
-        .card p {
-            margin: 0.3rem 0;
-            font-size: 0.95rem;
-        }
-
-        .card a {
-            margin-top: 0.5rem;
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .pagination {
-            margin: 2rem 0;
-            text-align: center;
-        }
-
-        .pagination a, .pagination strong {
-            margin: 0 4px;
-            padding: 6px 12px;
-            text-decoration: none;
-            border-radius: 4px;
-            background: #e9e9e9;
-            color: #333;
-        }
-
-        .pagination strong {
-            background: #007bff;
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .card {
-                flex: 1 1 100%;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/explore.min.css">
 </head>
 <body>
 <?php include_once "nav.php"; ?>

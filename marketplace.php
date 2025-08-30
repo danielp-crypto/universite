@@ -2,14 +2,8 @@
 <html  >
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
-  <script>
-   window.dataLayer = window.dataLayer || [];
-   function gtag(){dataLayer.push(arguments);}
-   gtag('js', new Date());
-
-   gtag('config', 'G-YTT2QHLQC7');
-  </script> 
+  <script src="assets/js/marketplace.min.js"></script>
+  <script src="assets/js/marketplace.min.js"></script> 
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
@@ -46,116 +40,7 @@
   <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc"><link rel="stylesheet" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc" type="text/css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f8f9fa;
-    }
-    .container-custom {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-    }
-    h1, h2 {
-      text-align: center;
-    }
-    form {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    form input[type="text"] {
-      flex: 1;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    form button {
-      padding: 10px 20px;
-      background-color: #007BFF;
-      border: none;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .category-button {
-      padding: 10px 15px;
-      margin: 5px;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .category-button:hover {
-      background-color: #0056b3;
-    }
-    .products {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    .product {
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      padding: 15px;
-      text-align: center;
-      background: #fff;
-    }
-    .product img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 4px;
-    }
-    .product-title {
-      margin: 10px 0;
-      font-size: 16px;
-      font-weight: 600;
-    }
-    .product-link {
-      color: #007BFF;
-      text-decoration: none;
-      font-size: 14px;
-    }
-    @media (max-width: 768px) {
-  form {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  form input[type="text"],
-  form button {
-    width: 100%;
-  }
-
-  .category-button {
-    display: block;
-    width: 100%;
-    margin: 8px 0;
-    text-align: center;
-  }
-
-  .products {
-    grid-template-columns: 1fr; /* single column on small screens */
-  }
-
-  .container-custom {
-    padding: 15px;
-    margin: 20px 10px;
-  }
-
-  h1, h2 {
-    font-size: 1.5rem;
-  }
-}
-
-  </style>
+  <link rel="stylesheet" href="assets/css/marketplace.min.css">
 
 </head>
 <body>

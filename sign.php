@@ -2,14 +2,8 @@
 <html  >
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
-  <script>
-   window.dataLayer = window.dataLayer || [];
-   function gtag(){dataLayer.push(arguments);}
-   gtag('js', new Date());
-
-   gtag('config', 'G-YTT2QHLQC7');
-  </script>
+  <script src="assets/js/sign.min.js"></script>
+  <script src="assets/js/sign.min.js"></script>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
@@ -47,32 +41,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- Google & Apple SDKs -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+  <script src="assets/js/sign.min.js"></script>
+  <script src="assets/js/sign.min.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 100px;
-    }
-    h2 {
-      margin-bottom: 30px;
-    }
-    .social-login-buttons {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .g_id_signin,
-    #appleid-signin {
-      max-width: 280px;
-    }
-  </style>
+  <link rel="stylesheet" href="assets/css/sign.min.css">
 </head>
 <body>
 <?php include_once "nav.php"; ?><br><br>
@@ -96,53 +68,5 @@
     </div>
   </div>
 
-  <script>
-    // Google Login Handler
-    function handleGoogleLogin(response) {
-      fetch("log.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "google_id_token=" + response.credential
-      })
-      .then(res => res.json())
-      .then(data => {
-  if (data.status === 'success') {
-    if (data.user_type === 'new') {
-      window.location.href = "studentinfo.php";
-    } else {
-       window.location.href = "profile.php";
-    }
-  } else {
-    alert("Google sign-up failed");
-  }
-});
-
-    }
-
-    // Apple Login Setup
-    AppleID.auth.init({
-      clientId: "YOUR_APPLE_CLIENT_ID",
-      scope: "name email",
-      redirectURI: "https://yourdomain.com/signup.php",
-      usePopup: true
-    });
-
-    document.getElementById('appleid-signin').addEventListener('click', () => {
-      AppleID.auth.signIn().then(response => {
-        fetch("log.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: "apple_identity_token=" + response.authorization.id_token
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'success') {
-            window.location.href = "studentinfo.php";
-          } else {
-            alert("Apple sign-up failed");
-          }
-        });
-      });
-    });
-  </script>
+  <script src="assets/js/sign.min.js"></script>
 <?php include_once "footer.php"; ?>

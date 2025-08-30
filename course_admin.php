@@ -47,31 +47,12 @@ $conn->close();
 <html>
 <head>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-YTT2QHLQC7');
-</script>
+<script src="assets/js/course_admin.min.js"></script>
+<script src="assets/js/course_admin.min.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0" http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <title>admin</title>
 
-<style>
-table{
-    border: 0px solid black;width:100%;
-}
-th {
-    color:black;border-top-style: none;border-bottom-style: none; border-left-style: none; border-right-style: none;background-color:navy;color:white;height:80px;
-}
-tr, td{color:black;border: 1px solid black;height:40px;
- 
-}
-div{
-   overflow-x:auto;
-}
-</style>
+<link rel="stylesheet" href="assets/css/course_admin.min.css">
 <form method="get" action="comprehensive.php" enctype="text/plain">
 <div class="navbar">
 
