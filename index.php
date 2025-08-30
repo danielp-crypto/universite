@@ -1,6 +1,14 @@
 <!DOCTYPE html>
-<html  >
+<html lang="en">
+
 <head>
+	<!-- Canonical URL -->
+	<link rel="canonical" href="https://universite.co.za/" />
+
+<!-- Hreflang tags -->
+<link rel="alternate" href="https://universite.co.za/" hreflang="en-za" />
+<link rel="alternate" href="https://universite.co.za/" hreflang="en" />
+<link rel="alternate" href="https://universite.co.za/" hreflang="x-default" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTT2QHLQC7"></script>
   <script>
