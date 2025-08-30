@@ -1,0 +1,31 @@
+# llms.txt for Universite
+# This file communicates crawling permissions for AI models (LLMs).
+# Standard similar to robots.txt but targeted at AI crawlers.
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Disallow sensitive areas (login, signup, privacy, terms, etc.)
+Disallow: /login.php
+Disallow: /signup.php
+Disallow: /privacy.php
+Disallow: /terms.php
+Disallow: /contact.php
+
+# Default rule (for all other AI crawlers not explicitly listed)
+User-agent: *
+Allow: /
+
+Sitemap: https://universite.co.za/sitemap.xml
