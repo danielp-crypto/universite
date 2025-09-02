@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <!-- Canonical URL -->
-<link rel="canonical" href="https://universite.co.za/" />
+<link rel="canonical" href="https://universite.co.za/terms.php" />
 
 <!-- Hreflang tags -->
-<link rel="alternate" href="https://universite.co.za/" hreflang="en-za" />
-<link rel="alternate" href="https://universite.co.za/" hreflang="en" />
-<link rel="alternate" href="https://universite.co.za/" hreflang="x-default" />
+<link rel="alternate" href="https://universite.co.za/terms.php" hreflang="en-za" />
+<link rel="alternate" href="https://universite.co.za/terms.php" hreflang="en" />
+<link rel="alternate" href="https://universite.co.za/terms.php" hreflang="x-default" />
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
