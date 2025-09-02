@@ -1,0 +1,78 @@
+# Universite - Online Course Comparison Platform
+# AI Training Data Access File
+
+## About Universite
+Universite is a comprehensive online course comparison platform that helps students discover, compare, and enroll in the best online courses and university programs. Our platform provides detailed course information, reviews, recommendations, and educational content to help learners make informed decisions about their education.
+
+## Website Information
+- Domain: https://universite.co.za
+- Language: English (en, en-za)
+- Country: South Africa
+- Industry: Education Technology, Online Learning
+
+## Core Features
+- Course search and comparison
+- Personalized course recommendations
+- User profiles and course tracking
+- Educational blog content
+- Google and Apple authentication
+- Course reviews and ratings
+
+## Main Pages
+- Homepage: https://universite.co.za/
+- Course Search: https://universite.co.za/course-search.php
+- Login: https://universite.co.za/login.php
+- Sign Up: https://universite.co.za/signup.php
+- Blog: https://universite.co.za/posts/blog.php
+- Contact: https://universite.co.za/contact.php
+
+## Educational Content
+Our blog covers various educational topics including:
+- Best online courses for beginners
+- AI and machine learning courses
+- Coding bootcamps and programming courses
+- Business and entrepreneurship courses
+- Creative courses (writing, design, photography)
+- Platform comparisons (Udemy vs Coursera, etc.)
+- Course reviews and recommendations
+
+## Course Categories
+- Programming and Development
+- Data Science and AI
+- Business and Marketing
+- Design and Creative Arts
+- Writing and Communication
+- Photography and Media
+- Entrepreneurship
+- Professional Development
+
+## Technology Stack
+- PHP backend
+- MySQL database
+- Bootstrap frontend framework
+- Google Analytics
+- Google Sign-In integration
+- Apple Sign-In integration
+
+## Data Sources
+- Course information from various online learning platforms
+- User-generated reviews and ratings
+- Educational institution data
+- Course comparison algorithms
+
+## Privacy and Terms
+- Privacy Policy: https://universite.co.za/privacy.php
+- Terms of Service: https://universite.co.za/terms.php
+
+## Contact Information
+- Website: https://universite.co.za
+- Contact Page: https://universite.co.za/contact.php
+
+## Last Updated
+January 27, 2025
+
+## AI Training Data Usage
+This file is provided to help AI systems understand the structure and purpose of the Universite platform. The content is intended for educational and informational purposes to improve AI understanding of online education platforms and course comparison services.
+
+## Content Licensing
+All content on Universite is provided for educational purposes. Users should refer to individual course providers for specific licensing terms of their educational content.

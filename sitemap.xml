@@ -4,44 +4,215 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
+<!-- Updated sitemap for Universite - Course Comparison Platform -->
 
-
+<!-- Main Pages -->
 <url>
   <loc>https://universite.co.za/</loc>
-  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>weekly</changefreq>
   <priority>1.00</priority>
 </url>
+
 <url>
   <loc>https://universite.co.za/index.php</loc>
-  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
-  <priority>0.80</priority>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.90</priority>
 </url>
+
+<!-- Authentication Pages -->
 <url>
   <loc>https://universite.co.za/login.php</loc>
-  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
-  <priority>0.80</priority>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.70</priority>
 </url>
+
 <url>
   <loc>https://universite.co.za/signup.php</loc>
-  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
-  <priority>0.80</priority>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.70</priority>
 </url>
+
+<!-- Course Search and Discovery -->
 <url>
-  <loc>https://universite.co.za/contact.php</loc>
-  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
-  <priority>0.80</priority>
+  <loc>https://universite.co.za/course-search.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>daily</changefreq>
+  <priority>0.90</priority>
 </url>
+
 <url>
-  <loc>https://universite.co.za/privacy.php</loc>
-  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
-  <priority>0.80</priority>
+  <loc>https://universite.co.za/explore.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>daily</changefreq>
+  <priority>0.85</priority>
 </url>
+
 <url>
-  <loc>https://universite.co.za/terms.php</loc>
-  <lastmod>2025-08-29T19:13:16+00:00</lastmod>
+  <loc>https://universite.co.za/recommendations.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>daily</changefreq>
+  <priority>0.85</priority>
+</url>
+
+<!-- User Dashboard Pages -->
+<url>
+  <loc>https://universite.co.za/profile.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.60</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/studentinfo.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.60</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/mycourses.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.60</priority>
+</url>
+
+<!-- Blog and Content -->
+<url>
+  <loc>https://universite.co.za/posts/blog.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>weekly</changefreq>
   <priority>0.80</priority>
 </url>
 
+<url>
+  <loc>https://universite.co.za/posts/best-online-courses-for-beginners.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/udemy-versus-coursera.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/best-ai-and-machine-learning-courses-in-2025.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/best-coding-bootcamps-online.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/best-affiliate-marketing-course-for-beginners.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/best-online-writing-courses-for-aspiring-authors.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/best-programming-courses-for-kids.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/cheapest-online-learning-platforms-compared.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/coursera-plus-review-is-it-worth-the-money.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/is-skillshare-worth-it-in-2025.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/online-courses-for-graphic-designers.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/photography-courses-online-top-picks.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/top-business-and-entrepreneurship-courses-online.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/top-linkedin-learning-courses-for-professionals.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/posts/udemy-course-reviews-what-to-expect.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.75</priority>
+</url>
+
+<!-- Legal and Support Pages -->
+<url>
+  <loc>https://universite.co.za/contact.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.60</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/privacy.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>yearly</changefreq>
+  <priority>0.30</priority>
+</url>
+
+<url>
+  <loc>https://universite.co.za/terms.php</loc>
+  <lastmod>2025-01-27T10:00:00+00:00</lastmod>
+  <changefreq>yearly</changefreq>
+  <priority>0.30</priority>
+</url>
 
 </urlset>
