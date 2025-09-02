@@ -12,8 +12,21 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="canonical" href="https://universite.co.za/posts/blog.php">
   <title>Blog | Universite – Course Reviews & Comparisons</title>
-  <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
+  <meta name="description" content="Explore course reviews, comparisons, and guides to online and university learning on the Universite blog.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Universite">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Universite">
+  <meta property="og:title" content="Blog | Universite – Course Reviews & Comparisons">
+  <meta property="og:description" content="Read expert roundups, platform comparisons, and beginner-friendly course lists.">
+  <meta property="og:url" content="https://universite.co.za/posts/blog.php">
+  <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Blog | Universite – Course Reviews & Comparisons">
+  <meta name="twitter:description" content="Course reviews, comparisons, and learning guides.">
+  <meta name="twitter:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
 <!-- Mobirise & Bootstrap CSS -->
 <link rel="stylesheet" href="https://www.universite.co.za/assets/web/assets/mobirise-icons2/mobirise2.css">
   <link rel="stylesheet" href="https://www.universite.co.za/assets/bootstrap/css/bootstrap.min.css">
@@ -141,6 +154,23 @@
       }
     }
   </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "url": "https://universite.co.za/posts/blog.php",
+    "name": "Universite Blog",
+    "description": "Course reviews, comparisons, and guides to online learning.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Universite",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png"
+      }
+    }
+  }
+  </script>
 </head>
 
 <body>

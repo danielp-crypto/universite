@@ -36,18 +36,46 @@ $interests = $interestStmt->fetch();
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
+  <link rel="canonical" href="https://universite.co.za/template.php">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="Explore top online courses and university programs in one place. Compare options, read reviews, and enroll in the best course for your goals.">
+  <meta name="author" content="Universite">
   <meta property="og:title" content="Find Online & University Courses for Students">
   <meta property="og:description" content="Browse both online courses and in-person college programs. Discover the best course for your goals and enroll with confidence.">
   <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
   <meta property="og:url" content="https://universite.co.za">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Universite">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Find Online & University Courses for Students">
+  <meta name="twitter:description" content="Browse both online courses and in-person college programs. Discover the best course for your goals and enroll with confidence.">
+  <meta name="twitter:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">
 
 
 
   <title>Find Online & University Courses for Students | Compare & Enroll</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/template.min.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://universite.co.za/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Dashboard",
+        "item": "https://universite.co.za/template.php"
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <div class="container">
