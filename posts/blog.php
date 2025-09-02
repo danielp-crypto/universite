@@ -144,6 +144,67 @@
       color: #888;
     }
 
+    .intro-content {
+      background: #fff;
+      padding: 3rem 0;
+      margin: 2rem 0;
+    }
+
+    .intro-content h2 {
+      color: #2c3e50;
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
+    }
+
+    .intro-content h3 {
+      color: #34495e;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .intro-content h4 {
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+
+    .intro-content p {
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+      color: #555;
+    }
+
+    .content-categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .category-item {
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #007bff;
+    }
+
+    .category-item h4 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .category-item i {
+      color: #007bff;
+    }
+
+    .category-item p {
+      margin-bottom: 0;
+      font-size: 0.95rem;
+    }
+
     @media (max-width: 600px) {
       header h1 {
         font-size: 2rem;
@@ -151,6 +212,18 @@
 
       header p {
         font-size: 1rem;
+      }
+
+      .intro-content {
+        padding: 2rem 0;
+      }
+
+      .intro-content h2 {
+        font-size: 1.5rem;
+      }
+
+      .content-categories {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -177,9 +250,49 @@
   <?php include_once "nav.php"; ?>
 
   <header>
-    <h1>Blog</h1>
-    <p>Top articles about online learning, affiliate picks, and course reviews</p>
+    <h1>Universite Blog</h1>
+    <p>Your comprehensive guide to online learning, course reviews, and educational insights</p>
   </header>
+
+  <div class="intro-content">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h2>Welcome to the Universite Blog</h2>
+          <p>At Universite, we believe that education is the key to unlocking your potential and achieving your career goals. Our blog serves as your comprehensive resource for navigating the world of online learning, discovering the best courses, and making informed decisions about your educational journey.</p>
+          
+          <h3>What You'll Find Here</h3>
+          <div class="content-categories">
+            <div class="category-item">
+              <h4><i class="fas fa-star"></i> Course Reviews & Comparisons</h4>
+              <p>In-depth reviews of popular online courses and platforms, helping you understand what to expect before you enroll. We compare features, pricing, content quality, and student outcomes to give you the full picture.</p>
+            </div>
+            <div class="category-item">
+              <h4><i class="fas fa-graduation-cap"></i> Learning Guides & Tips</h4>
+              <p>Expert advice on how to succeed in online learning, study techniques, time management, and strategies for staying motivated throughout your educational journey.</p>
+            </div>
+            <div class="category-item">
+              <h4><i class="fas fa-briefcase"></i> Career Development</h4>
+              <p>Insights into emerging career paths, in-demand skills, and how specific courses can help you advance in your chosen field or transition to a new career.</p>
+            </div>
+            <div class="category-item">
+              <h4><i class="fas fa-chart-line"></i> Industry Trends</h4>
+              <p>Analysis of the latest trends in online education, new learning technologies, and how the educational landscape is evolving to meet the needs of modern learners.</p>
+            </div>
+          </div>
+
+          <h3>Our Editorial Standards</h3>
+          <p>All our content is carefully researched and written by education experts and industry professionals. We maintain strict editorial standards to ensure that our reviews and recommendations are honest, unbiased, and genuinely helpful to our readers. While we may earn commissions from course providers when you enroll through our links, this never influences our editorial content or recommendations.</p>
+
+          <h3>How We Review Courses</h3>
+          <p>Our course review process is thorough and objective. We evaluate courses based on multiple criteria including content quality, instructor expertise, student feedback, value for money, and learning outcomes. We also consider factors like course structure, accessibility, and support resources to provide you with a comprehensive assessment.</p>
+
+          <h3>Stay Updated</h3>
+          <p>Education is constantly evolving, and so is our content. We regularly update our reviews and articles to reflect the latest changes in course offerings, pricing, and platform features. Bookmark our blog and check back regularly for the most current information and insights.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="post-list">
     
