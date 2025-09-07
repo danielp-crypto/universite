@@ -111,7 +111,8 @@
 			<div class="col-12 col-lg col-md-12">
 				<div class="text-wrapper align-left">
 					<h1 class="mbr-section-title mbr-fonts-style mb-4 display-2"><strong>Empowering learners to discover their path</strong></h1>
-					<p class="mbr-text mbr-fonts-style mb-4 display-7">Universite is a platform designed to help students find the right courses tailored to their interests and career goals. Our mission is to simplify the search and connect learners with high-quality educational content.</p>
+					<p class="mbr-text mbr-fonts-style mb-4 display-7">Universite is a comprehensive platform designed to help students find the right courses tailored to their interests and career goals. Our mission is to simplify the search process and connect learners with high-quality educational content from top universities and online providers worldwide.</p>
+					<p class="mbr-text mbr-fonts-style mb-4 display-7">Whether you're a recent graduate exploring career options, a working professional seeking to upskill, or someone looking to change career paths entirely, Universite provides the tools and insights you need to make informed educational decisions. Our platform combines advanced search capabilities with AI-powered recommendations to match you with courses that align with your aspirations and learning style.</p>
 
 				</div>
 			</div>
@@ -162,7 +163,7 @@
                         <span class="num mbr-fonts-style display-2"><strong>Smart Course Search</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Search and filter courses by subject, level, provider, and more.</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Search and filter courses by subject, level, provider, duration, cost, and learning format. Our advanced search engine helps you find exactly what you're looking for from our extensive database of over 10,000 courses.</p>
                 </div>
             </div>
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
@@ -171,7 +172,7 @@
                         <span class="num mbr-fonts-style display-2"><strong>AI Career Guidance & Support</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Ask questions and get instant help from our AI.</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Ask questions and get instant help from our AI-powered career guidance system. Get personalized advice on career paths, course selection, and skill development tailored to your goals and interests.</p>
                 </div>
             </div>
             <div class="item features-without-image col-12 col-md-6 col-lg-4 item-mb">
@@ -180,13 +181,25 @@
                         <span class="num mbr-fonts-style display-2"><strong>Personalized Recommendations</strong></span>
                     </div>
 
-                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Get course recommendations tailored to you.</p>
+                    <p class="mbr-text card-text mbr-fonts-style mb-0 display-7">Get course recommendations tailored to your learning preferences, career goals, and skill level. Our algorithm learns from your interactions to suggest the most relevant courses for your educational journey.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
+<section data-bs-version="5.1" class="content1 cid-uOzBenefits01" id="benefits01-x">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-8">
+                <h2 class="mbr-section-title mbr-fonts-style mb-4 display-2"><strong>Why Choose Universite?</strong></h2>
+                <p class="mbr-text mbr-fonts-style mb-3 display-7">Our platform stands out in the crowded online education space by focusing on what matters most to learners: finding the right course for their specific needs and goals. We understand that choosing the right educational path can be overwhelming, which is why we've built tools that make the process intuitive and efficient.</p>
+                <p class="mbr-text mbr-fonts-style mb-3 display-7">Unlike other course aggregators, we don't just list courses—we provide context, comparisons, and guidance. Our team of education experts regularly reviews and updates course information to ensure accuracy and relevance. We also maintain partnerships with leading educational institutions and online learning platforms to bring you the most current and comprehensive course offerings.</p>
+                <p class="mbr-text mbr-fonts-style mb-4 display-7">Whether you're looking to advance in your current career, switch to a new field, or simply pursue a personal interest, Universite provides the resources and support you need to make confident educational decisions that align with your long-term goals.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
  <section data-bs-version="5.1" class="people02 cid-uOz0kV7uO5" id="people02-9">
 
