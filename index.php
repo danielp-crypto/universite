@@ -119,6 +119,24 @@
 	</div>
 </section>
 
+<section data-bs-version="5.1" class="content1 cid-uOzAbout01" id="about01-x">
+
+
+
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-8">
+                <h2 class="mbr-section-title mbr-fonts-style mb-4 display-2"><strong>About Universite</strong></h2>
+                <p class="mbr-text mbr-fonts-style mb-3 display-7">Universite makes discovering education opportunities simple, transparent, and accessible. Whether you are comparing university degrees, short online certificates, or industry micro-credentials, we help you make confident decisions with side-by-side comparisons, detailed course information, and direct application links.</p>
+                <p class="mbr-text mbr-fonts-style mb-3 display-7">Our platform aggregates courses from trusted institutions and leading providers, so you spend less time searching and more time learning. With clear costs, durations, entry requirements, and outcomes, Universite empowers you to align your studies with your goals and budget.</p>
+                <p class="mbr-text mbr-fonts-style mb-3 display-7">From high-school graduates exploring their first steps to professionals upskilling for new opportunities, learners use Universite to discover personalized pathways. You can save programs, compare options, and track your interests as you plan your journey.</p>
+                <p class="mbr-text mbr-fonts-style mb-4 display-7">We also provide guidance on admissions and career planning. Using plain‑language explanations and real examples, we demystify qualifications, credits, and prerequisites so you can focus on choosing the right course for you.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section data-bs-version="5.1" class="features023 cid-uOyQ3b4iBI" id="features023-5">
 
 
