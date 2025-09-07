@@ -1,0 +1,12 @@
+# Enable PHP processing
+AddType application/x-httpd-php .php
+
+# Ensure PHP files are processed
+<Files "*.php">
+    SetHandler application/x-httpd-php
+</Files>
+
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
