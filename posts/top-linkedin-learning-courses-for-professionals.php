@@ -13,7 +13,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Top LinkedIn Learning Courses for Professionals (2025 Update) | Universite</title>
-  <meta name="description" content="Discover the best LinkedIn Learning courses for career growth, productivity, and upskilling in 2025. Curated picks for professionals in business, tech, and leadership.">
+  <meta name="description" content="Best LinkedIn Learning courses for professionals in 2025. Career growth, productivity & upskilling picks for business, tech & leadership roles.">
   <meta property="og:title" content="Top LinkedIn Learning Courses for Professionals (2025)">
   <meta property="og:description" content="Explore the most recommended LinkedIn Learning courses for boosting your career in 2025.">
   <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">

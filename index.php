@@ -24,7 +24,7 @@
   <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#1d9bd4">
-  <meta name="description" content="Discover and compare the best online courses and university programs in 2025. Get AI-powered course recommendations, career guidance, and easy enrollment. Free course comparison platform for students.">
+  <meta name="description" content="Best online courses & university programs 2025. AI-powered recommendations, career guidance & easy enrollment. Free course comparison platform.">
   <meta name="author" content="Universite">
   <meta property="og:title" content="Best Online Courses & University Programs 2025 | Universite">
   <meta property="og:description" content="Compare thousands of online courses and university programs. Get AI-powered recommendations and career guidance. Free course discovery platform for students.">

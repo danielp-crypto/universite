@@ -13,7 +13,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>Top Business and Entrepreneurship Courses Online in 2025 | Universite</title>
-  <meta name="description" content="Discover the best online business and entrepreneurship courses to grow your skills in 2025. Learn from top instructors on Coursera, Udemy, LinkedIn Learning, and more.">
+  <meta name="description" content="Best online business & entrepreneurship courses 2025. Learn from top instructors on Coursera, Udemy, LinkedIn Learning. Grow your business skills.">
   <meta property="og:title" content="Top Business and Entrepreneurship Courses Online in 2025">
   <meta property="og:description" content="Explore leading business courses on strategy, startups, marketing, and leadership. Perfect for aspiring entrepreneurs and professionals.">
   <meta property="og:image" content="https://www.universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">

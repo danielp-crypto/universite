@@ -16,7 +16,7 @@
   <meta name="generator" content="Mobirise v6.0.1, mobirise.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <link rel="shortcut icon" href="https://www.universite.co.za/assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
-  <meta name="description" content="Discover the best online courses for beginners in 2025. Compare top platforms like Coursera, Udemy, edX, and Skillshare. Find beginner-friendly courses with expert reviews and recommendations.">
+  <meta name="description" content="Best online courses for beginners in 2025. Compare Coursera, Udemy, edX & Skillshare. Expert reviews & recommendations for new learners.">
   <meta property="og:title" content="Best Online Courses for Beginners 2025 | Universite">
   <meta property="og:description" content="Discover the best beginner-friendly online courses in 2025. Compare top platforms and find the perfect starting point for your learning journey.">
   <meta property="og:image" content="https://universite.co.za/assets/images/new-logo-white-removebg-preview.png-1-192x192.png">

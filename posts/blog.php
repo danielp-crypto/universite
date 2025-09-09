@@ -14,7 +14,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="canonical" href="https://universite.co.za/posts/blog.php">
   <title>Blog | Universite – Course Reviews & Comparisons</title>
-  <meta name="description" content="Explore course reviews, comparisons, and guides to online and university learning on the Universite blog.">
+  <meta name="description" content="Course reviews, comparisons & guides for online & university learning. Expert insights on education platforms & career development.">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Universite">
   <meta property="og:type" content="website">
