@@ -7,7 +7,7 @@ echo ('
   <div class="container">
     <div class="navbar-brand">
       <span class="navbar-logo">
-        <a href="index.php">
+        <a href="https://www.universite.co.za/">
           <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" style="height: 5rem;">
         </a>
       </span>
@@ -23,7 +23,7 @@ echo ('
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav nav-dropdown" data-app-modern-menu="true"><li class="nav-item">
-          <a class="nav-link link text-white text-primary display-4" href="index.php">Home</a>
+          <a class="nav-link link text-white text-primary display-4" href="https://www.universite.co.za/">Home</a>
         </li>
         <li class="nav-item">
           <a class="nav-link link text-white text-primary display-4" href="https://www.universite.co.za/posts/blog.php">Blog</a>
