@@ -119,7 +119,7 @@
 		</div>
 	</div>
 </section>
-
+<br>
 <section data-bs-version="5.1" class="content1 cid-uOzAbout01" id="about01-x">
 
 
@@ -187,7 +187,7 @@
         </div>
     </div>
 </section>
-
+<br>
 <section data-bs-version="5.1" class="content1 cid-uOzBenefits01" id="benefits01-x">
     <div class="container">
         <div class="row justify-content-center">
@@ -226,7 +226,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-4">
-                    <a href="posts/blog.php" class="btn btn-primary">View All Course Reviews</a>
+                    <a href="posts/blog.php" class="btn btn-primary display-7">View All Course Reviews</a>
                 </div>
             </div>
         </div>
