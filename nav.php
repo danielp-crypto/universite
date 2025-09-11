@@ -1,5 +1,3 @@
-<?php
-echo ('
 <section data-bs-version="5.1" class="menu menu2 cid-uOxXG5eD6m" once="menu" id="menu02-0">
 
 
@@ -35,6 +33,3 @@ echo ('
   </div>
 </nav>
 </section>
-
-');
-?>
