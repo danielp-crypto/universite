@@ -25,14 +25,14 @@
   <title>Best Online Courses for Beginners 2025 | Top Learning Platforms Compared | Universite</title>
   
   <!-- Mobirise & Bootstrap CSS -->
-  <link rel="stylesheet" href="https://www.universite.co.za/assets/web/assets/mobirise-icons2/mobirise2.css">
+  <link rel="stylesheet" href="https://www.universite.co.za/assets/web/assets/mobirise-icons2/mobirise2.min.css">
   <link rel="stylesheet" href="https://www.universite.co.za/assets/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://www.universite.co.za/assets/bootstrap/css/bootstrap-grid.min.css">
   <link rel="stylesheet" href="https://www.universite.co.za/assets/bootstrap/css/bootstrap-reboot.min.css">
-  <link rel="stylesheet" href="https://www.universite.co.za/assets/animatecss/animate.css">
-  <link rel="stylesheet" href="https://www.universite.co.za/assets/dropdown/css/style.css">
-  <link rel="stylesheet" href="https://www.universite.co.za/assets/socicon/css/styles.css">
-  <link rel="stylesheet" href="https://www.universite.co.za/assets/theme/css/style.css">
+  <link rel="stylesheet" href="https://www.universite.co.za/assets/animatecss/animate.min.css">
+  <link rel="stylesheet" href="https://www.universite.co.za/assets/dropdown/css/style.min.css">
+  <link rel="stylesheet" href="https://www.universite.co.za/assets/socicon/css/styles.min.css">
+  <link rel="stylesheet" href="https://www.universite.co.za/assets/theme/css/style.min.css">
   <link rel="preload" href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap"></noscript>
   <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:100,200,300,400,500,600,700,800,900,100i,200i,300i,400i,500i,600i,700i,800i,900i&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -43,7 +43,7 @@
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,500,600,700,800,900,200i,300i,400i,500i,600i,700i,800i,900i&display=swap"></noscript>
   <link rel="preload" href="https://fonts.googleapis.com/css?family=Quicksand:300,400,500,600,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Quicksand:300,400,500,600,700&display=swap"></noscript>
-  <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc"><link rel="stylesheet" href="assets/mobirise/css/mbr-additional.css?v=mjqTLc" type="text/css">
+  <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.min.css?v=mjqTLc"><link rel="stylesheet" href="assets/mobirise/css/mbr-additional.min.css?v=mjqTLc" type="text/css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- Google Fonts -->
