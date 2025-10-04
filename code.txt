@@ -143,7 +143,7 @@ AWS:chmod 400 Bleedingedge.pem
 ssh -i D:/universite/Bleedingedge.pem ec2-user@16.16.227.97   4rw<7_)gegqL  NewSecurePassword123! google auth:435540089443-31su8foduuhrbgkhtktjbjqis3g1cvsm.apps.googleusercontent.com oAuth:435540089443-trqmc9iaq288jmvkb9t304tsmrlshikg.apps.googleusercontent.com
 
 chmod 400 ~\universite\Bleedingedge.pem
-chmod 400 f:/universite/Bleedingedge.pem
+chmod 400 D:/universite/Bleedingedge.pem
 cd /home/ec2-user/venv
 https://www.python.org/ftp/python/3.10.13/Python-3.10.13.tgz
 cd your-uploaded-folder
