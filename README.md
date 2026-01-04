@@ -1,2 +1,2 @@
 # universite
- University and College course searching tool
+ AI powered learning assistant
