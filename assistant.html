@@ -6,216 +6,30 @@
   <meta name="description" content="AI Learning Assistant - Your intelligent study companion. Get instant answers, personalized learning paths, and 24/7 AI tutoring support.">
   <title>AI Learning Assistant | Universite</title>
   <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
   <style>
     * {
-      margin: 0;
-      padding: 0;
       box-sizing: border-box;
-    }
-
-    :root {
-      --primary: #6366f1;
-      --primary-dark: #4f46e5;
-      --primary-light: #818cf8;
-      --secondary: #8b5cf6;
-      --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --bg-light: #f8fafc;
-      --text-primary: #1e293b;
-      --text-secondary: #64748b;
-      --border-color: #e2e8f0;
-      --user-bubble: #6366f1;
-      --bot-bubble: #f1f5f9;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-light);
-      color: var(--text-primary);
-      line-height: 1.6;
-      overflow-x: hidden;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Header */
-    .header {
-      background: white;
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem;
-      box-shadow: var(--shadow-sm);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .header-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-container img {
-      height: 40px;
-      width: 40px;
-      object-fit: contain;
-    }
-
-    .logo-text {
-      font-size: 1.25rem;
-      font-weight: 700;
-      background: var(--bg-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn-icon {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 1.25rem;
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-icon:hover {
-      background: var(--bg-light);
-      color: var(--text-primary);
-    }
-
-    /* Main Container */
-    .main-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      max-width: 1200px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 1rem;
-      overflow: hidden;
-    }
-
-    /* Chat Container */
-    .chat-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: white;
-      border-radius: 1.5rem;
-      box-shadow: var(--shadow-lg);
-      overflow: hidden;
-      max-height: calc(100vh - 140px);
-      min-height: 500px;
-    }
-
-    /* Chat Header */
-    .chat-header {
-      padding: 1.25rem 1.5rem;
-      background: var(--bg-gradient);
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .chat-header-icon {
-      width: 40px;
-      height: 40px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-    }
-
-    .chat-header-info h2 {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 0.125rem;
-    }
-
-    .chat-header-info p {
-      font-size: 0.875rem;
-      opacity: 0.9;
-    }
-
-    .status-indicator {
-      width: 8px;
-      height: 8px;
-      background: #10b981;
-      border-radius: 50%;
-      margin-left: auto;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    /* Messages Area */
-    .messages-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.5rem;
-      background: var(--bg-light);
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .messages-area::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .messages-area::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .messages-area::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-      border-radius: 3px;
-    }
-
-    .messages-area::-webkit-scrollbar-thumb:hover {
-      background: var(--text-secondary);
-    }
-
-    .message {
-      display: flex;
-      gap: 0.75rem;
-      animation: fadeIn 0.3s ease-in;
+      margin: 0;
+      padding: 0;
     }
 
     @keyframes fadeIn {
@@ -229,94 +43,11 @@
       }
     }
 
-    .message.user {
-      flex-direction: row-reverse;
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-in;
     }
 
-    .message-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.875rem;
-      flex-shrink: 0;
-    }
-
-    .message.user .message-avatar {
-      background: var(--bg-gradient);
-      color: white;
-    }
-
-    .message.bot .message-avatar {
-      background: var(--bot-bubble);
-      color: var(--primary);
-      border: 2px solid var(--border-color);
-    }
-
-    .message-bubble {
-      max-width: 75%;
-      padding: 0.875rem 1.125rem;
-      border-radius: 1.25rem;
-      word-wrap: break-word;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .message.user .message-bubble {
-      background: var(--bg-gradient);
-      color: white;
-      border-bottom-right-radius: 0.375rem;
-    }
-
-    .message.bot .message-bubble {
-      background: white;
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
-      border-bottom-left-radius: 0.375rem;
-    }
-
-    .message-time {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      margin-top: 0.375rem;
-      padding: 0 0.5rem;
-    }
-
-    .message.user .message-time {
-      text-align: right;
-    }
-
-    /* Typing Indicator */
-    .typing-indicator {
-      display: flex;
-      gap: 0.5rem;
-      padding: 0.875rem 1.125rem;
-      background: white;
-      border: 1px solid var(--border-color);
-      border-radius: 1.25rem;
-      border-bottom-left-radius: 0.375rem;
-      width: fit-content;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .typing-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--text-secondary);
-      border-radius: 50%;
-      animation: typing 1.4s infinite;
-    }
-
-    .typing-dot:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .typing-dot:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
-    @keyframes typing {
+    @keyframes typingDot {
       0%, 60%, 100% {
         transform: translateY(0);
         opacity: 0.7;
@@ -327,441 +58,244 @@
       }
     }
 
-    /* Welcome Message */
-    .welcome-message {
-      text-align: center;
-      padding: 2rem 1rem;
-      color: var(--text-secondary);
+    .animate-typing-dot {
+      animation: typingDot 1.4s infinite;
     }
 
-    .welcome-icon {
-      width: 64px;
-      height: 64px;
-      margin: 0 auto 1rem;
-      background: var(--bg-gradient);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.75rem;
-      color: white;
+    .animation-delay-200 {
+      animation-delay: 0.2s;
     }
 
-    .welcome-message h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
+    .animation-delay-400 {
+      animation-delay: 0.4s;
     }
 
-    .welcome-message p {
-      font-size: 0.875rem;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-
-    /* Suggestions */
-    .suggestions {
-      padding: 1rem 1.5rem;
-      background: white;
-      border-top: 1px solid var(--border-color);
-      overflow-x: auto;
-      display: flex;
-      gap: 0.75rem;
-    }
-
-    .suggestions::-webkit-scrollbar {
-      height: 4px;
-    }
-
-    .suggestions::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-      border-radius: 2px;
-    }
-
-    .suggestion-chip {
-      padding: 0.625rem 1rem;
-      background: var(--bg-light);
-      border: 1px solid var(--border-color);
-      border-radius: 2rem;
-      font-size: 0.875rem;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-      font-weight: 500;
-    }
-
-    .suggestion-chip:hover {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-
-    /* Input Area */
-    .input-area {
-      padding: 1.25rem 1.5rem;
-      background: white;
-      border-top: 1px solid var(--border-color);
-    }
-
-    .input-container {
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-end;
-      max-width: 100%;
-    }
-
-    .input-wrapper {
-      flex: 1;
-      position: relative;
-      display: flex;
-      align-items: center;
-      background: var(--bg-light);
-      border: 2px solid var(--border-color);
-      border-radius: 1.5rem;
-      padding: 0.75rem 1rem;
-      transition: all 0.2s;
-    }
-
-    .input-wrapper:focus-within {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-
-    #chat-input {
-      flex: 1;
-      border: none;
-      background: none;
-      outline: none;
-      font-size: 0.9375rem;
-      color: var(--text-primary);
-      font-family: inherit;
-      resize: none;
-      max-height: 120px;
-      min-height: 24px;
-      line-height: 1.5;
-    }
-
-    #chat-input::placeholder {
-      color: var(--text-secondary);
-    }
-
-    .input-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .btn-attach {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      padding: 0.375rem;
-      border-radius: 0.5rem;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-attach:hover {
-      background: var(--border-color);
-      color: var(--text-primary);
-    }
-
-    .btn-send {
-      background: var(--bg-gradient);
-      border: none;
-      color: white;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      transition: all 0.2s;
-      box-shadow: var(--shadow-md);
-    }
-
-    .btn-send:hover:not(:disabled) {
-      transform: scale(1.05);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .btn-send:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .footer-note {
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      margin-top: 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    /* Mobile Optimizations */
-    @media (max-width: 768px) {
-      .header {
-        padding: 0.875rem 1rem;
-      }
-
-      .logo-text {
-        font-size: 1.125rem;
-      }
-
-      .main-container {
-        padding: 0.75rem;
-      }
-
-      .chat-container {
-        border-radius: 1rem;
-        max-height: calc(100vh - 120px);
-        min-height: 400px;
-      }
-
-      .chat-header {
-        padding: 1rem;
-      }
-
-      .chat-header-info h2 {
-        font-size: 1rem;
-      }
-
-      .chat-header-info p {
-        font-size: 0.8125rem;
-      }
-
-      .messages-area {
-        padding: 1rem;
-      }
-
-      .message-bubble {
-        max-width: 85%;
-        padding: 0.75rem 1rem;
-        font-size: 0.9375rem;
-      }
-
-      .suggestions {
-        padding: 0.875rem 1rem;
-      }
-
-      .suggestion-chip {
-        font-size: 0.8125rem;
-        padding: 0.5rem 0.875rem;
-      }
-
-      .input-area {
-        padding: 1rem;
-      }
-
-      .welcome-message {
-        padding: 1.5rem 0.75rem;
-      }
-
-      .welcome-icon {
-        width: 56px;
-        height: 56px;
-        font-size: 1.5rem;
-      }
-
-      .welcome-message h3 {
-        font-size: 1.125rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .logo-container img {
-        height: 32px;
-        width: 32px;
-      }
-
-      .logo-text {
-        font-size: 1rem;
-      }
-
-      .message-bubble {
-        max-width: 90%;
-      }
-
-      .input-wrapper {
-        padding: 0.625rem 0.875rem;
-      }
-
-      #chat-input {
-        font-size: 0.875rem;
-      }
-    }
-
-    /* Loading State */
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
-    /* Code Blocks */
-    .message-bubble pre {
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 0.5rem;
-      padding: 0.75rem;
-      overflow-x: auto;
-      margin: 0.5rem 0;
-      font-size: 0.875rem;
-    }
-
-    .message.user .message-bubble pre {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .message-bubble code {
-      background: rgba(0, 0, 0, 0.05);
-      padding: 0.125rem 0.375rem;
-      border-radius: 0.25rem;
-      font-size: 0.875em;
-      font-family: 'Courier New', monospace;
-    }
-
-    .message.user .message-bubble code {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    /* Links */
-    .message-bubble a {
-      color: var(--primary);
-      text-decoration: underline;
-    }
-
-    .message.user .message-bubble a {
-      color: rgba(255, 255, 255, 0.9);
+    .safe-area-inset-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 0);
     }
   </style>
 </head>
-<body>
-  <!-- Header -->
-  <header class="header">
-    <div class="header-content">
-      <div class="logo-container">
-        <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite Logo">
-        <span class="logo-text">AI Learning Assistant</span>
-      </div>
-      <div class="header-actions">
-        <button class="btn-icon" title="Settings" aria-label="Settings">
-          <i class="fas fa-cog"></i>
-        </button>
-        <button class="btn-icon" title="New Chat" aria-label="New Chat" onclick="clearChat()">
-          <i class="fas fa-plus"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="main-container">
-    <div class="chat-container">
-      <!-- Chat Header -->
-      <div class="chat-header">
-        <div class="chat-header-icon">
-          <i class="fas fa-robot"></i>
-        </div>
-        <div class="chat-header-info">
-          <h2>AI Learning Assistant</h2>
-          <p>Your intelligent study companion</p>
-        </div>
-        <div class="status-indicator"></div>
+<body class="bg-slate-50 h-screen overflow-hidden">
+  <div id="app" class="flex flex-col h-screen">
+    <!-- Main Container -->
+    <div class="flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+      <!-- Header -->
+      <div class="bg-white border-b border-slate-200 px-4 py-3 md:py-4">
+        <h1 class="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          AI Learning Assistant
+        </h1>
       </div>
 
       <!-- Messages Area -->
-      <div class="messages-area" id="messages-area">
-        <div class="welcome-message" id="welcome-message">
-          <div class="welcome-icon">
-            <i class="fas fa-graduation-cap"></i>
+      <div id="messages-area" class="flex-1 overflow-y-auto px-4 py-6 space-y-4 pb-24">
+        <!-- Welcome Message -->
+        <div id="welcome-message" class="flex flex-col items-center justify-center h-full text-center px-4">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v7" />
+            </svg>
           </div>
-          <h3>Welcome! How can I help you learn today?</h3>
-          <p>Ask me anything about your studies, homework, or learning goals. I'm here to help 24/7!</p>
+          <h2 class="text-xl md:text-2xl font-semibold text-slate-800 mb-2">
+            Welcome! How can I help you learn today?
+          </h2>
+          <p class="text-sm md:text-base text-slate-600 max-w-md">
+            Ask me anything about your studies, homework, or learning goals. I'm here to help 24/7!
+          </p>
         </div>
       </div>
+    </div>
 
-      <!-- Suggestions -->
-      <div class="suggestions" id="suggestions">
-        <button class="suggestion-chip" data-prompt="Help me understand calculus concepts">Help with Calculus</button>
-        <button class="suggestion-chip" data-prompt="Create a study plan for my upcoming exams">Study Plan</button>
-        <button class="suggestion-chip" data-prompt="Explain the scientific method">Science Help</button>
-        <button class="suggestion-chip" data-prompt="How do I write a great essay?">Essay Writing</button>
-      </div>
-
-      <!-- Input Area -->
-      <div class="input-area">
-        <div class="input-container">
-          <div class="input-wrapper">
-            <textarea 
-              id="chat-input" 
+    <!-- Input Area -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-4 md:py-5 safe-area-inset-bottom">
+      <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+        <div class="flex gap-3 items-end">
+          <div class="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100">
+            <textarea
+              id="chat-input"
               placeholder="Ask me anything about your studies..."
               rows="1"
-              autocomplete="off"
+              class="flex-1 border-none bg-transparent outline-none resize-none text-sm md:text-base text-slate-800 placeholder-slate-500 min-h-[24px] max-h-[120px] leading-relaxed"
+              style="font-family: inherit;"
             ></textarea>
-            <div class="input-actions">
-              <button class="btn-attach" title="Attach file" aria-label="Attach file">
-                <i class="fas fa-paperclip"></i>
-              </button>
-            </div>
           </div>
-          <button class="btn-send" id="send-btn" type="submit" aria-label="Send message">
-            <i class="fas fa-paper-plane"></i>
+          <button
+            id="send-btn"
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-200"
+            aria-label="Send message"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
           </button>
         </div>
-        <div class="footer-note">
-          <i class="fas fa-shield-alt"></i>
+        <div class="flex items-center justify-center gap-2 mt-3 text-xs text-slate-500">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.834 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
           <span>AI may make mistakes. Always verify important information.</span>
         </div>
       </div>
     </div>
-  </main>
+  </div>
 
   <script>
     const messagesArea = document.getElementById('messages-area');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
     const welcomeMessage = document.getElementById('welcome-message');
-    const suggestions = document.getElementById('suggestions');
 
-    // Auto-resize textarea
-    chatInput.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-    });
+    // Mock AI responses
+    const educationalResponses = {
+      calculus: [
+        "Let's break down calculus step by step. The fundamental concept is understanding limits, which form the foundation for both derivatives and integrals.\n\n**Key concepts to remember:**\n\n• **Derivatives** measure the rate of change - think of it as finding the slope of a curve at any point\n• **Integrals** measure accumulation - like finding the area under a curve\n• The **Fundamental Theorem of Calculus** connects these two concepts beautifully\n\nA common exam question asks you to find the derivative of a function. Remember: the derivative of xⁿ is nxⁿ⁻¹. Practice with polynomial functions first, then move to trigonometric and exponential functions.",
+        "Calculus often shows up on exams in these forms:\n\n1. **Finding derivatives** - Start by identifying the function type (polynomial, trigonometric, exponential)\n2. **Finding integrals** - Use substitution or integration by parts\n3. **Applications** - Optimization problems, related rates, area/volume calculations\n\n**Study tip:** Work through practice problems daily. Calculus is about pattern recognition - the more problems you solve, the faster you'll identify which technique to use.",
+      ],
+      study: [
+        "Creating an effective study plan requires understanding your learning style and time constraints.\n\n**Step 1: Assess your current situation**\n• List all upcoming exams and their dates\n• Identify which subjects need the most attention\n• Calculate how many study hours you have available\n\n**Step 2: Prioritize**\n• Focus on subjects where you're struggling most\n• Allocate more time to high-weight exams\n• Don't forget to schedule breaks - your brain needs rest\n\n**Step 3: Use active recall**\n• Instead of just re-reading notes, test yourself\n• Create flashcards for key concepts\n• Explain concepts out loud as if teaching someone else\n\n**Step 4: Review regularly**\n• Spaced repetition helps long-term retention\n• Review material within 24 hours, then again after a few days\n• Mix up subjects to avoid fatigue\n\nRemember: Quality over quantity. One focused hour is better than three distracted hours.",
+        "Here's a proven study schedule template:\n\n**Week 1-2: Foundation**\n• Review all course materials\n• Identify knowledge gaps\n• Create summary notes\n\n**Week 3-4: Practice**\n• Work through practice problems\n• Take practice exams under timed conditions\n• Focus on weak areas\n\n**Week 5: Final Review**\n• Quick review of all material\n• Focus on formulas and key concepts\n• Get adequate sleep before exams\n\n**Daily routine:**\n• Morning: Tackle hardest subjects when you're freshest\n• Afternoon: Review and practice\n• Evening: Light review or planning for next day\n\nAdjust this based on your personal schedule and energy levels.",
+      ],
+      science: [
+        "The scientific method is a systematic approach to understanding the natural world. Here's how it works:\n\n**1. Observation**\n• Notice something interesting or puzzling\n• Ask questions about what you observe\n\n**2. Research**\n• Learn what's already known about the topic\n• Review existing studies and theories\n\n**3. Hypothesis**\n• Form a testable explanation for your observation\n• Make a prediction based on your hypothesis\n\n**4. Experiment**\n• Design a controlled experiment\n• Test your hypothesis systematically\n• Collect data carefully\n\n**5. Analysis**\n• Examine your results\n• Look for patterns or relationships\n• Determine if your hypothesis was supported\n\n**6. Conclusion**\n• Draw conclusions from your data\n• Share your findings\n• Consider what new questions arise\n\n**Important:** The scientific method is iterative - results often lead to new questions and refined hypotheses. This process is what drives scientific progress.",
+        "When applying the scientific method, remember these key principles:\n\n**Controlled variables** - Keep everything constant except what you're testing\n**Replication** - Repeat experiments to verify results\n**Peer review** - Share findings for others to evaluate\n**Objectivity** - Base conclusions on evidence, not assumptions\n\n**Common exam questions:**\n• Identify the hypothesis in a given scenario\n• Design an experiment to test a hypothesis\n• Identify independent and dependent variables\n• Explain why controls are necessary\n\nPractice by analyzing real scientific studies - this helps you understand how the method applies in practice.",
+      ],
+      essay: [
+        "Writing a great essay requires structure, clarity, and strong arguments. Here's a proven approach:\n\n**1. Understanding the prompt**\n• Read carefully and identify key requirements\n• Determine what type of essay is needed (argumentative, analytical, narrative)\n• Note any specific formatting or length requirements\n\n**2. Planning and research**\n• Brainstorm ideas and create an outline\n• Research credible sources to support your points\n• Organize your main arguments logically\n\n**3. Structure**\n• **Introduction:** Hook the reader, provide context, state your thesis\n• **Body paragraphs:** Each should have a topic sentence, evidence, analysis, and transition\n• **Conclusion:** Summarize key points, restate thesis, leave reader with something to think about\n\n**4. Writing tips**\n• Use clear, concise language\n• Support claims with evidence\n• Cite sources properly\n• Vary sentence structure\n• Write in active voice when possible\n\n**5. Revision**\n• Check for clarity and flow\n• Ensure each paragraph supports your thesis\n• Proofread for grammar and spelling\n• Verify citations are correct\n\nRemember: A strong essay answers the prompt completely and demonstrates critical thinking.",
+        "Here are common essay mistakes to avoid:\n\n**Weak thesis statements** - Your thesis should be specific and arguable, not just a statement of fact\n**Lack of evidence** - Every claim needs support from credible sources\n**Poor organization** - Ideas should flow logically from one to the next\n**Weak conclusions** - Don't just summarize; show why your argument matters\n**Grammar errors** - Proofread carefully, or use tools to help\n\n**Time management for exams:**\n• Spend 10-15% of time planning\n• Use 70-75% for writing\n• Reserve 15-20% for revision\n\n**Pro tip:** Start with your strongest argument, but save your second-strongest for last - this creates a strong opening and memorable ending.",
+      ],
+      default: [
+        "I'd be happy to help you with that! Let me break this down in a way that's easy to understand.\n\nWhen studying, it's important to:\n\n• **Understand the fundamentals first** - Build a strong foundation before moving to advanced topics\n• **Practice actively** - Don't just read; test yourself and apply what you've learned\n• **Make connections** - Relate new information to what you already know\n• **Review regularly** - Spaced repetition helps with long-term retention\n\nIs there a specific aspect of this topic you'd like me to explain in more detail? I can provide examples, break down complex concepts, or help you create a study plan.",
+        "Great question! This is a topic that often comes up in exams, so let's make sure you understand it well.\n\n**Key points to remember:**\n\n1. Start with the basics - make sure you understand the fundamental concepts\n2. Look for patterns - many academic topics follow logical patterns\n3. Practice application - understanding theory is important, but applying it is crucial\n4. Ask questions - if something doesn't make sense, dig deeper\n\nWould you like me to:\n• Explain this concept step-by-step?\n• Provide examples or practice problems?\n• Help you create a study strategy?\n• Break down how this might appear on an exam?\n\nLet me know what would be most helpful for your learning!",
+      ],
+    };
 
-    // Send message on button click
-    sendBtn.addEventListener('click', sendMessage);
-
-    // Send message on Enter (Shift+Enter for new line)
-    chatInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
+    function getResponseCategory(message) {
+      const lowerMessage = message.toLowerCase();
+      
+      if (lowerMessage.includes("calculus") || lowerMessage.includes("derivative") || lowerMessage.includes("integral")) {
+        return "calculus";
       }
-    });
+      if (lowerMessage.includes("study plan") || lowerMessage.includes("study schedule") || lowerMessage.includes("exam preparation")) {
+        return "study";
+      }
+      if (lowerMessage.includes("scientific method") || lowerMessage.includes("science") || lowerMessage.includes("experiment")) {
+        return "science";
+      }
+      if (lowerMessage.includes("essay") || lowerMessage.includes("writing") || lowerMessage.includes("paper")) {
+        return "essay";
+      }
+      
+      return "default";
+    }
 
-    // Suggestion chips
-    document.querySelectorAll('.suggestion-chip').forEach(chip => {
-      chip.addEventListener('click', function() {
-        const prompt = this.getAttribute('data-prompt');
-        chatInput.value = prompt;
-        chatInput.focus();
-        sendMessage();
+    async function getMockAiResponse(userMessage) {
+      // Simulate network delay (800-1500ms)
+      const delay = Math.floor(Math.random() * 700) + 800;
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      const category = getResponseCategory(userMessage);
+      const responses = educationalResponses[category] || educationalResponses.default;
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      
+      return randomResponse;
+    }
+
+    function formatTime(timestamp) {
+      return new Date(timestamp).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
       });
-    });
+    }
 
-    function sendMessage() {
+    function formatContent(content) {
+      return content
+        .split("\n")
+        .map((line, index, array) => {
+          if (line.trim() === "" && index < array.length - 1) {
+            return "<br>";
+          }
+          return line;
+        })
+        .join("\n")
+        .replace(/\n/g, "<br>");
+    }
+
+    function addMessage(content, sender) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `flex gap-3 ${sender === 'user' ? 'flex-row-reverse' : ''} animate-fade-in`;
+
+      const avatar = document.createElement('div');
+      avatar.className = `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+        sender === 'user'
+          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+          : 'bg-slate-100 text-indigo-600 border-2 border-slate-200'
+      }`;
+
+      if (sender === 'user') {
+        avatar.innerHTML = `
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+          </svg>
+        `;
+      } else {
+        avatar.innerHTML = `
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+          </svg>
+        `;
+      }
+
+      const bubbleContainer = document.createElement('div');
+      bubbleContainer.className = `flex flex-col ${sender === 'user' ? 'items-end' : 'items-start'} max-w-[75%] md:max-w-[80%]`;
+
+      const bubble = document.createElement('div');
+      bubble.className = `px-3.5 py-3.5 rounded-2xl shadow-sm text-sm md:text-base leading-relaxed ${
+        sender === 'user'
+          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-md'
+          : 'bg-white text-slate-800 border border-slate-200 rounded-bl-md'
+      }`;
+
+      if (content === '') {
+        // Loading indicator
+        bubble.innerHTML = `
+          <div class="flex gap-1.5">
+            <div class="w-2 h-2 bg-slate-400 rounded-full animate-typing-dot"></div>
+            <div class="w-2 h-2 bg-slate-400 rounded-full animate-typing-dot animation-delay-200"></div>
+            <div class="w-2 h-2 bg-slate-400 rounded-full animate-typing-dot animation-delay-400"></div>
+          </div>
+        `;
+        bubbleContainer.appendChild(bubble);
+      } else {
+        bubble.innerHTML = `<div class="whitespace-pre-wrap break-words">${formatContent(content)}</div>`;
+        bubbleContainer.appendChild(bubble);
+
+        const time = document.createElement('div');
+        time.className = `text-xs text-slate-500 mt-1.5 px-2 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+        time.textContent = formatTime(Date.now());
+        bubbleContainer.appendChild(time);
+      }
+
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(bubbleContainer);
+      messagesArea.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    function showTypingIndicator() {
+      addMessage('', 'bot');
+    }
+
+    function scrollToBottom() {
+      messagesArea.scrollTo({
+        top: messagesArea.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    async function sendMessage() {
       const message = chatInput.value.trim();
       if (!message) return;
 
@@ -784,137 +318,51 @@
       // Show typing indicator
       showTypingIndicator();
 
-      // Send to API
-      fetch('http://localhost:5000/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: message })
-      })
-      .then(response => response.json())
-      .then(data => {
-        hideTypingIndicator();
-        const reply = data.reply || 'Sorry, I encountered an error. Please try again.';
-        addMessage(reply, 'bot');
+      try {
+        const aiResponse = await getMockAiResponse(message);
         
-        // Enable input
-        chatInput.disabled = false;
-        sendBtn.disabled = false;
-        chatInput.focus();
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        hideTypingIndicator();
-        addMessage('Sorry, I couldn\'t connect to the server. Please check your connection and try again.', 'bot');
-        
-        // Enable input
-        chatInput.disabled = false;
-        sendBtn.disabled = false;
-        chatInput.focus();
-      });
-    }
-
-    function addMessage(text, sender) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${sender}`;
-
-      const avatar = document.createElement('div');
-      avatar.className = 'message-avatar';
-      avatar.innerHTML = sender === 'user' 
-        ? '<i class="fas fa-user"></i>'
-        : '<i class="fas fa-robot"></i>';
-
-      const bubble = document.createElement('div');
-      bubble.className = 'message-bubble';
-      bubble.innerHTML = formatMessage(text);
-
-      const time = document.createElement('div');
-      time.className = 'message-time';
-      time.textContent = getCurrentTime();
-
-      messageDiv.appendChild(avatar);
-      messageDiv.appendChild(bubble);
-      messageDiv.appendChild(time);
-
-      messagesArea.appendChild(messageDiv);
-      scrollToBottom();
-    }
-
-    function formatMessage(text) {
-      // Enhanced markdown support with link handling
-      let html = text
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>') // Links [text](url)
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold **text**
-        .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic *text*
-        .replace(/`([^`]+)`/g, '<code>$1</code>') // Inline code `code`
-        .replace(/```([\s\S]*?)```/g, '<pre>$1</pre>'); // Code blocks ```code```
-      
-      // Convert line breaks
-      html = html.replace(/\n/g, '<br>');
-      
-      return html;
-    }
-
-    function showTypingIndicator() {
-      const typingDiv = document.createElement('div');
-      typingDiv.className = 'message bot';
-      typingDiv.id = 'typing-indicator';
-      
-      const avatar = document.createElement('div');
-      avatar.className = 'message-avatar';
-      avatar.innerHTML = '<i class="fas fa-robot"></i>';
-
-      const indicator = document.createElement('div');
-      indicator.className = 'typing-indicator';
-      indicator.innerHTML = `
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-      `;
-
-      typingDiv.appendChild(avatar);
-      typingDiv.appendChild(indicator);
-      messagesArea.appendChild(typingDiv);
-      scrollToBottom();
-    }
-
-    function hideTypingIndicator() {
-      const indicator = document.getElementById('typing-indicator');
-      if (indicator) {
-        indicator.remove();
-      }
-    }
-
-    function scrollToBottom() {
-      messagesArea.scrollTo({
-        top: messagesArea.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-
-    function getCurrentTime() {
-      const now = new Date();
-      return now.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      });
-    }
-
-    function clearChat() {
-      if (confirm('Clear all messages and start a new conversation?')) {
-        messagesArea.innerHTML = '';
-        if (welcomeMessage) {
-          welcomeMessage.style.display = 'block';
+        // Remove loading indicator
+        const lastMessage = messagesArea.lastElementChild;
+        if (lastMessage && lastMessage.querySelector('.animate-typing-dot')) {
+          lastMessage.remove();
         }
+        
+        addMessage(aiResponse, 'bot');
+      } catch (error) {
+        // Remove loading indicator
+        const lastMessage = messagesArea.lastElementChild;
+        if (lastMessage && lastMessage.querySelector('.animate-typing-dot')) {
+          lastMessage.remove();
+        }
+        
+        addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+      } finally {
+        // Enable input
+        chatInput.disabled = false;
+        sendBtn.disabled = false;
+        chatInput.focus();
       }
     }
 
+    // Auto-resize textarea
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Send message on button click
+    sendBtn.addEventListener('click', sendMessage);
+
+    // Send message on Enter (Shift+Enter for new line)
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
 
     // Initialize
     chatInput.focus();
   </script>
 </body>
 </html>
-
