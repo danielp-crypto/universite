@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AI Learning Assistant - Your intelligent study companion. Get instant answers, personalized learning paths, and 24/7 AI tutoring support.">
+  <meta name="description" content="AI Learning Assistant - Record lectures, get transcripts, and study with AI">
   <title>AI Learning Assistant | Universite</title>
   <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,6 +70,19 @@
       animation-delay: 0.4s;
     }
 
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .animate-pulse-recording {
+      animation: pulse 2s infinite;
+    }
+
     .safe-area-inset-bottom {
       padding-bottom: env(safe-area-inset-bottom, 0);
     }
@@ -80,10 +93,15 @@
     <!-- Main Container -->
     <div class="flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
       <!-- Header -->
-      <div class="bg-white border-b border-slate-200 px-4 py-3 md:py-4">
+      <div class="bg-white border-b border-slate-200 px-4 py-3 md:py-4 flex items-center justify-between">
         <h1 class="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           AI Learning Assistant
         </h1>
+        <button id="record-btn" class="p-2 text-slate-600 hover:text-indigo-600 transition-colors active:scale-95">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+        </button>
       </div>
 
       <!-- Messages Area -->
@@ -98,23 +116,73 @@
             </svg>
           </div>
           <h2 class="text-xl md:text-2xl font-semibold text-slate-800 mb-2">
-            Welcome! How can I help you learn today?
+            Record a lecture to get started
           </h2>
-          <p class="text-sm md:text-base text-slate-600 max-w-md">
-            Ask me anything about your studies, homework, or learning goals. I'm here to help 24/7!
+          <p class="text-sm md:text-base text-slate-600 max-w-md mb-6">
+            Record or upload a lecture recording to generate transcripts, summaries, and study materials.
           </p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button id="start-record-btn" class="px-6 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-medium shadow-md active:scale-95 transition-transform">
+              Record Lecture
+            </button>
+            <button id="upload-record-btn" class="px-6 py-3 bg-white text-slate-700 border-2 border-slate-200 rounded-xl font-medium active:scale-95 transition-transform">
+              Upload Recording
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recording Overlay -->
+    <div id="recording-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+        <div class="text-center">
+          <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center animate-pulse-recording">
+            <div class="w-12 h-12 rounded-full bg-red-500"></div>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-800 mb-2">Recording</h3>
+          <div id="recording-timer" class="text-2xl font-mono text-slate-700 mb-4">00:00</div>
+          <div class="flex gap-3">
+            <button id="stop-record-btn" class="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-medium active:scale-95 transition-transform">
+              Stop
+            </button>
+            <button id="cancel-record-btn" class="flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processing-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+            <svg class="w-8 h-8 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-800 mb-2">Processing</h3>
+          <p id="processing-text" class="text-slate-600">Generating transcript...</p>
         </div>
       </div>
     </div>
 
     <!-- Input Area -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-4 md:py-5 safe-area-inset-bottom">
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 md:py-4 safe-area-inset-bottom">
       <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
-        <div class="flex gap-3 items-end">
+        <div class="flex gap-2 items-end">
+          <button id="attach-lecture-btn" class="p-2.5 text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 flex-shrink-0" title="Attach lecture">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+          </button>
           <div class="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100">
             <textarea
               id="chat-input"
-              placeholder="Ask me anything about your studies..."
+              placeholder="Ask about your lecture..."
               rows="1"
               class="flex-1 border-none bg-transparent outline-none resize-none text-sm md:text-base text-slate-800 placeholder-slate-500 min-h-[24px] max-h-[120px] leading-relaxed"
               style="font-family: inherit;"
@@ -122,7 +190,7 @@
           </div>
           <button
             id="send-btn"
-            class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-200"
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-200 flex-shrink-0"
             aria-label="Send message"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,75 +198,259 @@
             </svg>
           </button>
         </div>
-        <div class="flex items-center justify-center gap-2 mt-3 text-xs text-slate-500">
-          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.834 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-          </svg>
-          <span>AI may make mistakes. Always verify important information.</span>
-        </div>
       </div>
     </div>
   </div>
 
   <script>
+    // App State
+    const appState = {
+      recordingState: 'idle', // 'idle', 'recording', 'processing', 'processed'
+      currentLecture: null,
+      recordingStartTime: null,
+      recordingTimerInterval: null,
+      messages: [],
+    };
+
     const messagesArea = document.getElementById('messages-area');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
     const welcomeMessage = document.getElementById('welcome-message');
+    const recordBtn = document.getElementById('record-btn');
+    const startRecordBtn = document.getElementById('start-record-btn');
+    const uploadRecordBtn = document.getElementById('upload-record-btn');
+    const recordingOverlay = document.getElementById('recording-overlay');
+    const stopRecordBtn = document.getElementById('stop-record-btn');
+    const cancelRecordBtn = document.getElementById('cancel-record-btn');
+    const processingOverlay = document.getElementById('processing-overlay');
+    const processingText = document.getElementById('processing-text');
+    const recordingTimer = document.getElementById('recording-timer');
+    const attachLectureBtn = document.getElementById('attach-lecture-btn');
 
-    // Mock AI responses
-    const educationalResponses = {
-      calculus: [
-        "Let's break down calculus step by step. The fundamental concept is understanding limits, which form the foundation for both derivatives and integrals.\n\n**Key concepts to remember:**\n\n• **Derivatives** measure the rate of change - think of it as finding the slope of a curve at any point\n• **Integrals** measure accumulation - like finding the area under a curve\n• The **Fundamental Theorem of Calculus** connects these two concepts beautifully\n\nA common exam question asks you to find the derivative of a function. Remember: the derivative of xⁿ is nxⁿ⁻¹. Practice with polynomial functions first, then move to trigonometric and exponential functions.",
-        "Calculus often shows up on exams in these forms:\n\n1. **Finding derivatives** - Start by identifying the function type (polynomial, trigonometric, exponential)\n2. **Finding integrals** - Use substitution or integration by parts\n3. **Applications** - Optimization problems, related rates, area/volume calculations\n\n**Study tip:** Work through practice problems daily. Calculus is about pattern recognition - the more problems you solve, the faster you'll identify which technique to use.",
-      ],
-      study: [
-        "Creating an effective study plan requires understanding your learning style and time constraints.\n\n**Step 1: Assess your current situation**\n• List all upcoming exams and their dates\n• Identify which subjects need the most attention\n• Calculate how many study hours you have available\n\n**Step 2: Prioritize**\n• Focus on subjects where you're struggling most\n• Allocate more time to high-weight exams\n• Don't forget to schedule breaks - your brain needs rest\n\n**Step 3: Use active recall**\n• Instead of just re-reading notes, test yourself\n• Create flashcards for key concepts\n• Explain concepts out loud as if teaching someone else\n\n**Step 4: Review regularly**\n• Spaced repetition helps long-term retention\n• Review material within 24 hours, then again after a few days\n• Mix up subjects to avoid fatigue\n\nRemember: Quality over quantity. One focused hour is better than three distracted hours.",
-        "Here's a proven study schedule template:\n\n**Week 1-2: Foundation**\n• Review all course materials\n• Identify knowledge gaps\n• Create summary notes\n\n**Week 3-4: Practice**\n• Work through practice problems\n• Take practice exams under timed conditions\n• Focus on weak areas\n\n**Week 5: Final Review**\n• Quick review of all material\n• Focus on formulas and key concepts\n• Get adequate sleep before exams\n\n**Daily routine:**\n• Morning: Tackle hardest subjects when you're freshest\n• Afternoon: Review and practice\n• Evening: Light review or planning for next day\n\nAdjust this based on your personal schedule and energy levels.",
-      ],
-      science: [
-        "The scientific method is a systematic approach to understanding the natural world. Here's how it works:\n\n**1. Observation**\n• Notice something interesting or puzzling\n• Ask questions about what you observe\n\n**2. Research**\n• Learn what's already known about the topic\n• Review existing studies and theories\n\n**3. Hypothesis**\n• Form a testable explanation for your observation\n• Make a prediction based on your hypothesis\n\n**4. Experiment**\n• Design a controlled experiment\n• Test your hypothesis systematically\n• Collect data carefully\n\n**5. Analysis**\n• Examine your results\n• Look for patterns or relationships\n• Determine if your hypothesis was supported\n\n**6. Conclusion**\n• Draw conclusions from your data\n• Share your findings\n• Consider what new questions arise\n\n**Important:** The scientific method is iterative - results often lead to new questions and refined hypotheses. This process is what drives scientific progress.",
-        "When applying the scientific method, remember these key principles:\n\n**Controlled variables** - Keep everything constant except what you're testing\n**Replication** - Repeat experiments to verify results\n**Peer review** - Share findings for others to evaluate\n**Objectivity** - Base conclusions on evidence, not assumptions\n\n**Common exam questions:**\n• Identify the hypothesis in a given scenario\n• Design an experiment to test a hypothesis\n• Identify independent and dependent variables\n• Explain why controls are necessary\n\nPractice by analyzing real scientific studies - this helps you understand how the method applies in practice.",
-      ],
-      essay: [
-        "Writing a great essay requires structure, clarity, and strong arguments. Here's a proven approach:\n\n**1. Understanding the prompt**\n• Read carefully and identify key requirements\n• Determine what type of essay is needed (argumentative, analytical, narrative)\n• Note any specific formatting or length requirements\n\n**2. Planning and research**\n• Brainstorm ideas and create an outline\n• Research credible sources to support your points\n• Organize your main arguments logically\n\n**3. Structure**\n• **Introduction:** Hook the reader, provide context, state your thesis\n• **Body paragraphs:** Each should have a topic sentence, evidence, analysis, and transition\n• **Conclusion:** Summarize key points, restate thesis, leave reader with something to think about\n\n**4. Writing tips**\n• Use clear, concise language\n• Support claims with evidence\n• Cite sources properly\n• Vary sentence structure\n• Write in active voice when possible\n\n**5. Revision**\n• Check for clarity and flow\n• Ensure each paragraph supports your thesis\n• Proofread for grammar and spelling\n• Verify citations are correct\n\nRemember: A strong essay answers the prompt completely and demonstrates critical thinking.",
-        "Here are common essay mistakes to avoid:\n\n**Weak thesis statements** - Your thesis should be specific and arguable, not just a statement of fact\n**Lack of evidence** - Every claim needs support from credible sources\n**Poor organization** - Ideas should flow logically from one to the next\n**Weak conclusions** - Don't just summarize; show why your argument matters\n**Grammar errors** - Proofread carefully, or use tools to help\n\n**Time management for exams:**\n• Spend 10-15% of time planning\n• Use 70-75% for writing\n• Reserve 15-20% for revision\n\n**Pro tip:** Start with your strongest argument, but save your second-strongest for last - this creates a strong opening and memorable ending.",
-      ],
-      default: [
-        "I'd be happy to help you with that! Let me break this down in a way that's easy to understand.\n\nWhen studying, it's important to:\n\n• **Understand the fundamentals first** - Build a strong foundation before moving to advanced topics\n• **Practice actively** - Don't just read; test yourself and apply what you've learned\n• **Make connections** - Relate new information to what you already know\n• **Review regularly** - Spaced repetition helps with long-term retention\n\nIs there a specific aspect of this topic you'd like me to explain in more detail? I can provide examples, break down complex concepts, or help you create a study plan.",
-        "Great question! This is a topic that often comes up in exams, so let's make sure you understand it well.\n\n**Key points to remember:**\n\n1. Start with the basics - make sure you understand the fundamental concepts\n2. Look for patterns - many academic topics follow logical patterns\n3. Practice application - understanding theory is important, but applying it is crucial\n4. Ask questions - if something doesn't make sense, dig deeper\n\nWould you like me to:\n• Explain this concept step-by-step?\n• Provide examples or practice problems?\n• Help you create a study strategy?\n• Break down how this might appear on an exam?\n\nLet me know what would be most helpful for your learning!",
-      ],
-    };
-
-    function getResponseCategory(message) {
-      const lowerMessage = message.toLowerCase();
-      
-      if (lowerMessage.includes("calculus") || lowerMessage.includes("derivative") || lowerMessage.includes("integral")) {
-        return "calculus";
-      }
-      if (lowerMessage.includes("study plan") || lowerMessage.includes("study schedule") || lowerMessage.includes("exam preparation")) {
-        return "study";
-      }
-      if (lowerMessage.includes("scientific method") || lowerMessage.includes("science") || lowerMessage.includes("experiment")) {
-        return "science";
-      }
-      if (lowerMessage.includes("essay") || lowerMessage.includes("writing") || lowerMessage.includes("paper")) {
-        return "essay";
-      }
-      
-      return "default";
+    // Placeholder functions
+    function startRecording() {
+      appState.recordingState = 'recording';
+      appState.recordingStartTime = Date.now();
+      recordingOverlay.classList.remove('hidden');
+      startRecordingTimer();
     }
 
-    async function getMockAiResponse(userMessage) {
-      // Simulate network delay (800-1500ms)
+    function stopRecording() {
+      appState.recordingState = 'processing';
+      recordingOverlay.classList.add('hidden');
+      processingOverlay.classList.remove('hidden');
+      stopRecordingTimer();
+      
+      // Simulate processing
+      processRecording();
+    }
+
+    function cancelRecording() {
+      appState.recordingState = 'idle';
+      recordingOverlay.classList.add('hidden');
+      stopRecordingTimer();
+    }
+
+    function startRecordingTimer() {
+      appState.recordingTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - appState.recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        recordingTimer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    function stopRecordingTimer() {
+      if (appState.recordingTimerInterval) {
+        clearInterval(appState.recordingTimerInterval);
+        appState.recordingTimerInterval = null;
+      }
+    }
+
+    async function processRecording() {
+      // Simulate processing stages
+      const stages = [
+        'Generating transcript...',
+        'Extracting key concepts...',
+        'Creating segments...',
+        'Almost done...'
+      ];
+      
+      for (let i = 0; i < stages.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        processingText.textContent = stages[i];
+      }
+
+      // Mock processed lecture data
+      appState.currentLecture = {
+        id: Date.now().toString(),
+        title: 'Introduction to Calculus - Limits and Derivatives',
+        date: new Date().toLocaleDateString(),
+        duration: '45:30',
+        segments: [
+          {
+            id: '1',
+            title: 'Introduction to Limits',
+            startTime: '00:00',
+            concepts: ['limit definition', 'approaching values', 'continuity']
+          },
+          {
+            id: '2',
+            title: 'Derivative Fundamentals',
+            startTime: '15:20',
+            concepts: ['rate of change', 'tangent lines', 'differentiation rules']
+          },
+          {
+            id: '3',
+            title: 'Practical Applications',
+            startTime: '30:45',
+            concepts: ['optimization', 'related rates', 'curve sketching']
+          }
+        ],
+        keyConcepts: [
+          'limits', 'derivatives', 'continuity', 'rate of change', 'optimization'
+        ]
+      };
+
+      appState.recordingState = 'processed';
+      processingOverlay.classList.add('hidden');
+      
+      // Hide welcome message and show lecture summary
+      if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+      }
+      
+      showLectureSummary(appState.currentLecture);
+    }
+
+    function showLectureSummary(lecture) {
+      const summaryDiv = document.createElement('div');
+      summaryDiv.className = 'animate-fade-in mb-4';
+      summaryDiv.innerHTML = `
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-slate-800 mb-1">${lecture.title}</h3>
+              <div class="flex items-center gap-3 text-xs text-slate-500">
+                <span>${lecture.date}</span>
+                <span>•</span>
+                <span>${lecture.duration}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <h4 class="text-sm font-semibold text-slate-700 mb-2">Key Concepts</h4>
+            <div class="flex flex-wrap gap-2">
+              ${lecture.keyConcepts.map(concept => `
+                <button class="concept-chip px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium active:scale-95 transition-transform" data-concept="${concept}">
+                  ${concept}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          
+          <div>
+            <h4 class="text-sm font-semibold text-slate-700 mb-2">Segments</h4>
+            <div class="space-y-2">
+              ${lecture.segments.map(segment => `
+                <button class="segment-item w-full text-left p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors active:scale-[0.98]" data-segment-id="${segment.id}">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm font-medium text-slate-800">${segment.title}</span>
+                    <span class="text-xs text-slate-500">${segment.startTime}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5 mt-1.5">
+                    ${segment.concepts.map(concept => `
+                      <span class="px-2 py-0.5 bg-white text-slate-600 rounded text-xs">${concept}</span>
+                    `).join('')}
+                  </div>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      messagesArea.insertBefore(summaryDiv, messagesArea.firstChild);
+      scrollToBottom();
+      
+      // Add event listeners for concept chips and segments
+      summaryDiv.querySelectorAll('.concept-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const concept = chip.getAttribute('data-concept');
+          chatInput.value = `Explain ${concept} from this lecture`;
+          chatInput.focus();
+        });
+      });
+      
+      summaryDiv.querySelectorAll('.segment-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const segmentId = item.getAttribute('data-segment-id');
+          const segment = lecture.segments.find(s => s.id === segmentId);
+          chatInput.value = `Tell me more about: ${segment.title}`;
+          chatInput.focus();
+        });
+      });
+    }
+
+    function uploadRecording() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'audio/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          appState.recordingState = 'processing';
+          processingOverlay.classList.remove('hidden');
+          processRecording();
+        }
+      };
+      input.click();
+    }
+
+    // Context-aware AI responses
+    async function getContextAwareResponse(userMessage) {
       const delay = Math.floor(Math.random() * 700) + 800;
       await new Promise(resolve => setTimeout(resolve, delay));
       
-      const category = getResponseCategory(userMessage);
-      const responses = educationalResponses[category] || educationalResponses.default;
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      const lowerMessage = userMessage.toLowerCase();
+      const hasLecture = appState.currentLecture !== null;
       
-      return randomResponse;
+      if (!hasLecture) {
+        return "I don't have any lecture content yet. Please record or upload a lecture to get started!";
+      }
+      
+      const lecture = appState.currentLecture;
+      
+      // Context-aware responses based on user query
+      if (lowerMessage.includes('explain') || lowerMessage.includes('what is')) {
+        const conceptMatch = lecture.keyConcepts.find(c => 
+          lowerMessage.includes(c.toLowerCase())
+        );
+        if (conceptMatch) {
+          return `Based on your lecture "${lecture.title}", ${conceptMatch} is a fundamental concept that was discussed. In the context of this lecture, it relates to the broader topics covered in the segments. Would you like me to explain a specific aspect of ${conceptMatch}?`;
+        }
+        return `I can explain concepts from your lecture "${lecture.title}". Which concept or segment would you like me to clarify? You can click on any concept or segment above to ask about it.`;
+      }
+      
+      if (lowerMessage.includes('flashcard') || lowerMessage.includes('flash card')) {
+        return `I can help create flashcards from your lecture "${lecture.title}". Here are some suggested flashcard topics based on the key concepts:\n\n${lecture.keyConcepts.map((c, i) => `${i + 1}. ${c.charAt(0).toUpperCase() + c.slice(1)}`).join('\n')}\n\nWhich concepts would you like me to create flashcards for?`;
+      }
+      
+      if (lowerMessage.includes('exam') || lowerMessage.includes('test') || lowerMessage.includes('quiz')) {
+        return `Based on your lecture "${lecture.title}", here are key topics that are likely to appear on exams:\n\n• **${lecture.segments[0]?.title}** - Focus on the fundamental definitions\n• **${lecture.segments[1]?.title}** - Practice with application problems\n• **${lecture.segments[2]?.title}** - Understand the real-world applications\n\nWould you like me to create practice questions for any specific segment?`;
+      }
+      
+      if (lowerMessage.includes('summary') || lowerMessage.includes('summarize')) {
+        return `Here's a summary of your lecture "${lecture.title}":\n\n**Main Topics:**\n${lecture.segments.map((s, i) => `${i + 1}. ${s.title} (${s.startTime})`).join('\n')}\n\n**Key Concepts Covered:**\n${lecture.keyConcepts.map(c => `• ${c.charAt(0).toUpperCase() + c.slice(1)}`).join('\n')}\n\nWhich segment would you like to explore in more detail?`;
+      }
+      
+      if (lowerMessage.includes('segment') || lowerMessage.includes('section')) {
+        return `Your lecture "${lecture.title}" has ${lecture.segments.length} main segments. Click on any segment above to learn more, or ask me about a specific topic from the lecture.`;
+      }
+      
+      // Default context-aware response
+      return `I'm here to help you study "${lecture.title}". You can ask me to:\n\n• Explain specific concepts from the lecture\n• Create flashcards\n• Summarize segments\n• Predict exam topics\n• Answer questions about the content\n\nWhat would you like to know?`;
     }
 
     function formatTime(timestamp) {
@@ -259,7 +511,6 @@
       }`;
 
       if (content === '') {
-        // Loading indicator
         bubble.innerHTML = `
           <div class="flex gap-1.5">
             <div class="w-2 h-2 bg-slate-400 rounded-full animate-typing-dot"></div>
@@ -306,6 +557,7 @@
 
       // Add user message
       addMessage(message, 'user');
+      appState.messages.push({ sender: 'user', content: message });
 
       // Clear input
       chatInput.value = '';
@@ -319,7 +571,7 @@
       showTypingIndicator();
 
       try {
-        const aiResponse = await getMockAiResponse(message);
+        const aiResponse = await getContextAwareResponse(message);
         
         // Remove loading indicator
         const lastMessage = messagesArea.lastElementChild;
@@ -328,8 +580,8 @@
         }
         
         addMessage(aiResponse, 'bot');
+        appState.messages.push({ sender: 'bot', content: aiResponse });
       } catch (error) {
-        // Remove loading indicator
         const lastMessage = messagesArea.lastElementChild;
         if (lastMessage && lastMessage.querySelector('.animate-typing-dot')) {
           lastMessage.remove();
@@ -337,12 +589,23 @@
         
         addMessage('Sorry, I encountered an error. Please try again.', 'bot');
       } finally {
-        // Enable input
         chatInput.disabled = false;
         sendBtn.disabled = false;
         chatInput.focus();
       }
     }
+
+    // Event listeners
+    startRecordBtn.addEventListener('click', startRecording);
+    uploadRecordBtn.addEventListener('click', uploadRecording);
+    stopRecordBtn.addEventListener('click', stopRecording);
+    cancelRecordBtn.addEventListener('click', cancelRecording);
+    recordBtn.addEventListener('click', () => {
+      if (appState.recordingState === 'idle') {
+        startRecording();
+      }
+    });
+    attachLectureBtn.addEventListener('click', uploadRecording);
 
     // Auto-resize textarea
     chatInput.addEventListener('input', function() {
