@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Lecture details and transcript">
+  <title>Lecture Details | AI Learning Assistant</title>
+  <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .safe-area-inset-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <div id="app" class="flex flex-col min-h-screen pb-20">
+    <!-- Header -->
+    <div class="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+      <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
+        <a href="lectures.html" class="p-1 text-slate-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </a>
+        <h1 class="text-lg md:text-xl font-semibold text-slate-800 flex-1">Lecture Details</h1>
+        <button class="p-1 text-slate-400 hover:text-amber-500">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
+      <!-- Lecture Header -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 mb-4">
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Introduction to Calculus - Limits and Derivatives</h2>
+        <div class="flex items-center gap-3 text-sm text-slate-500 mb-4">
+          <span>Today, 2:30 PM</span>
+          <span>•</span>
+          <span>45:30</span>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex gap-2 mb-4">
+          <a href="assistant.html?lecture=1" class="flex-1 px-4 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-medium text-center active:scale-95 transition-transform">
+            Chat with Lecture
+          </a>
+          <button class="px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Key Concepts -->
+        <div class="mb-4">
+          <h3 class="text-sm font-semibold text-slate-700 mb-2">Key Concepts</h3>
+          <div class="flex flex-wrap gap-2">
+            <button class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium active:scale-95 transition-transform">
+              limits
+            </button>
+            <button class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium active:scale-95 transition-transform">
+              derivatives
+            </button>
+            <button class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium active:scale-95 transition-transform">
+              continuity
+            </button>
+            <button class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium active:scale-95 transition-transform">
+              rate of change
+            </button>
+            <button class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium active:scale-95 transition-transform">
+              optimization
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-2 gap-2">
+          <button class="px-3 py-2 bg-slate-50 text-slate-700 rounded-lg text-sm font-medium active:scale-95 transition-transform flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Download
+          </button>
+          <button class="px-3 py-2 bg-slate-50 text-slate-700 rounded-lg text-sm font-medium active:scale-95 transition-transform flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export Notes
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="mb-4">
+        <div class="flex gap-2 border-b border-slate-200">
+          <button class="px-4 py-2 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600">
+            Segments
+          </button>
+          <button class="px-4 py-2 text-sm font-medium text-slate-500">
+            Transcript
+          </button>
+          <button class="px-4 py-2 text-sm font-medium text-slate-500">
+            Flashcards
+          </button>
+        </div>
+      </div>
+
+      <!-- Segments List -->
+      <div class="space-y-3">
+        <!-- Segment 1 -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex-1">
+              <h3 class="text-base font-semibold text-slate-800 mb-1">Introduction to Limits</h3>
+              <div class="text-xs text-slate-500 mb-3">00:00 - 15:20</div>
+              <p class="text-sm text-slate-600 mb-3">
+                Covers the fundamental concept of limits, approaching values, and understanding continuity in functions. Essential foundation for calculus.
+              </p>
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">limit definition</span>
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">approaching values</span>
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">continuity</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium active:scale-95 transition-transform">
+              View Transcript
+            </button>
+            <button class="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium active:scale-95 transition-transform">
+              Ask AI
+            </button>
+          </div>
+        </div>
+
+        <!-- Segment 2 -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex-1">
+              <h3 class="text-base font-semibold text-slate-800 mb-1">Derivative Fundamentals</h3>
+              <div class="text-xs text-slate-500 mb-3">15:20 - 30:45</div>
+              <p class="text-sm text-slate-600 mb-3">
+                Understanding derivatives as rates of change, tangent lines, and basic differentiation rules for polynomial functions.
+              </p>
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">rate of change</span>
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">tangent lines</span>
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">differentiation rules</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium active:scale-95 transition-transform">
+              View Transcript
+            </button>
+            <button class="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium active:scale-95 transition-transform">
+              Ask AI
+            </button>
+          </div>
+        </div>
+
+        <!-- Segment 3 -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex-1">
+              <h3 class="text-base font-semibold text-slate-800 mb-1">Practical Applications</h3>
+              <div class="text-xs text-slate-500 mb-3">30:45 - 45:30</div>
+              <p class="text-sm text-slate-600 mb-3">
+                Real-world applications of derivatives including optimization problems, related rates, and curve sketching techniques.
+              </p>
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">optimization</span>
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">related rates</span>
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">curve sketching</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium active:scale-95 transition-transform">
+              View Transcript
+            </button>
+            <button class="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium active:scale-95 transition-transform">
+              Ask AI
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom">
+      <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+        <div class="flex items-center justify-around py-2">
+          <a href="index.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span class="text-xs font-medium">Home</span>
+          </a>
+          <a href="lectures.html" class="flex flex-col items-center py-2 px-4 text-indigo-600">
+            <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+            </svg>
+            <span class="text-xs font-medium">Lectures</span>
+          </a>
+          <a href="assistant.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span class="text-xs font-medium">Chat</span>
+          </a>
+          <a href="settings.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="text-xs font-medium">Settings</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+  </div>
+</body>
+</html>
+
