@@ -437,49 +437,46 @@
       input.click();
     }
 
-    // Context-aware AI responses
+    // Python Backend API Configuration
+    const API_BASE_URL = 'http://localhost:5000';  // Change this to your backend URL in production
+
+    // Context-aware AI responses using Python backend (which calls Google Gemini API)
     async function getContextAwareResponse(userMessage) {
-      const delay = Math.floor(Math.random() * 700) + 800;
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      const lowerMessage = userMessage.toLowerCase();
       const hasLecture = appState.currentLecture !== null;
       
-      if (!hasLecture) {
-        return "I don't have any lecture content yet. Please record or upload a lecture to get started!";
-      }
-      
-      const lecture = appState.currentLecture;
-      
-      // Context-aware responses based on user query
-      if (lowerMessage.includes('explain') || lowerMessage.includes('what is')) {
-        const conceptMatch = lecture.keyConcepts.find(c => 
-          lowerMessage.includes(c.toLowerCase())
-        );
-        if (conceptMatch) {
-          return `Based on your lecture "${lecture.title}", ${conceptMatch} is a fundamental concept that was discussed. In the context of this lecture, it relates to the broader topics covered in the segments. Would you like me to explain a specific aspect of ${conceptMatch}?`;
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: userMessage,
+            currentLecture: appState.currentLecture,
+            messages: appState.messages
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get response from server');
         }
-        return `I can explain concepts from your lecture "${lecture.title}". Which concept or segment would you like me to clarify? You can click on any concept or segment above to ask about it.`;
+
+        const data = await response.json();
+        
+        if (data.success && data.response) {
+          return data.response;
+        } else {
+          throw new Error(data.error || 'Invalid response from server');
+        }
+      } catch (error) {
+        console.error('API Error:', error);
+        // Fallback response if API fails
+        if (!hasLecture) {
+          return "I don't have any lecture content yet. Please record or upload a lecture to get started!";
+        }
+        return `Sorry, I encountered an error processing your request. Please make sure the backend server is running. Error: ${error.message}`;
       }
-      
-      if (lowerMessage.includes('flashcard') || lowerMessage.includes('flash card')) {
-        return `I can help create flashcards from your lecture "${lecture.title}". Here are some suggested flashcard topics based on the key concepts:\n\n${lecture.keyConcepts.map((c, i) => `${i + 1}. ${c.charAt(0).toUpperCase() + c.slice(1)}`).join('\n')}\n\nWhich concepts would you like me to create flashcards for?`;
-      }
-      
-      if (lowerMessage.includes('exam') || lowerMessage.includes('test') || lowerMessage.includes('quiz')) {
-        return `Based on your lecture "${lecture.title}", here are key topics that are likely to appear on exams:\n\n• **${lecture.segments[0]?.title}** - Focus on the fundamental definitions\n• **${lecture.segments[1]?.title}** - Practice with application problems\n• **${lecture.segments[2]?.title}** - Understand the real-world applications\n\nWould you like me to create practice questions for any specific segment?`;
-      }
-      
-      if (lowerMessage.includes('summary') || lowerMessage.includes('summarize')) {
-        return `Here's a summary of your lecture "${lecture.title}":\n\n**Main Topics:**\n${lecture.segments.map((s, i) => `${i + 1}. ${s.title} (${s.startTime})`).join('\n')}\n\n**Key Concepts Covered:**\n${lecture.keyConcepts.map(c => `• ${c.charAt(0).toUpperCase() + c.slice(1)}`).join('\n')}\n\nWhich segment would you like to explore in more detail?`;
-      }
-      
-      if (lowerMessage.includes('segment') || lowerMessage.includes('section')) {
-        return `Your lecture "${lecture.title}" has ${lecture.segments.length} main segments. Click on any segment above to learn more, or ask me about a specific topic from the lecture.`;
-      }
-      
-      // Default context-aware response
-      return `I'm here to help you study "${lecture.title}". You can ask me to:\n\n• Explain specific concepts from the lecture\n• Create flashcards\n• Summarize segments\n• Predict exam topics\n• Answer questions about the content\n\nWhat would you like to know?`;
     }
 
     function formatTime(timestamp) {
