@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sign Up - Step 3: Academic Preferences">
+  <title>Sign Up - Step 3 | Universite</title>
+  
+  <link rel="shortcut icon" href="assets/images/icon-white-removebg.png" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .progress-bar {
+      height: 4px;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-white to-purple-50 min-h-screen">
+  <!-- Navigation -->
+  <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <a href="index.html" class="flex items-center">
+          <img src="assets/images/new-logo-white-removebg-preview.png-1-192x192.png" alt="Universite logo" class="h-10 w-10 mr-3">
+          <span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
+        </a>
+        <a href="signup.html" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Cancel</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Progress Bar -->
+  <div class="bg-slate-200 h-1">
+    <div class="progress-bar bg-gradient-to-r from-indigo-600 to-purple-600" style="width: 75%"></div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="min-h-screen flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+      <!-- Signup Card -->
+      <div class="bg-white rounded-2xl shadow-xl p-8 md:p-10 border border-slate-200">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl font-bold text-white">3</span>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Academic Preferences</h1>
+          <p class="text-slate-600">Step 3 of 4: Help us personalize your experience</p>
+        </div>
+
+        <!-- Form -->
+        <form id="signup-step3-form" class="space-y-5">
+          <div>
+            <label for="university" class="block text-sm font-medium text-slate-700 mb-2">University / Institution (optional)</label>
+            <input
+              type="text"
+              id="university"
+              name="university"
+              list="universities"
+              class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              placeholder="University of Cape Town"
+            >
+            <datalist id="universities">
+              <option value="University of Cape Town">
+              <option value="University of the Witwatersrand">
+              <option value="University of Stellenbosch">
+              <option value="University of Pretoria">
+              <option value="University of Johannesburg">
+              <option value="Other">
+            </datalist>
+          </div>
+
+          <div>
+            <label for="academic-level" class="block text-sm font-medium text-slate-700 mb-2">Academic level *</label>
+            <select
+              id="academic-level"
+              name="academic-level"
+              required
+              class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+            >
+              <option value="">Select your level</option>
+              <option value="first-year">First Year (Undergraduate)</option>
+              <option value="second-year">Second Year (Undergraduate)</option>
+              <option value="third-year">Third Year (Undergraduate)</option>
+              <option value="fourth-year">Fourth Year (Undergraduate)</option>
+              <option value="honors">Honors</option>
+              <option value="masters">Masters</option>
+              <option value="phd">PhD / Doctorate</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="field-of-study" class="block text-sm font-medium text-slate-700 mb-2">Field of study (optional)</label>
+            <input
+              type="text"
+              id="field-of-study"
+              name="field-of-study"
+              list="fields"
+              class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              placeholder="Computer Science, Medicine, etc."
+            >
+            <datalist id="fields">
+              <option value="Computer Science">
+              <option value="Engineering">
+              <option value="Medicine">
+              <option value="Law">
+              <option value="Business">
+              <option value="Arts">
+              <option value="Sciences">
+              <option value="Other">
+            </datalist>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-3">Learning preferences (optional)</label>
+            <div class="space-y-2">
+              <label class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+                <input type="checkbox" name="preferences" value="visual" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                <span class="ml-3 text-sm text-slate-700">Visual learner (diagrams, charts, images)</span>
+              </label>
+              <label class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+                <input type="checkbox" name="preferences" value="auditory" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                <span class="ml-3 text-sm text-slate-700">Auditory learner (listening, discussions)</span>
+              </label>
+              <label class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+                <input type="checkbox" name="preferences" value="reading" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                <span class="ml-3 text-sm text-slate-700">Reading/Writing learner (notes, text)</span>
+              </label>
+              <label class="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+                <input type="checkbox" name="preferences" value="kinesthetic" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                <span class="ml-3 text-sm text-slate-700">Kinesthetic learner (hands-on, practice)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <button
+              type="button"
+              onclick="window.location.href='signup-step2.html'"
+              class="flex-1 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:border-slate-400 transition-all"
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-lg transition-all transform hover:scale-105"
+            >
+              Continue to Step 4
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Progress Indicators -->
+      <div class="mt-8 flex justify-center space-x-2">
+        <div class="w-2 h-2 rounded-full bg-indigo-600"></div>
+        <div class="w-2 h-2 rounded-full bg-indigo-600"></div>
+        <div class="w-2 h-2 rounded-full bg-indigo-600"></div>
+        <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Store form data in sessionStorage
+    document.getElementById('signup-step3-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const university = document.getElementById('university').value;
+      const academicLevel = document.getElementById('academic-level').value;
+      const fieldOfStudy = document.getElementById('field-of-study').value;
+      
+      const preferences = [];
+      document.querySelectorAll('input[name="preferences"]:checked').forEach(checkbox => {
+        preferences.push(checkbox.value);
+      });
+
+      // Get existing data
+      let storedData = sessionStorage.getItem('signupData');
+      let formData = storedData ? JSON.parse(storedData) : {};
+
+      // Update with step 3 data
+      formData.university = university;
+      formData.academicLevel = academicLevel;
+      formData.fieldOfStudy = fieldOfStudy;
+      formData.preferences = preferences;
+
+      sessionStorage.setItem('signupData', JSON.stringify(formData));
+
+      // Proceed to next step
+      window.location.href = 'signup-step4.html';
+    });
+
+    // Pre-fill form if data exists
+    window.addEventListener('DOMContentLoaded', function() {
+      const storedData = sessionStorage.getItem('signupData');
+      if (storedData) {
+        const data = JSON.parse(storedData);
+        if (data.university) document.getElementById('university').value = data.university;
+        if (data.academicLevel) document.getElementById('academic-level').value = data.academicLevel;
+        if (data.fieldOfStudy) document.getElementById('field-of-study').value = data.fieldOfStudy;
+        if (data.preferences) {
+          data.preferences.forEach(pref => {
+            const checkbox = document.querySelector(`input[name="preferences"][value="${pref}"]`);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+      } else {
+        // If no data, redirect to step 1
+        window.location.href = 'signup-step1.html';
+      }
+    });
+  </script>
+</body>
+</html>
