@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View all lecture notes">
+  <title>Notes | AI Learning Assistant</title>
+  <link rel="shortcut icon" href="assets/images/icon-removebg-preview.png-128x128.png" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+    .safe-area-inset-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+  </style>
+  <script src="js/app-state.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <div id="app" class="flex flex-col min-h-screen pb-20">
+    <!-- Header -->
+    <div class="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+      <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
+        <a href="home.html" class="p-1 text-slate-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </a>
+        <h1 class="text-lg md:text-xl font-semibold text-slate-800 flex-1">Notes</h1>
+        <button onclick="exportAllNotes()" class="p-2 text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
+      <div id="notes-container" class="space-y-3">
+        <!-- Notes will be dynamically loaded here -->
+      </div>
+      <div id="empty-state" class="hidden text-center py-12">
+        <p class="text-slate-600 mb-4">No notes available yet.</p>
+        <p class="text-sm text-slate-500 mb-6">Record or upload a lecture to generate notes.</p>
+        <a href="assistant.html" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-xl">Record Lecture</a>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom">
+      <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+        <div class="flex items-center justify-around py-2">
+          <a href="home.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span class="text-xs font-medium">Home</span>
+          </a>
+          <a href="lectures.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span class="text-xs font-medium">Lectures</span>
+          </a>
+          <a href="assistant.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span class="text-xs font-medium">Chat</span>
+          </a>
+          <a href="settings.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="text-xs font-medium">Settings</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadNotes();
+    });
+
+    function loadNotes() {
+      if (typeof appState === 'undefined') {
+        document.getElementById('empty-state').classList.remove('hidden');
+        return;
+      }
+
+      const lectures = appState.lectures || [];
+      const container = document.getElementById('notes-container');
+      const emptyState = document.getElementById('empty-state');
+
+      if (lectures.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = lectures.map(lecture => `
+        <div class="bg-white border border-slate-200 rounded-2xl p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex-1">
+              <h3 class="text-base font-semibold text-slate-800 mb-1">${lecture.title}</h3>
+              <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                <span>${new Date(lecture.createdAt).toLocaleDateString()}</span>
+                <span>•</span>
+                <span>${lecture.duration || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+          
+          ${lecture.transcript ? `
+            <div class="text-sm text-slate-600 mb-3 line-clamp-3">${lecture.transcript.substring(0, 200)}...</div>
+          ` : ''}
+          
+          ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              ${lecture.keyConcepts.slice(0, 5).map(concept => `
+                <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
+              `).join('')}
+            </div>
+          ` : ''}
+          
+          <div class="flex gap-2">
+            <a href="lecture-detail.html?id=${lecture.id}" class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform">
+              View Details
+            </a>
+            <button onclick="exportNote('${lecture.id}')" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium active:scale-95 transition-transform">
+              Export
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function exportNote(lectureId) {
+      if (typeof appState === 'undefined') return;
+      const lecture = appState.getLecture(lectureId);
+      if (!lecture) return;
+
+      const content = `Lecture Notes: ${lecture.title}\n\nDate: ${new Date(lecture.createdAt).toLocaleDateString()}\nDuration: ${lecture.duration || 'N/A'}\n\nKey Concepts: ${lecture.keyConcepts?.join(', ') || 'N/A'}\n\nTranscript:\n${lecture.transcript || 'No transcript available yet.'}`;
+      
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${lecture.title.replace(/[^a-z0-9]/gi, '_')}_notes.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportAllNotes() {
+      if (typeof appState === 'undefined' || appState.lectures.length === 0) {
+        alert('No notes to export');
+        return;
+      }
+
+      const content = appState.lectures.map(lecture => 
+        `=== ${lecture.title} ===\nDate: ${new Date(lecture.createdAt).toLocaleDateString()}\nDuration: ${lecture.duration || 'N/A'}\n\nKey Concepts: ${lecture.keyConcepts?.join(', ') || 'N/A'}\n\nTranscript:\n${lecture.transcript || 'No transcript available yet.'}\n\n`
+      ).join('\n\n');
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `all_lecture_notes_${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

@@ -89,6 +89,115 @@ Use this lecture information to provide contextually relevant responses."""
             'error': str(e)
         }), 500
 
+@app.route('/api/generate-flashcards', methods=['POST'])
+def generate_flashcards():
+    try:
+        data = request.get_json()
+        lecture = data.get('lecture', {})
+        
+        # Use Gemini to generate flashcards from lecture content
+        prompt = f"""Based on this lecture content, generate 10-15 educational flashcards in JSON format.
+        
+Lecture Title: {lecture.get('title', 'Unknown')}
+Key Concepts: {', '.join(lecture.get('keyConcepts', []))}
+Segments: {', '.join([s.get('title', '') for s in lecture.get('segments', [])])}
+
+Generate flashcards as a JSON array with this structure:
+[
+  {{"question": "What is...?", "answer": "The answer is...", "category": "concept name"}},
+  ...
+]
+
+Return ONLY the JSON array, no other text."""
+
+        response = requests.post(
+            GEMINI_API_URL,
+            json={
+                'contents': [{
+                    'parts': [{'text': prompt}]
+                }]
+            },
+            headers={'Content-Type': 'application/json'}
+        )
+        
+        if response.status_code != 200:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to generate flashcards'
+            }), response.status_code
+        
+        result = response.json()
+        if result.get('candidates') and len(result['candidates']) > 0:
+            response_text = result['candidates'][0]['content']['parts'][0]['text']
+            # Try to extract JSON from response
+            import re
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            if json_match:
+                import json
+                flashcards = json.loads(json_match.group())
+                return jsonify({
+                    'success': True,
+                    'flashcards': flashcards
+                })
+        
+        return jsonify({
+            'success': False,
+            'error': 'Failed to parse flashcards'
+        }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/transcribe', methods=['POST'])
+def transcribe():
+    """
+    Audio transcription endpoint - STUBBED for now
+    When audio transcription API key is available, implement here
+    """
+    try:
+        # This is a stub - will be implemented when transcription API key is available
+        # For now, return a mock response
+        
+        # In production, this would:
+        # 1. Receive audio file from request
+        # 2. Call transcription API (e.g., Google Speech-to-Text, Whisper, etc.)
+        # 3. Process and return transcript
+        
+        return jsonify({
+            'success': False,
+            'error': 'Transcription API key not configured yet. Please add your transcription API key to enable this feature.',
+            'stub': True
+        }), 503
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/process-lecture', methods=['POST'])
+def process_lecture():
+    """
+    Process uploaded/recorded lecture audio
+    This will call transcription and then extract concepts/segments
+    """
+    try:
+        # Stub for now - will process audio when transcription is available
+        return jsonify({
+            'success': False,
+            'error': 'Audio transcription not available yet. Please add transcription API key.',
+            'stub': True
+        }), 503
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({'status': 'ok'}), 200

@@ -77,6 +77,7 @@
       padding-bottom: env(safe-area-inset-bottom, 0);
     }
   </style>
+  <script src="js/app-state.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
   <div id="app" class="flex flex-col min-h-screen pb-20">
@@ -151,40 +152,40 @@
 
       <!-- Current Flashcard -->
       <div id="flashcard-container" class="mb-4">
-        <div class="flashcard" onclick="this.classList.toggle('flipped')">
+        <div id="current-flashcard" class="flashcard" onclick="flipCard()">
           <div class="flashcard-inner">
             <div class="flashcard-front">
               <div>
                 <div class="text-xs text-slate-500 mb-3">Question</div>
-                <div class="text-lg font-semibold text-slate-800">
-                  What is the definition of a limit in calculus?
+                <div id="flashcard-question" class="text-lg font-semibold text-slate-800">
+                  Loading...
                 </div>
               </div>
             </div>
             <div class="flashcard-back">
               <div>
                 <div class="text-xs text-white opacity-80 mb-3">Answer</div>
-                <div class="text-base">
-                  A limit is the value that a function approaches as the input approaches some value. It's written as lim(x→a) f(x) = L, meaning as x gets closer to a, f(x) gets closer to L.
+                <div id="flashcard-answer" class="text-base">
+                  Loading...
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div class="text-center mt-3 text-sm text-slate-500">
-          Tap card to flip
+          <span id="card-counter">0 / 0</span> • Tap card to flip
         </div>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex gap-3 mb-6">
-        <button class="flex-1 px-4 py-3 bg-red-100 text-red-700 rounded-xl font-medium active:scale-95 transition-transform">
+        <button id="hard-btn" onclick="rateCard('hard')" class="flex-1 px-4 py-3 bg-red-100 text-red-700 rounded-xl font-medium active:scale-95 transition-transform">
           Hard
         </button>
-        <button class="flex-1 px-4 py-3 bg-amber-100 text-amber-700 rounded-xl font-medium active:scale-95 transition-transform">
+        <button id="good-btn" onclick="rateCard('good')" class="flex-1 px-4 py-3 bg-amber-100 text-amber-700 rounded-xl font-medium active:scale-95 transition-transform">
           Good
         </button>
-        <button class="flex-1 px-4 py-3 bg-green-100 text-green-700 rounded-xl font-medium active:scale-95 transition-transform">
+        <button id="easy-btn" onclick="rateCard('easy')" class="flex-1 px-4 py-3 bg-green-100 text-green-700 rounded-xl font-medium active:scale-95 transition-transform">
           Easy
         </button>
       </div>
@@ -192,43 +193,8 @@
       <!-- All Cards List -->
       <div>
         <h3 class="text-lg font-semibold text-slate-800 mb-3">All Cards</h3>
-        <div class="space-y-2">
-          <div class="bg-white border border-slate-200 rounded-xl p-3">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="text-sm font-medium text-slate-800 mb-1">What is the definition of a limit?</div>
-                <div class="text-xs text-slate-500">Limits & Continuity</div>
-              </div>
-              <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Mastered</span>
-            </div>
-          </div>
-          <div class="bg-white border border-slate-200 rounded-xl p-3">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="text-sm font-medium text-slate-800 mb-1">What is the power rule for derivatives?</div>
-                <div class="text-xs text-slate-500">Differentiation Rules</div>
-              </div>
-              <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">Learning</span>
-            </div>
-          </div>
-          <div class="bg-white border border-slate-200 rounded-xl p-3">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="text-sm font-medium text-slate-800 mb-1">Define continuity of a function</div>
-                <div class="text-xs text-slate-500">Limits & Continuity</div>
-              </div>
-              <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">New</span>
-            </div>
-          </div>
-          <div class="bg-white border border-slate-200 rounded-xl p-3">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="text-sm font-medium text-slate-800 mb-1">What is the chain rule?</div>
-                <div class="text-xs text-slate-500">Differentiation Rules</div>
-              </div>
-              <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">New</span>
-            </div>
-          </div>
+        <div id="all-cards-list" class="space-y-2">
+          <!-- Cards will be dynamically loaded here -->
         </div>
       </div>
     </div>
@@ -266,6 +232,239 @@
       </div>
     </nav>
   </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:5000';
+    let currentFlashcardSet = null;
+    let currentCardIndex = 0;
+    let isFlipped = false;
+
+    // Check for lecture ID in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const lectureId = urlParams.get('lecture');
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (lectureId && typeof appState !== 'undefined') {
+        const lecture = appState.getLecture(lectureId);
+        if (lecture) {
+          await loadFlashcards(lecture);
+        } else {
+          showNoFlashcards();
+        }
+      } else {
+        // Load first available flashcard set or show empty state
+        if (typeof appState !== 'undefined' && appState.flashcards.length > 0) {
+          const firstSet = appState.flashcards[0];
+          const lecture = appState.getLecture(firstSet.lectureId);
+          if (lecture) {
+            await loadFlashcards(lecture);
+          }
+        } else {
+          showNoFlashcards();
+        }
+      }
+    });
+
+    async function loadFlashcards(lecture) {
+      // Check if flashcards already exist
+      let flashcardSet = null;
+      if (typeof appState !== 'undefined') {
+        flashcardSet = appState.getFlashcardSet(lecture.id);
+      }
+
+      if (!flashcardSet) {
+        // Generate flashcards from lecture
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/generate-flashcards`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lecture })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.flashcards) {
+              // Add status to each card
+              const flashcards = data.flashcards.map(card => ({
+                ...card,
+                status: 'new'
+              }));
+
+              if (typeof appState !== 'undefined') {
+                flashcardSet = appState.addFlashcardSet(lecture.id, flashcards);
+              } else {
+                flashcardSet = { flashcards, progress: { mastered: 0, learning: 0, new: flashcards.length } };
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error generating flashcards:', error);
+        }
+
+        // Fallback to mock flashcards if API fails
+        if (!flashcardSet || !flashcardSet.flashcards || flashcardSet.flashcards.length === 0) {
+          flashcardSet = {
+            flashcards: [
+              { question: `What are the key concepts in "${lecture.title}"?`, answer: lecture.keyConcepts.join(', '), category: 'Overview', status: 'new' },
+              ...lecture.segments.flatMap(seg => seg.concepts.map(concept => ({
+                question: `Explain ${concept} from ${seg.title}`,
+                answer: `This concept was discussed in the "${seg.title}" segment of the lecture.`,
+                category: seg.title,
+                status: 'new'
+              })))
+            ],
+            progress: { mastered: 0, learning: 0, new: 0 }
+          };
+          if (typeof appState !== 'undefined') {
+            flashcardSet = appState.addFlashcardSet(lecture.id, flashcardSet.flashcards);
+          }
+        }
+      }
+
+      currentFlashcardSet = flashcardSet;
+      updateFlashcardDisplay();
+      updateProgressDisplay();
+      renderAllCards();
+    }
+
+    function updateFlashcardDisplay() {
+      if (!currentFlashcardSet || currentFlashcardSet.flashcards.length === 0) {
+        showNoFlashcards();
+        return;
+      }
+
+      const card = currentFlashcardSet.flashcards[currentCardIndex];
+      document.getElementById('flashcard-question').textContent = card.question;
+      document.getElementById('flashcard-answer').textContent = card.answer;
+      document.getElementById('card-counter').textContent = `${currentCardIndex + 1} / ${currentFlashcardSet.flashcards.length}`;
+      
+      // Reset flip state
+      isFlipped = false;
+      document.getElementById('current-flashcard').classList.remove('flipped');
+    }
+
+    function updateProgressDisplay() {
+      if (!currentFlashcardSet) return;
+      
+      const progress = currentFlashcardSet.progress || { mastered: 0, learning: 0, new: 0 };
+      const total = currentFlashcardSet.flashcards.length;
+      const percentage = total > 0 ? ((progress.mastered + progress.learning) / total * 100).toFixed(0) : 0;
+
+      // Update progress bar
+      const progressBar = document.querySelector('.bg-gradient-to-r');
+      if (progressBar) {
+        progressBar.style.width = `${percentage}%`;
+      }
+
+      // Update stats
+      const statsElements = document.querySelectorAll('.text-xl.font-bold');
+      if (statsElements.length >= 3) {
+        statsElements[0].textContent = progress.mastered || 0;
+        statsElements[1].textContent = progress.learning || 0;
+        statsElements[2].textContent = progress.new || 0;
+      }
+    }
+
+    function renderAllCards() {
+      const container = document.getElementById('all-cards-list');
+      if (!container || !currentFlashcardSet) return;
+
+      container.innerHTML = currentFlashcardSet.flashcards.map((card, index) => {
+        const statusClass = {
+          'mastered': 'bg-green-100 text-green-700',
+          'learning': 'bg-amber-100 text-amber-700',
+          'new': 'bg-slate-100 text-slate-600'
+        }[card.status] || 'bg-slate-100 text-slate-600';
+
+        const statusText = {
+          'mastered': 'Mastered',
+          'learning': 'Learning',
+          'new': 'New'
+        }[card.status] || 'New';
+
+        return `
+          <div class="bg-white border border-slate-200 rounded-xl p-3 cursor-pointer hover:bg-slate-50" onclick="goToCard(${index})">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="text-sm font-medium text-slate-800 mb-1">${card.question}</div>
+                <div class="text-xs text-slate-500">${card.category || 'General'}</div>
+              </div>
+              <span class="px-2 py-1 ${statusClass} rounded-full text-xs font-medium">${statusText}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function flipCard() {
+      isFlipped = !isFlipped;
+      const card = document.getElementById('current-flashcard');
+      if (isFlipped) {
+        card.classList.add('flipped');
+      } else {
+        card.classList.remove('flipped');
+      }
+    }
+
+    function rateCard(rating) {
+      if (!currentFlashcardSet) return;
+
+      const statusMap = {
+        'hard': 'new',
+        'good': 'learning',
+        'easy': 'mastered'
+      };
+
+      const status = statusMap[rating];
+      const card = currentFlashcardSet.flashcards[currentCardIndex];
+      card.status = status;
+
+      // Update progress
+      if (typeof appState !== 'undefined' && currentFlashcardSet.id) {
+        appState.updateFlashcardProgress(currentFlashcardSet.id, currentCardIndex, status);
+      } else {
+        // Recalculate progress locally
+        currentFlashcardSet.progress = currentFlashcardSet.flashcards.reduce((acc, c) => {
+          if (c.status === 'mastered') acc.mastered++;
+          else if (c.status === 'learning') acc.learning++;
+          else acc.new++;
+          return acc;
+        }, { mastered: 0, learning: 0, new: 0 });
+      }
+
+      updateProgressDisplay();
+      renderAllCards();
+
+      // Move to next card
+      nextCard();
+    }
+
+    function nextCard() {
+      if (!currentFlashcardSet) return;
+      currentCardIndex = (currentCardIndex + 1) % currentFlashcardSet.flashcards.length;
+      isFlipped = false;
+      document.getElementById('current-flashcard').classList.remove('flipped');
+      updateFlashcardDisplay();
+    }
+
+    function goToCard(index) {
+      currentCardIndex = index;
+      isFlipped = false;
+      document.getElementById('current-flashcard').classList.remove('flipped');
+      updateFlashcardDisplay();
+    }
+
+    function showNoFlashcards() {
+      document.getElementById('flashcard-container').innerHTML = `
+        <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+          <p class="text-slate-600 mb-4">No flashcards available yet.</p>
+          <p class="text-sm text-slate-500">Record or upload a lecture to generate flashcards.</p>
+          <a href="assistant.html" class="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded-xl">Go to Assistant</a>
+        </div>
+      `;
+    }
+  </script>
 </body>
 </html>
 

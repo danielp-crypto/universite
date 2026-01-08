@@ -51,6 +51,7 @@
       padding-bottom: env(safe-area-inset-bottom, 0);
     }
   </style>
+  <script src="js/app-state.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
   <div id="app" class="flex flex-col min-h-screen pb-20">
@@ -93,57 +94,12 @@
           <h2 class="text-lg font-semibold text-slate-800">Recent Lectures</h2>
           <a href="lectures.html" class="text-sm text-indigo-600 font-medium">View All</a>
         </div>
-        <div class="space-y-3">
-          <!-- Lecture Card 1 -->
-          <a href="lecture-detail.html?id=1" class="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
-            <div class="flex items-start justify-between mb-2">
-              <h3 class="text-base font-semibold text-slate-800 flex-1">Introduction to Calculus - Limits and Derivatives</h3>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
-              <span>Today, 2:30 PM</span>
-              <span>•</span>
-              <span>45:30</span>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">limits</span>
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">derivatives</span>
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">continuity</span>
-            </div>
-          </a>
-
-          <!-- Lecture Card 2 -->
-          <a href="lecture-detail.html?id=2" class="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
-            <div class="flex items-start justify-between mb-2">
-              <h3 class="text-base font-semibold text-slate-800 flex-1">Organic Chemistry - Molecular Structures</h3>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
-              <span>Yesterday, 10:15 AM</span>
-              <span>•</span>
-              <span>38:42</span>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">molecules</span>
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">bonds</span>
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">reactions</span>
-            </div>
-          </a>
-
-          <!-- Lecture Card 3 -->
-          <a href="lecture-detail.html?id=3" class="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
-            <div class="flex items-start justify-between mb-2">
-              <h3 class="text-base font-semibold text-slate-800 flex-1">World History - The Renaissance Period</h3>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
-              <span>Jan 3, 3:00 PM</span>
-              <span>•</span>
-              <span>52:18</span>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">renaissance</span>
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">art</span>
-              <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">culture</span>
-            </div>
-          </a>
+        <div id="recent-lectures" class="space-y-3">
+          <!-- Lectures will be dynamically loaded here -->
+        </div>
+        <div id="no-lectures" class="hidden text-center py-8">
+          <p class="text-slate-600 mb-4">No lectures yet</p>
+          <a href="assistant.html" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-xl">Record Your First Lecture</a>
         </div>
       </div>
 
@@ -152,15 +108,15 @@
         <h2 class="text-lg font-semibold text-slate-800 mb-3">This Week</h2>
         <div class="grid grid-cols-3 gap-3">
           <div class="bg-white border border-slate-200 rounded-xl p-3 text-center">
-            <div class="text-2xl font-bold text-indigo-600 mb-1">12</div>
+            <div id="stat-lectures" class="text-2xl font-bold text-indigo-600 mb-1">0</div>
             <div class="text-xs text-slate-600">Lectures</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-xl p-3 text-center">
-            <div class="text-2xl font-bold text-indigo-600 mb-1">8.5</div>
+            <div id="stat-hours" class="text-2xl font-bold text-indigo-600 mb-1">0</div>
             <div class="text-xs text-slate-600">Hours</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-xl p-3 text-center">
-            <div class="text-2xl font-bold text-indigo-600 mb-1">245</div>
+            <div id="stat-flashcards" class="text-2xl font-bold text-indigo-600 mb-1">0</div>
             <div class="text-xs text-slate-600">Flashcards</div>
           </div>
         </div>
@@ -257,5 +213,75 @@
       </div>
     </nav>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadRecentLectures();
+      loadStats();
+    });
+
+    function loadRecentLectures() {
+      if (typeof appState === 'undefined') {
+        document.getElementById('no-lectures').classList.remove('hidden');
+        return;
+      }
+
+      const lectures = appState.getRecentLectures(3);
+      const container = document.getElementById('recent-lectures');
+      const noLectures = document.getElementById('no-lectures');
+
+      if (lectures.length === 0) {
+        container.innerHTML = '';
+        noLectures.classList.remove('hidden');
+        return;
+      }
+
+      noLectures.classList.add('hidden');
+      container.innerHTML = lectures.map(lecture => {
+        const date = new Date(lecture.createdAt);
+        const dateStr = formatDate(date);
+        
+        return `
+          <a href="lecture-detail.html?id=${lecture.id}" class="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="text-base font-semibold text-slate-800 flex-1">${lecture.title}</h3>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
+              <span>${dateStr}</span>
+              <span>•</span>
+              <span>${lecture.duration || 'N/A'}</span>
+            </div>
+            ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
+              <div class="flex flex-wrap gap-1.5">
+                ${lecture.keyConcepts.slice(0, 3).map(concept => `
+                  <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
+                `).join('')}
+              </div>
+            ` : ''}
+          </a>
+        `;
+      }).join('');
+    }
+
+    function loadStats() {
+      if (typeof appState === 'undefined') return;
+      
+      const stats = appState.getWeeklyStats();
+      document.getElementById('stat-lectures').textContent = stats.lectures || 0;
+      document.getElementById('stat-hours').textContent = stats.hours || '0';
+      document.getElementById('stat-flashcards').textContent = stats.flashcards || 0;
+    }
+
+    function formatDate(date) {
+      const now = new Date();
+      const diffTime = Math.abs(now - date);
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return date.toLocaleDateString();
+    }
+  </script>
 </body>
 </html>

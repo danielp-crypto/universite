@@ -87,6 +87,7 @@
       padding-bottom: env(safe-area-inset-bottom, 0);
     }
   </style>
+  <script src="js/app-state.js"></script>
 </head>
 <body class="bg-slate-50 h-screen overflow-hidden">
   <div id="app" class="flex flex-col h-screen">
@@ -232,14 +233,27 @@
   </div>
 
   <script>
-    // App State
-    const appState = {
+    // Local app state for this page
+    const localState = {
       recordingState: 'idle', // 'idle', 'recording', 'processing', 'processed'
       currentLecture: null,
       recordingStartTime: null,
       recordingTimerInterval: null,
       messages: [],
+      mediaRecorder: null,
+      audioChunks: [],
+      audioBlob: null,
     };
+
+    // Check for lecture ID in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const lectureId = urlParams.get('lecture');
+    if (lectureId && typeof appState !== 'undefined') {
+      localState.currentLecture = appState.getLecture(lectureId);
+      if (localState.currentLecture) {
+        localState.messages = localState.currentLecture.chatHistory || [];
+      }
+    }
 
     const messagesArea = document.getElementById('messages-area');
     const chatInput = document.getElementById('chat-input');
@@ -256,26 +270,56 @@
     const recordingTimer = document.getElementById('recording-timer');
     const attachLectureBtn = document.getElementById('attach-lecture-btn');
 
-    // Placeholder functions
-    function startRecording() {
-      appState.recordingState = 'recording';
-      appState.recordingStartTime = Date.now();
-      recordingOverlay.classList.remove('hidden');
-      startRecordingTimer();
+    // Audio Recording Functions
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localState.mediaRecorder = new MediaRecorder(stream);
+        localState.audioChunks = [];
+        
+        localState.mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            localState.audioChunks.push(event.data);
+          }
+        };
+        
+        localState.mediaRecorder.onstop = () => {
+          localState.audioBlob = new Blob(localState.audioChunks, { type: 'audio/webm' });
+          stream.getTracks().forEach(track => track.stop());
+        };
+        
+        localState.mediaRecorder.start();
+        localState.recordingState = 'recording';
+        localState.recordingStartTime = Date.now();
+        recordingOverlay.classList.remove('hidden');
+        startRecordingTimer();
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        alert('Could not access microphone. Please check permissions.');
+      }
     }
 
-    function stopRecording() {
-      appState.recordingState = 'processing';
-      recordingOverlay.classList.add('hidden');
-      processingOverlay.classList.remove('hidden');
-      stopRecordingTimer();
-      
-      // Simulate processing
-      processRecording();
+    async function stopRecording() {
+      if (localState.mediaRecorder && localState.recordingState === 'recording') {
+        localState.mediaRecorder.stop();
+        localState.recordingState = 'processing';
+        recordingOverlay.classList.add('hidden');
+        processingOverlay.classList.remove('hidden');
+        stopRecordingTimer();
+        
+        // Process the recording
+        await processRecording();
+      }
     }
 
     function cancelRecording() {
-      appState.recordingState = 'idle';
+      if (localState.mediaRecorder && localState.recordingState === 'recording') {
+        localState.mediaRecorder.stop();
+        localState.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      localState.recordingState = 'idle';
+      localState.audioChunks = [];
+      localState.audioBlob = null;
       recordingOverlay.classList.add('hidden');
       stopRecordingTimer();
     }
@@ -297,8 +341,8 @@
     }
 
     async function processRecording() {
-      // Simulate processing stages
       const stages = [
+        'Uploading audio...',
         'Generating transcript...',
         'Extracting key concepts...',
         'Creating segments...',
@@ -310,46 +354,110 @@
         processingText.textContent = stages[i];
       }
 
-      // Mock processed lecture data
-      appState.currentLecture = {
+      try {
+        // Try to transcribe audio (will fail gracefully if API key not set)
+        const formData = new FormData();
+        formData.append('audio', localState.audioBlob, 'recording.webm');
+        
+        const transcriptResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (transcriptResponse.ok) {
+          const transcriptData = await transcriptResponse.json();
+          if (transcriptData.success) {
+            // Process transcript and create lecture
+            await createLectureFromTranscript(transcriptData.transcript);
+            return;
+          }
+        }
+        
+        // Fallback: Create mock lecture if transcription not available
+        createMockLecture();
+        
+      } catch (error) {
+        console.error('Transcription error:', error);
+        // Fallback to mock lecture
+        createMockLecture();
+      }
+    }
+
+    function createMockLecture() {
+      const duration = formatDuration(Math.floor((Date.now() - localState.recordingStartTime) / 1000));
+      
+      const lecture = {
         id: Date.now().toString(),
-        title: 'Introduction to Calculus - Limits and Derivatives',
+        title: `Lecture Recording - ${new Date().toLocaleDateString()}`,
         date: new Date().toLocaleDateString(),
-        duration: '45:30',
+        duration: duration,
         segments: [
           {
             id: '1',
-            title: 'Introduction to Limits',
+            title: 'Introduction',
             startTime: '00:00',
-            concepts: ['limit definition', 'approaching values', 'continuity']
-          },
-          {
-            id: '2',
-            title: 'Derivative Fundamentals',
-            startTime: '15:20',
-            concepts: ['rate of change', 'tangent lines', 'differentiation rules']
-          },
-          {
-            id: '3',
-            title: 'Practical Applications',
-            startTime: '30:45',
-            concepts: ['optimization', 'related rates', 'curve sketching']
+            concepts: ['introduction', 'overview', 'key topics']
           }
         ],
-        keyConcepts: [
-          'limits', 'derivatives', 'continuity', 'rate of change', 'optimization'
-        ]
+        keyConcepts: ['lecture', 'recording'],
+        transcript: 'Transcription will be available once the audio transcription API key is configured.',
+        audioUrl: URL.createObjectURL(localState.audioBlob),
+        createdAt: new Date().toISOString()
       };
 
-      appState.recordingState = 'processed';
+      // Save to app state
+      if (typeof appState !== 'undefined') {
+        appState.addLecture(lecture);
+      }
+      
+      localState.currentLecture = lecture;
+      localState.recordingState = 'processed';
       processingOverlay.classList.add('hidden');
       
-      // Hide welcome message and show lecture summary
       if (welcomeMessage) {
         welcomeMessage.style.display = 'none';
       }
       
-      showLectureSummary(appState.currentLecture);
+      showLectureSummary(lecture);
+    }
+
+    async function createLectureFromTranscript(transcript) {
+      // Use AI to extract concepts and segments from transcript
+      // This would call the backend to process the transcript
+      const duration = formatDuration(Math.floor((Date.now() - localState.recordingStartTime) / 1000));
+      
+      const lecture = {
+        id: Date.now().toString(),
+        title: `Lecture Recording - ${new Date().toLocaleDateString()}`,
+        date: new Date().toLocaleDateString(),
+        duration: duration,
+        transcript: transcript,
+        audioUrl: URL.createObjectURL(localState.audioBlob),
+        createdAt: new Date().toISOString(),
+        segments: [],
+        keyConcepts: []
+      };
+
+      // Save to app state
+      if (typeof appState !== 'undefined') {
+        appState.addLecture(lecture);
+      }
+      
+      localState.currentLecture = lecture;
+      localState.recordingState = 'processed';
+      processingOverlay.classList.add('hidden');
+      
+      if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+      }
+      
+      showLectureSummary(lecture);
+    }
+
+    function formatDuration(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
     function showLectureSummary(lecture) {
@@ -422,16 +530,40 @@
       });
     }
 
-    function uploadRecording() {
+    async function uploadRecording() {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'audio/*';
-      input.onchange = (e) => {
+      input.onchange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-          appState.recordingState = 'processing';
+          localState.audioBlob = file;
+          localState.recordingState = 'processing';
           processingOverlay.classList.remove('hidden');
-          processRecording();
+          
+          try {
+            const formData = new FormData();
+            formData.append('audio', file);
+            
+            const transcriptResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (transcriptResponse.ok) {
+              const transcriptData = await transcriptResponse.json();
+              if (transcriptData.success) {
+                await createLectureFromTranscript(transcriptData.transcript);
+                return;
+              }
+            }
+            
+            // Fallback to mock
+            createMockLecture();
+          } catch (error) {
+            console.error('Upload error:', error);
+            createMockLecture();
+          }
         }
       };
       input.click();
@@ -452,8 +584,8 @@
           },
           body: JSON.stringify({
             message: userMessage,
-            currentLecture: appState.currentLecture,
-            messages: appState.messages
+            currentLecture: localState.currentLecture,
+            messages: localState.messages
           })
         });
 
@@ -583,7 +715,14 @@
 
       // Add user message
       addMessage(message, 'user');
-      appState.messages.push({ sender: 'user', content: message });
+      localState.messages.push({ sender: 'user', content: message });
+      
+      // Save to lecture if exists
+      if (localState.currentLecture && typeof appState !== 'undefined') {
+        localState.currentLecture.chatHistory = localState.currentLecture.chatHistory || [];
+        localState.currentLecture.chatHistory.push({ sender: 'user', content: message });
+        appState.updateLecture(localState.currentLecture.id, { chatHistory: localState.currentLecture.chatHistory });
+      }
 
       // Clear input
       chatInput.value = '';
@@ -606,7 +745,14 @@
         }
         
         addMessage(aiResponse, 'bot');
-        appState.messages.push({ sender: 'bot', content: aiResponse });
+        localState.messages.push({ sender: 'bot', content: aiResponse });
+        
+        // Save to lecture if exists
+        if (localState.currentLecture && typeof appState !== 'undefined') {
+          localState.currentLecture.chatHistory = localState.currentLecture.chatHistory || [];
+          localState.currentLecture.chatHistory.push({ sender: 'bot', content: aiResponse });
+          appState.updateLecture(localState.currentLecture.id, { chatHistory: localState.currentLecture.chatHistory });
+        }
       } catch (error) {
         const lastMessage = messagesArea.lastElementChild;
         if (lastMessage && lastMessage.querySelector('.animate-typing-dot')) {
@@ -627,11 +773,21 @@
     stopRecordBtn.addEventListener('click', stopRecording);
     cancelRecordBtn.addEventListener('click', cancelRecording);
     recordBtn.addEventListener('click', () => {
-      if (appState.recordingState === 'idle') {
+      if (localState.recordingState === 'idle') {
         startRecording();
       }
     });
     attachLectureBtn.addEventListener('click', uploadRecording);
+
+    // Load existing messages if lecture is loaded
+    if (localState.currentLecture && localState.messages.length > 0) {
+      if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+      }
+      localState.messages.forEach(msg => {
+        addMessage(msg.content, msg.sender);
+      });
+    }
 
     // Auto-resize textarea
     chatInput.addEventListener('input', function() {
