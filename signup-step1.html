@@ -38,6 +38,8 @@
       transition: width 0.3s ease;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
 </head>
 <body class="bg-gradient-to-br from-indigo-50 via-white to-purple-50 min-h-screen">
   <!-- Navigation -->
@@ -176,7 +178,7 @@
 
   <script>
     // Store form data in sessionStorage
-    document.getElementById('signup-step1-form').addEventListener('submit', function(e) {
+    document.getElementById('signup-step1-form').addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const email = document.getElementById('email').value;
@@ -212,8 +214,28 @@
 
       sessionStorage.setItem('signupData', JSON.stringify(formData));
 
-      // Proceed to next step
-      window.location.href = 'signup-step2.html';
+      // Create Supabase user now (so the rest of onboarding can attach to an authenticated user)
+      try {
+        const redirectTo = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, '')}login.html`;
+        const { data, error } = await window.UniSupabase.signUpWithPassword(email, password, { redirectTo });
+        if (error) {
+          alert(error.message);
+          return;
+        }
+
+        // If email confirmations are enabled, session may be null until user confirms.
+        if (!data.session) {
+          alert('Check your email to confirm your account, then return to log in.');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // Proceed to next step
+        window.location.href = 'signup-step2.html';
+      } catch (err) {
+        console.error('Signup error:', err);
+        alert('Sign up failed. Please try again.');
+      }
     });
 
     // Pre-fill form if data exists (if user goes back)

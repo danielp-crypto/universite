@@ -1,19 +1,115 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import requests
 import os
+import jwt
+from jwt import PyJWKClient
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Supabase configuration (do NOT hardcode secrets; anon key is okay to ship in frontend,
+# but backend reads it from env to call Supabase RPC consistently).
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 
 # Google Gemini API Configuration
 # Use environment variable for API key in production, fallback to default for development
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyAqpapZgs2z9oussNPp68ssXeVGIRf25qo')
 GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}'
 
+_jwks_client = None
+
+def _get_jwks_client():
+    global _jwks_client
+    if _jwks_client is not None:
+        return _jwks_client
+    if not SUPABASE_URL:
+        raise RuntimeError("SUPABASE_URL is not set")
+    jwks_url = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+    _jwks_client = PyJWKClient(jwks_url)
+    return _jwks_client
+
+def _get_bearer_token():
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return None
+    return auth_header.split(' ', 1)[1].strip()
+
+def require_supabase_user():
+    """
+    Validates Supabase JWT (access token) and stores user id in flask.g.
+    """
+    token = _get_bearer_token()
+    if not token:
+        return False, ("missing_auth", 401)
+
+    try:
+        jwk_client = _get_jwks_client()
+        signing_key = jwk_client.get_signing_key_from_jwt(token).key
+        decoded = jwt.decode(
+            token,
+            signing_key,
+            algorithms=["RS256"],
+            options={"verify_aud": False},
+            issuer=f"{SUPABASE_URL}/auth/v1"
+        )
+        user_id = decoded.get('sub')
+        if not user_id:
+            return False, ("invalid_token", 401)
+        g.supabase_user_id = user_id
+        g.supabase_access_token = token
+        return True, None
+    except Exception as e:
+        return False, (str(e), 401)
+
+def consume_quota(action: str, amount: int = 1):
+    """
+    Calls Supabase RPC `consume_quota` using the user's JWT. Returns (ok, payload_or_error).
+    """
+    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+        return False, {"error": "SUPABASE_URL/SUPABASE_ANON_KEY not configured on backend"}
+
+    token = getattr(g, "supabase_access_token", None)
+    if not token:
+        return False, {"error": "missing_auth"}
+
+    resp = requests.post(
+        f"{SUPABASE_URL}/rest/v1/rpc/consume_quota",
+        headers={
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        json={"p_action": action, "p_amount": amount},
+        timeout=15,
+    )
+    if resp.status_code >= 400:
+        return False, {"error": "quota_rpc_failed", "details": resp.text}
+    try:
+        data = resp.json()
+    except Exception:
+        return False, {"error": "quota_rpc_invalid_json", "details": resp.text}
+    return True, data
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
+        qok, qdata = consume_quota("chat_messages", 1)
+        if not qok:
+            return jsonify({"success": False, "error": "quota_check_failed", "details": qdata}), 503
+        if not qdata.get("ok", False):
+            return jsonify({
+                "success": False,
+                "error": "quota_exceeded",
+                "quota": qdata
+            }), 402
+
         data = request.get_json()
         user_message = data.get('message', '')
         current_lecture = data.get('currentLecture', None)
@@ -92,6 +188,21 @@ Use this lecture information to provide contextually relevant responses."""
 @app.route('/api/generate-flashcards', methods=['POST'])
 def generate_flashcards():
     try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
+        qok, qdata = consume_quota("flashcard_generations", 1)
+        if not qok:
+            return jsonify({"success": False, "error": "quota_check_failed", "details": qdata}), 503
+        if not qdata.get("ok", False):
+            return jsonify({
+                "success": False,
+                "error": "quota_exceeded",
+                "quota": qdata
+            }), 402
+
         data = request.get_json()
         lecture = data.get('lecture', {})
         
@@ -158,6 +269,11 @@ def transcribe():
     When audio transcription API key is available, implement here
     """
     try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
         # This is a stub - will be implemented when transcription API key is available
         # For now, return a mock response
         
@@ -185,6 +301,11 @@ def process_lecture():
     This will call transcription and then extract concepts/segments
     """
     try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
         # Stub for now - will process audio when transcription is available
         return jsonify({
             'success': False,

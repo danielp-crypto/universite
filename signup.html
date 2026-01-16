@@ -41,8 +41,8 @@
       },
     }
   </script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -103,25 +103,20 @@
 
         <!-- Social Signup Buttons -->
         <div class="social-signin-wrapper mb-6">
-          <!-- Google Sign-Up -->
-          <div>
-            <div id="g_id_onload"
-                 data-client_id="435540089443-trqmc9iaq288jmvkb9t304tsmrlshikg.apps.googleusercontent.com"
-                 data-callback="handleGoogleSignup">
-            </div>
-            <div class="g_id_signin" data-type="standard" data-theme="outline" data-text="signup_with" data-size="large" data-logo_alignment="left"></div>
-          </div>
-
-          <!-- Apple Sign-Up -->
-          <div>
-            <div id="appleid-signin"
-                 data-type="sign in"
-                 data-color="black"
-                 data-border="true"
-                 data-border-radius="8"
-                 data-width="200">
-            </div>
-          </div>
+          <button
+            type="button"
+            id="btn-google"
+            class="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl font-semibold text-slate-800 hover:bg-slate-50 transition-all"
+          >
+            Sign up with Google
+          </button>
+          <button
+            type="button"
+            id="btn-apple"
+            class="w-full px-4 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all"
+          >
+            Sign up with Apple
+          </button>
         </div>
 
         <!-- Divider -->
@@ -217,61 +212,36 @@
   </footer>
 
   <script>
-    function handleGoogleSignup(response) {
-      fetch("logger3.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `google_id_token=${response.credential}`
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success') {
-          // If new user, redirect to onboarding
-          window.location.href = "signup-step2.html";
-        } else {
-          alert("Google signup failed. Please try again.");
-        }
-      })
-      .catch(error => {
-        console.error('Signup error:', error);
-        alert("An error occurred during signup. Please try again.");
-      });
-    }
+    // If already logged in, go to app
+    (async () => {
+      try {
+        const session = await window.UniSupabase.getSession();
+        if (session) window.location.href = "home.html";
+      } catch (_) {}
+    })();
 
-    // Apple Sign-Up
-    if (typeof AppleID !== 'undefined') {
-      AppleID.auth.init({
-        clientId: "YOUR_APPLE_CLIENT_ID",
-        scope: "name email",
-        redirectURI: "https://universite.co.za/",
-        usePopup: true
-      });
+    // OAuth sign-up (Supabase treats it as sign-in/up)
+    document.getElementById('btn-google').addEventListener('click', async () => {
+      try {
+        const redirectTo = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, '')}home.html`;
+        const { error } = await window.UniSupabase.signInWithOAuth('google', { redirectTo });
+        if (error) alert(error.message);
+      } catch (e) {
+        console.error('Google signup error:', e);
+        alert("Google signup failed. Please try again.");
+      }
+    });
 
-      document.getElementById('appleid-signin').addEventListener('click', () => {
-        AppleID.auth.signIn().then(response => {
-          fetch("logger3.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `apple_identity_token=${response.authorization.id_token}`
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'success') {
-              window.location.href = "signup-step2.html";
-            } else {
-              alert("Apple signup failed. Please try again.");
-            }
-          })
-          .catch(error => {
-            console.error('Signup error:', error);
-            alert("An error occurred during signup. Please try again.");
-          });
-        }).catch(error => {
-          console.error('Apple Sign-In error:', error);
-          alert("Apple Sign-Up failed. Please try again.");
-        });
-      });
-    }
+    document.getElementById('btn-apple').addEventListener('click', async () => {
+      try {
+        const redirectTo = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, '')}home.html`;
+        const { error } = await window.UniSupabase.signInWithOAuth('apple', { redirectTo });
+        if (error) alert(error.message);
+      } catch (e) {
+        console.error('Apple signup error:', e);
+        alert("Apple signup failed. Please try again.");
+      }
+    });
   </script>
 </body>
 </html>

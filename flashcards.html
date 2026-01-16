@@ -78,6 +78,9 @@
     }
   </style>
   <script src="js/app-state.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth-guard.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
   <div id="app" class="flex flex-col min-h-screen pb-20">
@@ -276,9 +279,17 @@
       if (!flashcardSet) {
         // Generate flashcards from lecture
         try {
+          const token = await window.UniSupabase.getAccessToken();
+          if (!token) {
+            window.location.href = 'login.html';
+            return;
+          }
           const response = await fetch(`${API_BASE_URL}/api/generate-flashcards`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
             body: JSON.stringify({ lecture })
           });
 
@@ -296,6 +307,13 @@
               } else {
                 flashcardSet = { flashcards, progress: { mastered: 0, learning: 0, new: flashcards.length } };
               }
+            }
+          }
+
+          if (response.status === 402) {
+            const data = await response.json().catch(() => null);
+            if (data && data.error === 'quota_exceeded') {
+              alert('You reached your monthly quota for flashcard generation.');
             }
           }
         } catch (error) {
