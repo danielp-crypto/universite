@@ -35,12 +35,60 @@
     .safe-area-inset-bottom {
       padding-bottom: env(safe-area-inset-bottom, 0);
     }
+
+    .modal-overlay {
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+      transition: stroke-dasharray 0.3s ease;
+    }
+
+    .error-message {
+      display: none;
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .error-message:not(.hidden) {
+      display: block;
+    }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
   <div id="app" class="flex flex-col min-h-screen pb-20">
     <!-- Header -->
-    <div class="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+    <div class="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-50">
       <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
         <h1 class="text-lg md:text-xl font-semibold text-slate-800">Settings</h1>
       </div>
@@ -51,15 +99,15 @@
       <!-- Profile Section -->
       <div class="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
         <div class="flex items-center gap-4 mb-4">
-          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
-            JS
+          <div id="user-avatar" class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+            <!-- Avatar will be populated by JS -->
           </div>
           <div class="flex-1">
-            <div class="text-lg font-semibold text-slate-800">John Student</div>
-            <div class="text-sm text-slate-500">john.student@university.edu</div>
+            <div id="user-name" class="text-lg font-semibold text-slate-800"><!-- Name will be populated by JS --></div>
+            <div id="user-email" class="text-sm text-slate-500"><!-- Email will be populated by JS --></div>
           </div>
         </div>
-        <button class="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform">
+        <button id="edit-profile-btn" class="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform">
           Edit Profile
         </button>
       </div>
@@ -68,7 +116,7 @@
       <div class="mb-4">
         <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 px-2">General</h2>
         <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-200">
-          <button class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
+          <button id="notifications-btn" class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                 <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +133,7 @@
             </svg>
           </button>
 
-          <button class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
+          <button id="appearance-btn" class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                 <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +146,7 @@
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-sm text-slate-500">Light</span>
+              <span id="current-theme" class="text-sm text-slate-500">Light</span>
               <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
@@ -128,7 +176,7 @@
       <div class="mb-4">
         <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 px-2">Study</h2>
         <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-200">
-          <div class="flex items-center justify-between p-4">
+          <button id="daily-goal-btn" class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                 <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,15 +185,15 @@
               </div>
               <div class="text-left">
                 <div class="font-medium text-slate-800">Daily Study Goal</div>
-                <div class="text-xs text-slate-500">2 hours per day</div>
+                <div id="current-daily-goal" class="text-xs text-slate-500">2 hours per day</div>
               </div>
             </div>
             <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-          </div>
+          </button>
 
-          <div class="flex items-center justify-between p-4">
+          <button id="audio-quality-btn" class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                 <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,13 +202,13 @@
               </div>
               <div class="text-left">
                 <div class="font-medium text-slate-800">Audio Quality</div>
-                <div class="text-xs text-slate-500">High (better transcripts)</div>
+                <div id="current-audio-quality" class="text-xs text-slate-500">High (better transcripts)</div>
               </div>
             </div>
             <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-          </div>
+          </button>
 
           <div class="flex items-center justify-between p-4">
             <div class="text-left flex-1">
@@ -168,7 +216,7 @@
               <div class="text-xs text-slate-500">Automatically save lecture recordings</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" checked class="sr-only peer">
+              <input id="auto-save-toggle" type="checkbox" checked class="sr-only peer">
               <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
             </label>
           </div>
@@ -179,7 +227,7 @@
       <div class="mb-4">
         <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 px-2">About</h2>
         <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-200">
-          <button class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
+          <button id="help-support-btn" class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
                 <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,7 +244,7 @@
             </svg>
           </button>
 
-          <button class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
+          <button id="privacy-policy-btn" class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
                 <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,9 +280,593 @@
       </div>
 
       <!-- Sign Out -->
-      <button class="w-full px-4 py-3 bg-red-50 text-red-600 rounded-xl font-medium active:scale-95 transition-transform">
+      <button id="sign-out-btn" class="w-full px-4 py-3 bg-red-50 text-red-600 rounded-xl font-medium active:scale-95 transition-transform">
         Sign Out
       </button>
+    </div>
+
+    <!-- Modals -->
+    <!-- Notifications Modal -->
+    <div id="notifications-modal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold text-slate-800">Notifications</h2>
+              <button id="close-notifications" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="space-y-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-slate-800">Email Notifications</div>
+                  <div class="text-sm text-slate-500">Receive updates via email</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="email-notifications" type="checkbox" checked class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-slate-800">Push Notifications</div>
+                  <div class="text-sm text-slate-500">Get notified in your browser</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="push-notifications" type="checkbox" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-slate-800">Study Reminders</div>
+                  <div class="text-sm text-slate-500">Daily study goal reminders</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="study-reminders" type="checkbox" checked class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-slate-800">Lecture Processing</div>
+                  <div class="text-sm text-slate-500">When your lectures are ready</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="lecture-processing" type="checkbox" checked class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+            </div>
+
+            <div class="mt-8 flex gap-3">
+              <button id="save-notifications" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                Save Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appearance Modal -->
+    <div id="appearance-modal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold text-slate-800">Appearance</h2>
+              <button id="close-appearance" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="space-y-4">
+              <div class="p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors" data-theme="light">
+                <div class="flex items-center gap-3">
+                  <div class="w-4 h-4 rounded-full bg-yellow-400 flex-shrink-0"></div>
+                  <div>
+                    <div class="font-medium text-slate-800">Light</div>
+                    <div class="text-sm text-slate-500">Clean and bright interface</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors" data-theme="dark">
+                <div class="flex items-center gap-3">
+                  <div class="w-4 h-4 rounded-full bg-slate-800 flex-shrink-0"></div>
+                  <div>
+                    <div class="font-medium text-slate-800">Dark</div>
+                    <div class="text-sm text-slate-500">Easy on the eyes in low light</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-4 border-2 border-indigo-300 bg-indigo-50 rounded-xl cursor-pointer" data-theme="system">
+                <div class="flex items-center gap-3">
+                  <div class="w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-slate-800 flex-shrink-0"></div>
+                  <div>
+                    <div class="font-medium text-slate-800">System</div>
+                    <div class="text-sm text-slate-500">Follow your device settings</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-8 flex gap-3">
+              <button id="save-appearance" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                Apply Theme
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Goal Modal -->
+    <div id="daily-goal-modal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold text-slate-800">Daily Study Goal</h2>
+              <button id="close-daily-goal" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="space-y-6">
+              <div class="text-center">
+                <div class="w-24 h-24 mx-auto mb-4 relative">
+                  <svg class="progress-ring w-24 h-24" viewBox="0 0 36 36">
+                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+                    <path id="progress-circle" class="progress-ring-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="75, 100"/>
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                      <div class="text-2xl font-bold text-slate-800">2.5</div>
+                      <div class="text-xs text-slate-500">hours</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-sm text-slate-600">You've studied 2.5 of 3 hours today</div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Set Daily Goal</label>
+                <div class="grid grid-cols-4 gap-2">
+                  <button class="goal-btn px-3 py-2 border border-slate-200 rounded-lg text-sm hover:border-indigo-300 hover:bg-indigo-50 transition-colors" data-hours="1">1h</button>
+                  <button class="goal-btn px-3 py-2 border border-slate-200 rounded-lg text-sm hover:border-indigo-300 hover:bg-indigo-50 transition-colors" data-hours="2">2h</button>
+                  <button class="goal-btn px-3 py-2 border-2 border-indigo-300 bg-indigo-50 rounded-lg text-sm font-medium" data-hours="3">3h</button>
+                  <button class="goal-btn px-3 py-2 border border-slate-200 rounded-lg text-sm hover:border-indigo-300 hover:bg-indigo-50 transition-colors" data-hours="4">4h</button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                <div>
+                  <div class="font-medium text-slate-800">Weekly Summary</div>
+                  <div class="text-sm text-slate-500">This week's progress</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-lg font-bold text-indigo-600">15.5h</div>
+                  <div class="text-xs text-slate-500">of 21h goal</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-8 flex gap-3">
+              <button id="save-daily-goal" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                Save Goal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audio Quality Modal -->
+    <div id="audio-quality-modal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold text-slate-800">Audio Quality</h2>
+              <button id="close-audio-quality" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="space-y-4">
+              <div class="p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors" data-quality="low">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-medium text-slate-800">Low Quality</div>
+                    <div class="text-sm text-slate-500">64 kbps • Faster uploads • Basic transcripts</div>
+                  </div>
+                  <div class="text-xs text-slate-400">Recommended for short lectures</div>
+                </div>
+              </div>
+
+              <div class="p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors" data-quality="medium">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-medium text-slate-800">Medium Quality</div>
+                    <div class="text-sm text-slate-500">128 kbps • Balanced performance • Good transcripts</div>
+                  </div>
+                  <div class="text-xs text-slate-400">Good for most lectures</div>
+                </div>
+              </div>
+
+              <div class="p-4 border-2 border-indigo-300 bg-indigo-50 rounded-xl cursor-pointer" data-quality="high">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-medium text-slate-800">High Quality</div>
+                    <div class="text-sm text-slate-500">256 kbps • Best transcripts • Slower uploads</div>
+                  </div>
+                  <div class="text-xs text-green-600">Current setting</div>
+                </div>
+              </div>
+
+              <div class="p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors" data-quality="ultra">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-medium text-slate-800">Ultra Quality</div>
+                    <div class="text-sm text-slate-500">320 kbps • Premium transcripts • Slowest uploads</div>
+                  </div>
+                  <div class="text-xs text-amber-600">Plus plan only</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <div class="text-sm font-medium text-amber-800">Higher quality = Better transcripts</div>
+                  <div class="text-xs text-amber-700 mt-1">But uploads may take longer with high-quality audio</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-8 flex gap-3">
+              <button id="save-audio-quality" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                Save Quality
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help & Support Modal -->
+    <div id="help-support-modal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold text-slate-800">Help & Support</h2>
+              <button id="close-help-support" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="space-y-4">
+              <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5z" />
+                  </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-800 mb-2">How can we help?</h3>
+                <p class="text-slate-600">Find answers or get in touch with our support team</p>
+              </div>
+
+              <div class="space-y-3">
+                <button class="w-full p-4 border border-slate-200 rounded-xl text-left hover:border-indigo-300 hover:bg-indigo-50 transition-colors">
+                  <div class="font-medium text-slate-800">Getting Started Guide</div>
+                  <div class="text-sm text-slate-500 mt-1">Learn the basics of using Universite</div>
+                </button>
+
+                <button class="w-full p-4 border border-slate-200 rounded-xl text-left hover:border-indigo-300 hover:bg-indigo-50 transition-colors">
+                  <div class="font-medium text-slate-800">Recording Lectures</div>
+                  <div class="text-sm text-slate-500 mt-1">Tips for better audio quality</div>
+                </button>
+
+                <button class="w-full p-4 border border-slate-200 rounded-xl text-left hover:border-indigo-300 hover:bg-indigo-50 transition-colors">
+                  <div class="font-medium text-slate-800">Transcription Issues</div>
+                  <div class="text-sm text-slate-500 mt-1">Common problems and solutions</div>
+                </button>
+
+                <button class="w-full p-4 border border-slate-200 rounded-xl text-left hover:border-indigo-300 hover:bg-indigo-50 transition-colors">
+                  <div class="font-medium text-slate-800">Account & Billing</div>
+                  <div class="text-sm text-slate-500 mt-1">Manage your subscription</div>
+                </button>
+              </div>
+
+              <div class="border-t border-slate-200 pt-6 mt-6">
+                <h4 class="font-medium text-slate-800 mb-4">Contact Support</h4>
+                <div class="space-y-3">
+                  <button class="w-full p-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                    Send us a message
+                  </button>
+                  <button class="w-full p-3 border border-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-colors">
+                    Schedule a call
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacy-policy-modal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold text-slate-800">Privacy Policy</h2>
+              <button id="close-privacy-policy" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="prose prose-sm max-w-none text-slate-600 space-y-4 overflow-y-auto max-h-96">
+              <h3 class="text-lg font-semibold text-slate-800">Information We Collect</h3>
+              <p>We collect information you provide directly to us, such as when you create an account, record lectures, or contact support.</p>
+
+              <h3 class="text-lg font-semibold text-slate-800">How We Use Your Information</h3>
+              <p>Your information is used to provide our services, process audio transcriptions, generate AI responses, and improve our platform.</p>
+
+              <h3 class="text-lg font-semibold text-slate-800">Data Security</h3>
+              <p>We implement appropriate security measures to protect your personal information against unauthorized access or disclosure.</p>
+
+              <h3 class="text-lg font-semibold text-slate-800">Third-Party Services</h3>
+              <p>We use Google and Apple for authentication and Google Gemini for AI processing. Your data is processed according to their privacy policies.</p>
+
+              <h3 class="text-lg font-semibold text-slate-800">Your Rights</h3>
+              <p>You have the right to access, update, or delete your personal information. Contact us to exercise these rights.</p>
+
+              <h3 class="text-lg font-semibold text-slate-800">Contact Us</h3>
+              <p>If you have questions about this Privacy Policy, please contact us at privacy@universite.co.za</p>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-200">
+              <p class="text-xs text-slate-500 text-center">Last updated: January 2026</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Editing Modal -->
+    <div id="profile-modal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold text-slate-800">Edit Profile</h2>
+              <button id="close-profile" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form id="profile-form" class="space-y-6">
+              <!-- Profile Picture -->
+              <div class="text-center">
+                <div class="relative inline-block">
+                  <div id="profile-picture-preview" class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+                    <!-- Avatar will be populated by JS -->
+                  </div>
+                  <button type="button" id="change-avatar-btn" class="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
+                </div>
+                <input type="file" id="avatar-input" accept="image/*" class="hidden">
+                <p class="text-sm text-slate-500">Click to change profile picture</p>
+              </div>
+
+              <!-- Full Name -->
+              <div>
+                <label for="full-name" class="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+                <input
+                  type="text"
+                  id="full-name"
+                  name="full-name"
+                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  placeholder="Enter your full name"
+                  maxlength="100"
+                >
+                <div id="name-error" class="error-message mt-2"></div>
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label for="email" class="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  placeholder="your.email@example.com"
+                >
+                <p class="text-xs text-slate-500 mt-1">Changing email requires verification</p>
+                <div id="email-error" class="error-message mt-2"></div>
+              </div>
+
+              <!-- Bio -->
+              <div>
+                <label for="bio" class="block text-sm font-medium text-slate-700 mb-2">Bio</label>
+                <textarea
+                  id="bio"
+                  name="bio"
+                  rows="3"
+                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-none"
+                  placeholder="Tell us about yourself..."
+                  maxlength="200"
+                ></textarea>
+                <div class="flex justify-between mt-1">
+                  <span id="bio-error" class="error-message"></span>
+                  <span class="text-xs text-slate-500"><span id="bio-count">0</span>/200</span>
+                </div>
+              </div>
+
+              <!-- Academic Information -->
+              <div class="space-y-4">
+                <h3 class="text-sm font-semibold text-slate-800">Academic Information</h3>
+
+                <div>
+                  <label for="university" class="block text-sm font-medium text-slate-700 mb-2">University/Institution</label>
+                  <input
+                    type="text"
+                    id="university"
+                    name="university"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    placeholder="Your university or institution"
+                    maxlength="100"
+                  >
+                </div>
+
+                <div>
+                  <label for="major" class="block text-sm font-medium text-slate-700 mb-2">Field of Study</label>
+                  <input
+                    type="text"
+                    id="major"
+                    name="major"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    placeholder="e.g., Computer Science, Biology, Business"
+                    maxlength="100"
+                  >
+                </div>
+
+                <div>
+                  <label for="year" class="block text-sm font-medium text-slate-700 mb-2">Year of Study</label>
+                  <select
+                    id="year"
+                    name="year"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none bg-white"
+                  >
+                    <option value="">Select year</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                    <option value="5">5th Year+</option>
+                    <option value="graduate">Graduate Student</option>
+                    <option value="phd">PhD Student</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Study Preferences -->
+              <div class="space-y-4">
+                <h3 class="text-sm font-semibold text-slate-800">Study Preferences</h3>
+
+                <div>
+                  <label for="study-time" class="block text-sm font-medium text-slate-700 mb-2">Preferred Study Time</label>
+                  <select
+                    id="study-time"
+                    name="study-time"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none bg-white"
+                  >
+                    <option value="">Select preferred time</option>
+                    <option value="morning">Morning (6AM - 12PM)</option>
+                    <option value="afternoon">Afternoon (12PM - 6PM)</option>
+                    <option value="evening">Evening (6PM - 12AM)</option>
+                    <option value="night">Night (12AM - 6AM)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="learning-style" class="block text-sm font-medium text-slate-700 mb-2">Learning Style</label>
+                  <select
+                    id="learning-style"
+                    name="learning-style"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none bg-white"
+                  >
+                    <option value="">Select learning style</option>
+                    <option value="visual">Visual (diagrams, videos)</option>
+                    <option value="auditory">Auditory (lectures, discussions)</option>
+                    <option value="reading">Reading/Writing (notes, books)</option>
+                    <option value="kinesthetic">Kinesthetic (hands-on, practical)</option>
+                    <option value="mixed">Mixed (combination)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Loading and Error States -->
+              <div id="profile-loading" class="hidden">
+                <div class="flex items-center justify-center py-4">
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span class="text-slate-600">Updating profile...</span>
+                </div>
+              </div>
+
+              <div id="profile-success" class="hidden p-4 bg-green-50 border border-green-200 rounded-xl">
+                <div class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <div class="text-sm font-medium text-green-800">Profile updated successfully!</div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="profile-error" class="hidden p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <div class="text-sm font-medium text-red-800">Error updating profile</div>
+                    <div id="profile-error-message" class="text-sm text-red-700 mt-1"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-3 pt-4">
+                <button type="button" id="cancel-profile" class="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" id="save-profile" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Bottom Navigation -->
@@ -269,6 +901,564 @@
       </div>
     </nav>
   </div>
+
+  <script>
+    // User data and settings state
+    let userSettings = {
+      notifications: {
+        email: true,
+        push: false,
+        studyReminders: true,
+        lectureProcessing: true
+      },
+      appearance: 'system',
+      dailyGoal: 3,
+      audioQuality: 'high',
+      autoSave: true,
+      profile: {}
+    };
+
+    // Load user profile and initialize settings
+    async function initializeSettings() {
+      try {
+        const session = await window.UniSupabase.getSession();
+        if (session?.user) {
+          const user = session.user;
+          const metadata = user.user_metadata || {};
+
+          // Set profile data from Supabase
+          userSettings.profile = {
+            full_name: metadata.full_name || '',
+            email: user.email || '',
+            bio: metadata.bio || '',
+            university: metadata.university || '',
+            major: metadata.major || '',
+            year: metadata.year || '',
+            study_time: metadata.study_time || '',
+            learning_style: metadata.learning_style || '',
+            avatar_url: metadata.avatar_url || null
+          };
+
+          // Load additional preferences from localStorage
+          const savedSettings = localStorage.getItem('universite_settings');
+          if (savedSettings) {
+            const parsed = JSON.parse(savedSettings);
+            userSettings = {
+              ...userSettings,
+              ...parsed,
+              profile: userSettings.profile // Keep Supabase profile data
+            };
+          }
+
+          updateProfileDisplay(userSettings.profile);
+          updateUIFromSettings();
+        }
+      } catch (error) {
+        console.error('Error initializing settings:', error);
+      }
+    }
+
+    function updateUIFromSettings() {
+      // Update appearance
+      document.getElementById('current-theme').textContent = userSettings.appearance.charAt(0).toUpperCase() + userSettings.appearance.slice(1);
+
+      // Update daily goal
+      document.getElementById('current-daily-goal').textContent = `${userSettings.dailyGoal} hours per day`;
+
+      // Update audio quality
+      const qualityLabels = {
+        low: 'Low (basic transcripts)',
+        medium: 'Medium (good transcripts)',
+        high: 'High (better transcripts)',
+        ultra: 'Ultra (premium transcripts)'
+      };
+      document.getElementById('current-audio-quality').textContent = qualityLabels[userSettings.audioQuality];
+
+      // Update toggles
+      document.getElementById('auto-save-toggle').checked = userSettings.autoSave;
+    }
+
+    // Modal management functions
+    function showModal(modalId) {
+      document.getElementById(modalId).classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hideModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Notifications modal
+    document.getElementById('notifications-btn').addEventListener('click', () => {
+      // Load current settings into modal
+      document.getElementById('email-notifications').checked = userSettings.notifications.email;
+      document.getElementById('push-notifications').checked = userSettings.notifications.push;
+      document.getElementById('study-reminders').checked = userSettings.notifications.studyReminders;
+      document.getElementById('lecture-processing').checked = userSettings.notifications.lectureProcessing;
+
+      showModal('notifications-modal');
+    });
+
+    document.getElementById('close-notifications').addEventListener('click', () => hideModal('notifications-modal'));
+    document.getElementById('save-notifications').addEventListener('click', () => {
+      userSettings.notifications = {
+        email: document.getElementById('email-notifications').checked,
+        push: document.getElementById('push-notifications').checked,
+        studyReminders: document.getElementById('study-reminders').checked,
+        lectureProcessing: document.getElementById('lecture-processing').checked
+      };
+      saveSettings();
+      hideModal('notifications-modal');
+    });
+
+    // Appearance modal
+    document.getElementById('appearance-btn').addEventListener('click', () => {
+      // Highlight current theme
+      document.querySelectorAll('[data-theme]').forEach(el => {
+        el.classList.remove('border-indigo-300', 'bg-indigo-50');
+        el.classList.add('border-slate-200');
+      });
+      const currentThemeEl = document.querySelector(`[data-theme="${userSettings.appearance}"]`);
+      if (currentThemeEl) {
+        currentThemeEl.classList.remove('border-slate-200');
+        currentThemeEl.classList.add('border-indigo-300', 'bg-indigo-50');
+      }
+
+      showModal('appearance-modal');
+    });
+
+    document.querySelectorAll('[data-theme]').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('[data-theme]').forEach(e => {
+          e.classList.remove('border-indigo-300', 'bg-indigo-50');
+          e.classList.add('border-slate-200');
+        });
+        el.classList.remove('border-slate-200');
+        el.classList.add('border-indigo-300', 'bg-indigo-50');
+      });
+    });
+
+    document.getElementById('close-appearance').addEventListener('click', () => hideModal('appearance-modal'));
+    document.getElementById('save-appearance').addEventListener('click', () => {
+      const selectedTheme = document.querySelector('[data-theme].border-indigo-300')?.dataset.theme || 'system';
+      userSettings.appearance = selectedTheme;
+      updateUIFromSettings();
+      saveSettings();
+      hideModal('appearance-modal');
+    });
+
+    // Daily goal modal
+    document.getElementById('daily-goal-btn').addEventListener('click', () => {
+      // Highlight current goal
+      document.querySelectorAll('.goal-btn').forEach(btn => {
+        btn.classList.remove('border-indigo-300', 'bg-indigo-50', 'font-medium');
+        btn.classList.add('border-slate-200');
+      });
+      const currentGoalBtn = document.querySelector(`[data-hours="${userSettings.dailyGoal}"]`);
+      if (currentGoalBtn) {
+        currentGoalBtn.classList.remove('border-slate-200');
+        currentGoalBtn.classList.add('border-indigo-300', 'bg-indigo-50', 'font-medium');
+      }
+
+      showModal('daily-goal-modal');
+    });
+
+    document.querySelectorAll('.goal-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.goal-btn').forEach(b => {
+          b.classList.remove('border-indigo-300', 'bg-indigo-50', 'font-medium');
+          b.classList.add('border-slate-200');
+        });
+        btn.classList.remove('border-slate-200');
+        btn.classList.add('border-indigo-300', 'bg-indigo-50', 'font-medium');
+      });
+    });
+
+    document.getElementById('close-daily-goal').addEventListener('click', () => hideModal('daily-goal-modal'));
+    document.getElementById('save-daily-goal').addEventListener('click', () => {
+      const selectedGoal = parseInt(document.querySelector('.goal-btn.border-indigo-300')?.dataset.hours) || 3;
+      userSettings.dailyGoal = selectedGoal;
+      updateUIFromSettings();
+      saveSettings();
+      hideModal('daily-goal-modal');
+    });
+
+    // Audio quality modal
+    document.getElementById('audio-quality-btn').addEventListener('click', () => {
+      // Highlight current quality
+      document.querySelectorAll('[data-quality]').forEach(el => {
+        el.classList.remove('border-indigo-300', 'bg-indigo-50');
+        el.classList.add('border-slate-200');
+      });
+      const currentQualityEl = document.querySelector(`[data-quality="${userSettings.audioQuality}"]`);
+      if (currentQualityEl) {
+        currentQualityEl.classList.remove('border-slate-200');
+        currentQualityEl.classList.add('border-indigo-300', 'bg-indigo-50');
+      }
+
+      showModal('audio-quality-modal');
+    });
+
+    document.querySelectorAll('[data-quality]').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('[data-quality]').forEach(e => {
+          e.classList.remove('border-indigo-300', 'bg-indigo-50');
+          e.classList.add('border-slate-200');
+        });
+        el.classList.remove('border-slate-200');
+        el.classList.add('border-indigo-300', 'bg-indigo-50');
+      });
+    });
+
+    document.getElementById('close-audio-quality').addEventListener('click', () => hideModal('audio-quality-modal'));
+    document.getElementById('save-audio-quality').addEventListener('click', () => {
+      const selectedQuality = document.querySelector('[data-quality].border-indigo-300')?.dataset.quality || 'high';
+      userSettings.audioQuality = selectedQuality;
+      updateUIFromSettings();
+      saveSettings();
+      hideModal('audio-quality-modal');
+    });
+
+    // Help & support modal
+    document.getElementById('help-support-btn').addEventListener('click', () => showModal('help-support-modal'));
+    document.getElementById('close-help-support').addEventListener('click', () => hideModal('help-support-modal'));
+
+    // Privacy policy modal
+    document.getElementById('privacy-policy-btn').addEventListener('click', () => showModal('privacy-policy-modal'));
+    document.getElementById('close-privacy-policy').addEventListener('click', () => hideModal('privacy-policy-modal'));
+
+    // Sign out functionality
+    document.getElementById('sign-out-btn').addEventListener('click', async () => {
+      if (confirm('Are you sure you want to sign out?')) {
+        try {
+          await window.UniSupabase.signOut();
+          window.location.href = 'login.html';
+        } catch (error) {
+          console.error('Error signing out:', error);
+          alert('Error signing out. Please try again.');
+        }
+      }
+    });
+
+    // Auto-save toggle
+    document.getElementById('auto-save-toggle').addEventListener('change', (e) => {
+      userSettings.autoSave = e.target.checked;
+      saveSettings();
+    });
+
+    // Edit profile modal
+    document.getElementById('edit-profile-btn').addEventListener('click', () => {
+      loadProfileData();
+      showModal('profile-modal');
+    });
+
+    document.getElementById('close-profile').addEventListener('click', () => hideModal('profile-modal'));
+    document.getElementById('cancel-profile').addEventListener('click', () => hideModal('profile-modal'));
+
+    // Profile picture upload
+    document.getElementById('change-avatar-btn').addEventListener('click', () => {
+      document.getElementById('avatar-input').click();
+    });
+
+    document.getElementById('avatar-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Validate file type and size
+        if (!file.type.startsWith('image/')) {
+          showProfileError('Please select a valid image file.');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+          showProfileError('Image size must be less than 5MB.');
+          return;
+        }
+
+        // Preview image
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const preview = document.getElementById('profile-picture-preview');
+          preview.style.backgroundImage = `url(${e.target.result})`;
+          preview.style.backgroundSize = 'cover';
+          preview.style.backgroundPosition = 'center';
+          preview.textContent = ''; // Remove initials
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Bio character counter
+    document.getElementById('bio').addEventListener('input', (e) => {
+      const count = e.target.value.length;
+      document.getElementById('bio-count').textContent = count;
+      if (count > 180) {
+        document.getElementById('bio-count').className = 'text-xs text-red-500';
+      } else {
+        document.getElementById('bio-count').className = 'text-xs text-slate-500';
+      }
+    });
+
+    // Profile form validation
+    function validateProfileForm() {
+      const name = document.getElementById('full-name').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      let isValid = true;
+
+      // Clear previous errors
+      document.getElementById('name-error').classList.add('hidden');
+      document.getElementById('email-error').classList.add('hidden');
+
+      // Name validation
+      if (!name) {
+        showFieldError('name-error', 'Full name is required');
+        isValid = false;
+      } else if (name.length < 2) {
+        showFieldError('name-error', 'Name must be at least 2 characters');
+        isValid = false;
+      }
+
+      // Email validation
+      if (!email) {
+        showFieldError('email-error', 'Email is required');
+        isValid = false;
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showFieldError('email-error', 'Please enter a valid email address');
+        isValid = false;
+      }
+
+      return isValid;
+    }
+
+    function showFieldError(elementId, message) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.classList.remove('hidden');
+    }
+
+    // Profile form submission
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!validateProfileForm()) {
+        return;
+      }
+
+      showProfileLoading(true);
+      hideProfileMessages();
+
+      try {
+        const session = await window.UniSupabase.getSession();
+        if (!session?.user) {
+          throw new Error('User not authenticated');
+        }
+
+        const formData = {
+          full_name: document.getElementById('full-name').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          bio: document.getElementById('bio').value.trim(),
+          university: document.getElementById('university').value.trim(),
+          major: document.getElementById('major').value.trim(),
+          year: document.getElementById('year').value,
+          study_time: document.getElementById('study-time').value,
+          learning_style: document.getElementById('learning-style').value
+        };
+
+        // Update user metadata in Supabase
+        const { data, error } = await window.UniSupabase.client.auth.updateUser({
+          data: formData
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        // Handle profile picture upload if a new one was selected
+        const avatarFile = document.getElementById('avatar-input').files[0];
+        if (avatarFile) {
+          await uploadProfilePicture(avatarFile, session.user.id);
+        }
+
+        // Update local storage and UI
+        const updatedSettings = { ...userSettings, profile: formData };
+        localStorage.setItem('universite_settings', JSON.stringify(updatedSettings));
+
+        // Update the main profile display
+        updateProfileDisplay(formData);
+
+        showProfileSuccess();
+
+        // Close modal after a short delay
+        setTimeout(() => {
+          hideModal('profile-modal');
+          hideProfileMessages();
+        }, 2000);
+
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        showProfileError(error.message || 'Failed to update profile. Please try again.');
+      } finally {
+        showProfileLoading(false);
+      }
+    });
+
+    // Helper functions for profile management
+    async function loadProfileData() {
+      try {
+        const session = await window.UniSupabase.getSession();
+        if (!session?.user) return;
+
+        const user = session.user;
+        const metadata = user.user_metadata || {};
+
+        // Populate form fields
+        document.getElementById('full-name').value = metadata.full_name || '';
+        document.getElementById('email').value = user.email || '';
+        document.getElementById('bio').value = metadata.bio || '';
+        document.getElementById('university').value = metadata.university || '';
+        document.getElementById('major').value = metadata.major || '';
+        document.getElementById('year').value = metadata.year || '';
+        document.getElementById('study-time').value = metadata.study_time || '';
+        document.getElementById('learning-style').value = metadata.learning_style || '';
+
+        // Update bio counter
+        const bioLength = (metadata.bio || '').length;
+        document.getElementById('bio-count').textContent = bioLength;
+
+        // Load profile picture if available
+        if (metadata.avatar_url) {
+          const preview = document.getElementById('profile-picture-preview');
+          preview.style.backgroundImage = `url(${metadata.avatar_url})`;
+          preview.style.backgroundSize = 'cover';
+          preview.style.backgroundPosition = 'center';
+          preview.textContent = '';
+        } else {
+          // Show initials
+          const initials = (metadata.full_name || user.email)
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+          const preview = document.getElementById('profile-picture-preview');
+          preview.style.backgroundImage = 'none';
+          preview.textContent = initials;
+        }
+
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+      }
+    }
+
+    async function uploadProfilePicture(file, userId) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${userId}/avatar.${fileExt}`;
+
+        // Upload to Supabase storage (you'll need to set up a storage bucket)
+        const { data, error } = await window.UniSupabase.client.storage
+          .from('avatars')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          console.warn('Storage upload failed, continuing without avatar:', error);
+          return null;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = window.UniSupabase.client.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        return publicUrl;
+      } catch (error) {
+        console.warn('Avatar upload failed:', error);
+        return null;
+      }
+    }
+
+    function updateProfileDisplay(profileData) {
+      // Update main profile section
+      const nameElement = document.getElementById('user-name');
+      const emailElement = document.getElementById('user-email');
+      const avatarElement = document.getElementById('user-avatar');
+
+      if (nameElement) nameElement.textContent = profileData.full_name || 'User';
+      if (emailElement) emailElement.textContent = profileData.email || '';
+
+      // Update avatar
+      if (avatarElement) {
+        if (profileData.avatar_url) {
+          avatarElement.style.backgroundImage = `url(${profileData.avatar_url})`;
+          avatarElement.style.backgroundSize = 'cover';
+          avatarElement.style.backgroundPosition = 'center';
+          avatarElement.textContent = '';
+        } else {
+          avatarElement.style.backgroundImage = 'none';
+          const initials = (profileData.full_name || profileData.email || 'U')
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+          avatarElement.textContent = initials;
+        }
+      }
+    }
+
+    function showProfileLoading(show) {
+      const loading = document.getElementById('profile-loading');
+      const form = document.getElementById('profile-form');
+      const buttons = form.querySelectorAll('button');
+
+      if (show) {
+        loading.classList.remove('hidden');
+        buttons.forEach(btn => btn.disabled = true);
+      } else {
+        loading.classList.add('hidden');
+        buttons.forEach(btn => btn.disabled = false);
+      }
+    }
+
+    function showProfileSuccess() {
+      document.getElementById('profile-success').classList.remove('hidden');
+    }
+
+    function showProfileError(message) {
+      const errorDiv = document.getElementById('profile-error');
+      const errorMessage = document.getElementById('profile-error-message');
+      errorMessage.textContent = message;
+      errorDiv.classList.remove('hidden');
+    }
+
+    function hideProfileMessages() {
+      document.getElementById('profile-success').classList.add('hidden');
+      document.getElementById('profile-error').classList.add('hidden');
+    }
+
+    // Save settings to localStorage (in production, this would save to your backend)
+    function saveSettings() {
+      localStorage.setItem('universite_settings', JSON.stringify(userSettings));
+      console.log('Settings saved:', userSettings);
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializeSettings);
+
+    // Close modals when clicking overlay
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.closest('.fixed').classList.add('hidden');
+          document.body.style.overflow = 'auto';
+        }
+      });
+    });
+  </script>
 </body>
+</html>
 </html>
 
