@@ -22,7 +22,7 @@ The server will start on `http://localhost:5000` by default.
 
 Make sure the `API_BASE_URL` in `assistant.html` points to your backend URL:
 - Local development: `http://localhost:5000`
-- Production: Update to your production server URL
+- Production: Update to your production server URL (currently set to placeholder: `https://your-backend-api-url.com`)
 
 ## API Endpoints
 
@@ -100,5 +100,6 @@ For production deployment:
 3. Configure CORS settings for your domain
 4. Use HTTPS in production
 5. Update the `API_BASE_URL` in the frontend to your production server URL
+6. Configure CORS to allow requests from `https://master.dopnvb05t610g.amplifyapp.com`
 
 

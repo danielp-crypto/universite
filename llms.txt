@@ -5,7 +5,7 @@
 Universite is a comprehensive online course comparison platform that helps students discover, compare, and enroll in the best online courses and university programs. Our platform provides detailed course information, reviews, recommendations, and educational content to help learners make informed decisions about their education.
 
 ## Website Information
-- Domain: https://universite.co.za
+- Domain: https://master.dopnvb05t610g.amplifyapp.com
 - Language: English (en, en-za)
 - Country: South Africa
 - Industry: Education Technology, Online Learning
@@ -19,12 +19,12 @@ Universite is a comprehensive online course comparison platform that helps stude
 - Course reviews and ratings
 
 ## Main Pages
-- Homepage: https://universite.co.za/
-- Course Search: https://universite.co.za/course-search.php
-- Login: https://universite.co.za/login.php
-- Sign Up: https://universite.co.za/signup.php
-- Blog: https://universite.co.za/posts/blog.php
-- Contact: https://universite.co.za/contact.php
+- Homepage: https://master.dopnvb05t610g.amplifyapp.com/
+- Course Search: https://master.dopnvb05t610g.amplifyapp.com/course-search.php
+- Login: https://master.dopnvb05t610g.amplifyapp.com/login.html
+- Sign Up: https://master.dopnvb05t610g.amplifyapp.com/signup.html
+- Blog: https://master.dopnvb05t610g.amplifyapp.com/posts/blog.php
+- Contact: https://master.dopnvb05t610g.amplifyapp.com/contact.php
 
 ## Educational Content
 Our blog covers various educational topics including:
@@ -61,12 +61,12 @@ Our blog covers various educational topics including:
 - Course comparison algorithms
 
 ## Privacy and Terms
-- Privacy Policy: https://universite.co.za/privacy.php
-- Terms of Service: https://universite.co.za/terms.php
+- Privacy Policy: https://master.dopnvb05t610g.amplifyapp.com/privacy.html
+- Terms of Service: https://master.dopnvb05t610g.amplifyapp.com/terms.html
 
 ## Contact Information
-- Website: https://universite.co.za
-- Contact Page: https://universite.co.za/contact.php
+- Website: https://master.dopnvb05t610g.amplifyapp.com
+- Contact Page: https://master.dopnvb05t610g.amplifyapp.com/contact.php
 
 ## Last Updated
 January 27, 2025

@@ -10,8 +10,9 @@ This project uses Supabase for:
 In your Supabase dashboard:
 
 - **Auth → URL Configuration**
-  - Set **Site URL** to your production origin (example: `https://universite.co.za`)
+  - Set **Site URL** to your production origin (currently: `https://master.dopnvb05t610g.amplifyapp.com`)
   - Add **Redirect URLs** for local dev (example: `http://localhost:5500/home.html`, `http://127.0.0.1:5500/home.html`)
+  - Add production redirect URLs: `https://master.dopnvb05t610g.amplifyapp.com/home.html`, `https://master.dopnvb05t610g.amplifyapp.com/login.html`
 
 - **Auth → Providers**
   - Enable **Google** (add OAuth client ID/secret)
