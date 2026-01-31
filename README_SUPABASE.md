@@ -15,7 +15,7 @@ In your Supabase dashboard:
   - Add production redirect URLs: `https://master.dopnvb05t610g.amplifyapp.com/home.html`, `https://master.dopnvb05t610g.amplifyapp.com/login.html`
 
 - **Auth → Providers**
-  - Enable **Google** (add OAuth client ID/secret)
+  - **Google**: Use the client ID and client secret from your `client_secret_*.json` file (fields `web.client_id` and `web.client_secret`). See **GOOGLE_OAUTH_SETUP.md** for step-by-step instructions. Redirect URI in Google Cloud must be `https://hiruufvoyigrcdohqjkm.supabase.co/auth/v1/callback`.
   - Enable **Apple** (add Services ID / Key / Team ID etc.)
 
 If you want multi-step signup to work without email confirmation blocking sessions, either:
