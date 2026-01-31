@@ -61,6 +61,33 @@ Send a chat message to get an AI response.
 }
 ```
 
+### POST `/api/transcribe`
+Transcribe lecture audio using Google Cloud Speech-to-Text (service account).
+
+**Request:** `multipart/form-data` with an `audio` file (webm from browser recording, or flac/wav).
+
+**Headers:** `Authorization: Bearer <Supabase access token>`
+
+**Response (success):**
+```json
+{
+  "success": true,
+  "transcript": "Full text of the lecture..."
+}
+```
+
+**Response (quota exceeded, 402):**
+```json
+{
+  "success": false,
+  "error": "quota_exceeded",
+  "message": "Monthly lecture upload limit reached.",
+  "quota": { "ok": false, "used": 3, "limit": 3 }
+}
+```
+
+To enforce lecture upload quotas (e.g. 3/month on free plan), run `supabase/lecture_uploads_migration.sql` in your Supabase project.
+
 ### GET `/health`
 Health check endpoint.
 
@@ -72,6 +99,9 @@ Health check endpoint.
 ```
 
 ## Environment Variables
+
+- **PORT** – Server port (default 5000).
+- **GOOGLE_APPLICATION_CREDENTIALS** – Path to the Google Cloud **service account** JSON key file used for Speech-to-Text (e.g. `project-ca44d972-cc17-42a1-9ed-432c23b5c92f.json`). If unset, the backend looks for `project-ca44d972-cc17-42a1-9ed-432c23b5c92f.json` in the same directory as `api.py` (for local dev). Do not commit the key file; add it to `.gitignore`.
 
 You can set the `PORT` environment variable to change the server port:
 ```bash
