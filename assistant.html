@@ -344,50 +344,52 @@
     }
 
     async function processRecording() {
-      const stages = [
-        'Uploading audio...',
-        'Generating transcript...',
-        'Extracting key concepts...',
-        'Creating segments...',
-        'Almost done...'
-      ];
-      
-      for (let i = 0; i < stages.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        processingText.textContent = stages[i];
+      processingText.textContent = 'Uploading audio...';
+      const token = await window.UniSupabase.getAccessToken();
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
       }
 
       try {
-        // Try to transcribe audio (will fail gracefully if API key not set)
         const formData = new FormData();
         formData.append('audio', localState.audioBlob, 'recording.webm');
         
+        processingText.textContent = 'Generating transcript...';
         const transcriptResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
           method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
           body: formData
         });
         
-        if (transcriptResponse.ok) {
-          const transcriptData = await transcriptResponse.json();
-          if (transcriptData.success) {
-            // Process transcript and create lecture
-            await createLectureFromTranscript(transcriptData.transcript);
-            return;
-          }
+        const transcriptData = await transcriptResponse.json().catch(() => ({}));
+        
+        if (transcriptResponse.ok && transcriptData.success && transcriptData.transcript) {
+          await createLectureFromTranscript(transcriptData.transcript);
+          return;
         }
         
-        // Fallback: Create mock lecture if transcription not available
+        if (transcriptResponse.status === 402 && transcriptData.error === 'quota_exceeded') {
+          processingOverlay.classList.add('hidden');
+          alert('Monthly lecture upload limit reached. Upgrade or try again next month.');
+          localState.recordingState = 'idle';
+          return;
+        }
+        
+        const errMsg = transcriptData.error || transcriptData.message || 'Transcription unavailable';
+        console.error('Transcription error:', errMsg);
         createMockLecture();
         
       } catch (error) {
         console.error('Transcription error:', error);
-        // Fallback to mock lecture
         createMockLecture();
       }
     }
 
     function createMockLecture() {
-      const duration = formatDuration(Math.floor((Date.now() - localState.recordingStartTime) / 1000));
+      const elapsed = localState.recordingStartTime != null
+        ? Math.floor((Date.now() - localState.recordingStartTime) / 1000) : 0;
+      const duration = formatDuration(elapsed);
       
       const lecture = {
         id: Date.now().toString(),
@@ -425,9 +427,9 @@
     }
 
     async function createLectureFromTranscript(transcript) {
-      // Use AI to extract concepts and segments from transcript
-      // This would call the backend to process the transcript
-      const duration = formatDuration(Math.floor((Date.now() - localState.recordingStartTime) / 1000));
+      const elapsed = localState.recordingStartTime != null
+        ? Math.floor((Date.now() - localState.recordingStartTime) / 1000) : 0;
+      const duration = formatDuration(elapsed);
       
       const lecture = {
         id: Date.now().toString(),
@@ -800,6 +802,35 @@
     if (localState.currentLecture && localState.messages.length > 0) {
       if (welcomeMessage) {
         welcomeMessage.style.display = 'none';
+      }
+      localState.messages.forEach(msg => {
+        addMessage(msg.content, msg.sender);
+      });
+    }
+
+    // Auto-resize textarea
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Send message on button click
+    sendBtn.addEventListener('click', sendMessage);
+
+    // Send message on Enter (Shift+Enter for new line)
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Initialize
+    chatInput.focus();
+  </script>
+</body>
+</html>
+
       }
       localState.messages.forEach(msg => {
         addMessage(msg.content, msg.sender);

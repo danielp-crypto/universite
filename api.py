@@ -18,6 +18,9 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyAqpapZgs2z9oussNPp68ssXeVGIRf25qo')
 GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}'
 
+# Google Cloud Speech-to-Text: use service account from env (path to JSON key file)
+GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', '')
+
 _jwks_client = None
 
 def _get_jwks_client():
@@ -262,11 +265,51 @@ Return ONLY the JSON array, no other text."""
             'error': str(e)
         }), 500
 
+def _transcribe_audio(audio_content: bytes, content_type: str) -> str:
+    """
+    Transcribe audio using Google Cloud Speech-to-Text (service account).
+    Supports webm/opus (browser MediaRecorder) and common formats.
+    """
+    if not GOOGLE_APPLICATION_CREDENTIALS or not os.path.isfile(GOOGLE_APPLICATION_CREDENTIALS):
+        raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS not set or file not found")
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
+    from google.cloud import speech_v1 as speech
+
+    client = speech.SpeechClient()
+    # Browser MediaRecorder typically produces webm with opus
+    encoding = speech.RecognitionConfig.AudioEncoding.WEBM_OPUS
+    sample_rate = 48000
+    if content_type and "flac" in content_type.lower():
+        encoding = speech.RecognitionConfig.AudioEncoding.FLAC
+        sample_rate = 44100
+    elif content_type and "wav" in content_type.lower():
+        encoding = speech.RecognitionConfig.AudioEncoding.LINEAR16
+        sample_rate = 16000
+
+    config = speech.RecognitionConfig(
+        encoding=encoding,
+        sample_rate_hertz=sample_rate,
+        language_code="en-US",
+        enable_automatic_punctuation=True,
+    )
+    audio = speech.RecognitionAudio(content=audio_content)
+
+    # Long-running recognize for lectures (can be several minutes)
+    operation = client.long_running_recognize(config=config, audio=audio)
+    response = operation.result(timeout=600)
+    transcript_parts = []
+    for result in response.results:
+        if result.alternatives:
+            transcript_parts.append(result.alternatives[0].transcript)
+    return " ".join(transcript_parts).strip() if transcript_parts else ""
+
+
 @app.route('/api/transcribe', methods=['POST'])
 def transcribe():
     """
-    Audio transcription endpoint - STUBBED for now
-    When audio transcription API key is available, implement here
+    Audio transcription endpoint using Google Cloud Speech-to-Text (service account).
+    Expects multipart/form-data with an 'audio' file (webm, flac, or wav).
     """
     try:
         ok, err = require_supabase_user()
@@ -274,24 +317,57 @@ def transcribe():
             msg, code = err
             return jsonify({"success": False, "error": msg}), code
 
-        # This is a stub - will be implemented when transcription API key is available
-        # For now, return a mock response
-        
-        # In production, this would:
-        # 1. Receive audio file from request
-        # 2. Call transcription API (e.g., Google Speech-to-Text, Whisper, etc.)
-        # 3. Process and return transcript
-        
+        # Consume lecture_uploads quota when schema supports it (run supabase/lecture_uploads_migration.sql)
+        qok, qdata = consume_quota("lecture_uploads", 1)
+        if qok and qdata.get("ok") is False:
+            return jsonify({
+                "success": False,
+                "error": "quota_exceeded",
+                "message": "Monthly lecture upload limit reached.",
+                "quota": qdata,
+            }), 402
+
+        audio_file = request.files.get("audio")
+        if not audio_file:
+            return jsonify({"success": False, "error": "missing_audio"}), 400
+
+        audio_content = audio_file.read()
+        if not audio_content:
+            return jsonify({"success": False, "error": "empty_audio"}), 400
+
+        content_type = (audio_file.content_type or "").strip().lower()
+
+        try:
+            transcript_text = _transcribe_audio(audio_content, content_type)
+        except RuntimeError as e:
+            if "GOOGLE_APPLICATION_CREDENTIALS" in str(e):
+                return jsonify({
+                    "success": False,
+                    "error": "Transcription not configured. Set GOOGLE_APPLICATION_CREDENTIALS to your service account JSON path.",
+                }), 503
+            raise
+        except Exception as e:
+            return jsonify({
+                "success": False,
+                "error": "Transcription failed.",
+                "detail": str(e),
+            }), 502
+
+        if not transcript_text:
+            return jsonify({
+                "success": False,
+                "error": "No speech detected in audio.",
+            }), 422
+
         return jsonify({
-            'success': False,
-            'error': 'Transcription API key not configured yet. Please add your transcription API key to enable this feature.',
-            'stub': True
-        }), 503
-        
+            "success": True,
+            "transcript": transcript_text,
+        })
+
     except Exception as e:
         return jsonify({
-            'success': False,
-            'error': str(e)
+            "success": False,
+            "error": str(e),
         }), 500
 
 @app.route('/api/process-lecture', methods=['POST'])
