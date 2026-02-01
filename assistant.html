@@ -328,8 +328,8 @@
     }
 
     function startRecordingTimer() {
-      appState.recordingTimerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - appState.recordingStartTime) / 1000);
+      localState.recordingTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - localState.recordingStartTime) / 1000);
         const minutes = Math.floor(elapsed / 60);
         const seconds = elapsed % 60;
         recordingTimer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
@@ -337,9 +337,9 @@
     }
 
     function stopRecordingTimer() {
-      if (appState.recordingTimerInterval) {
-        clearInterval(appState.recordingTimerInterval);
-        appState.recordingTimerInterval = null;
+      if (localState.recordingTimerInterval) {
+        clearInterval(localState.recordingTimerInterval);
+        localState.recordingTimerInterval = null;
       }
     }
 

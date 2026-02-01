@@ -84,6 +84,10 @@
       display: block;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script src="js/app-state.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
   <div id="app" class="flex flex-col min-h-screen pb-20">
@@ -107,8 +111,11 @@
             <div id="user-email" class="text-sm text-slate-500"><!-- Email will be populated by JS --></div>
           </div>
         </div>
-        <button id="edit-profile-btn" class="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform">
+        <button id="edit-profile-btn" class="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform mb-2">
           Edit Profile
+        </button>
+        <button id="sign-out-btn" class="w-full px-4 py-2 border border-red-200 text-red-600 rounded-xl font-medium active:scale-95 transition-transform hover:bg-red-50">
+          Sign Out
         </button>
       </div>
 
@@ -1446,7 +1453,18 @@
     }
 
     // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', initializeSettings);
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeSettings();
+      document.getElementById('sign-out-btn')?.addEventListener('click', async () => {
+        try {
+          await window.UniSupabase?.signOut();
+          window.location.href = 'login.html';
+        } catch (e) {
+          console.error('Sign out error:', e);
+          window.location.href = 'login.html';
+        }
+      });
+    });
 
     // Close modals when clicking overlay
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -1460,5 +1478,3 @@
   </script>
 </body>
 </html>
-</html>
-

@@ -140,9 +140,15 @@ Basic settings structure is in place. Can be enhanced with:
 - Frontend is fully functional with mock data when APIs unavailable
 - Responsive design works on mobile and desktop
 
+## ✅ Auth Build (Latest)
+
+- **Auth guard** on all app pages: home, lectures, assistant, flashcards, settings, notes, search, lecture-detail
+- **User-scoped app state**: localStorage key includes Supabase user ID; each user sees only their lectures, notes, flashcards
+- **Sign out** in Settings page; redirects to login
+
 ## 🎯 Next Steps (Optional Enhancements)
 
-1. Add user authentication
+1. ~~Add user authentication~~ (done via Supabase)
 2. Cloud storage integration
 3. Real-time collaboration
 4. Advanced analytics

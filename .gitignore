@@ -27,6 +27,12 @@ wheels/
 .env
 .env.local
 
+# Google OAuth client secrets (do not commit)
+client_secret_*.json
+
+# Google Cloud service account keys (do not commit private keys)
+project-*-*.json
+
 # IDE
 .vscode/
 .idea/

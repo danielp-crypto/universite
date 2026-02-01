@@ -1,7 +1,34 @@
-// Shared App State Management
+// Shared App State Management - user-scoped via Supabase session
+(function () {
+  const DEFAULT_STORAGE_KEY = 'universite_app_data';
+  const SUPABASE_PROJECT_REF = 'hiruufvoyigrcdohqjkm';
+
+  function getUserIdFromSession() {
+    try {
+      const key = `sb-${SUPABASE_PROJECT_REF}-auth-token`;
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      const token = data?.access_token;
+      if (!token) return null;
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload?.sub || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getStorageKey() {
+    const userId = getUserIdFromSession();
+    return userId ? `universite_app_data_${userId}` : DEFAULT_STORAGE_KEY;
+  }
+
 class AppState {
   constructor() {
-    this.storageKey = 'universite_app_data';
+    this.baseKey = DEFAULT_STORAGE_KEY;
+    this.storageKey = getStorageKey();
     this.init();
   }
 
@@ -9,8 +36,17 @@ class AppState {
     this.loadFromStorage();
   }
 
+  _refreshStorageKey() {
+    const key = getStorageKey();
+    if (key !== this.storageKey) {
+      this.storageKey = key;
+      this.loadFromStorage();
+    }
+  }
+
   // Load data from localStorage
   loadFromStorage() {
+    this._refreshStorageKey();
     try {
       const stored = localStorage.getItem(this.storageKey);
       if (stored) {
@@ -175,11 +211,11 @@ class AppState {
   searchLectures(query) {
     const lowerQuery = query.toLowerCase();
     return this.lectures.filter(lecture => 
-      lecture.title.toLowerCase().includes(lowerQuery) ||
-      lecture.keyConcepts.some(c => c.toLowerCase().includes(lowerQuery)) ||
-      lecture.segments.some(s => 
-        s.title.toLowerCase().includes(lowerQuery) ||
-        s.concepts.some(c => c.toLowerCase().includes(lowerQuery))
+      (lecture.title || '').toLowerCase().includes(lowerQuery) ||
+      (lecture.keyConcepts || []).some(c => (c || '').toLowerCase().includes(lowerQuery)) ||
+      (lecture.segments || []).some(s => 
+        (s?.title || '').toLowerCase().includes(lowerQuery) ||
+        (s?.concepts || []).some(c => (c || '').toLowerCase().includes(lowerQuery))
       )
     );
   }
@@ -207,5 +243,6 @@ class AppState {
   }
 }
 
-// Create global instance
-const appState = new AppState();
+// Create global instance (user-scoped storage key)
+window.appState = new AppState();
+})();
