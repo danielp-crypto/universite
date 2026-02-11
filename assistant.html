@@ -538,10 +538,19 @@
     async function uploadRecording() {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'audio/*';
+      // Only allow lecture uploads in mp3, mp4 and wav formats
+      input.accept = '.mp3,.mp4,.wav';
       input.onchange = async (e) => {
         const file = e.target.files[0];
         if (file) {
+          const allowedExtensions = ['mp3', 'mp4', 'wav'];
+          const extension = file.name.split('.').pop()?.toLowerCase();
+
+          if (!extension || !allowedExtensions.includes(extension)) {
+            alert('Please upload a lecture in one of these formats only: MP3, MP4, or WAV.');
+            return;
+          }
+
           localState.audioBlob = file;
           localState.recordingState = 'processing';
           processingOverlay.classList.remove('hidden');
