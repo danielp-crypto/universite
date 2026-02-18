@@ -20,9 +20,9 @@ The server will start on `http://localhost:5000` by default.
 
 ### 3. Update Frontend Configuration
 
-Make sure the `API_BASE_URL` in `assistant.html` points to your backend URL:
+Make sure the `API_BASE_URL` in `assistant.html` (and other pages like `flashcards.html`) points to your backend URL:
 - Local development: `http://localhost:5000`
-- Production: Update to your production server URL (currently set to placeholder: `https://your-backend-api-url.com`)
+- Production: `https://rz1l1z65eb.execute-api.eu-north-1.amazonaws.com/prod`
 
 ## API Endpoints
 

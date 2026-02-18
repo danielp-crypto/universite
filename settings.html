@@ -169,7 +169,7 @@
               </div>
               <div class="text-left">
                 <div class="font-medium text-slate-800">Storage</div>
-                <div class="text-xs text-slate-500">1.2 GB used of 5 GB</div>
+                <div id="storage-usage" class="text-xs text-slate-500">Calculating storage...</div>
               </div>
             </div>
             <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -954,6 +954,19 @@
             };
           }
 
+          // Merge in any existing app-wide settings (theme, audio, autosave, goal)
+          if (typeof appState !== 'undefined' && appState.settings) {
+            const appSettings = appState.settings;
+            userSettings.appearance = appSettings.theme || userSettings.appearance;
+            userSettings.audioQuality = appSettings.audioQuality || userSettings.audioQuality;
+            userSettings.autoSave = typeof appSettings.autoSave === 'boolean'
+              ? appSettings.autoSave
+              : userSettings.autoSave;
+            if (typeof appSettings.dailyStudyGoal === 'number') {
+              userSettings.dailyGoal = Math.max(1, Math.round(appSettings.dailyStudyGoal / 60));
+            }
+          }
+
           updateProfileDisplay(userSettings.profile);
           updateUIFromSettings();
         }
@@ -980,6 +993,16 @@
 
       // Update toggles
       document.getElementById('auto-save-toggle').checked = userSettings.autoSave;
+
+      // Update storage usage (best-effort using appState)
+      const storageEl = document.getElementById('storage-usage');
+      if (storageEl && typeof appState !== 'undefined' && appState.settings) {
+        const usedBytes = appState.settings.storageUsed || 0;
+        const limitBytes = appState.settings.storageLimit || (5 * 1024 * 1024 * 1024);
+        const usedGB = usedBytes / (1024 * 1024 * 1024);
+        const limitGB = limitBytes / (1024 * 1024 * 1024);
+        storageEl.textContent = `${usedGB.toFixed(2)} GB used of ${limitGB.toFixed(1)} GB`;
+      }
     }
 
     // Modal management functions
@@ -1049,6 +1072,9 @@
       userSettings.appearance = selectedTheme;
       updateUIFromSettings();
       saveSettings();
+      if (typeof appState !== 'undefined') {
+        appState.updateSettings({ theme: selectedTheme });
+      }
       hideModal('appearance-modal');
     });
 
@@ -1085,6 +1111,9 @@
       userSettings.dailyGoal = selectedGoal;
       updateUIFromSettings();
       saveSettings();
+      if (typeof appState !== 'undefined') {
+        appState.updateSettings({ dailyStudyGoal: selectedGoal * 60 });
+      }
       hideModal('daily-goal-modal');
     });
 
@@ -1121,6 +1150,9 @@
       userSettings.audioQuality = selectedQuality;
       updateUIFromSettings();
       saveSettings();
+      if (typeof appState !== 'undefined') {
+        appState.updateSettings({ audioQuality: selectedQuality });
+      }
       hideModal('audio-quality-modal');
     });
 
@@ -1149,6 +1181,9 @@
     document.getElementById('auto-save-toggle').addEventListener('change', (e) => {
       userSettings.autoSave = e.target.checked;
       saveSettings();
+      if (typeof appState !== 'undefined') {
+        appState.updateSettings({ autoSave: userSettings.autoSave });
+      }
     });
 
     // Edit profile modal

@@ -99,11 +99,22 @@ class AppState {
     };
   }
 
+  // Roughly estimate how much local storage we're using for lectures
+  recalculateStorageUsage() {
+    try {
+      const json = JSON.stringify(this.lectures || []);
+      this.settings.storageUsed = json ? json.length : 0;
+    } catch (e) {
+      console.error('Error calculating storage usage:', e);
+    }
+  }
+
   // Lecture management
   addLecture(lecture) {
     lecture.id = lecture.id || Date.now().toString();
     lecture.createdAt = lecture.createdAt || new Date().toISOString();
     this.lectures.unshift(lecture);
+    this.recalculateStorageUsage();
     this.saveToStorage();
     return lecture;
   }
@@ -116,6 +127,7 @@ class AppState {
     const index = this.lectures.findIndex(l => l.id === id);
     if (index !== -1) {
       this.lectures[index] = { ...this.lectures[index], ...updates };
+      this.recalculateStorageUsage();
       this.saveToStorage();
       return this.lectures[index];
     }
@@ -124,6 +136,7 @@ class AppState {
 
   deleteLecture(id) {
     this.lectures = this.lectures.filter(l => l.id !== id);
+    this.recalculateStorageUsage();
     this.saveToStorage();
   }
 

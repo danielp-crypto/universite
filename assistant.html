@@ -354,6 +354,11 @@
       try {
         const formData = new FormData();
         formData.append('audio', localState.audioBlob, 'recording.webm');
+        // Pass audio quality preference to backend if available
+        if (typeof appState !== 'undefined' && appState.getSetting) {
+          const quality = appState.getSetting('audioQuality') || 'high';
+          formData.append('audioQuality', quality);
+        }
         
         processingText.textContent = 'Generating transcript...';
         const transcriptResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
@@ -410,9 +415,14 @@
         createdAt: new Date().toISOString()
       };
 
-      // Save to app state
+      // Save to app state (respect auto-save) and record a study session
       if (typeof appState !== 'undefined') {
-        appState.addLecture(lecture);
+        const shouldAutoSave = !appState.getSetting || appState.getSetting('autoSave') !== false;
+        if (shouldAutoSave) {
+          appState.addLecture(lecture);
+        }
+        const minutes = Math.max(1, Math.round(elapsed / 60));
+        appState.addStudySession({ lectureId: lecture.id, duration: minutes });
       }
       
       localState.currentLecture = lecture;
@@ -443,9 +453,14 @@
         keyConcepts: []
       };
 
-      // Save to app state
+      // Save to app state (respect auto-save) and track a study session
       if (typeof appState !== 'undefined') {
-        appState.addLecture(lecture);
+        const shouldAutoSave = !appState.getSetting || appState.getSetting('autoSave') !== false;
+        if (shouldAutoSave) {
+          appState.addLecture(lecture);
+        }
+        const minutes = Math.max(1, Math.round(elapsed / 60));
+        appState.addStudySession({ lectureId: lecture.id, duration: minutes });
       }
       
       localState.currentLecture = lecture;
@@ -558,6 +573,10 @@
           try {
             const formData = new FormData();
             formData.append('audio', file);
+            if (typeof appState !== 'undefined' && appState.getSetting) {
+              const quality = appState.getSetting('audioQuality') || 'high';
+              formData.append('audioQuality', quality);
+            }
             
             const transcriptResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
               method: 'POST',
@@ -583,8 +602,8 @@
       input.click();
     }
 
-    // Python Backend API Configuration
-    const API_BASE_URL = 'https://your-backend-api-url.com';  // TODO: Update this to your production backend URL
+    // Backend API base URL (AWS API Gateway)
+    const API_BASE_URL = 'https://rz1l1z65eb.execute-api.eu-north-1.amazonaws.com/prod';
 
     // Context-aware AI responses using Python backend (which calls Google Gemini API)
     async function getContextAwareResponse(userMessage) {
