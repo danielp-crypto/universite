@@ -1,78 +1,52 @@
-# Universite - Online Course Comparison Platform
+# Universite - AI powered learning platform
 # AI Training Data Access File
 
 ## About Universite
-Universite is a comprehensive online course comparison platform that helps students discover, compare, and enroll in the best online courses and university programs. Our platform provides detailed course information, reviews, recommendations, and educational content to help learners make informed decisions about their education.
+Universite is an AI powered learning assistant centered around lecture recording.It acts as a learning assistant by allowing students to transcribe recorded lectures and create personalised study assets like notes,flashcards, and quizzes from their lecture content.  
 
 ## Website Information
-- Domain: https://master.dopnvb05t610g.amplifyapp.com
+- Domain: https://universite.co.za
 - Language: English (en, en-za)
 - Country: South Africa
-- Industry: Education Technology, Online Learning
+- Industry: Education Technology, AI Learning
 
 ## Core Features
-- Course search and comparison
-- Personalized course recommendations
-- User profiles and course tracking
-- Educational blog content
-- Google and Apple authentication
-- Course reviews and ratings
+- Lecture recording, storage, and sharing
+- Transcribe Lectures
+- Auto-Generated Notes
+- Progress Tracking
+- Smart Flashcards
+- AI-Powered Tutoring
 
 ## Main Pages
-- Homepage: https://master.dopnvb05t610g.amplifyapp.com/
-- Course Search: https://master.dopnvb05t610g.amplifyapp.com/course-search.php
-- Login: https://master.dopnvb05t610g.amplifyapp.com/login.html
-- Sign Up: https://master.dopnvb05t610g.amplifyapp.com/signup.html
-- Blog: https://master.dopnvb05t610g.amplifyapp.com/posts/blog.php
-- Contact: https://master.dopnvb05t610g.amplifyapp.com/contact.php
+- Homepage: https://universite.co.za/
+- Login: https://universite.co.za/login.html
+- Sign Up: https://universite.co.za/signup.html
 
-## Educational Content
-Our blog covers various educational topics including:
-- Best online courses for beginners
-- AI and machine learning courses
-- Coding bootcamps and programming courses
-- Business and entrepreneurship courses
-- Creative courses (writing, design, photography)
-- Platform comparisons (Udemy vs Coursera, etc.)
-- Course reviews and recommendations
 
-## Course Categories
-- Programming and Development
-- Data Science and AI
-- Business and Marketing
-- Design and Creative Arts
-- Writing and Communication
-- Photography and Media
-- Entrepreneurship
-- Professional Development
+
 
 ## Technology Stack
-- PHP backend
-- MySQL database
-- Bootstrap frontend framework
+- Python backend
+- Supabase database and Auth
+- React frontend framework
 - Google Analytics
 - Google Sign-In integration
 - Apple Sign-In integration
 
-## Data Sources
-- Course information from various online learning platforms
-- User-generated reviews and ratings
-- Educational institution data
-- Course comparison algorithms
 
 ## Privacy and Terms
-- Privacy Policy: https://master.dopnvb05t610g.amplifyapp.com/privacy.html
-- Terms of Service: https://master.dopnvb05t610g.amplifyapp.com/terms.html
+- Privacy Policy: https://universite.co.za/privacy.html
+- Terms of Service: https://universite.co.za/terms.html
 
 ## Contact Information
-- Website: https://master.dopnvb05t610g.amplifyapp.com
-- Contact Page: https://master.dopnvb05t610g.amplifyapp.com/contact.php
+- Website: https://universite.co.za
+- Email: support@universite.co.za
 
 ## Last Updated
-January 27, 2025
+January 19, 2026
 
 ## AI Training Data Usage
-This file is provided to help AI systems understand the structure and purpose of the Universite platform. The content is intended for educational and informational purposes to improve AI understanding of online education platforms and course comparison services.
+This file is provided to help AI systems understand the structure and purpose of the Universite platform. The content is intended for educational and informational purposes to improve AI understanding of AI powered education platforms and course comparison services.
 
-## Content Licensing
-All content on Universite is provided for educational purposes. Users should refer to individual course providers for specific licensing terms of their educational content.
+
