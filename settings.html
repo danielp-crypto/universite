@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/theme-manager.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -48,12 +49,75 @@
     @keyframes modalSlideIn {
       from {
         opacity: 0;
-        transform: translateY(20px) scale(0.95);
+        transform: translateY(20px);
       }
       to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
       }
+    }
+
+    /* Dark theme styles */
+    .dark {
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+
+    .dark .bg-white {
+      background-color: #1e293b !important;
+    }
+
+    .dark .bg-slate-50 {
+      background-color: #334155 !important;
+    }
+
+    .dark .bg-slate-100 {
+      background-color: #475569 !important;
+    }
+
+    .dark .text-slate-800 {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .text-slate-700 {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .text-slate-600 {
+      color: #cbd5e1 !important;
+    }
+
+    .dark .text-slate-500 {
+      color: #94a3b8 !important;
+    }
+
+    .dark .border-slate-200 {
+      border-color: #475569 !important;
+    }
+
+    .dark .border-slate-300 {
+      border-color: #64748b !important;
+    }
+
+    .dark .hover\:bg-slate-50:hover {
+      background-color: #334155 !important;
+    }
+
+    .dark .hover\:bg-slate-100:hover {
+      background-color: #475569 !important;
+    }
+
+    .dark .modal-overlay {
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .dark .modal-content {
+      background-color: #1e293b !important;
+    }
+
+    /* Smooth theme transition */
+    * {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
 
     .fade-in {
@@ -976,6 +1040,11 @@
     }
 
     function updateUIFromSettings() {
+      // Apply theme using global theme manager
+      if (window.themeManager) {
+        window.themeManager.setTheme(userSettings.appearance);
+      }
+      
       // Update appearance
       document.getElementById('current-theme').textContent = userSettings.appearance.charAt(0).toUpperCase() + userSettings.appearance.slice(1);
 
@@ -1003,6 +1072,55 @@
         const limitGB = limitBytes / (1024 * 1024 * 1024);
         storageEl.textContent = `${usedGB.toFixed(2)} GB used of ${limitGB.toFixed(1)} GB`;
       }
+    }
+
+    // Theme management functions
+    function applyTheme(theme) {
+      const html = document.documentElement;
+      const body = document.body;
+      
+      // Remove existing theme classes
+      html.classList.remove('light', 'dark');
+      body.classList.remove('light', 'dark');
+      
+      if (theme === 'dark') {
+        html.classList.add('dark');
+        body.classList.add('dark');
+      } else if (theme === 'light') {
+        html.classList.add('light');
+        body.classList.add('light');
+      } else if (theme === 'system') {
+        // Check system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          html.classList.add('dark');
+          body.classList.add('dark');
+        } else {
+          html.classList.add('light');
+          body.classList.add('light');
+        }
+        
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+          if (userSettings.appearance === 'system') {
+            applyTheme('system');
+          }
+        });
+      }
+      
+      // Save theme preference to localStorage for immediate loading on other pages
+      localStorage.setItem('universite_theme', theme);
+    }
+
+    function getSystemTheme() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function initializeTheme() {
+      // Check for saved theme first
+      const savedTheme = localStorage.getItem('universite_theme') || userSettings.appearance || 'system';
+      applyTheme(savedTheme);
+      userSettings.appearance = savedTheme;
     }
 
     // Modal management functions
@@ -1070,6 +1188,12 @@
     document.getElementById('save-appearance').addEventListener('click', () => {
       const selectedTheme = document.querySelector('[data-theme].border-indigo-300')?.dataset.theme || 'system';
       userSettings.appearance = selectedTheme;
+      
+      // Apply theme using global theme manager
+      if (window.themeManager) {
+        window.themeManager.setTheme(selectedTheme);
+      }
+      
       updateUIFromSettings();
       saveSettings();
       if (typeof appState !== 'undefined') {
@@ -1507,6 +1631,14 @@
         }
       });
     });
+
+    // Initialize theme on page load
+    if (window.themeManager) {
+      userSettings.appearance = window.themeManager.currentTheme;
+    }
+    
+    // Initialize settings
+    initializeSettings();
   </script>
 </body>
 </html>
