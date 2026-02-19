@@ -66,6 +66,80 @@ def require_supabase_user():
     except Exception as e:
         return False, (str(e), 401)
 
+def call_supabase_rpc(function_name, params):
+    """
+    Generic function to call Supabase RPC functions
+    """
+    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+        return {"error": "SUPABASE_URL/SUPABASE_ANON_KEY not configured on backend"}
+
+    token = getattr(g, "supabase_access_token", None)
+    if not token:
+        return {"error": "missing_auth"}
+
+    resp = requests.post(
+        f"{SUPABASE_URL}/rest/v1/rpc/{function_name}",
+        headers={
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        json=params,
+        timeout=15,
+    )
+    if resp.status_code >= 400:
+        return {"error": f"rpc_failed", "details": resp.text}
+    try:
+        return resp.json()
+    except Exception:
+        return {"error": "rpc_invalid_json", "details": resp.text}
+
+def execute_supabase_query(query, params=None):
+    """
+    Execute a SQL query against Supabase using PostgREST
+    """
+    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+        raise Exception("SUPABASE_URL/SUPABASE_ANON_KEY not configured on backend")
+
+    token = getattr(g, "supabase_access_token", None)
+    if not token:
+        raise Exception("missing_auth")
+
+    headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+
+    # For SELECT queries
+    if query.strip().upper().startswith('SELECT'):
+        # Convert to PostgREST format
+        # This is a simplified version - in production you'd want to use the Supabase client
+        # or build proper REST API calls
+        resp = requests.post(
+            f"{SUPABASE_URL}/rest/v1/rpc/execute_sql",
+            headers=headers,
+            json={"query": query, "params": params},
+            timeout=15,
+        )
+    else:
+        # For INSERT/UPDATE/DELETE - use RPC
+        resp = requests.post(
+            f"{SUPABASE_URL}/rest/v1/rpc/execute_sql",
+            headers=headers,
+            json={"query": query, "params": params},
+            timeout=15,
+        )
+
+    if resp.status_code >= 400:
+        raise Exception(f"Query failed: {resp.text}")
+    
+    try:
+        return resp.json()
+    except Exception:
+        return []
+
 def consume_quota(action: str, amount: int = 1):
     """
     Calls Supabase RPC `consume_quota` using the user's JWT. Returns (ok, payload_or_error).
@@ -389,6 +463,381 @@ def process_lecture():
             'stub': True
         }), 503
         
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/lectures', methods=['GET'])
+def get_lectures():
+    """
+    Get user's lectures with optional filtering
+    """
+    try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
+        user_id = g.user_id
+        filter_type = request.args.get('filter', 'all')  # all, favorites, recent
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+
+        # Build query based on filter
+        if filter_type == 'favorites':
+            where_clause = "user_id = %s AND favorite = true"
+        elif filter_type == 'recent':
+            where_clause = "user_id = %s AND created_at >= NOW() - INTERVAL '7 days'"
+        else:
+            where_clause = "user_id = %s"
+
+        query = f"""
+        SELECT l.*, 
+               COUNT(ls.id) as segment_count,
+               CASE 
+                 WHEN l.transcription IS NOT NULL AND l.transcription != '' THEN 
+                   array_length(regexp_split_to_array(l.transcription, '\s'), 1)
+                 ELSE 0 
+               END as word_count
+        FROM lectures l
+        LEFT JOIN lecture_segments ls ON l.id = ls.lecture_id
+        WHERE {where_clause}
+        GROUP BY l.id
+        ORDER BY l.created_at DESC
+        LIMIT %s OFFSET %s
+        """
+
+        result = execute_supabase_query(query, (user_id, limit, offset))
+        
+        return jsonify({
+            'success': True,
+            'lectures': result,
+            'filter': filter_type,
+            'total': len(result)
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/lectures', methods=['POST'])
+def create_lecture():
+    """
+    Create a new lecture record
+    """
+    try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
+        # Check quota for lecture uploads
+        quota_result = call_supabase_rpc('consume_quota', {'p_action': 'lecture_uploads', 'p_amount': 1})
+        if not quota_result.get('ok'):
+            return jsonify({
+                'success': False,
+                'error': 'Monthly lecture upload limit exceeded',
+                'quota': quota_result
+            }), 429
+
+        data = request.get_json()
+        user_id = g.user_id
+
+        # Validate required fields
+        if not data.get('title'):
+            return jsonify({
+                'success': False,
+                'error': 'Title is required'
+            }), 400
+
+        # Insert lecture
+        query = """
+        INSERT INTO lectures (user_id, title, description, duration_seconds, file_path, 
+                             file_size, mime_type, status, tags)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id, created_at, updated_at
+        """
+
+        params = (
+            user_id,
+            data['title'],
+            data.get('description'),
+            data.get('duration_seconds'),
+            data.get('file_path'),
+            data.get('file_size'),
+            data.get('mime_type'),
+            data.get('status', 'processing'),
+            data.get('tags', [])
+        )
+
+        result = execute_supabase_query(query, params)
+        
+        if result:
+            lecture = result[0]
+            return jsonify({
+                'success': True,
+                'lecture': {
+                    'id': lecture['id'],
+                    'user_id': user_id,
+                    'title': data['title'],
+                    'description': data.get('description'),
+                    'duration_seconds': data.get('duration_seconds'),
+                    'file_path': data.get('file_path'),
+                    'file_size': data.get('file_size'),
+                    'mime_type': data.get('mime_type'),
+                    'status': data.get('status', 'processing'),
+                    'tags': data.get('tags', []),
+                    'created_at': lecture['created_at'],
+                    'updated_at': lecture['updated_at']
+                },
+                'quota': quota_result
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to create lecture'
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/lectures/<lecture_id>', methods=['GET'])
+def get_lecture(lecture_id):
+    """
+    Get a specific lecture with its segments
+    """
+    try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
+        user_id = g.user_id
+
+        # Get lecture details
+        lecture_query = """
+        SELECT * FROM lectures 
+        WHERE id = %s AND user_id = %s
+        """
+        lecture_result = execute_supabase_query(lecture_query, (lecture_id, user_id))
+        
+        if not lecture_result:
+            return jsonify({
+                'success': False,
+                'error': 'Lecture not found'
+            }), 404
+
+        lecture = lecture_result[0]
+
+        # Get lecture segments
+        segments_query = """
+        SELECT * FROM lecture_segments 
+        WHERE lecture_id = %s 
+        ORDER BY start_time_seconds
+        """
+        segments_result = execute_supabase_query(segments_query, (lecture_id,))
+
+        return jsonify({
+            'success': True,
+            'lecture': lecture,
+            'segments': segments_result
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/lectures/<lecture_id>', methods=['PUT'])
+def update_lecture(lecture_id):
+    """
+    Update lecture details
+    """
+    try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
+        user_id = g.user_id
+        data = request.get_json()
+
+        # Check if lecture exists and belongs to user
+        check_query = "SELECT id FROM lectures WHERE id = %s AND user_id = %s"
+        check_result = execute_supabase_query(check_query, (lecture_id, user_id))
+        
+        if not check_result:
+            return jsonify({
+                'success': False,
+                'error': 'Lecture not found'
+            }), 404
+
+        # Build update query dynamically
+        update_fields = []
+        params = []
+        
+        for field in ['title', 'description', 'transcription', 'summary', 'status', 'favorite']:
+            if field in data:
+                update_fields.append(f"{field} = %s")
+                params.append(data[field])
+
+        if update_fields:
+            params.extend([lecture_id, user_id])
+            query = f"""
+            UPDATE lectures 
+            SET {', '.join(update_fields)}, updated_at = NOW()
+            WHERE id = %s AND user_id = %s
+            RETURNING *
+            """
+            
+            result = execute_supabase_query(query, params)
+            
+            if result:
+                return jsonify({
+                    'success': True,
+                    'lecture': result[0]
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to update lecture'
+                }), 500
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No valid fields to update'
+            }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/lectures/<lecture_id>', methods=['DELETE'])
+def delete_lecture(lecture_id):
+    """
+    Delete a lecture and its segments
+    """
+    try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
+        user_id = g.user_id
+
+        # Check if lecture exists and belongs to user
+        check_query = "SELECT file_path FROM lectures WHERE id = %s AND user_id = %s"
+        check_result = execute_supabase_query(check_query, (lecture_id, user_id))
+        
+        if not check_result:
+            return jsonify({
+                'success': False,
+                'error': 'Lecture not found'
+            }), 404
+
+        lecture = check_result[0]
+        
+        # Delete lecture (segments will be deleted by cascade)
+        delete_query = "DELETE FROM lectures WHERE id = %s AND user_id = %s"
+        execute_supabase_query(delete_query, (lecture_id, user_id))
+
+        # TODO: Delete file from Supabase Storage if file_path exists
+        # This would require additional storage client setup
+
+        return jsonify({
+            'success': True,
+            'message': 'Lecture deleted successfully'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/lectures/<lecture_id>/segments', methods=['POST'])
+def create_lecture_segment(lecture_id):
+    """
+    Create a new lecture segment
+    """
+    try:
+        ok, err = require_supabase_user()
+        if not ok:
+            msg, code = err
+            return jsonify({"success": False, "error": msg}), code
+
+        user_id = g.user_id
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ['start_time_seconds', 'end_time_seconds', 'title', 'content']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'{field} is required'
+                }), 400
+
+        # Check if lecture exists and belongs to user
+        check_query = "SELECT id FROM lectures WHERE id = %s AND user_id = %s"
+        check_result = execute_supabase_query(check_query, (lecture_id, user_id))
+        
+        if not check_result:
+            return jsonify({
+                'success': False,
+                'error': 'Lecture not found'
+            }), 404
+
+        # Insert segment
+        query = """
+        INSERT INTO lecture_segments (lecture_id, start_time_seconds, end_time_seconds, 
+                                     title, content, key_concepts)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id, created_at
+        """
+
+        params = (
+            lecture_id,
+            data['start_time_seconds'],
+            data['end_time_seconds'],
+            data['title'],
+            data['content'],
+            data.get('key_concepts', [])
+        )
+
+        result = execute_supabase_query(query, params)
+        
+        if result:
+            segment = result[0]
+            return jsonify({
+                'success': True,
+                'segment': {
+                    'id': segment['id'],
+                    'lecture_id': lecture_id,
+                    'start_time_seconds': data['start_time_seconds'],
+                    'end_time_seconds': data['end_time_seconds'],
+                    'title': data['title'],
+                    'content': data['content'],
+                    'key_concepts': data.get('key_concepts', []),
+                    'created_at': segment['created_at']
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to create segment'
+            }), 500
+
     except Exception as e:
         return jsonify({
             'success': False,

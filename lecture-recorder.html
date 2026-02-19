@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture Recorder - Universite</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .recording-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+        
+        .level-meter {
+            transition: width 0.1s ease-out;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            stroke-dasharray: 339.292;
+            stroke-dashoffset: 339.292;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="home.html" class="text-xl font-bold text-indigo-600">Universite</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="lectures.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-book-open mr-2"></i>My Lectures
+                    </a>
+                    <a href="settings.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto py-8 px-4">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Lecture Recorder</h1>
+                <p class="text-gray-600">Record your lectures and automatically transcribe them</p>
+            </div>
+
+            <!-- Recording Interface -->
+            <div class="space-y-8">
+                <!-- Recording Status -->
+                <div id="recordingStatus" class="text-center">
+                    <div class="inline-flex items-center space-x-3">
+                        <div id="statusIndicator" class="w-4 h-4 bg-gray-400 rounded-full"></div>
+                        <span id="statusText" class="text-lg font-medium text-gray-700">Ready to record</span>
+                    </div>
+                </div>
+
+                <!-- Timer Display -->
+                <div class="text-center">
+                    <div id="timerDisplay" class="text-5xl font-mono font-bold text-gray-900">00:00:00</div>
+                    <div id="durationDisplay" class="text-sm text-gray-500 mt-1">Duration: 0 seconds</div>
+                </div>
+
+                <!-- Audio Level Meter -->
+                <div class="bg-gray-200 rounded-full h-4 overflow-hidden">
+                    <div id="audioLevelMeter" class="level-meter bg-green-500 h-full" style="width: 0%"></div>
+                </div>
+
+                <!-- Recording Controls -->
+                <div class="flex justify-center items-center space-x-4">
+                    <button id="recordBtn" class="bg-red-500 hover:bg-red-600 text-white rounded-full p-6 shadow-lg transition-colors">
+                        <i class="fas fa-microphone text-2xl"></i>
+                    </button>
+                    
+                    <button id="pauseBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white rounded-full p-4 shadow-lg transition-colors hidden">
+                        <i class="fas fa-pause text-xl"></i>
+                    </button>
+                    
+                    <button id="stopBtn" class="bg-gray-500 hover:bg-gray-600 text-white rounded-full p-4 shadow-lg transition-colors hidden">
+                        <i class="fas fa-stop text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="border-t pt-8">
+                    <div class="text-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Or upload an existing recording</h3>
+                        <p class="text-sm text-gray-600">Support for audio files (MP3, WAV, M4A, WebM)</p>
+                    </div>
+                    
+                    <div class="flex justify-center">
+                        <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg cursor-pointer transition-colors">
+                            <i class="fas fa-upload mr-2"></i>Choose File
+                            <input type="file" id="fileInput" accept="audio/*" class="hidden">
+                        </label>
+                    </div>
+                    
+                    <div id="fileInfo" class="mt-4 text-center text-sm text-gray-600 hidden">
+                        <p id="fileName"></p>
+                        <p id="fileSize"></p>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="progressSection" class="hidden">
+                    <div class="text-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Processing Recording</h3>
+                        <p class="text-sm text-gray-600">Uploading and transcribing your lecture...</p>
+                    </div>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="text-center mt-2">
+                        <span id="progressText" class="text-sm text-gray-600">0%</span>
+                    </div>
+                </div>
+
+                <!-- Success Message -->
+                <div id="successMessage" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
+                        <div>
+                            <h4 class="text-green-800 font-medium">Recording saved successfully!</h4>
+                            <p class="text-green-700 text-sm mt-1">Your lecture is being processed and will be available soon.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
+                        <div>
+                            <h4 class="text-red-800 font-medium">Recording failed</h4>
+                            <p id="errorText" class="text-red-700 text-sm mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/supabase-client.js"></script>
+    <script src="js/audio-recorder.js"></script>
+    <script src="js/supabase-storage.js"></script>
+    <script src="js/lecture-manager.js"></script>
+    <script>
+        // Configuration
+        const SUPABASE_URL = 'https://hiruufvoyigrcdohqjkm.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with actual key
+
+        // Initialize lecture manager
+        const lectureManager = new LectureManager(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // UI Elements
+        const recordBtn = document.getElementById('recordBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const fileInput = document.getElementById('fileInput');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const durationDisplay = document.getElementById('durationDisplay');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const audioLevelMeter = document.getElementById('audioLevelMeter');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+
+        let recordingStartTime = null;
+        let timerInterval = null;
+
+        // Update UI based on recording state
+        function updateRecordingState(state) {
+            switch (state) {
+                case 'recording':
+                    recordBtn.classList.add('hidden');
+                    pauseBtn.classList.remove('hidden');
+                    stopBtn.classList.remove('hidden');
+                    statusIndicator.className = 'w-4 h-4 bg-red-500 rounded-full recording-pulse';
+                    statusText.textContent = 'Recording...';
+                    break;
+                case 'paused':
+                    pauseBtn.classList.add('hidden');
+                    recordBtn.classList.remove('hidden');
+                    recordBtn.innerHTML = '<i class="fas fa-play text-2xl"></i>';
+                    statusIndicator.className = 'w-4 h-4 bg-yellow-500 rounded-full';
+                    statusText.textContent = 'Paused';
+                    break;
+                case 'stopped':
+                    recordBtn.classList.remove('hidden');
+                    recordBtn.innerHTML = '<i class="fas fa-microphone text-2xl"></i>';
+                    pauseBtn.classList.add('hidden');
+                    stopBtn.classList.add('hidden');
+                    statusIndicator.className = 'w-4 h-4 bg-gray-400 rounded-full';
+                    statusText.textContent = 'Ready to record';
+                    break;
+            }
+        }
+
+        // Format time display
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update timer
+        function updateTimer() {
+            if (recordingStartTime) {
+                const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                timerDisplay.textContent = formatTime(elapsed);
+                durationDisplay.textContent = `Duration: ${elapsed} seconds`;
+            }
+        }
+
+        // Start timer
+        function startTimer() {
+            recordingStartTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Stop timer
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            recordingStartTime = null;
+        }
+
+        // Show progress
+        function showProgress() {
+            progressSection.classList.remove('hidden');
+            successMessage.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        // Show success
+        function showSuccess() {
+            progressSection.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            successMessage.classList.remove('hidden');
+        }
+
+        // Show error
+        function showError(message) {
+            progressSection.classList.add('hidden');
+            successMessage.classList.add('hidden');
+            errorMessage.classList.remove('hidden');
+            errorText.textContent = message;
+        }
+
+        // Event Listeners
+        recordBtn.addEventListener('click', async () => {
+            try {
+                const state = lectureManager.getRecordingState();
+                
+                if (state === 'inactive' || state === 'stopped') {
+                    // Start recording
+                    const result = await lectureManager.startRecording({
+                        onTimeUpdate: updateTimer,
+                        onLevelUpdate: (level) => {
+                            const percentage = Math.min(100, (level / 128) * 100);
+                            audioLevelMeter.style.width = `${percentage}%`;
+                        }
+                    });
+                    
+                    if (result.success) {
+                        startTimer();
+                        updateRecordingState('recording');
+                    } else {
+                        showError(result.error);
+                    }
+                } else if (state === 'paused') {
+                    // Resume recording
+                    const result = await lectureManager.resumeRecording();
+                    if (result.success) {
+                        startTimer();
+                        updateRecordingState('recording');
+                    } else {
+                        showError(result.error);
+                    }
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        pauseBtn.addEventListener('click', async () => {
+            try {
+                stopTimer();
+                const result = await lectureManager.pauseRecording();
+                if (result.success) {
+                    updateRecordingState('paused');
+                } else {
+                    showError(result.error);
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        stopBtn.addEventListener('click', async () => {
+            try {
+                stopTimer();
+                audioLevelMeter.style.width = '0%';
+                showProgress();
+                
+                const result = await lectureManager.stopRecording();
+                if (!result.success) {
+                    showError(result.error);
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Show file info
+            fileName.textContent = `File: ${file.name}`;
+            fileSize.textContent = `Size: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+            fileInfo.classList.remove('hidden');
+
+            try {
+                showProgress();
+                
+                // Create a blob from the file
+                const audioBlob = new Blob([file], { type: file.type });
+                const duration = 0; // We'll need to calculate this or get it from metadata
+                
+                // Simulate the recording complete handler
+                await lectureManager.handleRecordingComplete(audioBlob, duration, file.type);
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        // Listen for custom events
+        window.addEventListener('lectureUploadProgress', (event) => {
+            const { percent, loaded, total } = event.detail;
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = `${Math.round(percent)}% (${(loaded / 1024 / 1024).toFixed(1)} MB / ${(total / 1024 / 1024).toFixed(1)} MB)`;
+        });
+
+        window.addEventListener('lectureRecordingComplete', (event) => {
+            const { lecture, audioUrl } = event.detail;
+            showSuccess();
+            updateRecordingState('stopped');
+            
+            // Redirect to lecture detail after a delay
+            setTimeout(() => {
+                window.location.href = `lecture-detail.html?id=${lecture.id}`;
+            }, 2000);
+        });
+
+        window.addEventListener('lectureRecordingError', (event) => {
+            const { error } = event.detail;
+            showError(error);
+            updateRecordingState('stopped');
+        });
+
+        // Check browser support
+        if (!LectureManager.isSupported()) {
+            showError('Your browser does not support audio recording. Please use a modern browser like Chrome, Firefox, or Safari.');
+            recordBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
