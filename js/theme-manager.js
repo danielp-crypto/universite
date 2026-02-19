@@ -195,18 +195,17 @@ class ThemeManager {
   }
 }
 
-// Create global theme manager instance
-window.themeManager = new ThemeManager();
-
 // Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    ThemeManager.injectThemeStyles();
-    window.themeManager.init();
-  });
-} else {
+function initializeThemeManager() {
   ThemeManager.injectThemeStyles();
+  window.themeManager = new ThemeManager();
   window.themeManager.init();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeThemeManager);
+} else {
+  initializeThemeManager();
 }
 
 // Export for use in other modules

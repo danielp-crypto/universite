@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Test - Universite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/theme-manager.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-slate-800 mb-6">Theme Persistence Test</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">Test Instructions</h2>
+            <ol class="list-decimal list-inside space-y-2 text-slate-600">
+                <li>Set a theme using the buttons below</li>
+                <li>Navigate to another page (like <a href="theme-demo.html" class="text-blue-600 underline">Theme Demo</a>)</li>
+                <li>Come back to this page to verify theme persisted</li>
+                <li>Try refreshing this page to verify theme is maintained</li>
+            </ol>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">Theme Controls</h2>
+            
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <button onclick="setThemeAndTest('light')" class="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-sun mr-2"></i>Light
+                </button>
+                <button onclick="setThemeAndTest('dark')" class="px-4 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-moon mr-2"></i>Dark
+                </button>
+                <button onclick="setThemeAndTest('system')" class="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+                    <i class="fas fa-desktop mr-2"></i>System
+                </button>
+            </div>
+            
+            <div class="text-slate-600 space-y-2">
+                <p><strong>Current Theme:</strong> <span id="current-theme" class="font-semibold"></span></p>
+                <p><strong>System Preference:</strong> <span id="system-theme" class="font-semibold"></span></p>
+                <p><strong>Stored Theme:</strong> <span id="stored-theme" class="font-semibold"></span></p>
+                <p><strong>Last Updated:</strong> <span id="last-updated" class="font-semibold"></span></p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">Theme Test Results</h2>
+            <div id="test-results" class="space-y-2 text-slate-600">
+                <p>Theme system initialized. Testing persistence...</p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">Quick Navigation</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <a href="theme-demo.html" class="px-3 py-2 bg-slate-100 text-slate-800 rounded hover:bg-slate-200 transition-colors text-center">
+                    Theme Demo
+                </a>
+                <a href="settings.html" class="px-3 py-2 bg-slate-100 text-slate-800 rounded hover:bg-slate-200 transition-colors text-center">
+                    Settings
+                </a>
+                <a href="home.html" class="px-3 py-2 bg-slate-100 text-slate-800 rounded hover:bg-slate-200 transition-colors text-center">
+                    Home
+                </a>
+                <a href="lectures.html" class="px-3 py-2 bg-slate-100 text-slate-800 rounded hover:bg-slate-200 transition-colors text-center">
+                    Lectures
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        function setThemeAndTest(theme) {
+            if (window.themeManager) {
+                window.themeManager.setTheme(theme);
+                updateDisplay();
+                logTest(`Theme set to: ${theme}`);
+            } else {
+                logTest('Theme manager not loaded!');
+            }
+        }
+        
+        function updateDisplay() {
+            if (window.themeManager) {
+                const currentTheme = window.themeManager.getCurrentTheme();
+                const systemTheme = window.themeManager.getSystemTheme();
+                const storedTheme = localStorage.getItem('universite_theme');
+                
+                document.getElementById('current-theme').textContent = currentTheme;
+                document.getElementById('system-theme').textContent = systemTheme;
+                document.getElementById('stored-theme').textContent = storedTheme || 'None';
+                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                
+                // Update test results
+                const results = document.getElementById('test-results');
+                results.innerHTML = `
+                    <p class="text-green-600">✅ Theme manager loaded successfully</p>
+                    <p class="text-blue-600">📱 Current theme: <strong>${currentTheme}</strong></p>
+                    <p class="text-purple-600">🖥️ System prefers: <strong>${systemTheme}</strong></p>
+                    <p class="text-orange-600">💾 Stored theme: <strong>${storedTheme || 'None'}</strong></p>
+                    <p class="text-gray-600">🔄 Last updated: <strong>${new Date().toLocaleTimeString()}</strong></p>
+                `;
+            } else {
+                document.getElementById('test-results').innerHTML = '<p class="text-red-600">❌ Theme manager not loaded</p>';
+            }
+        }
+        
+        function logTest(message) {
+            console.log('[Theme Test]', message);
+            const timestamp = new Date().toISOString();
+            const logs = JSON.parse(localStorage.getItem('theme_test_logs') || '[]');
+            logs.push({ timestamp, message });
+            localStorage.setItem('theme_test_logs', JSON.stringify(logs.slice(-10))); // Keep last 10 logs
+        }
+        
+        // Initialize display
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                updateDisplay();
+                logTest('Theme test page loaded');
+            }, 100); // Small delay to ensure theme manager is initialized
+        });
+        
+        // Listen for theme changes
+        if (window.themeManager) {
+            window.themeManager.addListener((theme) => {
+                updateDisplay();
+                logTest(`Theme changed to: ${theme}`);
+            });
+        }
+    </script>
+</body>
+</html>
