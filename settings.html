@@ -44,6 +44,64 @@
 
     .modal-content {
       animation: modalSlideIn 0.3s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .modal-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .dark .modal-content::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+
+    .dark .modal-content::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    /* Modal inner container scrolling */
+    .modal-content > div {
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+    }
+
+    .modal-content > div::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .modal-content > div::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .modal-content > div::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    .modal-content > div::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .dark .modal-content > div::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+
+    .dark .modal-content > div::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
     }
 
     @keyframes modalSlideIn {
@@ -357,8 +415,8 @@
     <!-- Notifications Modal -->
     <div id="notifications-modal" class="fixed inset-0 z-50 hidden">
       <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
-        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
-          <div class="p-6">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto">
+          <div class="p-6 max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold text-slate-800">Notifications</h2>
               <button id="close-notifications" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -427,8 +485,8 @@
     <!-- Appearance Modal -->
     <div id="appearance-modal" class="fixed inset-0 z-50 hidden">
       <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
-        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
-          <div class="p-6">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto">
+          <div class="p-6 max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold text-slate-800">Appearance</h2>
               <button id="close-appearance" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -483,8 +541,8 @@
     <!-- Daily Goal Modal -->
     <div id="daily-goal-modal" class="fixed inset-0 z-50 hidden">
       <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
-        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
-          <div class="p-6">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto">
+          <div class="p-6 max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold text-slate-800">Daily Study Goal</h2>
               <button id="close-daily-goal" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -546,8 +604,8 @@
     <!-- Audio Quality Modal -->
     <div id="audio-quality-modal" class="fixed inset-0 z-50 hidden">
       <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
-        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
-          <div class="p-6">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto">
+          <div class="p-6 max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold text-slate-800">Audio Quality</h2>
               <button id="close-audio-quality" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -624,8 +682,8 @@
     <!-- Help & Support Modal -->
     <div id="help-support-modal" class="fixed inset-0 z-50 hidden">
       <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
-        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
-          <div class="p-6">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto">
+          <div class="p-6 max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold text-slate-800">Help & Support</h2>
               <button id="close-help-support" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -688,8 +746,8 @@
     <!-- Privacy Policy Modal -->
     <div id="privacy-policy-modal" class="fixed inset-0 z-50 hidden">
       <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
-        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
-          <div class="p-6">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto">
+          <div class="p-6 max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold text-slate-800">Privacy Policy</h2>
               <button id="close-privacy-policy" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -730,8 +788,8 @@
     <!-- Profile Editing Modal -->
     <div id="profile-modal" class="fixed inset-0 z-50 hidden">
       <div class="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4">
-        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
-          <div class="p-6">
+        <div class="modal-content bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto">
+          <div class="p-6 max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold text-slate-800">Edit Profile</h2>
               <button id="close-profile" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
