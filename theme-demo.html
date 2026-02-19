@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Demo - Universite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/theme-manager.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-slate-800 mb-6">Theme Demo</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">Theme Controls</h2>
+            
+            <div class="space-y-3">
+                <button onclick="window.themeManager.setTheme('light')" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Light Theme
+                </button>
+                <button onclick="window.themeManager.setTheme('dark')" class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
+                    Dark Theme
+                </button>
+                <button onclick="window.themeManager.setTheme('system')" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
+                    System Theme
+                </button>
+            </div>
+            
+            <div class="mt-4 text-slate-600">
+                <p>Current theme: <span id="current-theme" class="font-semibold"></span></p>
+                <p>System preference: <span id="system-theme" class="font-semibold"></span></p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">Content Examples</h2>
+            
+            <div class="space-y-4">
+                <div class="p-4 bg-slate-50 rounded border border-slate-200">
+                    <h3 class="font-medium text-slate-800">Card Example</h3>
+                    <p class="text-slate-600">This is a sample card to demonstrate theme switching.</p>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border border-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-slate-800">Column 1</th>
+                                <th class="px-4 py-2 text-left text-slate-800">Column 2</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            <tr class="border-t border-slate-200">
+                                <td class="px-4 py-2 text-slate-600">Data 1</td>
+                                <td class="px-4 py-2 text-slate-600">Data 2</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                        Primary Button
+                    </button>
+                    <button class="px-3 py-1 bg-slate-200 text-slate-800 rounded hover:bg-slate-300">
+                        Secondary Button
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">Theme Information</h2>
+            <div class="text-slate-600 space-y-2">
+                <p>This demo shows how the theme system works across different UI elements.</p>
+                <p>Try switching themes to see how all elements adapt to the selected theme.</p>
+                <p>The theme preference is saved to localStorage and persists across page reloads.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Update theme display
+        function updateThemeDisplay() {
+            const currentTheme = window.themeManager.getCurrentTheme();
+            const systemTheme = window.themeManager.getSystemTheme();
+            
+            document.getElementById('current-theme').textContent = currentTheme;
+            document.getElementById('system-theme').textContent = systemTheme;
+        }
+        
+        // Listen for theme changes
+        window.themeManager.addListener(updateThemeDisplay);
+        
+        // Initial display update
+        updateThemeDisplay();
+    </script>
+</body>
+</html>
