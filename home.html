@@ -92,6 +92,36 @@
         </div>
       </div>
 
+      <!-- Profile Completion Widget -->
+      <div id="profile-widget" class="hidden mb-6">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-slate-800 mb-2">Complete Your Profile</h3>
+              <p class="text-slate-600 mb-4">Tell us about yourself to get personalized AI assistance and study recommendations</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">Better AI</span>
+                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">Study Tips</span>
+                <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">Course Help</span>
+              </div>
+              <button onclick="showProfileForm()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                Add Details (2 min)
+              </button>
+              <button onclick="dismissProfileWidget()" class="ml-3 text-slate-500 hover:text-slate-700 transition-colors">
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Recent Lectures -->
       <div class="mb-6">
         <div class="flex items-center justify-between mb-3">
@@ -219,9 +249,136 @@
   </div>
 
   <script>
+    // Profile completion functions
+    let userProfile = null;
+
+    async function checkProfileCompletion() {
+      try {
+        const session = await window.UniSupabase.getSession();
+        if (!session) return;
+
+        const userId = session.user.id;
+        
+        // Check if user has completed profile
+        const { data: profile } = await window.UniSupabase.client
+          .from('profiles')
+          .select('university, major, year, study_time, learning_style')
+          .eq('id', userId)
+          .single();
+
+        userProfile = profile;
+
+        // Show widget if profile is incomplete
+        if (!profile || !profile.university || !profile.major) {
+          document.getElementById('profile-widget').classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+      }
+    }
+
+    function showProfileForm() {
+      document.getElementById('profile-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      
+      // Pre-fill form with existing data
+      if (userProfile) {
+        document.getElementById('full_name').value = userProfile.full_name || '';
+        document.getElementById('university').value = userProfile.university || '';
+        document.getElementById('major').value = userProfile.major || '';
+        document.getElementById('year').value = userProfile.year || '';
+        document.getElementById('study_time').value = userProfile.study_time || '';
+        document.getElementById('learning_style').value = userProfile.learning_style || '';
+      }
+    }
+
+    function hideProfileForm() {
+      document.getElementById('profile-modal').classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    function dismissProfileWidget() {
+      document.getElementById('profile-widget').classList.add('hidden');
+      // Store dismissal for 7 days
+      localStorage.setItem('profile_widget_dismissed', Date.now().toString());
+    }
+
+    async function saveProfile(formData) {
+      try {
+        const session = await window.UniSupabase.getSession();
+        if (!session) return;
+
+        const userId = session.user.id;
+        
+        // Update profile in Supabase
+        const { error } = await window.UniSupabase.client
+          .from('profiles')
+          .upsert({
+            id: userId,
+            full_name: formData.get('full_name'),
+            university: formData.get('university'),
+            major: formData.get('major'),
+            year: formData.get('year'),
+            study_time: formData.get('study_time'),
+            learning_style: formData.get('learning_style'),
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) {
+          alert('Error saving profile: ' + error.message);
+          return;
+        }
+
+        // Update local state
+        userProfile = {
+          full_name: formData.get('full_name'),
+          university: formData.get('university'),
+          major: formData.get('major'),
+          year: formData.get('year'),
+          study_time: formData.get('study_time'),
+          learning_style: formData.get('learning_style')
+        };
+
+        // Hide modal and widget
+        hideProfileForm();
+        document.getElementById('profile-widget').classList.add('hidden');
+        
+        // Show success message
+        alert('Profile saved successfully!');
+        
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        alert('Error saving profile. Please try again.');
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      // Check if widget was recently dismissed
+      const dismissed = localStorage.getItem('profile_widget_dismissed');
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      
+      if (dismissed && parseInt(dismissed) > sevenDaysAgo) {
+        // Don't show widget if dismissed within last 7 days
+        return;
+      }
+
+      checkProfileCompletion();
       loadRecentLectures();
       loadStats();
+    });
+
+    // Handle profile form submission
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      await saveProfile(formData);
+    });
+
+    // Close modal on overlay click
+    document.getElementById('profile-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'profile-modal') {
+        hideProfileForm();
+      }
     });
 
     function loadRecentLectures() {
