@@ -281,23 +281,6 @@
               </svg>
             </div>
           </button>
-
-          <button class="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                </svg>
-              </div>
-              <div class="text-left">
-                <div class="font-medium text-slate-800">Storage</div>
-                <div id="storage-usage" class="text-xs text-slate-500">Calculating storage...</div>
-              </div>
-            </div>
-            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
         </div>
       </div>
 
@@ -1118,16 +1101,6 @@
 
       // Update toggles
       document.getElementById('auto-save-toggle').checked = userSettings.autoSave;
-
-      // Update storage usage (best-effort using appState)
-      const storageEl = document.getElementById('storage-usage');
-      if (storageEl && typeof appState !== 'undefined' && appState.settings) {
-        const usedBytes = appState.settings.storageUsed || 0;
-        const limitBytes = appState.settings.storageLimit || (5 * 1024 * 1024 * 1024);
-        const usedGB = usedBytes / (1024 * 1024 * 1024);
-        const limitGB = limitBytes / (1024 * 1024 * 1024);
-        storageEl.textContent = `${usedGB.toFixed(2)} GB used of ${limitGB.toFixed(1)} GB`;
-      }
     }
 
     // Theme management functions
