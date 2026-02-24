@@ -76,6 +76,7 @@
   <script src="js/supabase-client.js"></script>
   <script src="js/auth-guard.js"></script>
   <script src="js/app-state.js"></script>
+  <script src="js/local-lecture-manager.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
   <div id="app" class="flex flex-col min-h-screen pb-20">
@@ -380,6 +381,12 @@
   </div>
 
   <script>
+    // Initialize LocalLectureManager globally
+    window.localLectureManager = new LocalLectureManager(
+      'https://hiruufvoyigrcdohqjkm.supabase.co',
+      'sb_publishable_oAbDFVc8dPgLnNaJQ-QKhg_PUDOyjZp'
+    );
+
     // Profile completion functions
     let userProfile = null;
 
@@ -483,7 +490,7 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Check if widget was recently dismissed
       const dismissed = localStorage.getItem('profile_widget_dismissed');
       const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
@@ -494,7 +501,7 @@
       }
 
       checkProfileCompletion();
-      loadRecentLectures();
+      await loadRecentLectures();
       loadStats();
     });
 
@@ -512,47 +519,93 @@
       }
     });
 
-    function loadRecentLectures() {
-      if (typeof appState === 'undefined') {
+    async function loadRecentLectures() {
+      try {
+        if (window.localLectureManager) {
+          // Use LocalLectureManager to get lectures with local audio
+          const result = await window.localLectureManager.getLectures(3);
+          if (result.success) {
+            const container = document.getElementById('recent-lectures');
+            const noLectures = document.getElementById('no-lectures');
+
+            if (result.lectures.length === 0) {
+              container.innerHTML = '';
+              noLectures.classList.remove('hidden');
+              return;
+            }
+
+            noLectures.classList.add('hidden');
+            container.innerHTML = result.lectures.map(lecture => {
+              const date = new Date(lecture.created_at);
+              const dateStr = formatDate(date);
+              const hasLocalAudio = !!lecture.local_audio;
+              
+              return `
+                <a href="lecture-detail.html?id=${lecture.id}" class="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
+                  <div class="flex items-start justify-between mb-2">
+                    <h3 class="text-base font-semibold text-slate-800 flex-1">${lecture.title}</h3>
+                    ${hasLocalAudio ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>' : ''}
+                  </div>
+                  <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                    <span>${dateStr}</span>
+                    <span>•</span>
+                    <span>${lecture.duration || 'N/A'}</span>
+                  </div>
+                  ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
+                    <div class="flex flex-wrap gap-1.5">
+                      ${lecture.keyConcepts.slice(0, 3).map(concept => `
+                        <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </a>
+              `;
+            }).join('');
+          }
+        } else if (typeof appState !== 'undefined') {
+          // Fallback to appState
+          const lectures = appState.getRecentLectures(3);
+          const container = document.getElementById('recent-lectures');
+          const noLectures = document.getElementById('no-lectures');
+
+          if (lectures.length === 0) {
+            container.innerHTML = '';
+            noLectures.classList.remove('hidden');
+            return;
+          }
+
+          noLectures.classList.add('hidden');
+          container.innerHTML = lectures.map(lecture => {
+            const date = new Date(lecture.createdAt);
+            const dateStr = formatDate(date);
+            
+            return `
+              <a href="lecture-detail.html?id=${lecture.id}" class="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
+                <div class="flex items-start justify-between mb-2">
+                  <h3 class="text-base font-semibold text-slate-800 flex-1">${lecture.title}</h3>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                  <span>${dateStr}</span>
+                  <span>•</span>
+                  <span>${lecture.duration || 'N/A'}</span>
+                </div>
+                ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
+                  <div class="flex flex-wrap gap-1.5">
+                    ${lecture.keyConcepts.slice(0, 3).map(concept => `
+                      <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </a>
+            `;
+          }).join('');
+        } else {
+          document.getElementById('no-lectures').classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Error loading recent lectures:', error);
         document.getElementById('no-lectures').classList.remove('hidden');
-        return;
       }
-
-      const lectures = appState.getRecentLectures(3);
-      const container = document.getElementById('recent-lectures');
-      const noLectures = document.getElementById('no-lectures');
-
-      if (lectures.length === 0) {
-        container.innerHTML = '';
-        noLectures.classList.remove('hidden');
-        return;
-      }
-
-      noLectures.classList.add('hidden');
-      container.innerHTML = lectures.map(lecture => {
-        const date = new Date(lecture.createdAt);
-        const dateStr = formatDate(date);
-        
-        return `
-          <a href="lecture-detail.html?id=${lecture.id}" class="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
-            <div class="flex items-start justify-between mb-2">
-              <h3 class="text-base font-semibold text-slate-800 flex-1">${lecture.title}</h3>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
-              <span>${dateStr}</span>
-              <span>•</span>
-              <span>${lecture.duration || 'N/A'}</span>
-            </div>
-            ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
-              <div class="flex flex-wrap gap-1.5">
-                ${lecture.keyConcepts.slice(0, 3).map(concept => `
-                  <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
-                `).join('')}
-              </div>
-            ` : ''}
-          </a>
-        `;
-      }).join('');
     }
 
     function loadStats() {
