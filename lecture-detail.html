@@ -41,6 +41,7 @@
   <script src="js/supabase-client.js"></script>
   <script src="js/auth-guard.js"></script>
   <script src="js/app-state.js"></script>
+  <script src="js/local-lecture-manager.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
   <div id="app" class="flex flex-col min-h-screen pb-20">
@@ -72,6 +73,33 @@
           <span>45:30</span>
         </div>
         
+        <!-- Audio Player -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
+          <div class="flex items-center gap-3">
+            <button id="playPauseBtn" class="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center active:scale-95 transition-transform">
+              <svg id="playIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+              <svg id="pauseIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z" />
+              </svg>
+            </button>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 text-xs text-slate-500 mb-1">
+                <span id="currentTime">0:00</span>
+                <div class="flex-1 bg-slate-200 rounded-full h-1">
+                  <div id="progressBar" class="bg-indigo-600 h-1 rounded-full" style="width: 0%"></div>
+                </div>
+                <span id="duration">0:00</span>
+              </div>
+              <div class="text-sm font-medium text-slate-800">
+                <span id="audioStatus">Loading audio...</span>
+              </div>
+            </div>
+          </div>
+          <audio id="audioPlayer" class="hidden" preload="metadata"></audio>
+        </div>
+
         <!-- Action Buttons -->
         <div class="flex gap-2 mb-4">
           <a href="assistant.html?lecture=1" class="flex-1 px-4 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-medium text-center active:scale-95 transition-transform">
@@ -253,6 +281,140 @@
       </div>
     </nav>
   </div>
+
+  <script>
+    // Initialize LocalLectureManager
+    window.localLectureManager = new LocalLectureManager(
+      'https://hiruufvoyigrcdohqjkm.supabase.co',
+      'sb_publishable_oAbDFVc8dPgLnNaJQ-QKhg_PUDOyjZp'
+    );
+
+    // Audio player functionality
+    let currentLecture = null;
+    let audioPlayer = null;
+    let playPauseBtn = null;
+    let playIcon = null;
+    let pauseIcon = null;
+    let currentTimeSpan = null;
+    let durationSpan = null;
+    let progressBar = null;
+    let audioStatus = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Get audio player elements
+      audioPlayer = document.getElementById('audioPlayer');
+      playPauseBtn = document.getElementById('playPauseBtn');
+      playIcon = document.getElementById('playIcon');
+      pauseIcon = document.getElementById('pauseIcon');
+      currentTimeSpan = document.getElementById('currentTime');
+      durationSpan = document.getElementById('duration');
+      progressBar = document.getElementById('progressBar');
+      audioStatus = document.getElementById('audioStatus');
+
+      // Get lecture ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const lectureId = urlParams.get('id');
+
+      if (lectureId) {
+        await loadLecture(lectureId);
+      } else {
+        audioStatus.textContent = 'No lecture specified';
+      }
+
+      // Setup audio player event listeners
+      setupAudioPlayer();
+    });
+
+    async function loadLecture(lectureId) {
+      try {
+        audioStatus.textContent = 'Loading lecture...';
+        
+        if (window.localLectureManager) {
+          const result = await window.localLectureManager.getLecture(lectureId);
+          if (result.success) {
+            currentLecture = result.lecture;
+            await loadLocalAudio();
+          } else {
+            audioStatus.textContent = 'Lecture not found';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading lecture:', error);
+        audioStatus.textContent = 'Error loading lecture';
+      }
+    }
+
+    async function loadLocalAudio() {
+      try {
+        if (currentLecture && currentLecture.local_audio) {
+          // Load local audio from base64
+          audioPlayer.src = currentLecture.local_audio;
+          audioStatus.textContent = 'Local audio ready';
+          
+          // Update duration when metadata is loaded
+          audioPlayer.addEventListener('loadedmetadata', () => {
+            durationSpan.textContent = formatTime(audioPlayer.duration);
+          });
+        } else {
+          audioStatus.textContent = 'No audio available';
+          playPauseBtn.disabled = true;
+        }
+      } catch (error) {
+        console.error('Error loading local audio:', error);
+        audioStatus.textContent = 'Error loading audio';
+        playPauseBtn.disabled = true;
+      }
+    }
+
+    function setupAudioPlayer() {
+      // Play/Pause button
+      playPauseBtn.addEventListener('click', togglePlayPause);
+
+      // Audio player events
+      audioPlayer.addEventListener('timeupdate', updateProgress);
+      audioPlayer.addEventListener('ended', () => {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        progressBar.style.width = '0%';
+        currentTimeSpan.textContent = '0:00';
+      });
+
+      // Progress bar click to seek
+      progressBar.parentElement.addEventListener('click', (e) => {
+        const rect = progressBar.parentElement.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        audioPlayer.currentTime = percent * audioPlayer.duration;
+      });
+    }
+
+    function togglePlayPause() {
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        audioStatus.textContent = 'Playing...';
+      } else {
+        audioPlayer.pause();
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        audioStatus.textContent = 'Paused';
+      }
+    }
+
+    function updateProgress() {
+      const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+      progressBar.style.width = percent + '%';
+      currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
+    }
+
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = Math.floor(seconds % 60);
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+  </script>
 </body>
 </html>
 
