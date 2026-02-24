@@ -109,35 +109,90 @@ class AppState {
     }
   }
 
-  // Lecture management
-  addLecture(lecture) {
+  // Lecture management - now integrates with LocalLectureManager
+  async addLecture(lecture) {
     lecture.id = lecture.id || Date.now().toString();
     lecture.createdAt = lecture.createdAt || new Date().toISOString();
-    this.lectures.unshift(lecture);
-    this.recalculateStorageUsage();
-    this.saveToStorage();
-    return lecture;
-  }
-
-  getLecture(id) {
-    return this.lectures.find(l => l.id === id);
-  }
-
-  updateLecture(id, updates) {
-    const index = this.lectures.findIndex(l => l.id === id);
-    if (index !== -1) {
-      this.lectures[index] = { ...this.lectures[index], ...updates };
+    
+    // Check if LocalLectureManager is available
+    if (window.localLectureManager) {
+      // Use LocalLectureManager for local storage
+      const result = await window.localLectureManager.createLecture(lecture);
+      if (result.success) {
+        this.lectures.unshift(result.lecture);
+        this.recalculateStorageUsage();
+        this.saveToStorage();
+        return result.lecture;
+      }
+      throw new Error(result.error);
+    } else {
+      // Fallback to localStorage only
+      this.lectures.unshift(lecture);
       this.recalculateStorageUsage();
       this.saveToStorage();
-      return this.lectures[index];
+      return lecture;
     }
-    return null;
   }
 
-  deleteLecture(id) {
-    this.lectures = this.lectures.filter(l => l.id !== id);
-    this.recalculateStorageUsage();
-    this.saveToStorage();
+  async getLecture(id) {
+    // Check if LocalLectureManager is available
+    if (window.localLectureManager) {
+      const result = await window.localLectureManager.getLecture(id);
+      if (result.success) {
+        return result.lecture;
+      }
+      return null;
+    } else {
+      // Fallback to localStorage
+      return this.lectures.find(l => l.id === id);
+    }
+  }
+
+  async updateLecture(id, updates) {
+    // Check if LocalLectureManager is available
+    if (window.localLectureManager) {
+      const result = await window.localLectureManager.updateLecture(id, updates);
+      if (result.success) {
+        const index = this.lectures.findIndex(l => l.id === id);
+        if (index !== -1) {
+          this.lectures[index] = { ...this.lectures[index], ...updates };
+          this.recalculateStorageUsage();
+          this.saveToStorage();
+          return this.lectures[index];
+        }
+      }
+      return null;
+    } else {
+      // Fallback to localStorage
+      const index = this.lectures.findIndex(l => l.id === id);
+      if (index !== -1) {
+        this.lectures[index] = { ...this.lectures[index], ...updates };
+        this.recalculateStorageUsage();
+        this.saveToStorage();
+        return this.lectures[index];
+      }
+      return null;
+    }
+  }
+
+  async deleteLecture(id) {
+    // Check if LocalLectureManager is available
+    if (window.localLectureManager) {
+      const result = await window.localLectureManager.deleteLecture(id);
+      if (result.success) {
+        this.lectures = this.lectures.filter(l => l.id !== id);
+        this.recalculateStorageUsage();
+        this.saveToStorage();
+        return true;
+      }
+      return false;
+    } else {
+      // Fallback to localStorage
+      this.lectures = this.lectures.filter(l => l.id !== id);
+      this.recalculateStorageUsage();
+      this.saveToStorage();
+      return true;
+    }
   }
 
   getRecentLectures(limit = 10) {

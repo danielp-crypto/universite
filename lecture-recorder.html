@@ -163,17 +163,16 @@
     </main>
 
     <!-- Scripts -->
-    <script src="js/supabase-client.js"></script>
     <script src="js/audio-recorder.js"></script>
-    <script src="js/supabase-storage.js"></script>
-    <script src="js/lecture-manager.js"></script>
+    <script src="js/local-lecture-manager.js"></script>
+    <script src="js/supabase-client.js"></script>
     <script>
         // Configuration
         const SUPABASE_URL = 'https://hiruufvoyigrcdohqjkm.supabase.co';
         const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with actual key
 
         // Initialize lecture manager
-        const lectureManager = new LectureManager(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const lectureManager = new LocalLectureManager(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // UI Elements
         const recordBtn = document.getElementById('recordBtn');
