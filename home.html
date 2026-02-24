@@ -51,6 +51,26 @@
     .safe-area-inset-bottom {
       padding-bottom: env(safe-area-inset-bottom, 0);
     }
+
+    /* Modal styles */
+    .modal-overlay {
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .modal-content {
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
@@ -246,6 +266,117 @@
         </div>
       </div>
     </nav>
+  </div>
+
+  <!-- Profile Completion Modal -->
+  <div id="profile-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay flex items-center justify-center min-h-screen p-4 bg-black bg-opacity-50">
+      <div class="modal-content bg-white rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-slate-800">Complete Your Profile</h2>
+            <button onclick="hideProfileForm()" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form id="profile-form" class="space-y-5">
+            <div>
+              <label for="full_name" class="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+              <input
+                type="text"
+                id="full_name"
+                name="full_name"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                placeholder="Your full name"
+              >
+            </div>
+
+            <div>
+              <label for="university" class="block text-sm font-medium text-slate-700 mb-2">University</label>
+              <input
+                type="text"
+                id="university"
+                name="university"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                placeholder="Your university"
+              >
+            </div>
+
+            <div>
+              <label for="major" class="block text-sm font-medium text-slate-700 mb-2">Major/Field of Study</label>
+              <input
+                type="text"
+                id="major"
+                name="major"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                placeholder="e.g., Computer Science, Biology"
+              >
+            </div>
+
+            <div>
+              <label for="year" class="block text-sm font-medium text-slate-700 mb-2">Year of Study</label>
+              <select
+                id="year"
+                name="year"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              >
+                <option value="">Select your year</option>
+                <option value="freshman">Freshman</option>
+                <option value="sophomore">Sophomore</option>
+                <option value="junior">Junior</option>
+                <option value="senior">Senior</option>
+                <option value="graduate">Graduate</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="study_time" class="block text-sm font-medium text-slate-700 mb-2">Preferred Study Time</label>
+              <select
+                id="study_time"
+                name="study_time"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              >
+                <option value="">Select preference</option>
+                <option value="morning">Morning (6AM - 12PM)</option>
+                <option value="afternoon">Afternoon (12PM - 6PM)</option>
+                <option value="evening">Evening (6PM - 12AM)</option>
+                <option value="night">Night (12AM - 6AM)</option>
+                <option value="flexible">Flexible</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="learning_style" class="block text-sm font-medium text-slate-700 mb-2">Learning Style</label>
+              <select
+                id="learning_style"
+                name="learning_style"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              >
+                <option value="">Select your style</option>
+                <option value="visual">Visual (diagrams, charts)</option>
+                <option value="auditory">Auditory (lectures, discussions)</option>
+                <option value="reading">Reading/Writing (notes, texts)</option>
+                <option value="kinesthetic">Hands-on (practice, projects)</option>
+                <option value="mixed">Mixed approach</option>
+              </select>
+            </div>
+
+            <div class="flex gap-3">
+              <button type="submit" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                Save Profile
+              </button>
+              <button type="button" onclick="hideProfileForm()" class="px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300 transition-colors">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
