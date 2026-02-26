@@ -1,11 +1,18 @@
 class LocalLectureManager {
-  constructor(supabaseUrl, supabaseAnonKey) {
+  constructor(supabaseUrl, supabaseAnonKey, geminiApiKey = null) {
     this.supabaseUrl = supabaseUrl;
     this.supabaseAnonKey = supabaseAnonKey;
     this.audioRecorder = new AudioRecorder();
     this.currentLecture = null;
     this.isProcessing = false;
     this.storageKey = 'universite_lectures';
+    
+    // Initialize Gemini transcription service
+    this.transcriptionService = geminiApiKey ? 
+      new GeminiTranscriptionService(geminiApiKey) : null;
+    
+    // Set up event listeners for transcription updates
+    this.setupTranscriptionEventListeners();
   }
 
   getAuthHeaders() {
@@ -172,6 +179,11 @@ class LocalLectureManager {
       const updateResponse = await this.updateLecture(lecture.id, updateData);
       if (!updateResponse.success) {
         throw new Error(updateResponse.error);
+      }
+
+      // Start transcription if Gemini service is available
+      if (this.transcriptionService) {
+        await this.startTranscription(lecture.id, audioBlob);
       }
 
       this.isProcessing = false;
@@ -370,36 +382,43 @@ class LocalLectureManager {
     return null;
   }
 
-  // Save transcription to Supabase only
-  async saveTranscription(lectureId, transcription) {
+  // Save transcription to Supabase only (updated for new schema)
+  async saveTranscription(lectureId, transcription, metadata = {}) {
     try {
       const headers = this.getAuthHeaders();
       
-      const transcriptionData = {
+      // Use the new function that saves transcription with metadata
+      const requestData = {
         lecture_id: lectureId,
         content: transcription,
-        created_at: new Date().toISOString()
+        processing_time_ms: metadata.processingTimeMs || null,
+        model_used: metadata.modelUsed || 'gemini-1.5-flash',
+        language: metadata.language || 'en',
+        confidence_score: metadata.confidenceScore || null
       };
 
-      const response = await fetch(`${this.supabaseUrl}/rest/v1/transcriptions`, {
+      const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/save_transcription_with_metadata`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(transcriptionData)
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save transcription');
       }
 
       const result = await response.json();
       
-      // Update lecture with transcription reference
-      await this.updateLecture(lectureId, {
-        transcription_id: result.id,
-        has_transcription: true
-      });
-      
-      return { success: true, transcription: result };
+      if (result.success) {
+        return { 
+          success: true, 
+          transcriptionId: result.transcription_id,
+          transcription: transcription
+        };
+      } else {
+        throw new Error(result.error_message || 'Failed to save transcription');
+      }
     } catch (error) {
       console.error('Error saving transcription:', error);
       return { success: false, error: error.message };
@@ -476,8 +495,238 @@ class LocalLectureManager {
         remaining: toKeep.length 
       };
     } catch (error) {
-      console.error('Error cleaning up lectures:', error);
+      console.error('Error cleaning up old lectures:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  // Transcription methods
+  setupTranscriptionEventListeners() {
+    if (!this.transcriptionService) return;
+
+    // Listen for transcription completion
+    window.addEventListener('transcriptionCompleted', async (event) => {
+      const { jobId, transcription } = event.detail;
+      await this.handleTranscriptionCompleted(jobId, transcription);
+    });
+
+    // Listen for transcription failure
+    window.addEventListener('transcriptionFailed', async (event) => {
+      const { jobId, error } = event.detail;
+      await this.handleTranscriptionFailed(jobId, error);
+    });
+
+    // Listen for transcription status updates
+    window.addEventListener('transcriptionStatusUpdate', (event) => {
+      const { jobId, status, message, progress } = event.detail;
+      this.handleTranscriptionStatusUpdate(jobId, status, message, progress);
+    });
+  }
+
+  async startTranscription(lectureId, audioBlob, options = {}) {
+    if (!this.transcriptionService) {
+      console.warn('Transcription service not available');
+      return { success: false, error: 'Transcription service not available' };
+    }
+
+    try {
+      // Update lecture status to transcribing
+      await this.updateLecture(lectureId, {
+        status: 'transcribing',
+        transcription_status: 'processing'
+      });
+
+      // Start transcription job
+      const result = await this.transcriptionService.createTranscriptionJob(
+        lectureId, 
+        audioBlob, 
+        options
+      );
+
+      if (result.success) {
+        console.log('Transcription job started:', result.jobId);
+        
+        // Dispatch event for UI updates
+        window.dispatchEvent(new CustomEvent('transcriptionStarted', {
+          detail: {
+            lectureId: lectureId,
+            jobId: result.jobId
+          }
+        }));
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error starting transcription:', error);
+      
+      // Update lecture status to failed
+      await this.updateLecture(lectureId, {
+        status: 'transcription_failed',
+        transcription_status: 'failed'
+      });
+
+      return { success: false, error: error.message };
+    }
+  }
+
+  async handleTranscriptionCompleted(jobId, transcription) {
+    try {
+      console.log('Transcription completed for job:', jobId);
+
+      // Get job metadata for processing time
+      const job = this.transcriptionService.getTranscriptionJob(jobId);
+      const metadata = {
+        processingTimeMs: job.completedAt ? 
+          new Date(job.completedAt) - new Date(job.createdAt) : null,
+        modelUsed: 'gemini-1.5-flash',
+        language: 'en',
+        confidenceScore: null // Could be extracted from Gemini response if available
+      };
+
+      // Save transcription to Supabase with metadata
+      const saveResult = await this.saveTranscription(jobId, transcription, metadata);
+      
+      if (saveResult.success) {
+        // Update lecture status
+        await this.updateLecture(jobId, {
+          status: 'completed',
+          transcription_status: 'completed',
+          has_transcription: true
+        });
+
+        // Update local lecture with transcription
+        const localLectures = this.getLocalLectures();
+        const localLecture = localLectures.find(l => l.id === jobId);
+        if (localLecture) {
+          localLecture.transcription = transcription;
+          localLecture.transcription_completed_at = new Date().toISOString();
+          localLecture.transcription_id = saveResult.transcriptionId;
+          this.saveLocalLectures(localLectures);
+        }
+
+        // Dispatch completion event
+        window.dispatchEvent(new CustomEvent('lectureTranscriptionComplete', {
+          detail: {
+            lectureId: jobId,
+            transcription: transcription,
+            transcriptionId: saveResult.transcriptionId,
+            savedToSupabase: true,
+            metadata: metadata
+          }
+        }));
+      } else {
+        throw new Error(saveResult.error);
+      }
+    } catch (error) {
+      console.error('Error handling transcription completion:', error);
+      await this.handleTranscriptionFailed(jobId, error.message);
+    }
+  }
+
+  async handleTranscriptionFailed(jobId, error) {
+    console.error('Transcription failed for job:', jobId, error);
+
+    try {
+      // Update lecture status
+      await this.updateLecture(jobId, {
+        status: 'transcription_failed',
+        transcription_status: 'failed',
+        transcription_error: error
+      });
+
+      // Update local lecture
+      const localLectures = this.getLocalLectures();
+      const localLecture = localLectures.find(l => l.id === jobId);
+      if (localLecture) {
+        localLecture.transcription_status = 'failed';
+        localLecture.transcription_error = error;
+        localLecture.transcription_failed_at = new Date().toISOString();
+        this.saveLocalLectures(localLectures);
+      }
+
+      // Dispatch failure event
+      window.dispatchEvent(new CustomEvent('lectureTranscriptionFailed', {
+        detail: {
+          lectureId: jobId,
+          error: error
+        }
+      }));
+    } catch (updateError) {
+      console.error('Error updating lecture status after transcription failure:', updateError);
+    }
+  }
+
+  handleTranscriptionStatusUpdate(jobId, status, message, progress) {
+    // Dispatch status update for UI components
+    window.dispatchEvent(new CustomEvent('lectureTranscriptionStatus', {
+      detail: {
+        lectureId: jobId,
+        status: status,
+        message: message,
+        progress: progress
+      }
+    }));
+  }
+
+  async getTranscriptionStatus(lectureId) {
+    if (!this.transcriptionService) {
+      return { status: 'not_available' };
+    }
+
+    const job = this.transcriptionService.getTranscriptionJob(lectureId);
+    if (!job) {
+      return { status: 'not_found' };
+    }
+
+    return {
+      status: job.status,
+      message: job.message,
+      progress: this.transcriptionService.getJobProgress(job),
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      transcription: job.transcription
+    };
+  }
+
+  async cancelTranscription(lectureId) {
+    if (!this.transcriptionService) {
+      return { success: false, error: 'Transcription service not available' };
+    }
+
+    const cancelled = this.transcriptionService.cancelTranscriptionJob(lectureId);
+    
+    if (cancelled) {
+      // Update lecture status
+      await this.updateLecture(lectureId, {
+        status: 'transcription_cancelled',
+        transcription_status: 'cancelled'
+      });
+
+      window.dispatchEvent(new CustomEvent('lectureTranscriptionCancelled', {
+        detail: { lectureId: lectureId }
+      }));
+    }
+
+    return { success: cancelled };
+  }
+
+  getTranscriptionStats() {
+    if (!this.transcriptionService) {
+      return {
+        total: 0,
+        completed: 0,
+        processing: 0,
+        failed: 0,
+        averageDuration: 0
+      };
+    }
+
+    return this.transcriptionService.getTranscriptionStats();
+  }
+
+  cleanupOldTranscriptionJobs() {
+    if (this.transcriptionService) {
+      this.transcriptionService.cleanupOldJobs();
     }
   }
 }
