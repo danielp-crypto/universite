@@ -39,17 +39,6 @@
     return session;
   }
 
-  async function signInWithPassword(email, password) {
-    return await client.auth.signInWithPassword({ email, password });
-  }
-
-  async function signUpWithPassword(email, password, { redirectTo } = {}) {
-    return await client.auth.signUp({
-      email,
-      password,
-      options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
-    });
-  }
 
   async function signInWithOAuth(provider, { redirectTo } = {}) {
     return await client.auth.signInWithOAuth({
@@ -68,8 +57,6 @@
     getSession,
     getAccessToken,
     requireAuth,
-    signInWithPassword,
-    signUpWithPassword,
     signInWithOAuth,
     signOut,
   };
