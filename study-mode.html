@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Mode - Universite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .flashcard {
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border-radius: 1rem;
+        }
+        
+        .flashcard-front {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .flashcard-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+        
+        .study-progress {
+            transition: width 0.3s ease;
+        }
+        
+        .rating-button {
+            transition: all 0.2s ease;
+        }
+        
+        .rating-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .rating-button:active {
+            transform: scale(0.95);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="home.html" class="text-indigo-600 hover:text-indigo-700 font-semibold text-lg">
+                        <i class="fas fa-graduation-cap mr-2"></i>
+                        Universite
+                    </a>
+                    <div class="ml-8 hidden md:flex">
+                        <a href="lectures.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                            Lectures
+                        </a>
+                        <a href="study-mode.html" class="text-indigo-600 border-b-2 border-indigo-600 px-3 py-2 text-sm font-medium">
+                            Study Mode
+                        </a>
+                        <a href="settings.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                            Settings
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-600">
+                        <i class="fas fa-fire text-orange-500"></i>
+                        <span id="studyStreak">0</span> day streak
+                    </div>
+                    <button id="userMenu" class="flex items-center text-sm">
+                        <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Study Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+                        <i class="fas fa-layer-group text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Cards</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="totalCards">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Mastered</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="masteredCards">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-3">
+                        <i class="fas fa-clock text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Due Today</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="dueToday">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+                        <i class="fas fa-chart-line text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Avg Mastery</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="avgMastery">0.0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Controls -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="p-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">Study Session</h2>
+                        <p class="text-gray-600 mt-1">Review your flashcards with spaced repetition</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex space-x-3">
+                        <select id="lectureSelect" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">All Lectures</option>
+                        </select>
+                        <select id="difficultyFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">All Difficulties</option>
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                        <button id="startSession" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-play mr-2"></i>
+                            Start Session
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Session Progress -->
+                <div class="mt-6 hidden" id="sessionProgress">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">Session Progress</span>
+                        <span class="text-sm text-gray-600" id="progressText">0 / 0 cards</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="study-progress bg-indigo-600 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flashcard Study Area -->
+        <div class="bg-white rounded-lg shadow mb-8 hidden" id="studyArea">
+            <div class="p-8">
+                <div class="max-w-2xl mx-auto">
+                    <!-- Card Counter -->
+                    <div class="text-center mb-6">
+                        <span class="text-sm text-gray-600">Card <span id="currentCardIndex">1</span> of <span id="totalSessionCards">0</span></span>
+                    </div>
+                    
+                    <!-- Flashcard -->
+                    <div class="relative h-96 mb-8">
+                        <div id="flashcard" class="flashcard w-full h-full">
+                            <div class="flashcard-face flashcard-front">
+                                <div class="text-center">
+                                    <div class="mb-4">
+                                        <span class="inline-block px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">
+                                            <i class="fas fa-tag mr-1"></i>
+                                            <span id="cardType">Concept</span>
+                                        </span>
+                                    </div>
+                                    <h3 id="cardFront" class="text-xl font-medium leading-relaxed">
+                                        Loading...
+                                    </h3>
+                                    <div class="mt-4 text-sm opacity-75">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        <span id="cardTimeReference">0:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flashcard-face flashcard-back">
+                                <div class="text-center">
+                                    <div class="mb-4">
+                                        <span class="inline-block px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">
+                                            <i class="fas fa-lightbulb mr-1"></i>
+                                            Answer
+                                        </span>
+                                    </div>
+                                    <p id="cardBack" class="text-lg leading-relaxed">
+                                        Loading...
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rating Buttons -->
+                    <div class="flex justify-center space-x-4">
+                        <button class="rating-button px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600" data-rating="1">
+                            <i class="fas fa-redo mr-2"></i>
+                            Again
+                        </button>
+                        <button class="rating-button px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600" data-rating="2">
+                            <i class="fas fa-brain mr-2"></i>
+                            Hard
+                        </button>
+                        <button class="rating-button px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600" data-rating="3">
+                            <i class="fas fa-check mr-2"></i>
+                            Good
+                        </button>
+                        <button class="rating-button px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600" data-rating="4">
+                            <i class="fas fa-star mr-2"></i>
+                            Easy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Complete -->
+        <div class="bg-white rounded-lg shadow hidden" id="sessionComplete">
+            <div class="p-8 text-center">
+                <div class="mb-6">
+                    <i class="fas fa-trophy text-6xl text-yellow-500"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Session Complete!</h2>
+                <p class="text-gray-600 mb-8">Great job studying today! Here's your progress:</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
+                    <div class="text-center">
+                        <p class="text-3xl font-bold text-indigo-600" id="sessionCardsStudied">0</p>
+                        <p class="text-gray-600">Cards Studied</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-3xl font-bold text-green-600" id="sessionCorrectAnswers">0</p>
+                        <p class="text-gray-600">Good/Easy</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-3xl font-bold text-purple-600" id="sessionAvgMastery">0.0</p>
+                        <p class="text-gray-600">Avg Mastery</p>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-center space-x-4">
+                    <button id="startNewSession" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        <i class="fas fa-plus mr-2"></i>
+                        New Session
+                    </button>
+                    <button id="reviewMistakes" class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-redo mr-2"></i>
+                        Review Mistakes
+                    </button>
+                    <a href="home.html" class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-home mr-2"></i>
+                        Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/flashcard-service.js"></script>
+    <script src="js/local-lecture-manager.js"></script>
+    <script>
+        // Study Mode Controller
+        class StudyModeController {
+            constructor() {
+                this.config = window.UniversiteConfig.getConfig();
+                this.flashcardService = new FlashcardService(this.config.GEMINI.API_KEY);
+                this.lectureManager = new LocalLectureManager(
+                    this.config.SUPABASE.URL,
+                    this.config.SUPABASE.ANON_KEY,
+                    this.config.GEMINI.API_KEY
+                );
+                
+                this.currentSession = {
+                    cards: [],
+                    currentIndex: 0,
+                    studied: 0,
+                    correct: 0,
+                    startTime: null
+                };
+                
+                this.initializeElements();
+                this.setupEventListeners();
+                this.loadInitialData();
+            }
+            
+            initializeElements() {
+                this.elements = {
+                    // Stats
+                    totalCards: document.getElementById('totalCards'),
+                    masteredCards: document.getElementById('masteredCards'),
+                    dueToday: document.getElementById('dueToday'),
+                    avgMastery: document.getElementById('avgMastery'),
+                    studyStreak: document.getElementById('studyStreak'),
+                    
+                    // Controls
+                    lectureSelect: document.getElementById('lectureSelect'),
+                    difficultyFilter: document.getElementById('difficultyFilter'),
+                    startSession: document.getElementById('startSession'),
+                    
+                    // Session
+                    sessionProgress: document.getElementById('sessionProgress'),
+                    progressBar: document.getElementById('progressBar'),
+                    progressText: document.getElementById('progressText'),
+                    studyArea: document.getElementById('studyArea'),
+                    sessionComplete: document.getElementById('sessionComplete'),
+                    
+                    // Flashcard
+                    flashcard: document.getElementById('flashcard'),
+                    currentCardIndex: document.getElementById('currentCardIndex'),
+                    totalSessionCards: document.getElementById('totalSessionCards'),
+                    cardFront: document.getElementById('cardFront'),
+                    cardBack: document.getElementById('cardBack'),
+                    cardType: document.getElementById('cardType'),
+                    cardTimeReference: document.getElementById('cardTimeReference'),
+                    
+                    // Session Complete
+                    sessionCardsStudied: document.getElementById('sessionCardsStudied'),
+                    sessionCorrectAnswers: document.getElementById('sessionCorrectAnswers'),
+                    sessionAvgMastery: document.getElementById('sessionAvgMastery'),
+                    startNewSession: document.getElementById('startNewSession'),
+                    reviewMistakes: document.getElementById('reviewMistakes')
+                };
+            }
+            
+            setupEventListeners() {
+                // Start session
+                this.elements.startSession.addEventListener('click', () => this.startStudySession());
+                
+                // Flashcard flip
+                this.elements.flashcard.addEventListener('click', () => this.flipCard());
+                
+                // Rating buttons
+                document.querySelectorAll('.rating-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.rateCard(parseInt(button.dataset.rating));
+                    });
+                });
+                
+                // Session complete actions
+                this.elements.startNewSession?.addEventListener('click', () => this.startStudySession());
+                this.elements.reviewMistakes?.addEventListener('click', () => this.reviewMistakes());
+                
+                // Filter changes
+                this.elements.lectureSelect.addEventListener('change', () => this.updateStats());
+                this.elements.difficultyFilter.addEventListener('change', () => this.updateStats());
+            }
+            
+            async loadInitialData() {
+                try {
+                    await this.loadLectures();
+                    this.updateStats();
+                } catch (error) {
+                    console.error('Error loading initial data:', error);
+                }
+            }
+            
+            async loadLectures() {
+                try {
+                    const user = await this.lectureManager.getCurrentUser();
+                    if (!user) return;
+                    
+                    const response = await this.lectureManager.getLectures(50, 0);
+                    if (response.success) {
+                        const lectures = response.lectures;
+                        
+                        // Populate lecture select
+                        this.elements.lectureSelect.innerHTML = '<option value="">All Lectures</option>';
+                        lectures.forEach(lecture => {
+                            const option = document.createElement('option');
+                            option.value = lecture.id;
+                            option.textContent = lecture.title;
+                            this.elements.lectureSelect.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading lectures:', error);
+                }
+            }
+            
+            updateStats() {
+                const stats = this.flashcardService.getStudyStats();
+                
+                this.elements.totalCards.textContent = stats.totalCards;
+                this.elements.masteredCards.textContent = stats.masteredCards;
+                this.elements.dueToday.textContent = stats.cardsDueForReview;
+                this.elements.avgMastery.textContent = stats.averageMastery.toFixed(1);
+                this.elements.studyStreak.textContent = stats.studyStreak;
+            }
+            
+            async startStudySession() {
+                try {
+                    const flashcards = this.flashcardService.getStoredFlashcards();
+                    const filteredCards = this.filterFlashcards(flashcards);
+                    
+                    if (filteredCards.length === 0) {
+                        alert('No flashcards available for study. Generate some flashcards from your lectures first!');
+                        return;
+                    }
+                    
+                    // Create study session
+                    this.currentSession.cards = this.flashcardService.createStudySession(filteredCards);
+                    this.currentSession.currentIndex = 0;
+                    this.currentSession.studied = 0;
+                    this.currentSession.correct = 0;
+                    this.currentSession.startTime = new Date();
+                    
+                    // Show study area
+                    this.elements.sessionProgress.classList.remove('hidden');
+                    this.elements.studyArea.classList.remove('hidden');
+                    this.elements.sessionComplete.classList.add('hidden');
+                    
+                    // Update progress
+                    this.updateSessionProgress();
+                    
+                    // Show first card
+                    this.showCurrentCard();
+                    
+                } catch (error) {
+                    console.error('Error starting study session:', error);
+                    alert('Error starting study session. Please try again.');
+                }
+            }
+            
+            filterFlashcards(flashcards) {
+                let filtered = [...flashcards];
+                
+                // Filter by lecture
+                const selectedLecture = this.elements.lectureSelect.value;
+                if (selectedLecture) {
+                    filtered = filtered.filter(card => card.lecture_id === selectedLecture);
+                }
+                
+                // Filter by difficulty
+                const selectedDifficulty = this.elements.difficultyFilter.value;
+                if (selectedDifficulty) {
+                    filtered = filtered.filter(card => card.difficulty === selectedDifficulty);
+                }
+                
+                return filtered;
+            }
+            
+            updateSessionProgress() {
+                const progress = (this.currentSession.studied / this.currentSession.cards.length) * 100;
+                
+                this.elements.progressBar.style.width = `${progress}%`;
+                this.elements.progressText.textContent = `${this.currentSession.studied} / ${this.currentSession.cards.length} cards`;
+                this.elements.currentCardIndex.textContent = this.currentSession.currentIndex + 1;
+                this.elements.totalSessionCards.textContent = this.currentSession.cards.length;
+            }
+            
+            showCurrentCard() {
+                if (this.currentSession.currentIndex >= this.currentSession.cards.length) {
+                    this.completeSession();
+                    return;
+                }
+                
+                const card = this.currentSession.cards[this.currentSession.currentIndex];
+                
+                // Reset card flip state
+                this.elements.flashcard.classList.remove('flipped');
+                
+                // Update card content
+                this.elements.cardFront.textContent = card.front;
+                this.elements.cardBack.textContent = card.back;
+                this.elements.cardType.textContent = card.type || 'Concept';
+                this.elements.cardTimeReference.textContent = card.time_reference || '0:00';
+                
+                // Add slide-in animation
+                this.elements.flashcard.classList.add('slide-in');
+                setTimeout(() => {
+                    this.elements.flashcard.classList.remove('slide-in');
+                }, 300);
+            }
+            
+            flipCard() {
+                this.elements.flashcard.classList.toggle('flipped');
+            }
+            
+            rateCard(rating) {
+                const card = this.currentSession.cards[this.currentSession.currentIndex];
+                
+                // Update card progress
+                this.flashcardService.updateFlashcardProgress(card.id, rating);
+                
+                // Update session stats
+                this.currentSession.studied++;
+                if (rating >= 3) {
+                    this.currentSession.correct++;
+                }
+                
+                // Move to next card
+                this.currentSession.currentIndex++;
+                this.updateSessionProgress();
+                this.showCurrentCard();
+            }
+            
+            completeSession() {
+                // Calculate session stats
+                const sessionDuration = Date.now() - this.currentSession.startTime;
+                const avgMastery = this.currentSession.cards.reduce((sum, card) => 
+                    sum + (card.mastery_level || 0), 0) / this.currentSession.cards.length;
+                
+                // Update completion screen
+                this.elements.sessionCardsStudied.textContent = this.currentSession.studied;
+                this.elements.sessionCorrectAnswers.textContent = this.currentSession.correct;
+                this.elements.sessionAvgMastery.textContent = avgMastery.toFixed(1);
+                
+                // Show completion screen
+                this.elements.studyArea.classList.add('hidden');
+                this.elements.sessionComplete.classList.remove('hidden');
+                
+                // Update overall stats
+                this.updateStats();
+            }
+            
+            reviewMistakes() {
+                // Filter for cards that were rated "Again" or "Hard"
+                const mistakeCards = this.currentSession.cards.filter(card => 
+                    card.mastery_level < 2
+                );
+                
+                if (mistakeCards.length === 0) {
+                    alert('No mistakes to review!');
+                    return;
+                }
+                
+                // Start new session with mistakes
+                this.currentSession.cards = mistakeCards;
+                this.currentSession.currentIndex = 0;
+                this.currentSession.studied = 0;
+                this.currentSession.correct = 0;
+                this.currentSession.startTime = new Date();
+                
+                // Show study area
+                this.elements.sessionComplete.classList.add('hidden');
+                this.elements.studyArea.classList.remove('hidden');
+                
+                this.updateSessionProgress();
+                this.showCurrentCard();
+            }
+        }
+        
+        // Initialize study mode when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new StudyModeController();
+        });
+    </script>
+</body>
+</html>
