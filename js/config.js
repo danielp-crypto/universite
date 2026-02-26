@@ -5,12 +5,12 @@ const CONFIG = {
   // Supabase Configuration
   SUPABASE: {
     URL: 'https://hiruufvoyigrcdohqjkm.supabase.co',
-    ANON_KEY: 'YOUR_SUPABASE_ANON_KEY' // Replace with your actual key
+    ANON_KEY: 'sb_publishable_oAbDFVc8dPgLnNaJQ-QKhg_PUDOyjZp' // Replace with your actual key
   },
 
   // Gemini AI Configuration
   GEMINI: {
-    API_KEY: 'YOUR_GEMINI_API_KEY', // Replace with your actual key
+    API_KEY: 'AIzaSyAqpapZgs2z9oussNPp68ssXeVGIRf25qo', // Replace with your actual key
     MODEL: 'gemini-1.5-flash', // Use 'gemini-1.5-pro' for higher quality
     BASE_URL: 'https://generativelanguage.googleapis.com/v1beta',
     MAX_RETRIES: 3,
