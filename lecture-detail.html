@@ -131,6 +131,45 @@
           </button>
         </div>
 
+        <!-- Transcript Processing -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-slate-700">Transcript Processing</h3>
+            <button id="processTranscript" class="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-medium rounded-lg active:scale-95 transition-transform">
+              Process Transcript
+            </button>
+          </div>
+          
+          <div id="processingStatus" class="hidden p-3 bg-slate-50 rounded-lg border">
+            <div class="flex items-center space-x-2">
+              <div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
+              <span class="text-sm text-slate-600" id="processingMessage">Processing transcript...</span>
+            </div>
+          </div>
+          
+          <div id="processingResults" class="hidden space-y-3">
+            <div class="grid grid-cols-3 gap-2">
+              <div class="text-center p-2 bg-blue-50 rounded-lg">
+                <div class="text-lg font-semibold text-blue-600" id="segmentsCount">0</div>
+                <div class="text-xs text-blue-700">Segments</div>
+              </div>
+              <div class="text-center p-2 bg-green-50 rounded-lg">
+                <div class="text-lg font-semibold text-green-600" id="summaryAvailable">No</div>
+                <div class="text-xs text-green-700">Summary</div>
+              </div>
+              <div class="text-center p-2 bg-purple-50 rounded-lg">
+                <div class="text-lg font-semibold text-purple-600" id="suggestionsCount">0</div>
+                <div class="text-xs text-purple-700">Flashcards</div>
+              </div>
+            </div>
+            
+            <div id="summarySection" class="hidden p-3 bg-slate-50 rounded-lg">
+              <h4 class="text-sm font-medium text-slate-700 mb-2">Summary</h4>
+              <p class="text-sm text-slate-600" id="summaryText"></p>
+            </div>
+          </div>
+        </div>
+
         <!-- Key Concepts -->
         <div class="mb-4">
           <h3 class="text-sm font-semibold text-slate-700 mb-2">Key Concepts</h3>

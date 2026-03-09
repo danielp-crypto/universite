@@ -1,15 +1,18 @@
 class LocalLectureManager {
-  constructor(supabaseUrl, supabaseAnonKey, geminiApiKey = null) {
+  constructor(supabaseUrl, supabaseAnonKey, geminiApiKey) {
     this.supabaseUrl = supabaseUrl;
     this.supabaseAnonKey = supabaseAnonKey;
+    this.geminiApiKey = geminiApiKey;
+    
+    // Initialize services
+    this.transcriptionService = geminiApiKey ? 
+      new GeminiTranscriptionService(geminiApiKey) : null;
+    this.transcriptProcessor = geminiApiKey ? 
+      new TranscriptProcessor(geminiApiKey) : null;
     this.audioRecorder = new AudioRecorder();
     this.currentLecture = null;
     this.isProcessing = false;
     this.storageKey = 'universite_lectures';
-    
-    // Initialize Gemini transcription service
-    this.transcriptionService = geminiApiKey ? 
-      new GeminiTranscriptionService(geminiApiKey) : null;
     
     // Set up event listeners for transcription updates
     this.setupTranscriptionEventListeners();
