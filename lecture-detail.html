@@ -302,10 +302,16 @@
   </div>
 
   <script>
+    // Initialize configuration and services
+    const config = window.UniversiteConfig.getConfig();
+    const qaService = new QAService(config.GEMINI.API_KEY);
+    const flashcardService = new FlashcardService(config.GEMINI.API_KEY);
+
     // Initialize LocalLectureManager
     window.localLectureManager = new LocalLectureManager(
-      'https://hiruufvoyigrcdohqjkm.supabase.co',
-      'sb_publishable_oAbDFVc8dPgLnNaJQ-QKhg_PUDOyjZp'
+      config.SUPABASE.URL,
+      config.SUPABASE.ANON_KEY,
+      config.GEMINI.API_KEY
     );
 
     // Audio player functionality
@@ -342,7 +348,130 @@
 
       // Setup audio player event listeners
       setupAudioPlayer();
+
+      // Setup study tools event listeners
+      setupStudyTools();
     });
+
+    function setupStudyTools() {
+      // Generate Q&A button
+      const generateQA = document.getElementById('generateQA');
+      if (generateQA) {
+        generateQA.addEventListener('click', async () => {
+          if (!currentLecture) {
+            alert('Please load a lecture first');
+            return;
+          }
+
+          if (!currentLecture.transcription) {
+            alert('This lecture has no transcription to generate Q&A from');
+            return;
+          }
+
+          generateQA.disabled = true;
+          generateQA.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Generating...';
+
+          try {
+            // Create segments from transcription
+            const segments = createSegmentsFromTranscription(currentLecture);
+            
+            // Generate Q&A for the lecture
+            const result = await qaService.generateLectureQA(currentLecture, segments);
+            
+            if (result.success) {
+              // Store Q&A in localStorage
+              localStorage.setItem(`qa_${currentLecture.id}`, JSON.stringify(result.qaPairs));
+              
+              // Redirect to Q&A interface
+              window.location.href = `qa-interface.html?lecture=${currentLecture.id}`;
+            } else {
+              alert('Error generating Q&A: ' + result.error);
+            }
+          } catch (error) {
+            console.error('Error generating Q&A:', error);
+            alert('Error generating Q&A. Please try again.');
+          } finally {
+            generateQA.disabled = false;
+            generateQA.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Generate Q&A';
+          }
+        });
+      }
+
+      // Generate Flashcards button
+      const generateFlashcards = document.getElementById('generateFlashcards');
+      if (generateFlashcards) {
+        generateFlashcards.addEventListener('click', async () => {
+          if (!currentLecture) {
+            alert('Please load a lecture first');
+            return;
+          }
+
+          if (!currentLecture.transcription) {
+            alert('This lecture has no transcription to generate flashcards from');
+            return;
+          }
+
+          generateFlashcards.disabled = true;
+          generateFlashcards.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Creating...';
+
+          try {
+            // Create segments from transcription
+            const segments = createSegmentsFromTranscription(currentLecture);
+            
+            // Generate flashcards for the lecture
+            const result = await flashcardService.generateLectureFlashcards(currentLecture, segments);
+            
+            if (result.success) {
+              // Store flashcards in localStorage
+              const existingFlashcards = flashcardService.getStoredFlashcards();
+              const newFlashcards = result.flashcards.map(card => ({
+                ...card,
+                lecture_id: currentLecture.id,
+                lecture_title: currentLecture.title
+              }));
+              flashcardService.saveFlashcards([...existingFlashcards, ...newFlashcards]);
+              
+              // Redirect to study mode
+              window.location.href = `study-mode.html?lecture=${currentLecture.id}`;
+            } else {
+              alert('Error generating flashcards: ' + result.error);
+            }
+          } catch (error) {
+            console.error('Error generating flashcards:', error);
+            alert('Error generating flashcards. Please try again.');
+          } finally {
+            generateFlashcards.disabled = false;
+            generateFlashcards.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> Create Flashcards';
+          }
+        });
+      }
+    }
+
+    function createSegmentsFromTranscription(lecture) {
+      // Create segments from transcription (simple approach)
+      if (!lecture.transcription) {
+        return [];
+      }
+      
+      const sentences = lecture.transcription.split('. ').filter(s => s.trim().length > 0);
+      const segments = [];
+      const segmentLength = 3; // 3 sentences per segment
+      
+      for (let i = 0; i < sentences.length; i += segmentLength) {
+        const segmentSentences = sentences.slice(i, i + segmentLength);
+        const content = segmentSentences.join('. ');
+        
+        segments.push({
+          id: `segment_${i}`,
+          content: content,
+          start_time_seconds: i * 30, // Estimate 30 seconds per segment
+          end_time_seconds: (i + segmentLength) * 30,
+          title: `Segment ${Math.floor(i / segmentLength) + 1}`
+        });
+      }
+      
+      return segments;
+    }
 
     async function loadLecture(lectureId) {
       try {
