@@ -11,7 +11,16 @@ ADD COLUMN IF NOT EXISTS transcription_completed_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS transcription_failed_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS stored_locally BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS local_audio_size BIGINT DEFAULT 0,
-ADD COLUMN IF NOT EXISTS has_transcription BOOLEAN DEFAULT FALSE;
+ADD COLUMN IF NOT EXISTS has_transcription BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS processing_status TEXT DEFAULT 'pending' 
+CHECK (processing_status IN ('pending', 'processing', 'completed', 'failed')),
+ADD COLUMN IF NOT EXISTS processing_error TEXT,
+ADD COLUMN IF NOT EXISTS processed_segments JSONB,
+ADD COLUMN IF NOT EXISTS summary JSONB,
+ADD COLUMN IF NOT EXISTS flashcard_suggestions JSONB,
+ADD COLUMN IF NOT EXISTS processed_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS summary_generated_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS suggestions_generated_at TIMESTAMPTZ;
 
 -- 2. Create trigger for lectures updated_at (if not exists)
 CREATE OR REPLACE FUNCTION public.set_updated_at()
