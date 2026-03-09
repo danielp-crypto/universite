@@ -213,6 +213,45 @@ Provide a clear, accurate answer based on the transcript content. If the transcr
   }
 
   /**
+   * Check if user has quota for Q&A generation
+   */
+  async checkQAQuota() {
+    try {
+      const { data, error } = await supabase.rpc('get_quota_status');
+      if (error) throw error;
+
+      const qaQuota = data.qa_generations;
+      return {
+        hasQuota: qaQuota.unlimited || (qaQuota.used < qaQuota.limit),
+        used: qaQuota.used,
+        limit: qaQuota.limit,
+        remaining: qaQuota.unlimited ? -1 : qaQuota.limit - qaQuota.used
+      };
+    } catch (error) {
+      console.error('Error checking Q&A quota:', error);
+      // Default to allowing if quota check fails
+      return { hasQuota: true, used: 0, limit: -1, remaining: -1 };
+    }
+  }
+
+  /**
+   * Consume Q&A quota
+   */
+  async consumeQAQuota(amount = 1) {
+    try {
+      const { data, error } = await supabase.rpc('consume_quota', {
+        p_action: 'qa_generations',
+        p_amount: amount
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error consuming Q&A quota:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Call Gemini API
    */
   async callGeminiAPI(requestData) {

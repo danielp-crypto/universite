@@ -411,6 +411,13 @@
           generateQA.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Generating...';
 
           try {
+            // Check quota before generating Q&A
+            const quotaCheck = await qaService.checkQAQuota();
+            if (!quotaCheck.hasQuota) {
+              alert(`Q&A generation limit reached. You've used ${quotaCheck.used} of ${quotaCheck.limit} this month. Upgrade for unlimited contextual questions!`);
+              return;
+            }
+
             // Create segments from transcription
             const segments = createSegmentsFromTranscription(currentLecture);
             
@@ -418,6 +425,9 @@
             const result = await qaService.generateLectureQA(currentLecture, segments);
             
             if (result.success) {
+              // Consume quota
+              await qaService.consumeQAQuota();
+              
               // Store Q&A in localStorage
               localStorage.setItem(`qa_${currentLecture.id}`, JSON.stringify(result.qaPairs));
               
@@ -454,6 +464,13 @@
           generateFlashcards.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Creating...';
 
           try {
+            // Check quota before generating flashcards
+            const quotaCheck = await flashcardService.checkFlashcardQuota();
+            if (!quotaCheck.hasQuota) {
+              alert(`Flashcard generation limit reached. You've used ${quotaCheck.used} of ${quotaCheck.limit} this month. Upgrade for unlimited AI-powered study tools!`);
+              return;
+            }
+
             // Create segments from transcription
             const segments = createSegmentsFromTranscription(currentLecture);
             
@@ -461,6 +478,9 @@
             const result = await flashcardService.generateLectureFlashcards(currentLecture, segments);
             
             if (result.success) {
+              // Consume quota
+              await flashcardService.consumeFlashcardQuota(result.flashcards.length);
+              
               // Store flashcards in localStorage
               const existingFlashcards = flashcardService.getStoredFlashcards();
               const newFlashcards = result.flashcards.map(card => ({

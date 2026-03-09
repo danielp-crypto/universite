@@ -242,6 +242,45 @@ Only return the JSON, no additional text.`;
   }
 
   /**
+   * Check if user has quota for flashcard generation
+   */
+  async checkFlashcardQuota() {
+    try {
+      const { data, error } = await supabase.rpc('get_quota_status');
+      if (error) throw error;
+
+      const flashcardQuota = data.flashcard_generations;
+      return {
+        hasQuota: flashcardQuota.unlimited || (flashcardQuota.used < flashcardQuota.limit),
+        used: flashcardQuota.used,
+        limit: flashcardQuota.limit,
+        remaining: flashcardQuota.unlimited ? -1 : flashcardQuota.limit - flashcardQuota.used
+      };
+    } catch (error) {
+      console.error('Error checking flashcard quota:', error);
+      // Default to allowing if quota check fails
+      return { hasQuota: true, used: 0, limit: -1, remaining: -1 };
+    }
+  }
+
+  /**
+   * Consume flashcard quota
+   */
+  async consumeFlashcardQuota(amount = 1) {
+    try {
+      const { data, error } = await supabase.rpc('consume_quota', {
+        p_action: 'flashcard_generations',
+        p_amount: amount
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error consuming flashcard quota:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get flashcards by type
    */
   getFlashcardsByType(flashcards, type) {
