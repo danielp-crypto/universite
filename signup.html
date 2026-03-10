@@ -238,7 +238,7 @@
       text.classList.add('hidden');
       loading.classList.remove('hidden');
       try {
-        const redirectTo = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, '')}home.html`;
+        const redirectTo = `http://localhost:8000/home.html`;
         const { error } = await window.UniSupabase.signInWithOAuth('google', { redirectTo });
         if (error) {
           alert(error.message);
@@ -263,7 +263,7 @@
       text.classList.add('hidden');
       loading.classList.remove('hidden');
       try {
-        const redirectTo = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, '')}home.html`;
+        const redirectTo = `http://localhost:8000/home.html`;
         const { error } = await window.UniSupabase.signInWithOAuth('apple', { redirectTo });
         if (error) {
           alert(error.message);
