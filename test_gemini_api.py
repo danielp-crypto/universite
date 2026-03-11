@@ -13,7 +13,7 @@ def test_gemini_api():
     """Test Gemini API directly"""
     
     # Get API key from environment or use the one from config
-    api_key = os.environ.get('GEMINI_API_KEY', 'AIzaSyAqpapZgs2z9oussNPp68ssXeVGIRf25qo')
+    api_key = os.environ.get('GEMINI_API_KEY', 'AIzaSyBP_X2pw5Sz4zFiaIFVBD-00opo4wksGj8')
     
     if not api_key or api_key == 'YOUR_GEMINI_API_KEY':
         print("ERROR: Gemini API key not configured")

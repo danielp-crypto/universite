@@ -24,8 +24,8 @@ const CONFIG = {
 
   // Gemini AI Configuration
   GEMINI: {
-    API_KEY: 'AIzaSyAqpapZgs2z9oussNPp68ssXeVGIRf25qo', // Replace with your actual key
-    MODEL: 'gemini-1.5-flash', // Use 'gemini-1.5-pro' for higher quality
+    API_KEY: 'AIzaSyBP_X2pw5Sz4zFiaIFVBD-00opo4wksGj8', // Replace with your actual key
+    MODEL: 'gemini-pro', // Use 'gemini-1.5-flash' for newer model
     BASE_URL: 'https://generativelanguage.googleapis.com/v1beta',
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000,
