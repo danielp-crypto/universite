@@ -16,7 +16,7 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 # Google Gemini API Configuration
 # Use environment variable for API key in production, fallback to default for development
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyAqpapZgs2z9oussNPp68ssXeVGIRf25qo')
-GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}'
+GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}'
 
 # Google Cloud Speech-to-Text: use service account from env (path to JSON key file)
 GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', '')
@@ -847,6 +847,55 @@ def create_lecture_segment(lecture_id):
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({'status': 'ok'}), 200
+
+@app.route('/test-gemini', methods=['POST'])
+def test_gemini():
+    """
+    Test endpoint for Gemini API - no authentication required
+    """
+    try:
+        data = request.get_json()
+        message = data.get('message', 'Hello! Please respond with "API working" to confirm.')
+        
+        # Call Gemini API directly
+        gemini_request = {
+            "contents": [{
+                "parts": [{
+                    "text": message
+                }]
+            }],
+            "generationConfig": {
+                "temperature": 0.7,
+                "topK": 32,
+                "topP": 0.95,
+                "maxOutputTokens": 100
+            }
+        }
+        
+        response = requests.post(GEMINI_API_URL, json=gemini_request, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            if 'candidates' in result and len(result['candidates']) > 0:
+                candidate = result['candidates'][0]
+                if 'content' in candidate and 'parts' in candidate['content']:
+                    text = candidate['content']['parts'][0]['text']
+                    return jsonify({
+                        'success': True,
+                        'response': text.strip(),
+                        'model': 'gemini-1.5-flash'
+                    }), 200
+        
+        return jsonify({
+            'success': False,
+            'error': f'Gemini API error: {response.status_code} - {response.text}'
+        }), 400
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
