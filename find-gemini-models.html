@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Working Gemini Models</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Find Working Gemini Models</h1>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                <input type="text" id="apiKey" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                       value="AIzaSyBP_X2pw5Sz4zFiaIFVBD-00opo4wksGj8" placeholder="Enter your Gemini API key">
+            </div>
+
+            <button id="findModels" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition mb-4">
+                Find Available Models
+            </button>
+
+            <button id="testModels" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition mb-4 ml-2">
+                Test Common Models
+            </button>
+
+            <div id="loading" class="hidden mt-4">
+                <div class="text-blue-600">Testing...</div>
+            </div>
+
+            <div id="results" class="hidden mt-4">
+                <h3 class="font-semibold mb-2">Results:</h3>
+                <div id="resultContent" class="space-y-3"></div>
+            </div>
+
+            <div id="error" class="hidden mt-4">
+                <h3 class="font-semibold mb-2 text-red-600">Error:</h3>
+                <div id="errorContent" class="p-4 bg-red-50 rounded text-red-700"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function findAvailableModels() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                showError('Please enter an API key');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                // Try to list models from both API versions
+                const urls = [
+                    `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+                    `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`
+                ];
+                
+                const results = [];
+                
+                for (const url of urls) {
+                    try {
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.models) {
+                                results.push({
+                                    apiVersion: url.includes('v1beta') ? 'v1beta' : 'v1',
+                                    models: data.models.map(m => ({
+                                        name: m.name,
+                                        methods: m.supportedGenerationMethods || []
+                                    }))
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.log(`Failed to fetch ${url}:`, e);
+                    }
+                }
+                
+                if (results.length > 0) {
+                    displayModelResults(results);
+                } else {
+                    showError('Could not fetch models. Testing common models instead...');
+                    testCommonModels();
+                }
+                
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function testCommonModels() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            const testModels = [
+                // v1beta models
+                { version: 'v1beta', model: 'gemini-1.5-pro' },
+                { version: 'v1beta', model: 'gemini-1.5-flash' },
+                { version: 'v1beta', model: 'gemini-1.0-pro' },
+                { version: 'v1beta', model: 'gemini-pro' },
+                { version: 'v1beta', model: 'gemini-pro-vision' },
+                // v1 models
+                { version: 'v1', model: 'gemini-1.5-pro' },
+                { version: 'v1', model: 'gemini-1.5-flash' },
+                { version: 'v1', model: 'gemini-pro' },
+                { version: 'v1', model: 'gemini-pro-vision' }
+            ];
+            
+            const results = [];
+            
+            for (const config of testModels) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/${config.version}/models/${config.model}:generateContent?key=${apiKey}`;
+                    
+                    const testRequest = {
+                        contents: [{
+                            parts: [{
+                                text: "Hello! Please respond with 'working' to confirm."
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 32,
+                            topP: 0.95,
+                            maxOutputTokens: 100
+                        }
+                    };
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(testRequest)
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.candidates && data.candidates.length > 0) {
+                            const text = data.candidates[0].content?.parts?.[0]?.text || '';
+                            results.push({
+                                version: config.version,
+                                model: config.model,
+                                status: 'SUCCESS',
+                                response: text.trim()
+                            });
+                        } else {
+                            results.push({
+                                version: config.version,
+                                model: config.model,
+                                status: 'NO_RESPONSE',
+                                error: 'No candidates returned'
+                            });
+                        }
+                    } else {
+                        const errorText = await response.text();
+                        results.push({
+                            version: config.version,
+                            model: config.model,
+                            status: 'ERROR',
+                            error: `${response.status}: ${errorText.substring(0, 100)}`
+                        });
+                    }
+                } catch (error) {
+                    results.push({
+                        version: config.version,
+                        model: config.model,
+                        status: 'NETWORK_ERROR',
+                        error: error.message
+                    });
+                }
+                
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            displayTestResults(results);
+        }
+
+        function displayModelResults(results) {
+            const resultContent = document.getElementById('resultContent');
+            let html = '';
+            
+            results.forEach(result => {
+                html += `<div class="border rounded-lg p-4 bg-green-50 border-green-200">`;
+                html += `<h4 class="font-semibold text-green-800">API Version: ${result.apiVersion}</h4>`;
+                html += `<div class="mt-2">`;
+                result.models.forEach(model => {
+                    const modelName = model.name.split('/').pop();
+                    const supportsGenerate = model.methods.includes('generateContent');
+                    html += `<div class="text-sm ${supportsGenerate ? 'text-green-600' : 'text-gray-500'}">`;
+                    html += `• ${modelName} - ${supportsGenerate ? '✓ Supports generateContent' : '✗ Does not support generateContent'}`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            });
+            
+            resultContent.innerHTML = html;
+            showResults();
+        }
+
+        function displayTestResults(results) {
+            const resultContent = document.getElementById('resultContent');
+            let html = '';
+            
+            const successful = results.filter(r => r.status === 'SUCCESS');
+            const failed = results.filter(r => r.status !== 'SUCCESS');
+            
+            if (successful.length > 0) {
+                html += `<div class="border rounded-lg p-4 bg-green-50 border-green-200 mb-4">`;
+                html += `<h4 class="font-semibold text-green-800">✓ Working Models (${successful.length})</h4>`;
+                html += `<div class="mt-2">`;
+                successful.forEach(result => {
+                    html += `<div class="text-sm text-green-600 mb-1">`;
+                    html += `• ${result.version}/${result.model} - ${result.response}`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            if (failed.length > 0) {
+                html += `<div class="border rounded-lg p-4 bg-red-50 border-red-200">`;
+                html += `<h4 class="font-semibold text-red-800">✗ Failed Models (${failed.length})</h4>`;
+                html += `<div class="mt-2">`;
+                failed.forEach(result => {
+                    html += `<div class="text-sm text-red-600 mb-1">`;
+                    html += `• ${result.version}/${result.model} - ${result.error}`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            resultContent.innerHTML = html;
+            showResults();
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function showResults() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function showError(message) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
+            document.getElementById('errorContent').textContent = message;
+        }
+
+        // Setup event listeners
+        document.getElementById('findModels').addEventListener('click', findAvailableModels);
+        document.getElementById('testModels').addEventListener('click', testCommonModels);
+    </script>
+</body>
+</html>

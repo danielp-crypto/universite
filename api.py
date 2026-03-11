@@ -16,7 +16,7 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 # Google Gemini API Configuration
 # Use environment variable for API key in production, fallback to default for development
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyBP_X2pw5Sz4zFiaIFVBD-00opo4wksGj8')
-GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}'
+GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key={GEMINI_API_KEY}'
 
 # Google Cloud Speech-to-Text: use service account from env (path to JSON key file)
 GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', '')
