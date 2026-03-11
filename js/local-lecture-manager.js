@@ -1,8 +1,9 @@
 class LocalLectureManager {
-  constructor(supabaseUrl, supabaseAnonKey, geminiApiKey) {
+  constructor(supabaseUrl, supabaseAnonKey, geminiApiKey, backendUrl) {
     this.supabaseUrl = supabaseUrl;
     this.supabaseAnonKey = supabaseAnonKey;
     this.geminiApiKey = geminiApiKey;
+    this.backendUrl = backendUrl || 'http://localhost:5000';
     
     // Initialize services
     this.transcriptionService = geminiApiKey ? 
@@ -223,23 +224,24 @@ class LocalLectureManager {
     }));
   }
 
-  // Supabase operations for metadata only
+  // Supabase operations for metadata only - now using local backend
   async createLecture(lectureData) {
     try {
       const headers = this.getAuthHeaders();
       
-      const response = await fetch(`${this.supabaseUrl}/rest/v1/lectures`, {
+      const response = await fetch(`${this.backendUrl}/api/lectures`, {
         method: 'POST',
         headers,
         body: JSON.stringify(lectureData)
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const lecture = await response.json();
-      return { success: true, lecture };
+      const result = await response.json();
+      return { success: true, lecture: result.lecture };
     } catch (error) {
       console.error('Error creating lecture:', error);
       return { success: false, error: error.message };
@@ -249,33 +251,27 @@ class LocalLectureManager {
   async getLectures(limit = 50, offset = 0) {
     try {
       const headers = this.getAuthHeaders();
-      const user = await this.getCurrentUser();
       
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
       const params = new URLSearchParams({
-        user_id: `eq.${user.id}`,
-        order: 'created_at.desc',
         limit: limit.toString(),
         offset: offset.toString()
       });
 
-      const response = await fetch(`${this.supabaseUrl}/rest/v1/lectures?${params}`, {
+      const response = await fetch(`${this.backendUrl}/api/lectures?${params}`, {
         method: 'GET',
         headers
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const lectures = await response.json();
+      const result = await response.json();
       
       // Merge with local audio data
       const localLectures = this.getLocalLectures();
-      const mergedLectures = lectures.map(lecture => {
+      const mergedLectures = result.lectures.map(lecture => {
         const localLecture = localLectures.find(l => l.id === lecture.id);
         return localLecture || lecture;
       });
@@ -291,16 +287,17 @@ class LocalLectureManager {
     try {
       const headers = this.getAuthHeaders();
       
-      const response = await fetch(`${this.supabaseUrl}/rest/v1/lectures/${lectureId}`, {
+      const response = await fetch(`${this.backendUrl}/api/lectures/${lectureId}`, {
         method: 'GET',
         headers
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const lecture = await response.json();
+      const result = await response.json();
       
       // Check for local audio
       const localLectures = this.getLocalLectures();
@@ -308,7 +305,8 @@ class LocalLectureManager {
       
       return { 
         success: true, 
-        lecture: localLecture || lecture 
+        lecture: localLecture || result.lecture,
+        segments: result.segments || []
       };
     } catch (error) {
       console.error('Error getting lecture:', error);
@@ -320,17 +318,18 @@ class LocalLectureManager {
     try {
       const headers = this.getAuthHeaders();
       
-      const response = await fetch(`${this.supabaseUrl}/rest/v1/lectures/${lectureId}`, {
+      const response = await fetch(`${this.backendUrl}/api/lectures/${lectureId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(updateData)
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const lecture = await response.json();
+      const result = await response.json();
       
       // Update local storage if needed
       const localLectures = this.getLocalLectures();
@@ -340,7 +339,7 @@ class LocalLectureManager {
         this.saveLocalLectures(localLectures);
       }
       
-      return { success: true, lecture };
+      return { success: true, lecture: result.lecture };
     } catch (error) {
       console.error('Error updating lecture:', error);
       return { success: false, error: error.message };
@@ -351,14 +350,15 @@ class LocalLectureManager {
     try {
       const headers = this.getAuthHeaders();
       
-      // Delete from Supabase
-      const response = await fetch(`${this.supabaseUrl}/rest/v1/lectures/${lectureId}`, {
+      // Delete from backend
+      const response = await fetch(`${this.backendUrl}/api/lectures/${lectureId}`, {
         method: 'DELETE',
         headers
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       // Delete from local storage
@@ -385,43 +385,37 @@ class LocalLectureManager {
     return null;
   }
 
-  // Save transcription to Supabase only (updated for new schema)
+  // Save transcription using local backend API
   async saveTranscription(lectureId, transcription, metadata = {}) {
     try {
       const headers = this.getAuthHeaders();
       
-      // Use the new function that saves transcription with metadata
-      const requestData = {
-        lecture_id: lectureId,
-        content: transcription,
-        processing_time_ms: metadata.processingTimeMs || null,
-        model_used: metadata.modelUsed || 'gemini-1.5-flash',
-        language: metadata.language || 'en',
-        confidence_score: metadata.confidenceScore || null
+      // Update lecture with transcription
+      const updateData = {
+        transcription: transcription,
+        transcription_status: 'completed',
+        transcription_completed_at: new Date().toISOString(),
+        ...metadata
       };
 
-      const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/save_transcription_with_metadata`, {
-        method: 'POST',
+      const response = await fetch(`${this.backendUrl}/api/lectures/${lectureId}`, {
+        method: 'PUT',
         headers,
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(updateData)
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save transcription');
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
       
-      if (result.success) {
-        return { 
-          success: true, 
-          transcriptionId: result.transcription_id,
-          transcription: transcription
-        };
-      } else {
-        throw new Error(result.error_message || 'Failed to save transcription');
-      }
+      return { 
+        success: true, 
+        transcriptionId: lectureId, // Using lectureId as transcription ID for now
+        transcription: transcription
+      };
     } catch (error) {
       console.error('Error saving transcription:', error);
       return { success: false, error: error.message };

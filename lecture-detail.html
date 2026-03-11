@@ -343,14 +343,15 @@
   <script>
     // Initialize configuration and services
     const config = window.UniversiteConfig.getConfig();
-    const qaService = new QAService(config.GEMINI.API_KEY);
-    const flashcardService = new FlashcardService(config.GEMINI.API_KEY);
+    const qaService = new QAService(config.GEMINI.API_KEY, config.BACKEND.URL);
+    const flashcardService = new FlashcardService(config.GEMINI.API_KEY, config.BACKEND.URL);
 
     // Initialize LocalLectureManager
     window.localLectureManager = new LocalLectureManager(
       config.SUPABASE.URL,
       config.SUPABASE.ANON_KEY,
-      config.GEMINI.API_KEY
+      config.GEMINI.API_KEY,
+      config.BACKEND.URL
     );
 
     // Audio player functionality

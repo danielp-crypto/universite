@@ -1,7 +1,21 @@
 // Configuration file for Universite application
 // Update these values with your actual API keys
 
+// Environment detection
+const ENVIRONMENT = {
+  isDevelopment: () => window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+  isProduction: () => !window.location.hostname === 'localhost' && !window.location.hostname === '127.0.0.1',
+  isMobile: () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+};
+
 const CONFIG = {
+  // Local Backend Configuration
+  BACKEND: {
+    URL: ENVIRONMENT.isDevelopment() ? 'http://localhost:5000' : 'https://your-production-api.com',
+    API_VERSION: 'v1',
+    TIMEOUT: 30000 // 30 seconds
+  },
+
   // Supabase Configuration
   SUPABASE: {
     URL: 'https://hiruufvoyigrcdohqjkm.supabase.co',
@@ -59,13 +73,6 @@ const CONFIG = {
     PROGRESS_UPDATE_INTERVAL: 100,
     AUTO_REDIRECT_DELAY: 2000
   }
-};
-
-// Environment detection
-const ENVIRONMENT = {
-  isDevelopment: () => window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
-  isProduction: () => !window.location.hostname === 'localhost' && !window.location.hostname === '127.0.0.1',
-  isMobile: () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 };
 
 // Feature flags

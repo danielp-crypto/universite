@@ -73,6 +73,7 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/auth-guard.js"></script>
   <script src="js/app-state.js"></script>
@@ -382,10 +383,13 @@
   </div>
 
   <script>
-    // Initialize LocalLectureManager globally
+    // Initialize LocalLectureManager globally with config
+    const config = window.UniversiteConfig.getConfig();
     window.localLectureManager = new LocalLectureManager(
-      'https://hiruufvoyigrcdohqjkm.supabase.co',
-      'sb_publishable_oAbDFVc8dPgLnNaJQ-QKhg_PUDOyjZp'
+      config.SUPABASE.URL,
+      config.SUPABASE.ANON_KEY,
+      config.GEMINI.API_KEY,
+      config.BACKEND.URL
     );
 
     // Profile completion functions

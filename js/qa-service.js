@@ -1,6 +1,7 @@
 class QAService {
-  constructor(geminiApiKey) {
+  constructor(geminiApiKey, backendUrl) {
     this.apiKey = geminiApiKey;
+    this.backendUrl = backendUrl || 'http://localhost:5000';
     this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
     this.model = 'gemini-1.5-flash';
     this.maxRetries = 3;
@@ -146,9 +147,90 @@ Only return the JSON, no additional text.`;
   }
 
   /**
+   * Answer question using local backend chat API
+   */
+  async answerQuestionWithBackend(question, transcript, context = {}) {
+    try {
+      const { lectureTitle, relevantSegments } = context;
+      
+      const requestData = {
+        message: question,
+        currentLecture: {
+          title: lectureTitle || 'Unknown Lecture',
+          transcript: transcript,
+          segments: relevantSegments || []
+        },
+        messages: [] // Could be extended for conversation history
+      };
+
+      const response = await fetch(`${this.backendUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        return {
+          success: true,
+          answer: result.response.trim(),
+          question: question,
+          timestamp: new Date().toISOString()
+        };
+      } else {
+        throw new Error(result.error || 'Backend API error');
+      }
+
+    } catch (error) {
+      console.error('Error answering question with backend:', error);
+      return {
+        success: false,
+        error: error.message,
+        question: question
+      };
+    }
+  }
+
+  /**
+   * Get auth token for backend requests
+   */
+  getAuthToken() {
+    const token = localStorage.getItem('supabase.auth.token');
+    if (token) {
+      try {
+        const authData = JSON.parse(token);
+        return authData.access_token;
+      } catch (e) {
+        console.warn('Error parsing auth token:', e);
+      }
+    }
+    return null;
+  }
+
+  /**
    * Answer user question with context
    */
   async answerQuestion(question, transcript, context = {}) {
+    // Try backend first, fallback to Gemini if backend fails
+    try {
+      const backendResult = await this.answerQuestionWithBackend(question, transcript, context);
+      if (backendResult.success) {
+        return backendResult;
+      }
+    } catch (error) {
+      console.warn('Backend chat failed, falling back to Gemini:', error);
+    }
+
+    // Fallback to direct Gemini API
     try {
       const prompt = this.buildAnswerPrompt(question, transcript, context);
       

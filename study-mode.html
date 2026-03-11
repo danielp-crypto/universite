@@ -333,11 +333,12 @@
         class StudyModeController {
             constructor() {
                 this.config = window.UniversiteConfig.getConfig();
-                this.flashcardService = new FlashcardService(this.config.GEMINI.API_KEY);
+                this.flashcardService = new FlashcardService(this.config.GEMINI.API_KEY, this.config.BACKEND.URL);
                 this.lectureManager = new LocalLectureManager(
                     this.config.SUPABASE.URL,
                     this.config.SUPABASE.ANON_KEY,
-                    this.config.GEMINI.API_KEY
+                    this.config.GEMINI.API_KEY,
+                    this.config.BACKEND.URL
                 );
                 
                 this.currentSession = {

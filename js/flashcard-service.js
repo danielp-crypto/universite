@@ -1,10 +1,75 @@
 class FlashcardService {
-  constructor(geminiApiKey) {
+  constructor(geminiApiKey, backendUrl) {
     this.apiKey = geminiApiKey;
+    this.backendUrl = backendUrl || 'http://localhost:5000';
     this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
     this.model = 'gemini-1.5-flash';
     this.maxRetries = 3;
     this.retryDelay = 1000;
+  }
+
+  /**
+   * Generate flashcards using local backend API
+   */
+  async generateFlashcardsWithBackend(lecture, segments = []) {
+    try {
+      const requestData = {
+        lecture: {
+          title: lecture.title,
+          description: lecture.description,
+          keyConcepts: lecture.keyConcepts || [],
+          segments: segments || []
+        }
+      };
+
+      const response = await fetch(`${this.backendUrl}/api/generate-flashcards`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        return {
+          success: true,
+          flashcards: result.flashcards || []
+        };
+      } else {
+        throw new Error(result.error || 'Backend API error');
+      }
+
+    } catch (error) {
+      console.error('Error generating flashcards with backend:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Get auth token for backend requests
+   */
+  getAuthToken() {
+    const token = localStorage.getItem('supabase.auth.token');
+    if (token) {
+      try {
+        const authData = JSON.parse(token);
+        return authData.access_token;
+      } catch (e) {
+        console.warn('Error parsing auth token:', e);
+      }
+    }
+    return null;
   }
 
   /**
@@ -158,6 +223,21 @@ Only return the JSON, no additional text.`;
    * Generate flashcards for entire lecture
    */
   async generateLectureFlashcards(lecture, segments) {
+    // Try backend first for more efficient generation
+    try {
+      const backendResult = await this.generateFlashcardsWithBackend(lecture, segments);
+      if (backendResult.success && backendResult.flashcards.length > 0) {
+        return {
+          success: true,
+          flashcards: backendResult.flashcards,
+          totalCards: backendResult.flashcards.length
+        };
+      }
+    } catch (error) {
+      console.warn('Backend flashcard generation failed, falling back to segment-based generation:', error);
+    }
+
+    // Fallback to segment-based generation
     try {
       const allFlashcards = [];
       

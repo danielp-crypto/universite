@@ -212,7 +212,8 @@
         const lectureManager = new LocalLectureManager(
             config.SUPABASE.URL, 
             config.SUPABASE.ANON_KEY, 
-            config.GEMINI.API_KEY
+            config.GEMINI.API_KEY,
+            config.BACKEND.URL
         );
 
         // UI Elements
