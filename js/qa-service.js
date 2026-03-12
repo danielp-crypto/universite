@@ -1,9 +1,11 @@
+/**
+ * Q&A Service using Hugging Face AI
+ * Generates contextual Q&A from transcript segments using free Hugging Face models
+ */
+
 class QAService {
-  constructor(geminiApiKey, backendUrl) {
-    this.apiKey = geminiApiKey;
-    this.backendUrl = backendUrl || 'http://localhost:5000';
-    this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    this.model = 'gemini-1.5-flash';
+  constructor(huggingfaceApiKey, model = 'microsoft/DialoGPT-medium') {
+    this.huggingfaceService = new HuggingFaceService(huggingfaceApiKey, model);
     this.maxRetries = 3;
     this.retryDelay = 1000;
   }
@@ -15,24 +17,13 @@ class QAService {
     try {
       const prompt = this.buildQAPrompt(segment, context);
       
-      const requestData = {
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          topK: 32,
-          topP: 0.95,
-          maxOutputTokens: 2048
-        }
-      };
-
-      const response = await this.callGeminiAPI(requestData);
+      const response = await this.huggingfaceService.generateResponse(prompt, {
+        temperature: 0.3,
+        maxTokens: 2048
+      });
       
       if (response.success) {
-        const qaPairs = this.parseQAResponse(response.text);
+        const qaPairs = this.parseQAResponse(response.response);
         return {
           success: true,
           qaPairs: qaPairs,
@@ -52,398 +43,161 @@ class QAService {
   }
 
   /**
+   * Generate Q&A from multiple transcript segments
+   */
+  async generateQAFromSegments(segments, context = {}) {
+    const allQAPairs = [];
+    const errors = [];
+
+    for (const segment of segments) {
+      try {
+        const result = await this.generateQAFromSegment(segment, context);
+        if (result.success) {
+          allQAPairs.push(...result.qaPairs);
+        } else {
+          errors.push({
+            segmentId: segment.id,
+            error: result.error
+          });
+        }
+      } catch (error) {
+        errors.push({
+          segmentId: segment.id,
+          error: error.message
+        });
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      qaPairs: allQAPairs,
+      errors: errors,
+      totalSegments: segments.length,
+      processedSegments: segments.length - errors.length
+    };
+  }
+
+  /**
    * Build prompt for Q&A generation
    */
-  buildQAPrompt(segment, context) {
-    const { lectureTitle, lectureDescription, previousSegments } = context;
+  buildQAPrompt(segment, context = {}) {
+    let prompt = `You are an educational content creator specializing in creating Q&A pairs for study materials.\n\n`;
     
-    let prompt = `Based on the following transcript segment from a lecture, generate 5-8 relevant questions and answers that test understanding of the content.
-
-LECTURE: ${lectureTitle || 'Unknown Lecture'}
-${lectureDescription ? `DESCRIPTION: ${lectureDescription}` : ''}
-
-TRANSCRIPT SEGMENT:
-Time: ${segment.start_time_seconds}s - ${segment.end_time_seconds}s
-Content: "${segment.content}"
-${segment.title ? `Topic: ${segment.title}` : ''}
-
-${previousSegments && previousSegments.length > 0 ? 
-`PREVIOUS CONTEXT: ${previousSegments.slice(-2).map(s => s.content).join(' ')}` : ''}
-
-Generate questions that:
-1. Test key concepts from this segment
-2. Connect to broader lecture themes when relevant
-3. Vary in difficulty (basic recall to application)
-4. Are clear and specific
-5. Have accurate, concise answers
-
-Format your response as JSON:
-{
-  "questions": [
-    {
-      "question": "Clear question text",
-      "answer": "Accurate answer text",
-      "difficulty": "basic|intermediate|advanced",
-      "type": "recall|application|analysis",
-      "time_reference": "${segment.start_time_seconds}s"
+    prompt += `Transcript Segment:\n`;
+    prompt += `Title: ${segment.title || 'Untitled Segment'}\n`;
+    prompt += `Content: ${segment.content || ''}\n`;
+    prompt += `Key Concepts: ${(segment.concepts || []).join(', ')}\n\n`;
+    
+    if (context.lectureTitle) {
+      prompt += `Lecture Context:\n`;
+      prompt += `Lecture Title: ${context.lectureTitle}\n`;
+      prompt += `Lecture Date: ${context.lectureDate || 'Unknown'}\n`;
+      if (context.keyConcepts && context.keyConcepts.length > 0) {
+        prompt += `Lecture Key Concepts: ${context.keyConcepts.join(', ')}\n`;
+      }
+      prompt += `\n`;
     }
-  ]
-}
-
-Only return the JSON, no additional text.`;
-
+    
+    prompt += `Instructions:\n`;
+    prompt += `Generate 5-8 high-quality question-answer pairs based on the transcript segment above.\n`;
+    prompt += `Each pair should:\n`;
+    prompt += `- Question: Clear, specific, and testable\n`;
+    prompt += `- Answer: Accurate, concise, and directly addresses the question\n`;
+    prompt += `- Cover the main concepts and important details\n`;
+    prompt += `- Questions should vary in difficulty (basic recall to application)\n`;
+    prompt += `- Include questions that require critical thinking\n\n`;
+    
+    prompt += `Format your response as a JSON array of objects with "question" and "answer" fields.\n`;
+    prompt += `Example format: [{"question": "What is X?", "answer": "X is..."}, {"question": "How does Y work?", "answer": "Y works by..."}]\n\n`;
+    prompt += `Transcript Segment:\n${segment.content || ''}`;
+    
     return prompt;
   }
 
   /**
-   * Parse Q&A response from Gemini
+   * Parse Q&A response from Hugging Face
    */
-  parseQAResponse(responseText) {
+  parseQAResponse(response) {
     try {
-      // Extract JSON from response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+      // Try to parse as JSON first
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
       }
       
-      const parsed = JSON.parse(jsonMatch[0]);
+      // If not JSON, try to extract Q&A pairs manually
+      const qaPairs = [];
+      const lines = response.split('\n').filter(line => line.trim());
       
-      // Validate and normalize structure
-      if (!parsed.questions || !Array.isArray(parsed.questions)) {
-        throw new Error('Invalid Q&A structure');
+      let currentQuestion = null;
+      
+      for (const line of lines) {
+        const questionMatch = line.match(/^(\d+[\.\)]?\s*(?:Q\.?|Question:?)\s*(.+)/i);
+        const answerMatch = line.match(/^(\d+[\.\)]?\s*(?:A\.?|Answer:?)\s*(.+)/i);
+        
+        if (questionMatch) {
+          currentQuestion = questionMatch[2].trim();
+        } else if (answerMatch && currentQuestion) {
+          qaPairs.push({
+            question: currentQuestion,
+            answer: answerMatch[2].trim()
+          });
+          currentQuestion = null;
+        }
       }
       
-      return parsed.questions.map((qa, index) => ({
-        id: `qa_${Date.now()}_${index}`,
-        question: qa.question || '',
-        answer: qa.answer || '',
-        difficulty: qa.difficulty || 'basic',
-        type: qa.type || 'recall',
-        time_reference: qa.time_reference || '',
-        created_at: new Date().toISOString()
-      }));
+      return qaPairs.length > 0 ? qaPairs : this.fallbackParse(response);
+      
     } catch (error) {
       console.error('Error parsing Q&A response:', error);
-      // Return fallback Q&A
-      return this.generateFallbackQA();
+      return this.fallbackParse(response);
     }
   }
 
   /**
-   * Generate fallback Q&A if parsing fails
+   * Fallback parsing method
    */
-  generateFallbackQA() {
-    return [
-      {
-        id: `qa_fallback_${Date.now()}`,
-        question: "What was the main topic discussed in this segment?",
-        answer: "The main topic was covered in the transcript content.",
-        difficulty: "basic",
-        type: "recall",
-        time_reference: "",
-        created_at: new Date().toISOString()
-      }
-    ];
-  }
-
-  /**
-   * Answer question using local backend chat API
-   */
-  async answerQuestionWithBackend(question, transcript, context = {}) {
-    try {
-      const { lectureTitle, relevantSegments } = context;
-      
-      const requestData = {
-        message: question,
-        currentLecture: {
-          title: lectureTitle || 'Unknown Lecture',
-          transcript: transcript,
-          segments: relevantSegments || []
-        },
-        messages: [] // Could be extended for conversation history
-      };
-
-      const response = await fetch(`${this.backendUrl}/api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
-        },
-        body: JSON.stringify(requestData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      
-      if (result.success) {
-        return {
-          success: true,
-          answer: result.response.trim(),
-          question: question,
-          timestamp: new Date().toISOString()
-        };
-      } else {
-        throw new Error(result.error || 'Backend API error');
-      }
-
-    } catch (error) {
-      console.error('Error answering question with backend:', error);
-      return {
-        success: false,
-        error: error.message,
-        question: question
-      };
-    }
-  }
-
-  /**
-   * Get auth token for backend requests
-   */
-  getAuthToken() {
-    const token = localStorage.getItem('supabase.auth.token');
-    if (token) {
-      try {
-        const authData = JSON.parse(token);
-        return authData.access_token;
-      } catch (e) {
-        console.warn('Error parsing auth token:', e);
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Answer user question with context
-   */
-  async answerQuestion(question, transcript, context = {}) {
-    // Try backend first, fallback to Gemini if backend fails
-    try {
-      const backendResult = await this.answerQuestionWithBackend(question, transcript, context);
-      if (backendResult.success) {
-        return backendResult;
-      }
-    } catch (error) {
-      console.warn('Backend chat failed, falling back to Gemini:', error);
-    }
-
-    // Fallback to direct Gemini API
-    try {
-      const prompt = this.buildAnswerPrompt(question, transcript, context);
-      
-      const requestData = {
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.2,
-          topK: 32,
-          topP: 0.95,
-          maxOutputTokens: 1024
+  fallbackParse(response) {
+    const qaPairs = [];
+    const lines = response.split('\n').filter(line => line.trim());
+    
+    for (let i = 0; i < lines.length; i += 2) {
+      if (i + 1 < lines.length) {
+        const question = lines[i].replace(/^(\d+[\.\)]?\s*(?:Q\.?|Question:?)\s*/i, '').trim();
+        const answer = lines[i + 1].replace(/^(\d+[\.\)]?\s*(?:A\.?|Answer:?)\s*/i, '').trim();
+        
+        if (question && answer) {
+          qaPairs.push({ question, answer });
         }
-      };
-
-      const response = await this.callGeminiAPI(requestData);
-      
-      if (response.success) {
-        return {
-          success: true,
-          answer: response.text.trim(),
-          question: question,
-          timestamp: new Date().toISOString()
-        };
-      } else {
-        throw new Error(response.error);
       }
+    }
+    
+    return qaPairs;
+  }
+
+  /**
+   * Answer a question with context (for chat interface)
+   */
+  async answerQuestion(question, lectureContext = null, conversationHistory = []) {
+    try {
+      const response = await this.huggingfaceService.answerQuestion(question, lectureContext, conversationHistory);
+      
+      return {
+        success: true,
+        response: response.response,
+        model: this.huggingfaceService.model
+      };
     } catch (error) {
       console.error('Error answering question:', error);
       return {
         success: false,
-        error: error.message,
-        question: question
-      };
-    }
-  }
-
-  /**
-   * Build prompt for answering user questions
-   */
-  buildAnswerPrompt(question, transcript, context) {
-    const { lectureTitle, relevantSegments } = context;
-    
-    let prompt = `Answer the following question based on the lecture transcript. Be accurate and cite specific parts of the content when helpful.
-
-LECTURE: ${lectureTitle || 'Unknown Lecture'}
-
-TRANSCRIPT:
-${transcript}
-
-${relevantSegments && relevantSegments.length > 0 ? 
-`RELEVANT SEGMENTS:
-${relevantSegments.map(s => `Time ${s.start_time_seconds}s: "${s.content}"`).join('\n')}` : ''}
-
-QUESTION: ${question}
-
-Provide a clear, accurate answer based on the transcript content. If the transcript doesn't contain enough information to answer the question, say so clearly. Keep your answer concise but thorough.`;
-
-    return prompt;
-  }
-
-  /**
-   * Check if user has quota for Q&A generation
-   */
-  async checkQAQuota() {
-    try {
-      const { data, error } = await supabase.rpc('get_quota_status');
-      if (error) throw error;
-
-      const qaQuota = data.qa_generations;
-      return {
-        hasQuota: qaQuota.unlimited || (qaQuota.used < qaQuota.limit),
-        used: qaQuota.used,
-        limit: qaQuota.limit,
-        remaining: qaQuota.unlimited ? -1 : qaQuota.limit - qaQuota.used
-      };
-    } catch (error) {
-      console.error('Error checking Q&A quota:', error);
-      // Default to allowing if quota check fails
-      return { hasQuota: true, used: 0, limit: -1, remaining: -1 };
-    }
-  }
-
-  /**
-   * Consume Q&A quota
-   */
-  async consumeQAQuota(amount = 1) {
-    try {
-      const { data, error } = await supabase.rpc('consume_quota', {
-        p_action: 'qa_generations',
-        p_amount: amount
-      });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error consuming Q&A quota:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Call Gemini API
-   */
-  async callGeminiAPI(requestData) {
-    try {
-      const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`;
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.candidates && data.candidates.length > 0) {
-        const candidate = data.candidates[0];
-        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-          return {
-            success: true,
-            text: candidate.content.parts[0].text
-          };
-        }
-      }
-
-      throw new Error('No response generated');
-
-    } catch (error) {
-      return {
-        success: false,
         error: error.message
       };
     }
-  }
-
-  /**
-   * Generate Q&A for entire lecture
-   */
-  async generateLectureQA(lecture, segments) {
-    try {
-      const allQA = [];
-      
-      // Generate Q&A for each segment
-      for (const segment of segments) {
-        const context = {
-          lectureTitle: lecture.title,
-          lectureDescription: lecture.description,
-          previousSegments: allQA.length > 0 ? segments.slice(0, segments.indexOf(segment)) : []
-        };
-        
-        const result = await this.generateQAFromSegment(segment, context);
-        if (result.success) {
-          allQA.push(...result.qaPairs);
-        }
-        
-        // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
-      return {
-        success: true,
-        qaPairs: allQA,
-        totalQuestions: allQA.length
-      };
-    } catch (error) {
-      console.error('Error generating lecture Q&A:', error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  /**
-   * Get relevant segments for a question
-   */
-  findRelevantSegments(question, segments, maxSegments = 3) {
-    // Simple keyword matching - could be enhanced with embeddings
-    const questionWords = question.toLowerCase().split(/\s+/);
-    const segmentScores = segments.map(segment => {
-      const content = (segment.content + ' ' + (segment.title || '')).toLowerCase();
-      let score = 0;
-      
-      questionWords.forEach(word => {
-        if (word.length > 3) { // Skip very short words
-          const matches = (content.match(new RegExp(word, 'g')) || []).length;
-          score += matches;
-        }
-      });
-      
-      return { segment, score };
-    });
-    
-    // Sort by score and return top segments
-    return segmentScores
-      .sort((a, b) => b.score - a.score)
-      .slice(0, maxSegments)
-      .map(item => item.segment);
   }
 }
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = QAService;
-} else {
-  window.QAService = QAService;
 }

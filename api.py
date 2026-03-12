@@ -13,10 +13,15 @@ CORS(app)  # Enable CORS for all routes
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 
-# Google Gemini API Configuration
+# Hugging Face AI Configuration (Free Alternative to Google Gemini)
 # Use environment variable for API key in production, fallback to default for development
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyBP_X2pw5Sz4zFiaIFVBD-00opo4wksGj8')
-GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key={GEMINI_API_KEY}'
+HUGGINGFACE_API_KEY = os.environ.get('HUGGINGFACE_API_KEY', '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')
+HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium'
+
+# Deepgram Transcription Configuration (Free Alternative to Google Speech-to-Text)
+# Use environment variable for API key in production, fallback to default for development
+DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', 'your-deepgram-key-here')
+DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen'
 
 # Google Cloud Speech-to-Text: use service account from env (path to JSON key file)
 GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', '')
@@ -221,39 +226,44 @@ Use this lecture information to provide contextually relevant responses."""
         
         full_prompt = system_prompt + conversation_history + f"\n\nStudent: {user_message}\nAssistant:"
         
-        # Call Google Gemini API
+        # Call Hugging Face API
         response = requests.post(
-            GEMINI_API_URL,
+            HUGGINGFACE_API_URL,
             json={
-                'contents': [{
-                    'parts': [{
-                        'text': full_prompt
-                    }]
-                }]
+                'inputs': full_prompt,
+                'parameters': {
+                    'max_length': 500,
+                    'temperature': 0.7,
+                    'do_sample': True,
+                    'top_p': 0.9,
+                    'return_full_text': False
+                }
             },
-            headers={'Content-Type': 'application/json'}
+            headers={
+                'Authorization': f'Bearer {HUGGINGFACE_API_KEY}',
+                'Content-Type': 'application/json'
+            }
         )
         
         if response.status_code != 200:
-            error_data = response.json()
             return jsonify({
                 'success': False,
-                'error': error_data.get('error', {}).get('message', 'Failed to get response from Gemini API')
+                'error': 'Failed to get response from Hugging Face API'
             }), response.status_code
         
         result = response.json()
         
-        if result.get('candidates') and len(result['candidates']) > 0:
-            if result['candidates'][0].get('content'):
-                response_text = result['candidates'][0]['content']['parts'][0]['text']
-                return jsonify({
-                    'success': True,
-                    'response': response_text
-                })
+        # Hugging Face returns different format than Gemini
+        if isinstance(result, list) and len(result) > 0:
+            response_text = result[0].get('generated_text', '')
+            return jsonify({
+                'success': True,
+                'response': response_text.strip()
+            })
         
         return jsonify({
             'success': False,
-            'error': 'Invalid response format from Gemini API'
+            'error': 'Invalid response format from Hugging Face API'
         }), 500
         
     except Exception as e:

@@ -22,21 +22,29 @@ const CONFIG = {
     ANON_KEY: 'sb_publishable_oAbDFVc8dPgLnNaJQ-QKhg_PUDOyjZp' // Replace with your actual key
   },
 
-  // Gemini AI Configuration
-  GEMINI: {
-    API_KEY: 'AIzaSyBP_X2pw5Sz4zFiaIFVBD-00opo4wksGj8', // Replace with your actual key
-    MODEL: 'gemini-1.0-pro', // Use the original Gemini Pro model
-    BASE_URL: 'https://generativelanguage.googleapis.com/v1beta',
+  // Hugging Face AI Configuration (Free Alternative to Google Gemini)
+  HUGGINGFACE: {
+    API_KEY: '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', // Your Hugging Face token
+    MODEL: 'microsoft/DialoGPT-medium', // Free chat model
+    BASE_URL: 'https://api-inference.huggingface.co/models',
     MAX_RETRIES: 3,
-    RETRY_DELAY: 1000,
-    MAX_AUDIO_SIZE: 25 * 1024 * 1024, // 25MB limit for Gemini
-    SUPPORTED_FORMATS: [
-      'audio/webm',
-      'audio/mp4', 
-      'audio/mpeg',
-      'audio/wav',
-      'audio/ogg'
-    ]
+    RETRY_DELAY: 1000
+  },
+  
+  // Deepgram Transcription Configuration (Free Alternative to Google Speech-to-Text)
+  DEEPGRAM: {
+    API_KEY: 'your-deepgram-key', // Add your Deepgram key
+    MODEL: 'nova-2', // Free model
+    BASE_URL: 'https://api.deepgram.com/v1',
+    MAX_RETRIES: 3,
+    RETRY_DELAY: 1000
+  },
+
+  // Local Storage Configuration
+  LOCAL_STORAGE: {
+    LECTURE_KEY: 'lectures',
+    TRANSCRIPTION_KEY: 'transcriptions',
+    SETTINGS_KEY: 'app_settings'
   },
 
   // Local Storage Configuration
