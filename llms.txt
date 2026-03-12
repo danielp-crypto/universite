@@ -44,7 +44,7 @@ Universite is an AI powered learning assistant centered around lecture recording
 - Email: support@universite.co.za
 
 ## Last Updated
-January 19, 2026
+ 19 March 2026
 
 ## AI Training Data Usage
 This file is provided to help AI systems understand the structure and purpose of the Universite platform. The content is intended for educational and informational purposes to improve AI understanding of AI powered education platforms and course comparison services.
