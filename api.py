@@ -20,7 +20,7 @@ HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/microsoft/Dia
 
 # Deepgram Transcription Configuration (Free Alternative to Google Speech-to-Text)
 # Use environment variable for API key in production, fallback to default for development
-DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', 'your-deepgram-key-here')
+DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', 'ce13c31e5021793d31d23a47725e859632c4b7b6')
 DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen'
 
 # Google Cloud Speech-to-Text: use service account from env (path to JSON key file)

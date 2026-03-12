@@ -192,7 +192,9 @@
     <!-- Scripts -->
     <script src="js/config.js"></script>
     <script src="js/audio-recorder.js"></script>
-    <script src="js/gemini-transcription.js"></script>
+    <script src="js/huggingface-service.js"></script>
+    <script src="js/deepgram-service.js"></script>
+    <script src="js/transcription-service.js"></script>
     <script src="js/local-lecture-manager.js"></script>
     <script src="js/supabase-client.js"></script>
     <script>
@@ -212,7 +214,8 @@
         const lectureManager = new LocalLectureManager(
             config.SUPABASE.URL, 
             config.SUPABASE.ANON_KEY, 
-            config.GEMINI.API_KEY,
+            config.HUGGINGFACE.API_KEY,
+            config.DEEPGRAM.API_KEY,
             config.BACKEND.URL
         );
 

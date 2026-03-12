@@ -326,6 +326,7 @@
     <!-- Scripts -->
     <script src="js/config.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/huggingface-service.js"></script>
     <script src="js/flashcard-service.js"></script>
     <script src="js/local-lecture-manager.js"></script>
     <script>
@@ -333,11 +334,12 @@
         class StudyModeController {
             constructor() {
                 this.config = window.UniversiteConfig.getConfig();
-                this.flashcardService = new FlashcardService(this.config.GEMINI.API_KEY, this.config.BACKEND.URL);
+                this.flashcardService = new FlashcardService(this.config.HUGGINGFACE.API_KEY);
                 this.lectureManager = new LocalLectureManager(
                     this.config.SUPABASE.URL,
                     this.config.SUPABASE.ANON_KEY,
-                    this.config.GEMINI.API_KEY,
+                    this.config.HUGGINGFACE.API_KEY,
+                    this.config.DEEPGRAM.API_KEY,
                     this.config.BACKEND.URL
                 );
                 

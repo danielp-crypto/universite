@@ -33,7 +33,7 @@ const CONFIG = {
   
   // Deepgram Transcription Configuration (Free Alternative to Google Speech-to-Text)
   DEEPGRAM: {
-    API_KEY: 'your-deepgram-key', // Add your Deepgram key
+    API_KEY: 'ce13c31e5021793d31d23a47725e859632c4b7b6', // Your Deepgram API key
     MODEL: 'nova-2', // Free model
     BASE_URL: 'https://api.deepgram.com/v1',
     MAX_RETRIES: 3,

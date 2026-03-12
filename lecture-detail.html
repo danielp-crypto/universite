@@ -42,6 +42,7 @@
   <script src="js/supabase-client.js"></script>
   <script src="js/auth-guard.js"></script>
   <script src="js/app-state.js"></script>
+  <script src="js/huggingface-service.js"></script>
   <script src="js/qa-service.js"></script>
   <script src="js/flashcard-service.js"></script>
   <script src="js/local-lecture-manager.js"></script>
@@ -343,14 +344,15 @@
   <script>
     // Initialize configuration and services
     const config = window.UniversiteConfig.getConfig();
-    const qaService = new QAService(config.GEMINI.API_KEY, config.BACKEND.URL);
-    const flashcardService = new FlashcardService(config.GEMINI.API_KEY, config.BACKEND.URL);
+    const qaService = new QAService(config.HUGGINGFACE.API_KEY);
+    const flashcardService = new FlashcardService(config.HUGGINGFACE.API_KEY);
 
     // Initialize LocalLectureManager
     window.localLectureManager = new LocalLectureManager(
       config.SUPABASE.URL,
       config.SUPABASE.ANON_KEY,
-      config.GEMINI.API_KEY,
+      config.HUGGINGFACE.API_KEY,
+      config.DEEPGRAM.API_KEY,
       config.BACKEND.URL
     );
 
