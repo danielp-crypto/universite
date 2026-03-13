@@ -608,7 +608,7 @@
     // Backend API base URL (Local Development)
     const API_BASE_URL = 'http://localhost:5000';
 
-    // Context-aware AI responses using Python backend (which calls Google Gemini API)
+    // Context-aware AI responses using Python backend (which calls LLM API)
     async function getContextAwareResponse(userMessage) {
       const hasLecture = appState.currentLecture !== null;
       

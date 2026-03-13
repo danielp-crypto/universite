@@ -248,22 +248,6 @@ Use this lecture information to provide contextually relevant responses."""
         if response.status_code != 200:
             return jsonify({
                 'success': False,
-                'error': 'Failed to get response from Hugging Face API'
-            }), response.status_code
-        
-        result = response.json()
-        
-        # Hugging Face returns different format than Gemini
-        if isinstance(result, list) and len(result) > 0:
-            response_text = result[0].get('generated_text', '')
-            return jsonify({
-                'success': True,
-                'response': response_text.strip()
-            })
-        
-        return jsonify({
-            'success': False,
-            'error': 'Invalid response format from Hugging Face API'
         }), 500
         
     except Exception as e:
@@ -309,13 +293,21 @@ Generate flashcards as a JSON array with this structure:
 Return ONLY the JSON array, no other text."""
 
         response = requests.post(
-            GEMINI_API_URL,
+            HUGGINGFACE_API_URL,
             json={
-                'contents': [{
-                    'parts': [{'text': prompt}]
-                }]
+                'inputs': prompt,
+                'parameters': {
+                    'max_length': 1000,
+                    'temperature': 0.7,
+                    'do_sample': True,
+                    'top_p': 0.9,
+                    'return_full_text': False
+                }
             },
-            headers={'Content-Type': 'application/json'}
+            headers={
+                'Authorization': f'Bearer {HUGGINGFACE_API_KEY}',
+                'Content-Type': 'application/json'
+            }
         )
         
         if response.status_code != 200:
@@ -867,38 +859,34 @@ def test_gemini():
         data = request.get_json()
         message = data.get('message', 'Hello! Please respond with "API working" to confirm.')
         
-        # Call Gemini API directly
-        gemini_request = {
-            "contents": [{
-                "parts": [{
-                    "text": message
-                }]
-            }],
-            "generationConfig": {
+        # Call Hugging Face API directly
+        hf_request = {
+            "inputs": message,
+            "parameters": {
+                "max_length": 200,
                 "temperature": 0.7,
-                "topK": 32,
-                "topP": 0.95,
-                "maxOutputTokens": 100
+                "do_sample": True,
+                "top_p": 0.9,
+                "return_full_text": False
             }
         }
         
-        response = requests.post(GEMINI_API_URL, json=gemini_request, timeout=30)
+        response = requests.post(HUGGINGFACE_API_URL, json=hf_request, timeout=30)
         
         if response.status_code == 200:
             result = response.json()
-            if 'candidates' in result and len(result['candidates']) > 0:
-                candidate = result['candidates'][0]
-                if 'content' in candidate and 'parts' in candidate['content']:
-                    text = candidate['content']['parts'][0]['text']
-                    return jsonify({
-                        'success': True,
-                        'response': text.strip(),
-                        'model': 'gemini-1.5-flash'
-                    }), 200
+            # Hugging Face returns different format than Gemini
+            if isinstance(result, list) and len(result) > 0:
+                text = result[0].get('generated_text', '')
+                return jsonify({
+                    'success': True,
+                    'response': text.strip(),
+                    'model': 'huggingface-dialoGPT'
+                }), 200
         
         return jsonify({
             'success': False,
-            'error': f'Gemini API error: {response.status_code} - {response.text}'
+            'error': f'Hugging Face API error: {response.status_code} - {response.text}'
         }), 400
         
     except Exception as e:
