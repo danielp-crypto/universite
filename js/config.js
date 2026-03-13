@@ -22,7 +22,7 @@ const CONFIG = {
     ANON_KEY: 'sb_publishable_oAbDFVc8dPgLnNaJQ-QKhg_PUDOyjZp' // Replace with your actual key
   },
 
-  // Hugging Face AI Configuration (Free Alternative to Google Gemini)
+  // Hugging Face AI Configuration
   HUGGINGFACE: {
     API_KEY: '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', // Your Hugging Face token
     MODEL: 'microsoft/DialoGPT-medium', // Free chat model
@@ -50,7 +50,7 @@ const CONFIG = {
   // Local Storage Configuration
   STORAGE: {
     LECTURES_KEY: 'universite_lectures',
-    TRANSCRIPTION_JOBS_KEY: 'gemini_transcription_jobs',
+    TRANSCRIPTION_JOBS_KEY: 'huggingface_transcription_jobs',
     MAX_LOCAL_LECTURES: 50,
     CLEANUP_AGE: 24 * 60 * 60 * 1000, // 24 hours
     MAX_STORAGE_SIZE: 500 * 1024 * 1024 // 500MB local storage limit
@@ -101,8 +101,8 @@ const validateConfig = () => {
     errors.push('Supabase anon key is not configured');
   }
 
-  if (!CONFIG.GEMINI.API_KEY || CONFIG.GEMINI.API_KEY === 'YOUR_GEMINI_API_KEY') {
-    errors.push('Gemini API key is not configured');
+  if (!CONFIG.HUGGINGFACE.API_KEY || CONFIG.HUGGINGFACE.API_KEY === 'YOUR_HUGGINGFACE_API_KEY') {
+    errors.push('Hugging Face API key is not configured');
   }
 
   // Check browser support
@@ -128,7 +128,7 @@ const getConfig = () => {
   // Override with environment variables if available
   if (typeof window !== 'undefined' && window.ENV) {
     Object.assign(config.SUPABASE, window.ENV.SUPABASE || {});
-    Object.assign(config.GEMINI, window.ENV.GEMINI || {});
+    Object.assign(config.HUGGINGFACE, window.ENV.HUGGINGFACE || {});
   }
 
   return config;

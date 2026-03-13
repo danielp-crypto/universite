@@ -13,7 +13,7 @@ CORS(app)  # Enable CORS for all routes
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 
-# Hugging Face AI Configuration (Free Alternative to Google Gemini)
+# Hugging Face AI Configuration
 # Use environment variable for API key in production, fallback to default for development
 HUGGINGFACE_API_KEY = os.environ.get('HUGGINGFACE_API_KEY', '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')
 HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium'
@@ -277,7 +277,7 @@ def generate_flashcards():
         data = request.get_json()
         lecture = data.get('lecture', {})
         
-        # Use Gemini to generate flashcards from lecture content
+        # Use Hugging Face to generate flashcards from lecture content
         prompt = f"""Based on this lecture content, generate 10-15 educational flashcards in JSON format.
         
 Lecture Title: {lecture.get('title', 'Unknown')}
@@ -850,10 +850,10 @@ def create_lecture_segment(lecture_id):
 def health():
     return jsonify({'status': 'ok'}), 200
 
-@app.route('/test-gemini', methods=['POST'])
-def test_gemini():
+@app.route('/test-huggingface', methods=['POST'])
+def test_huggingface():
     """
-    Test endpoint for Gemini API - no authentication required
+    Test endpoint for Hugging Face API - no authentication required
     """
     try:
         data = request.get_json()
@@ -875,7 +875,7 @@ def test_gemini():
         
         if response.status_code == 200:
             result = response.json()
-            # Hugging Face returns different format than Gemini
+            # Hugging Face response format
             if isinstance(result, list) and len(result) > 0:
                 text = result[0].get('generated_text', '')
                 return jsonify({

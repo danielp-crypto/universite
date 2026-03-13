@@ -38,14 +38,14 @@ The Flask backend requires these env vars:
 
 - `SUPABASE_URL` = your project URL (example: `https://hiruufvoyigrcdohqjkm.supabase.co`)
 - `SUPABASE_ANON_KEY` = your **publishable/anon** API key
-- `GEMINI_API_KEY` = your Gemini API key (already supported)
+- `HUGGINGFACE_API_KEY` = your Hugging Face API key (already supported)
 
 Example (PowerShell):
 
 ```powershell
 $env:SUPABASE_URL="https://hiruufvoyigrcdohqjkm.supabase.co"
 $env:SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY"
-$env:GEMINI_API_KEY="YOUR_GEMINI_KEY"
+$env:HUGGINGFACE_API_KEY="YOUR_HUGGINGFACE_KEY"
 python api.py
 ```
 

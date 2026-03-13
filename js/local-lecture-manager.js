@@ -186,7 +186,7 @@ class LocalLectureManager {
         throw new Error(updateResponse.error);
       }
 
-      // Start transcription if Gemini service is available
+      // Start transcription if AI service is available
       if (this.transcriptionService) {
         await this.startTranscription(lecture.id, audioBlob);
       }
@@ -576,9 +576,9 @@ class LocalLectureManager {
       const metadata = {
         processingTimeMs: job.completedAt ? 
           new Date(job.completedAt) - new Date(job.createdAt) : null,
-        modelUsed: 'gemini-1.5-flash',
+        modelUsed: 'huggingface-dialoGPT-medium',
         language: 'en',
-        confidenceScore: null // Could be extracted from Gemini response if available
+        confidenceScore: null // Could be extracted from AI response if available
       };
 
       // Save transcription to Supabase with metadata

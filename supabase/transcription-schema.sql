@@ -1,4 +1,4 @@
--- Transcription schema updates for Gemini integration
+-- Transcription schema updates for AI integration
 -- Run this after the main schema.sql to add transcription-specific fields
 
 -- Add transcription status fields to lectures table
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS public.transcriptions (
   content TEXT NOT NULL,
   word_count INTEGER DEFAULT 0,
   processing_time_ms INTEGER,
-  model_used TEXT DEFAULT 'gemini-1.5-flash',
+  model_used TEXT DEFAULT 'huggingface-dialoGPT-medium',
   language TEXT DEFAULT 'en',
   confidence_score DECIMAL(3,2),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -96,7 +96,7 @@ CREATE OR REPLACE FUNCTION public.save_transcription_with_metadata(
   p_lecture_id UUID,
   p_content TEXT,
   p_processing_time_ms INTEGER DEFAULT NULL,
-  p_model_used TEXT DEFAULT 'gemini-1.5-flash',
+  p_model_used TEXT DEFAULT 'huggingface-dialoGPT-medium',
   p_language TEXT DEFAULT 'en',
   p_confidence_score DECIMAL(3,2) DEFAULT NULL
 )

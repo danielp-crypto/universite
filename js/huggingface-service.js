@@ -1,6 +1,6 @@
 /**
  * Hugging Face AI Service
- * Free alternative to Google Gemini API
+ * Free AI API service
  */
 
 class HuggingFaceService {

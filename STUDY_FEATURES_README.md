@@ -104,7 +104,7 @@ generateFlashcards.addEventListener('click', async () => {
          └───────────────────────┼───────────────────────┘
                                  │
                     ┌──────────────────┐
-                    │  Gemini AI       │
+                    │  Hugging Face AI  │
                     │                  │
                     │ Q&A Generation   │
                     │ Flashcard Creation│
@@ -149,7 +149,7 @@ generateFlashcards.addEventListener('click', async () => {
 - ✅ **Cache optimization** for performance
 
 ### **AI Integration**
-- ✅ **Gemini API** for content generation
+- ✅ **Hugging Face API** for content generation
 - ✅ **Prompt engineering** for quality outputs
 - ✅ **Error handling** and retry logic
 - ✅ **Rate limiting** and cost optimization

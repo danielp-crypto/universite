@@ -18,14 +18,14 @@
 - Audio blob storage and playback support
 
 ### 3. **AI Chat Assistant** (`assistant.html`)
-- Integrated with Google Gemini API via Python backend
+- Integrated with Hugging Face API via Python backend
 - Context-aware responses using lecture data
 - Conversation history persistence
 - Lecture attachment and context switching
 - Real-time chat interface with typing indicators
 
 ### 4. **Flashcards System** (`flashcards.html`)
-- Dynamic flashcard generation from lectures using Gemini AI
+- Dynamic flashcard generation from lectures using Hugging Face AI
 - Interactive flashcard flipping animation
 - Progress tracking (Mastered, Learning, New)
 - Study session with Hard/Good/Easy rating
@@ -46,7 +46,7 @@
 - Export functionality
 
 ### 7. **Backend API** (`api.py`)
-- `/api/chat` - Chat with Gemini AI
+- `/api/chat` - Chat with Hugging Face AI
 - `/api/generate-flashcards` - Generate flashcards from lecture content
 - `/api/transcribe` - Audio transcription (stubbed, ready for API key)
 - `/api/process-lecture` - Process lecture audio (stubbed)
@@ -124,8 +124,7 @@ Basic settings structure is in place. Can be enhanced with:
 
 ## 🔑 API Keys Needed
 
-1. **Google Gemini API** ✅ (Already configured)
-   - Key: `AIzaSyAqpapZgs2z9oussNPp68ssXeVGIRf25qo`
+1. **Hugging Face API** ✅ (Already configured)
    - Used for: Chat responses, flashcard generation
 
 2. **Audio Transcription API** ⏳ (Pending)

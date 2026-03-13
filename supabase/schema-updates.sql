@@ -107,7 +107,7 @@ CREATE OR REPLACE FUNCTION public.save_transcription_with_metadata(
   p_lecture_id UUID,
   p_content TEXT,
   p_processing_time_ms INTEGER DEFAULT NULL,
-  p_model_used TEXT DEFAULT 'gemini-1.5-flash',
+  p_model_used TEXT DEFAULT 'huggingface-dialoGPT-medium',
   p_language TEXT DEFAULT 'en',
   p_confidence_score NUMERIC DEFAULT NULL
 )
