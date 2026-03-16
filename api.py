@@ -343,42 +343,86 @@ Return ONLY the JSON array, no other text."""
 
 def _transcribe_audio(audio_content: bytes, content_type: str) -> str:
     """
-    Transcribe audio using Google Cloud Speech-to-Text (service account).
-    Supports webm/opus (browser MediaRecorder) and common formats.
+    Transcribe audio using Deepgram API (free alternative to Google Speech-to-Text).
+    Supports various audio formats and handles retry logic.
     """
-    if not GOOGLE_APPLICATION_CREDENTIALS or not os.path.isfile(GOOGLE_APPLICATION_CREDENTIALS):
-        raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS not set or file not found")
+    if not DEEPGRAM_API_KEY or DEEPGRAM_API_KEY == 'ce13c31e5021793d31d23a47725e859632c4b7b6':
+        raise RuntimeError("DEEPGRAM_API_KEY not set or using default demo key")
 
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
-    from google.cloud import speech_v1 as speech
+    import io
 
-    client = speech.SpeechClient()
-    # Browser MediaRecorder typically produces webm with opus
-    encoding = speech.RecognitionConfig.AudioEncoding.WEBM_OPUS
-    sample_rate = 48000
-    if content_type and "flac" in content_type.lower():
-        encoding = speech.RecognitionConfig.AudioEncoding.FLAC
-        sample_rate = 44100
-    elif content_type and "wav" in content_type.lower():
-        encoding = speech.RecognitionConfig.AudioEncoding.LINEAR16
-        sample_rate = 16000
+    # Create a file-like object from bytes
+    audio_file = io.BytesIO(audio_content)
+    
+    # Determine filename based on content type
+    filename = 'audio'
+    if content_type:
+        if 'wav' in content_type.lower():
+            filename += '.wav'
+        elif 'mp3' in content_type.lower():
+            filename += '.mp3'
+        elif 'webm' in content_type.lower():
+            filename += '.webm'
+        elif 'flac' in content_type.lower():
+            filename += '.flac'
+        else:
+            filename += '.audio'
 
-    config = speech.RecognitionConfig(
-        encoding=encoding,
-        sample_rate_hertz=sample_rate,
-        language_code="en-US",
-        enable_automatic_punctuation=True,
-    )
-    audio = speech.RecognitionAudio(content=audio_content)
+    # Prepare files for multipart upload
+    files = {
+        'file': (filename, audio_file, content_type or 'audio/wav')
+    }
 
-    # Long-running recognize for lectures (can be several minutes)
-    operation = client.long_running_recognize(config=config, audio=audio)
-    response = operation.result(timeout=600)
-    transcript_parts = []
-    for result in response.results:
-        if result.alternatives:
-            transcript_parts.append(result.alternatives[0].transcript)
-    return " ".join(transcript_parts).strip() if transcript_parts else ""
+    # Deepgram API parameters
+    data = {
+        'model': 'nova-2',
+        'language': 'en-US',
+        'punctuate': 'true',
+        'utterances': 'true'
+    }
+
+    max_retries = 3
+    retry_delay = 1  # seconds
+
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(
+                DEEPGRAM_API_URL,
+                headers={
+                    'Authorization': f'Token {DEEPGRAM_API_KEY}'
+                },
+                files=files,
+                data=data,
+                timeout=300  # 5 minutes for long audio
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get('results') and len(result['results']) > 0:
+                    # Combine all transcript alternatives
+                    transcripts = []
+                    for r in result['results']:
+                        if r.get('alternatives') and len(r['alternatives']) > 0:
+                            transcripts.append(r['alternatives'][0].get('transcript', ''))
+                    
+                    transcript_text = ' '.join(transcripts).strip()
+                    return transcript_text if transcript_text else ""
+                else:
+                    return ""
+            else:
+                last_error = f"Deepgram API error: {response.status_code} - {response.text}"
+                
+        except Exception as e:
+            last_error = str(e)
+
+        if attempt < max_retries - 1:
+            import time
+            time.sleep(retry_delay)
+            retry_delay *= 2  # Exponential backoff
+
+    raise RuntimeError(f"Transcription failed after {max_retries} attempts: {last_error}")
 
 
 @app.route('/api/transcribe', methods=['POST'])
@@ -416,10 +460,10 @@ def transcribe():
         try:
             transcript_text = _transcribe_audio(audio_content, content_type)
         except RuntimeError as e:
-            if "GOOGLE_APPLICATION_CREDENTIALS" in str(e):
+            if "DEEPGRAM_API_KEY" in str(e):
                 return jsonify({
                     "success": False,
-                    "error": "Transcription not configured. Set GOOGLE_APPLICATION_CREDENTIALS to your service account JSON path.",
+                    "error": "Transcription not configured. Set DEEPGRAM_API_KEY to your Deepgram API key.",
                 }), 503
             raise
         except Exception as e:
