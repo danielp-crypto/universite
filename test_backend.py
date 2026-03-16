@@ -15,25 +15,25 @@ def test_backend():
         print(f"Health endpoint: {response.status_code}")
         
         if response.status_code == 200:
-            print("✅ Backend is running!")
+            print("* Backend is running!")
             return True
         else:
-            print(f"❌ Backend returned: {response.status_code}")
+            print("* Backend returned: {response.status_code}".format(response=response))
             return False
             
     except requests.exceptions.Timeout:
-        print("❌ Backend connection timeout")
+        print("* Backend connection timeout")
         return False
     except requests.exceptions.ConnectionError:
-        print("❌ Cannot connect to backend - is it running?")
+        print("* Cannot connect to backend - is it running?")
         return False
     except Exception as e:
-        print(f"❌ Backend error: {e}")
+        print("* Backend error: {error}".format(error=e))
         return False
 
 if __name__ == "__main__":
     if test_backend():
-        print("\n🚀 Backend is ready!")
+        print("\n* Backend is ready!")
         print("Open: http://localhost:3000/assistant.html")
     else:
-        print("\n🔧 Start backend with: python api.py")
+        print("\n* Start backend with: python api.py")

@@ -500,7 +500,7 @@ def get_lectures():
                COUNT(ls.id) as segment_count,
                CASE 
                  WHEN l.transcription IS NOT NULL AND l.transcription != '' THEN 
-                   array_length(regexp_split_to_array(l.transcription, '\s'), 1)
+                   array_length(regexp_split_to_array(l.transcription, r'\s'), 1)
                  ELSE 0 
                END as word_count
         FROM lectures l
