@@ -15,7 +15,7 @@ def test_transcription():
     # Check if API key is configured
     api_key = os.environ.get('DEEPGRAM_API_KEY', '')
     if not api_key or api_key == 'your_deepgram_api_key_here':
-        print("❌ DEEPGRAM_API_KEY not configured in .env file")
+        print("X DEEPGRAM_API_KEY not configured in .env file")
         print("   Please get a free API key from https://deepgram.com/")
         print("   Add it to your .env file: DEEPGRAM_API_KEY=your_key_here")
         return False
@@ -24,16 +24,16 @@ def test_transcription():
     try:
         response = requests.get('http://localhost:5000/health', timeout=5)
         if response.status_code != 200:
-            print("❌ Backend not running or not healthy")
+            print("X Backend not running or not healthy")
             print("   Start it with: python api.py")
             return False
     except:
-        print("❌ Cannot connect to backend")
+        print("X Cannot connect to backend")
         print("   Make sure backend is running on http://localhost:5000")
         return False
 
-    print("✅ Backend is running")
-    print("✅ Deepgram API key is configured")
+    print("OK Backend is running")
+    print("OK Deepgram API key is configured")
 
     # Note: Actual transcription testing would require:
     # 1. A valid JWT token for authentication
@@ -49,7 +49,7 @@ def test_transcription():
 
 if __name__ == "__main__":
     if test_transcription():
-        print("\n🎉 Deepgram integration is ready!")
+        print("\nOK Deepgram integration is ready!")
     else:
-        print("\n❌ Configuration issues found")
+        print("\nX Configuration issues found")
         sys.exit(1)
