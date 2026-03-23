@@ -75,10 +75,37 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
-  <script src="js/auth-guard.js"></script>
+  <!-- <script src="js/auth-guard.js"></script> -->
   <script src="js/app-state.js"></script>
   <script src="js/audio-recorder.js"></script>
+  <script src="js/deepgram-service.js"></script>
+  <script src="js/transcription-service.js"></script>
+  <script src="js/transcript-processor.js"></script>
   <script src="js/local-lecture-manager.js"></script>
+  <script>
+    // Capture all errors before redirect
+    window.addEventListener('error', function(e) {
+      console.error('HOME CAPTURED ERROR:', e.error);
+      console.error('HOME ERROR MESSAGE:', e.message);
+      console.error('HOME ERROR FILE:', e.filename);
+      console.error('HOME ERROR LINE:', e.lineno);
+      // Store error in sessionStorage to view after redirect
+      sessionStorage.setItem('homeLastError', JSON.stringify({
+        message: e.message,
+        filename: e.filename,
+        lineno: e.lineno,
+        error: e.error?.toString()
+      }));
+    });
+    
+    // Capture unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('HOME CAPTURED PROMISE REJECTION:', e.reason);
+      sessionStorage.setItem('homeLastPromiseError', JSON.stringify({
+        reason: e.reason?.toString()
+      }));
+    });
+  </script>
 </head>
 <body class="bg-slate-50 min-h-screen">
   <div id="app" class="flex flex-col min-h-screen pb-20">

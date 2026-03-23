@@ -16,7 +16,7 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 # Hugging Face AI Configuration
 # Use environment variable for API key in production, fallback to default for development
 HUGGINGFACE_API_KEY = os.environ.get('HUGGINGFACE_API_KEY', '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')
-HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium'
+HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/distilgpt2'
 
 # Deepgram Transcription Configuration (Free Alternative to Google Speech-to-Text)
 # Use environment variable for API key in production, fallback to default for development
@@ -544,7 +544,7 @@ def get_lectures():
                COUNT(ls.id) as segment_count,
                CASE 
                  WHEN l.transcription IS NOT NULL AND l.transcription != '' THEN 
-                   array_length(regexp_split_to_array(l.transcription, r'\s'), 1)
+                   array_length(regexp_split_to_array(l.transcription, r'\\s'), 1)
                  ELSE 0 
                END as word_count
         FROM lectures l

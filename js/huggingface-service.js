@@ -4,7 +4,7 @@
  */
 
 class HuggingFaceService {
-  constructor(apiKey, model = 'microsoft/DialoGPT-medium') {
+  constructor(apiKey, model = 'distilgpt2') {
     this.apiKey = apiKey;
     this.model = model;
     this.baseUrl = 'https://api-inference.huggingface.co/models';
