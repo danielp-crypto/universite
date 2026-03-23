@@ -93,7 +93,32 @@
   <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/huggingface-service.js"></script>
-  <script src="js/auth-guard.js"></script>
+  <script src="js/transcription-service.js"></script>
+  <!-- <script src="js/auth-guard.js"></script> -->
+  <script>
+    // Capture all errors before redirect
+    window.addEventListener('error', function(e) {
+      console.error('CAPTURED ERROR:', e.error);
+      console.error('ERROR MESSAGE:', e.message);
+      console.error('ERROR FILE:', e.filename);
+      console.error('ERROR LINE:', e.lineno);
+      // Store error in sessionStorage to view after redirect
+      sessionStorage.setItem('lastError', JSON.stringify({
+        message: e.message,
+        filename: e.filename,
+        lineno: e.lineno,
+        error: e.error?.toString()
+      }));
+    });
+    
+    // Capture unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('CAPTURED PROMISE REJECTION:', e.reason);
+      sessionStorage.setItem('lastPromiseError', JSON.stringify({
+        reason: e.reason?.toString()
+      }));
+    });
+  </script>
 </head>
 <body class="bg-slate-50 h-screen overflow-hidden">
   <div id="app" class="flex flex-col h-screen">
@@ -177,12 +202,7 @@
     <div class="fixed bottom-16 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 md:py-4 safe-area-inset-bottom">
       <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
         <div class="flex gap-2 items-end">
-          <button id="attach-lecture-btn" class="p-2.5 text-slate-600 hover:text-indigo-600 transition-colors active:scale-95 flex-shrink-0" title="Attach lecture">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-            </svg>
-          </button>
-          <div class="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100">
+          <div class="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 pr-12 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100">
             <textarea
               id="chat-input"
               placeholder="Ask about your lecture..."
@@ -190,6 +210,15 @@
               class="flex-1 border-none bg-transparent outline-none resize-none text-sm md:text-base text-slate-800 placeholder-slate-500 min-h-[24px] max-h-[120px] leading-relaxed"
               style="font-family: inherit;"
             ></textarea>
+            <button
+              id="attach-lecture-btn"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-600 hover:text-indigo-600 transition-colors active:scale-95"
+              title="Attach lecture"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+            </button>
           </div>
           <button
             id="send-btn"
@@ -197,7 +226,7 @@
             aria-label="Send message"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
             </svg>
           </button>
         </div>
