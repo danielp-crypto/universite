@@ -263,7 +263,12 @@
     (async () => {
       try {
         const session = await window.UniSupabase.getSession();
-        if (session) window.location.href = "home.html";
+        if (session) {
+          // Check if there's a returnTo parameter
+          const urlParams = new URLSearchParams(window.location.search);
+          const returnTo = urlParams.get('returnTo');
+          window.location.href = returnTo || "home.html";
+        }
       } catch (_) {}
     })();
 
@@ -279,7 +284,9 @@
       loading.classList.remove('hidden');
 
       try {
-        const redirectTo = `http://localhost:8000/home.html`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('returnTo');
+        const redirectTo = `http://localhost:8000/login.html?returnTo=${encodeURIComponent(returnTo || 'home.html')}`;
         const { error } = await window.UniSupabase.signInWithOAuth('google', { redirectTo });
         if (error) {
           alert(error.message);
@@ -309,7 +316,9 @@
       loading.classList.remove('hidden');
 
       try {
-        const redirectTo = `http://localhost:8000/home.html`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('returnTo');
+        const redirectTo = `http://localhost:8000/login.html?returnTo=${encodeURIComponent(returnTo || 'home.html')}`;
         const { error } = await window.UniSupabase.signInWithOAuth('apple', { redirectTo });
         if (error) {
           alert(error.message);

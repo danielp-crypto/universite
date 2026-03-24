@@ -14,13 +14,20 @@
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      storage: window.localStorage,
+      storageKey: 'supabase.auth.token',
     },
   });
 
   async function getSession() {
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-    return data.session;
+    try {
+      const { data, error } = await client.auth.getSession();
+      if (error) throw error;
+      return data.session;
+    } catch (error) {
+      console.error('Error getting session:', error);
+      return null;
+    }
   }
 
   async function getAccessToken() {
