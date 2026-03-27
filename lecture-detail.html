@@ -385,8 +385,10 @@
       const lectureId = urlParams.get('id');
 
       if (lectureId) {
+        console.log('Loading lecture with ID:', lectureId);
         await loadLecture(lectureId);
       } else {
+        console.log('No lecture ID found in URL');
         audioStatus.textContent = 'No lecture specified';
       }
 
@@ -670,41 +672,107 @@
     async function loadLecture(lectureId) {
       try {
         audioStatus.textContent = 'Loading lecture...';
+        console.log('LocalLectureManager available:', !!window.localLectureManager);
         
         if (window.localLectureManager) {
           const result = await window.localLectureManager.getLecture(lectureId);
+          console.log('Lecture load result:', result);
+          
           if (result.success) {
             currentLecture = result.lecture;
+            console.log('Loaded lecture:', currentLecture);
             await loadLocalAudio();
           } else {
-            audioStatus.textContent = 'Lecture not found';
+            console.error('Lecture load failed:', result.error);
+            audioStatus.textContent = 'Lecture not found: ' + result.error;
           }
+        } else {
+          console.error('LocalLectureManager not initialized');
+          audioStatus.textContent = 'Lecture manager not available';
         }
       } catch (error) {
         console.error('Error loading lecture:', error);
-        audioStatus.textContent = 'Error loading lecture';
+        audioStatus.textContent = 'Error loading lecture: ' + error.message;
       }
     }
 
     async function loadLocalAudio() {
       try {
-        if (currentLecture && currentLecture.local_audio) {
-          // Load local audio from base64
-          audioPlayer.src = currentLecture.local_audio;
-          audioStatus.textContent = 'Local audio ready';
+        if (currentLecture) {
+          // First try local audio (for mock lectures)
+          if (currentLecture.local_audio) {
+            audioPlayer.src = currentLecture.local_audio;
+            audioStatus.textContent = 'Local audio ready';
+          } 
+          // Then try file_path from Supabase Storage
+          else if (currentLecture.file_path) {
+            audioStatus.textContent = 'Loading audio from storage...';
+            const token = await window.UniSupabase.getAccessToken();
+            const downloadUrl = `${window.UniSupabase.supabaseUrl}/storage/v1/object/public/${currentLecture.file_path}`;
+            
+            try {
+              audioPlayer.src = downloadUrl;
+              audioStatus.textContent = 'Audio loaded from storage';
+            } catch (error) {
+              console.error('Error loading storage audio:', error);
+              audioStatus.textContent = 'Error loading storage audio';
+              playPauseBtn.disabled = true;
+            }
+          }
+          // Finally try audioUrl (for blob URLs)
+          else if (currentLecture.audioUrl) {
+            audioPlayer.src = currentLecture.audioUrl;
+            audioStatus.textContent = 'Audio ready';
+          } else {
+            audioStatus.textContent = 'No audio available';
+            playPauseBtn.disabled = true;
+            return;
+          }
           
           // Update duration when metadata is loaded
           audioPlayer.addEventListener('loadedmetadata', () => {
             durationSpan.textContent = formatTime(audioPlayer.duration);
           });
+          
+          // Update page with lecture data
+          updatePageWithLectureData();
         } else {
-          audioStatus.textContent = 'No audio available';
+          audioStatus.textContent = 'No lecture loaded';
           playPauseBtn.disabled = true;
         }
       } catch (error) {
-        console.error('Error loading local audio:', error);
+        console.error('Error loading audio:', error);
         audioStatus.textContent = 'Error loading audio';
         playPauseBtn.disabled = true;
+      }
+    }
+
+    function updatePageWithLectureData() {
+      if (!currentLecture) return;
+      
+      // Update title
+      const titleElement = document.querySelector('h2');
+      if (titleElement) {
+        titleElement.textContent = currentLecture.title || 'Untitled Lecture';
+      }
+      
+      // Update date and duration
+      const dateElement = document.querySelector('.text-sm.text-slate-500 span');
+      if (dateElement && currentLecture.created_at) {
+        dateElement.textContent = new Date(currentLecture.created_at).toLocaleDateString();
+      }
+      
+      const durationElement = document.querySelectorAll('.text-sm.text-slate-500 span')[1];
+      if (durationElement && currentLecture.duration_seconds) {
+        const minutes = Math.floor(currentLecture.duration_seconds / 60);
+        const seconds = currentLecture.duration_seconds % 60;
+        durationElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+      
+      // Update action buttons
+      const chatLink = document.querySelector('a[href*="assistant.html"]');
+      if (chatLink) {
+        chatLink.href = `assistant.html?lecture=${currentLecture.id}`;
       }
     }
 
