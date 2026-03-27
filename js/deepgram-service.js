@@ -7,7 +7,10 @@ class DeepgramService {
   constructor(apiKey, model = 'nova-2') {
     this.apiKey = apiKey;
     this.model = model;
-    this.baseUrl = 'https://api.deepgram.com/v1';
+    // Use proxy endpoint instead of direct API to avoid CORS issues
+    this.baseUrl = window.UniversiteConfig?.CONFIG?.BACKEND?.URL || 'http://localhost:5000';
+    this.transcribeEndpoint = `${this.baseUrl}/api/deepgram/transcribe`;
+    this.testEndpoint = `${this.baseUrl}/api/deepgram/test`;
     this.maxRetries = 3;
     this.retryDelay = 1000;
   }
@@ -16,7 +19,7 @@ class DeepgramService {
     const formData = new FormData();
     formData.append('file', audioFile);
     formData.append('model', this.model);
-    formData.append('language', options.language || 'en-US');
+    formData.append('language', options.language || 'en');
     formData.append('punctuate', 'true');
     formData.append('utterances', 'true');
 
@@ -24,33 +27,28 @@ class DeepgramService {
     
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
-        const response = await fetch(`${this.baseUrl}/listen`, {
+        // Use proxy endpoint instead of direct Deepgram API
+        const response = await fetch(this.transcribeEndpoint, {
           method: 'POST',
-          headers: {
-            'Authorization': `Token ${this.apiKey}`
-          },
           body: formData
         });
 
         if (response.ok) {
           const result = await response.json();
           
-          if (result.results && result.results.length > 0) {
-            const transcript = result.results
-              .map(result => result.alternatives[0]?.transcript || '')
-              .join(' ');
-            
+          if (result.success) {
             return {
               success: true,
-              transcript: transcript,
-              confidence: result.results[0]?.alternatives[0]?.confidence || 0,
-              duration: result.metadata?.duration || 0,
-              model: this.model
+              transcript: result.transcript,
+              confidence: result.confidence,
+              duration: result.duration,
+              model: this.model,
+              rawResponse: result.raw_response
             };
           } else {
             return {
               success: false,
-              error: 'No transcription results returned'
+              error: result.error || 'Transcription failed'
             };
           }
         } else {
@@ -88,6 +86,22 @@ class DeepgramService {
     const audioBlob = new Blob([byteArray], { type: 'audio/wav' });
     
     return this.transcribeFromBlob(audioBlob, options);
+  }
+
+  async testConnection() {
+    try {
+      const response = await fetch(this.testEndpoint, {
+        method: 'GET'
+      });
+      
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: `Connection test failed: ${error.message}`
+      };
+    }
   }
 }
 

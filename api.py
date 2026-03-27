@@ -939,6 +939,108 @@ def test_huggingface():
             'error': str(e)
         }), 500
 
+@app.route('/api/deepgram/test', methods=['GET'])
+def test_deepgram():
+    """
+    Test Deepgram API connectivity through proxy
+    """
+    try:
+        # Test Deepgram models endpoint
+        models_url = 'https://api.deepgram.com/v1/models'
+        headers = {
+            'Authorization': f'Token {DEEPGRAM_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(models_url, headers=headers, timeout=30)
+        
+        if response.status_code == 200:
+            return jsonify({
+                'success': True,
+                'message': 'Deepgram API is reachable',
+                'models': response.json(),
+                'status': response.status_code
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Deepgram API error: {response.status_code} - {response.text}'
+            }), response.status_code
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Proxy error: {str(e)}'
+        }), 500
+
+@app.route('/api/deepgram/transcribe', methods=['POST'])
+def transcribe_audio():
+    """
+    Proxy for Deepgram transcription API
+    """
+    try:
+        # Get the audio file from the request
+        if 'file' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No audio file provided'
+            }), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No file selected'
+            }), 400
+        
+        # Get transcription options
+        model = request.form.get('model', 'nova-2')
+        language = request.form.get('language', 'en')
+        
+        # Prepare the request to Deepgram
+        deepgram_url = f'https://api.deepgram.com/v1/listen'
+        headers = {
+            'Authorization': f'Token {DEEPGRAM_API_KEY}',
+            'Content-Type': 'audio/wav'
+        }
+        
+        # Add query parameters
+        params = {
+            'model': model,
+            'language': language,
+            'smart_format': True,
+            'paragraphs': True,
+            'punctuate': True
+        }
+        
+        # Send file to Deepgram
+        files = {
+            'file': (file.filename, file.stream, file.content_type or 'audio/wav')
+        }
+        
+        response = requests.post(deepgram_url, headers=headers, files=files, params=params, timeout=60)
+        
+        if response.status_code == 200:
+            result = response.json()
+            return jsonify({
+                'success': True,
+                'transcript': result.get('results', {}).get('channels', [{}])[0].get('alternatives', [{}])[0].get('transcript', ''),
+                'confidence': result.get('results', {}).get('channels', [{}])[0].get('alternatives', [{}])[0].get('confidence', 0),
+                'duration': result.get('metadata', {}).get('duration', 0),
+                'raw_response': result
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Deepgram transcription error: {response.status_code} - {response.text}'
+            }), response.status_code
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Transcription proxy error: {str(e)}'
+        }), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
