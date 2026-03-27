@@ -26,10 +26,10 @@
 
   <script>
     const config = {
-      DEEPGRAM: {
-        API_KEY: 'ce13c31e5021793d31d23a47725e859632c4b7b6',
-        BASE_URL: 'https://api.deepgram.com/v1',
-        MODEL: 'nova-2'
+      FLASK_API: {
+        BASE_URL: 'http://localhost:5000',
+        DEEPGRAM_TEST_ENDPOINT: '/api/deepgram/test',
+        DEEPGRAM_TRANSCRIBE_ENDPOINT: '/api/deepgram/transcribe'
       }
     };
 
@@ -47,12 +47,11 @@
       detailsDiv.classList.add('hidden');
 
       try {
-        // Test 1: Basic connectivity check
-        console.log('Testing basic connectivity...');
-        const response = await fetch(`${config.DEEPGRAM.BASE_URL}/models`, {
+        // Test 1: Basic connectivity check through Flask proxy
+        console.log('Testing Flask proxy to Deepgram API...');
+        const response = await fetch(`${config.FLASK_API.BASE_URL}${config.FLASK_API.DEEPGRAM_TEST_ENDPOINT}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Token ${config.DEEPGRAM.API_KEY}`,
             'Content-Type': 'application/json'
           }
         });
@@ -64,14 +63,13 @@
           const data = await response.json();
           
           statusDiv.className = 'p-4 rounded bg-green-100 text-green-800';
-          statusDiv.textContent = '✅ Deepgram API is reachable and authentication successful!';
+          statusDiv.textContent = '✅ Flask proxy to Deepgram API is working!';
           
           detailsDiv.innerHTML = `
             <h3 class="font-bold mb-2">Connection Details:</h3>
             <p><strong>Status:</strong> ${response.status}</p>
-            <p><strong>API Key:</strong> ${config.DEEPGRAM.API_KEY.substring(0, 8)}...</p>
-            <p><strong>Base URL:</strong> ${config.DEEPGRAM.BASE_URL}</p>
-            <p><strong>Available Models:</strong></p>
+            <p><strong>Proxy URL:</strong> ${config.FLASK_API.BASE_URL}${config.FLASK_API.DEEPGRAM_TEST_ENDPOINT}</p>
+            <p><strong>Response:</strong></p>
             <pre>${JSON.stringify(data, null, 2)}</pre>
           `;
           detailsDiv.classList.remove('hidden');
@@ -87,7 +85,7 @@
         statusDiv.className = 'p-4 rounded bg-red-100 text-red-800';
         
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
-          statusDiv.textContent = '❌ Network error - Cannot reach Deepgram API. Check your internet connection.';
+          statusDiv.textContent = '❌ Network error - Cannot reach Flask server. Make sure it\'s running on port 5000.';
         } else if (error.message.includes('401')) {
           statusDiv.textContent = '❌ Authentication failed - Invalid API key.';
         } else if (error.message.includes('403')) {
@@ -100,8 +98,8 @@
           <h3 class="font-bold mb-2">Error Details:</h3>
           <p><strong>Error:</strong> ${error.name}</p>
           <p><strong>Message:</strong> ${error.message}</p>
-          <p><strong>API Key:</strong> ${config.DEEPGRAM.API_KEY.substring(0, 8)}...</p>
-          <p><strong>Base URL:</strong> ${config.DEEPGRAM.BASE_URL}</p>
+          <p><strong>Proxy URL:</strong> ${config.FLASK_API.BASE_URL}${config.FLASK_API.DEEPGRAM_TEST_ENDPOINT}</p>
+          <p><strong>Flask Server:</strong> Make sure it's running on port 5000</p>
         `;
         detailsDiv.classList.remove('hidden');
       }
@@ -127,14 +125,11 @@
       try {
         const formData = new FormData();
         formData.append('file', blob, 'test.wav');
-        formData.append('model', config.DEEPGRAM.MODEL);
+        formData.append('model', 'nova-2');
         formData.append('language', 'en');
 
-        const response = await fetch(`${config.DEEPGRAM.BASE_URL}/listen`, {
+        const response = await fetch(`${config.FLASK_API.BASE_URL}${config.FLASK_API.DEEPGRAM_TRANSCRIBE_ENDPOINT}`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Token ${config.DEEPGRAM.API_KEY}`
-          },
           body: formData
         });
 
