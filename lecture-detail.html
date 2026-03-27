@@ -43,6 +43,8 @@
   <script src="js/auth-guard.js"></script>
   <script src="js/app-state.js"></script>
   <script src="js/huggingface-service.js"></script>
+  <script src="js/deepgram-service.js"></script>
+  <script src="js/transcription-service.js"></script>
   <script src="js/qa-service.js"></script>
   <script src="js/flashcard-service.js"></script>
   <script src="js/local-lecture-manager.js"></script>
@@ -506,6 +508,136 @@
             generateFlashcards.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> Create Flashcards';
           }
         });
+      }
+
+      // Process Transcript button
+      const processTranscript = document.getElementById('processTranscript');
+      if (processTranscript) {
+        processTranscript.addEventListener('click', async () => {
+          if (!currentLecture) {
+            alert('Please load a lecture first');
+            return;
+          }
+
+          if (!currentLecture.audioUrl && !currentLecture.file_path) {
+            alert('This lecture has no audio file to transcribe');
+            return;
+          }
+
+          const processingStatus = document.getElementById('processingStatus');
+          const processingMessage = document.getElementById('processingMessage');
+          const processingResults = document.getElementById('processingResults');
+          const segmentsCount = document.getElementById('segmentsCount');
+          const summaryAvailable = document.getElementById('summaryAvailable');
+          const suggestionsCount = document.getElementById('suggestionsCount');
+          const summarySection = document.getElementById('summarySection');
+          const summaryText = document.getElementById('summaryText');
+
+          // Show processing status
+          processingStatus.classList.remove('hidden');
+          processingResults.classList.add('hidden');
+          processTranscript.disabled = true;
+          processTranscript.innerHTML = 'Processing...';
+
+          try {
+            // Initialize transcription service
+            const config = window.UniversiteConfig.getConfig();
+            const transcriptionService = new TranscriptionService(config.DEEPGRAM.API_KEY, config.DEEPGRAM.MODEL);
+
+            let audioFile;
+            
+            // If we have a local audio URL, use it
+            if (currentLecture.audioUrl && currentLecture.audioUrl.startsWith('blob:')) {
+              // Convert blob URL to File
+              const response = await fetch(currentLecture.audioUrl);
+              const blob = await response.blob();
+              audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
+            } else if (currentLecture.file_path) {
+              // Download from storage
+              const token = await window.UniSupabase.getAccessToken();
+              const downloadUrl = `${window.UniSupabase.supabaseUrl}/storage/v1/object/public/${currentLecture.file_path}`;
+              const response = await fetch(downloadUrl, {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              if (!response.ok) {
+                throw new Error('Failed to download audio file');
+              }
+              
+              const blob = await response.blob();
+              audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
+            } else {
+              throw new Error('No audio source available');
+            }
+
+            processingMessage.textContent = 'Transcribing audio...';
+            
+            // Transcribe the audio
+            const result = await transcriptionService.transcribeAudio(audioFile, {
+              language: 'en'
+            });
+
+            if (result.success) {
+              // Update lecture with transcription
+              currentLecture.transcription = result.transcript;
+              currentLecture.transcription_confidence = result.confidence;
+              currentLecture.transcription_duration = result.duration;
+
+              // Update UI
+              processingMessage.textContent = 'Processing transcript...';
+              
+              // Create segments from transcription
+              const segments = createSegmentsFromTranscription(currentLecture);
+              
+              // Update counts
+              segmentsCount.textContent = segments.length;
+              summaryAvailable.textContent = 'Yes';
+              suggestionsCount.textContent = Math.min(5, segments.length * 2);
+
+              // Generate summary
+              processingMessage.textContent = 'Generating summary...';
+              const summary = await generateSummary(currentLecture.transcription);
+              if (summary) {
+                summaryText.textContent = summary;
+                summarySection.classList.remove('hidden');
+              }
+
+              // Show results
+              processingStatus.classList.add('hidden');
+              processingResults.classList.remove('hidden');
+              processTranscript.innerHTML = 'Process Transcript';
+              processTranscript.disabled = false;
+
+              // Show success message
+              alert('Transcription completed successfully!');
+            } else {
+              throw new Error(result.error || 'Transcription failed');
+            }
+
+          } catch (error) {
+            console.error('Transcription error:', error);
+            processingStatus.classList.add('hidden');
+            processTranscript.innerHTML = 'Process Transcript';
+            processTranscript.disabled = false;
+            alert(`Transcription failed: ${error.message}`);
+          }
+        });
+      }
+
+    async function generateSummary(transcript) {
+      try {
+        const config = window.UniversiteConfig.getConfig();
+        const huggingfaceService = new HuggingFaceService(config.HUGGINGFACE.API_KEY, config.HUGGINGFACE.MODEL);
+        
+        const prompt = `Please provide a concise summary of the following lecture transcript:\n\n${transcript.substring(0, 2000)}...`;
+        
+        const result = await huggingfaceService.generateText(prompt);
+        return result.success ? result.text : null;
+      } catch (error) {
+        console.error('Summary generation error:', error);
+        return null;
       }
     }
 

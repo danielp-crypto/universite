@@ -606,6 +606,12 @@
           processingOverlay.classList.remove('hidden');
           
           try {
+            const token = await window.UniSupabase.getAccessToken();
+            if (!token) {
+              window.location.href = 'login.html';
+              return;
+            }
+
             const formData = new FormData();
             formData.append('audio', file);
             if (typeof appState !== 'undefined' && appState.getSetting) {
@@ -615,21 +621,31 @@
             
             const transcriptResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
               method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` },
               body: formData
             });
             
-            if (transcriptResponse.ok) {
-              const transcriptData = await transcriptResponse.json();
-              if (transcriptData.success) {
-                await createLectureFromTranscript(transcriptData.transcript);
-                return;
-              }
+            const transcriptData = await transcriptResponse.json().catch(() => ({}));
+            
+            if (transcriptResponse.ok && transcriptData.success && transcriptData.transcript) {
+              await createLectureFromTranscript(transcriptData.transcript);
+              return;
             }
             
-            // Fallback to mock
+            if (transcriptResponse.status === 402 && transcriptData.error === 'quota_exceeded') {
+              processingOverlay.classList.add('hidden');
+              alert('Monthly lecture upload limit reached. Upgrade or try again next month.');
+              localState.recordingState = 'idle';
+              return;
+            }
+            
+            const errMsg = transcriptData.error || transcriptData.message || 'Transcription unavailable';
+            console.error('Transcription error:', errMsg);
+            alert(`Transcription failed: ${errMsg}`);
             createMockLecture();
           } catch (error) {
             console.error('Upload error:', error);
+            alert(`Upload error: ${error.message}`);
             createMockLecture();
           }
         }
