@@ -3,8 +3,14 @@
 
 // Environment detection
 const ENVIRONMENT = {
-  isDevelopment: () => window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
-  isProduction: () => !window.location.hostname === 'localhost' && !window.location.hostname === '127.0.0.1',
+  isDevelopment: () => {
+    const hostname = window.location.hostname;
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname === '';
+  },
+  isProduction: () => {
+    const hostname = window.location.hostname;
+    return !ENVIRONMENT.isDevelopment();
+  },
   isMobile: () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 };
 
