@@ -4,6 +4,10 @@ import requests
 import os
 import jwt
 from jwt import PyJWKClient
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes

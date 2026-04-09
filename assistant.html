@@ -653,8 +653,8 @@
       input.click();
     }
 
-    // Backend API base URL (Local Development)
-    const API_BASE_URL = 'http://localhost:5000';
+    // Backend API base URL from config
+    const API_BASE_URL = window.UniversiteConfig.getConfig().BACKEND.URL;
 
     // Context-aware AI responses using Python backend (which calls LLM API)
     async function getContextAwareResponse(userMessage) {
