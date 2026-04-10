@@ -57,12 +57,22 @@ def require_supabase_user():
         return False, ("missing_auth", 401)
 
     try:
-        jwk_client = _get_jwks_client()
-        signing_key = jwk_client.get_signing_key_from_jwt(token).key
+        # First try to decode without verification to get the algorithm
+        unverified = jwt.decode(token, options={"verify_signature": False})
+        alg = unverified.get('alg', 'RS256')
+        
+        if alg == 'HS256':
+            # For HS256, use the anon key as the secret
+            signing_key = SUPABASE_ANON_KEY
+        else:
+            # For RS256, get the signing key from JWKS
+            jwk_client = _get_jwks_client()
+            signing_key = jwk_client.get_signing_key_from_jwt(token).key
+        
         decoded = jwt.decode(
             token,
             signing_key,
-            algorithms=["RS256"],
+            algorithms=[alg],
             options={"verify_aud": False},
             issuer=f"{SUPABASE_URL}/auth/v1"
         )
