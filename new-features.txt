@@ -4,3 +4,4 @@ new features to add
 users can add their docs for more context (reports,textbooks,curriculum)
 -proof reading feature (helps the student with grammar,spelling etc)
 - Homework assistance (take pictures and get step by step help but it doesnt provide answers)
+- add features to help self learners
