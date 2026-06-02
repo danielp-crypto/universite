@@ -71,6 +71,19 @@
         transform: translateY(0);
       }
     }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .animate-pulse-recording {
+      animation: pulse 2s infinite;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
@@ -126,22 +139,22 @@
       <!-- Quick Actions -->
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-3">
-          <a href="assistant.html" class="block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-md active:scale-95 transition-transform">
+          <button id="start-record-btn" class="block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-md active:scale-95 transition-transform">
             <div class="flex flex-col items-center text-center text-white">
               <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
               <span class="font-semibold">Record Lecture</span>
             </div>
-          </a>
-          <a href="lectures.html" class="block p-4 bg-white border-2 border-slate-200 rounded-2xl active:scale-95 transition-transform">
+          </button>
+          <button id="upload-record-btn" class="block p-4 bg-white border-2 border-slate-200 rounded-2xl active:scale-95 transition-transform">
             <div class="flex flex-col items-center text-center text-slate-700">
               <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
-              <span class="font-semibold">My Lectures</span>
+              <span class="font-semibold">Upload Audio</span>
             </div>
-          </a>
+          </button>
         </div>
       </div>
 
@@ -264,6 +277,54 @@
             </svg>
           </a>
         </div>
+      </div>
+    </div>
+
+    <!-- Recording Overlay -->
+    <div id="recording-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+        <div class="text-center">
+          <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center animate-pulse-recording">
+            <div class="w-12 h-12 rounded-full bg-red-500"></div>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-800 mb-2">Recording</h3>
+          <div id="recording-timer" class="text-2xl font-mono text-slate-700 mb-4">00:00</div>
+          <div class="flex gap-3">
+            <button id="stop-record-btn" class="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-medium active:scale-95 transition-transform">
+              Stop
+            </button>
+            <button id="cancel-record-btn" class="flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processing-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+            <svg class="w-8 h-8 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-800 mb-2">Processing</h3>
+          <p id="processing-text" class="text-slate-600">Saving audio...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved Recordings Section -->
+    <div id="saved-recordings-section" class="hidden mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold text-slate-800">Saved Recordings</h2>
+        <button id="clear-recordings-btn" class="text-sm text-red-600 font-medium">Clear All</button>
+      </div>
+      <div id="saved-recordings" class="space-y-3">
+        <!-- Recordings will be dynamically loaded here -->
       </div>
     </div>
 
@@ -423,6 +484,274 @@
       config.BACKEND.URL
     );
 
+    // Recording state
+    const recordingState = {
+      mediaRecorder: null,
+      audioChunks: [],
+      audioBlob: null,
+      recordingStartTime: null,
+      recordingTimerInterval: null,
+      isRecording: false
+    };
+
+    // DOM elements
+    const startRecordBtn = document.getElementById('start-record-btn');
+    const uploadRecordBtn = document.getElementById('upload-record-btn');
+    const recordingOverlay = document.getElementById('recording-overlay');
+    const stopRecordBtn = document.getElementById('stop-record-btn');
+    const cancelRecordBtn = document.getElementById('cancel-record-btn');
+    const processingOverlay = document.getElementById('processing-overlay');
+    const processingText = document.getElementById('processing-text');
+    const recordingTimer = document.getElementById('recording-timer');
+    const savedRecordingsSection = document.getElementById('saved-recordings-section');
+    const savedRecordings = document.getElementById('saved-recordings');
+    const clearRecordingsBtn = document.getElementById('clear-recordings-btn');
+
+    // Local storage key for recordings
+    const RECORDINGS_STORAGE_KEY = 'universite_recordings';
+
+    // Get recordings from local storage
+    function getRecordings() {
+      try {
+        const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
+        return recordings ? JSON.parse(recordings) : [];
+      } catch (error) {
+        console.error('Error getting recordings:', error);
+        return [];
+      }
+    }
+
+    // Save recordings to local storage
+    function saveRecordings(recordings) {
+      try {
+        localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
+      } catch (error) {
+        console.error('Error saving recordings:', error);
+        alert('Error saving recording. Storage may be full.');
+      }
+    }
+
+    // Load and display saved recordings
+    function loadSavedRecordings() {
+      const recordings = getRecordings();
+      if (recordings.length === 0) {
+        savedRecordingsSection.classList.add('hidden');
+        return;
+      }
+
+      savedRecordingsSection.classList.remove('hidden');
+      savedRecordings.innerHTML = recordings.map((recording, index) => `
+        <div class="bg-white border border-slate-200 rounded-2xl p-4">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1">
+              <h3 class="text-base font-semibold text-slate-800 mb-1">${recording.name}</h3>
+              <div class="flex items-center gap-3 text-xs text-slate-500">
+                <span>${recording.date}</span>
+                <span>•</span>
+                <span>${recording.duration}</span>
+              </div>
+            </div>
+            <button onclick="deleteRecording(${index})" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+          <audio controls class="w-full" src="${recording.audioUrl}"></audio>
+        </div>
+      `).join('');
+    }
+
+    // Delete a recording
+    window.deleteRecording = function(index) {
+      if (confirm('Are you sure you want to delete this recording?')) {
+        const recordings = getRecordings();
+        recordings.splice(index, 1);
+        saveRecordings(recordings);
+        loadSavedRecordings();
+      }
+    };
+
+    // Clear all recordings
+    function clearAllRecordings() {
+      if (confirm('Are you sure you want to delete all recordings?')) {
+        localStorage.removeItem(RECORDINGS_STORAGE_KEY);
+        loadSavedRecordings();
+      }
+    }
+
+    // Start recording
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordingState.mediaRecorder = new MediaRecorder(stream);
+        recordingState.audioChunks = [];
+        
+        recordingState.mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordingState.audioChunks.push(event.data);
+          }
+        };
+        
+        recordingState.mediaRecorder.onstop = () => {
+          recordingState.audioBlob = new Blob(recordingState.audioChunks, { type: 'audio/webm' });
+          stream.getTracks().forEach(track => track.stop());
+        };
+        
+        recordingState.mediaRecorder.start();
+        recordingState.isRecording = true;
+        recordingState.recordingStartTime = Date.now();
+        recordingOverlay.classList.remove('hidden');
+        startRecordingTimer();
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        alert('Could not access microphone. Please check permissions.');
+      }
+    }
+
+    // Stop recording
+    async function stopRecording() {
+      if (recordingState.mediaRecorder && recordingState.isRecording) {
+        recordingState.mediaRecorder.stop();
+        recordingState.isRecording = false;
+        recordingOverlay.classList.add('hidden');
+        processingOverlay.classList.remove('hidden');
+        stopRecordingTimer();
+        
+        // Save the recording
+        await saveRecording();
+      }
+    }
+
+    // Cancel recording
+    function cancelRecording() {
+      if (recordingState.mediaRecorder && recordingState.isRecording) {
+        recordingState.mediaRecorder.stop();
+        recordingState.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      recordingState.isRecording = false;
+      recordingState.audioChunks = [];
+      recordingState.audioBlob = null;
+      recordingOverlay.classList.add('hidden');
+      stopRecordingTimer();
+    }
+
+    // Start recording timer
+    function startRecordingTimer() {
+      recordingState.recordingTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingState.recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        recordingTimer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // Stop recording timer
+    function stopRecordingTimer() {
+      if (recordingState.recordingTimerInterval) {
+        clearInterval(recordingState.recordingTimerInterval);
+        recordingState.recordingTimerInterval = null;
+      }
+    }
+
+    // Save recording to local storage
+    async function saveRecording() {
+      processingText.textContent = 'Saving audio...';
+      
+      try {
+        const elapsed = recordingState.recordingStartTime != null
+          ? Math.floor((Date.now() - recordingState.recordingStartTime) / 1000) : 0;
+        const duration = formatDuration(elapsed);
+        
+        // Convert blob to base64 for storage
+        const reader = new FileReader();
+        reader.readAsDataURL(recordingState.audioBlob);
+        reader.onloadend = () => {
+          const base64Audio = reader.result;
+          
+          const recording = {
+            id: Date.now().toString(),
+            name: `Recording - ${new Date().toLocaleDateString()}`,
+            date: new Date().toLocaleDateString(),
+            duration: duration,
+            audioUrl: base64Audio,
+            createdAt: new Date().toISOString()
+          };
+          
+          const recordings = getRecordings();
+          recordings.unshift(recording);
+          saveRecordings(recordings);
+          
+          recordingState.audioChunks = [];
+          recordingState.audioBlob = null;
+          processingOverlay.classList.add('hidden');
+          
+          loadSavedRecordings();
+        };
+      } catch (error) {
+        console.error('Error saving recording:', error);
+        alert('Error saving recording. Please try again.');
+        processingOverlay.classList.add('hidden');
+      }
+    }
+
+    // Upload recording
+    function uploadRecording() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'audio/*';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          processingOverlay.classList.remove('hidden');
+          processingText.textContent = 'Processing audio...';
+          
+          try {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+              const base64Audio = reader.result;
+              
+              const recording = {
+                id: Date.now().toString(),
+                name: file.name,
+                date: new Date().toLocaleDateString(),
+                duration: 'N/A',
+                audioUrl: base64Audio,
+                createdAt: new Date().toISOString()
+              };
+              
+              const recordings = getRecordings();
+              recordings.unshift(recording);
+              saveRecordings(recordings);
+              
+              processingOverlay.classList.add('hidden');
+              loadSavedRecordings();
+            };
+          } catch (error) {
+            console.error('Error uploading recording:', error);
+            alert('Error uploading recording. Please try again.');
+            processingOverlay.classList.add('hidden');
+          }
+        }
+      };
+      input.click();
+    }
+
+    // Format duration
+    function formatDuration(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    // Event listeners
+    startRecordBtn.addEventListener('click', startRecording);
+    stopRecordBtn.addEventListener('click', stopRecording);
+    cancelRecordBtn.addEventListener('click', cancelRecording);
+    uploadRecordBtn.addEventListener('click', uploadRecording);
+    clearRecordingsBtn.addEventListener('click', clearAllRecordings);
+
     // Profile completion functions
     let userProfile = null;
 
@@ -527,6 +856,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // Load saved recordings
+      loadSavedRecordings();
+
       // Check if widget was recently dismissed
       const dismissed = localStorage.getItem('profile_widget_dismissed');
       const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
