@@ -32,7 +32,7 @@ Universite is an AI powered learning assistant centered around lecture recording
 - React frontend framework
 - Google Analytics
 - Google Sign-In integration
-- Apple Sign-In integration
+
 
 
 ## Privacy and Terms
