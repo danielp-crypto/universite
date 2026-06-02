@@ -344,6 +344,8 @@
   </div>
 
   <script>
+    console.log('Lecture detail page script loaded');
+    
     // Initialize configuration and services
     const config = window.UniversiteConfig.getConfig();
     const qaService = new QAService(config.HUGGINGFACE.API_KEY);
@@ -357,6 +359,26 @@
       config.DEEPGRAM.API_KEY,
       config.BACKEND.URL
     );
+
+    // Local storage key for recordings
+    const RECORDINGS_STORAGE_KEY = 'universite_recordings';
+
+    // Get recordings from local storage
+    function getRecordings() {
+      try {
+        const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
+        return recordings ? JSON.parse(recordings) : [];
+      } catch (error) {
+        console.error('Error getting recordings:', error);
+        return [];
+      }
+    }
+
+    // Get local recording by ID
+    function getLocalRecordingById(id) {
+      const recordings = getRecordings();
+      return recordings.find(recording => recording.id === id);
+    }
 
     // Audio player functionality
     let currentLecture = null;
@@ -672,6 +694,26 @@
     async function loadLecture(lectureId) {
       try {
         audioStatus.textContent = 'Loading lecture...';
+        console.log('Loading lecture with ID:', lectureId);
+        
+        // First check if it's a local recording from localStorage
+        const localRecording = getLocalRecordingById(lectureId);
+        if (localRecording) {
+          console.log('Found local recording:', localRecording);
+          currentLecture = {
+            id: localRecording.id,
+            title: localRecording.name,
+            created_at: localRecording.createdAt,
+            duration: localRecording.duration,
+            audioUrl: localRecording.audioUrl,
+            isLocal: true,
+            transcription: null
+          };
+          await loadLocalAudio();
+          return;
+        }
+        
+        // If not a local recording, try LocalLectureManager
         console.log('LocalLectureManager available:', !!window.localLectureManager);
         
         if (window.localLectureManager) {
@@ -699,8 +741,13 @@
     async function loadLocalAudio() {
       try {
         if (currentLecture) {
+          // For local recordings, use audioUrl directly
+          if (currentLecture.isLocal && currentLecture.audioUrl) {
+            audioPlayer.src = currentLecture.audioUrl;
+            audioStatus.textContent = 'Local recording ready';
+          }
           // First try local audio (for mock lectures)
-          if (currentLecture.local_audio) {
+          else if (currentLecture.local_audio) {
             audioPlayer.src = currentLecture.local_audio;
             audioStatus.textContent = 'Local audio ready';
           } 
