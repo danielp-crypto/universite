@@ -123,7 +123,38 @@
   </div>
 
   <script>
+    console.log('Lectures page script loaded');
+    
     let currentFilter = 'all';
+    
+    // Local storage key for recordings
+    const RECORDINGS_STORAGE_KEY = 'universite_recordings';
+
+    // Get recordings from local storage
+    function getRecordings() {
+      try {
+        const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
+        return recordings ? JSON.parse(recordings) : [];
+      } catch (error) {
+        console.error('Error getting recordings:', error);
+        return [];
+      }
+    }
+
+    // Convert local recordings to lecture format
+    function getLocalLectures() {
+      const localRecordings = getRecordings();
+      return localRecordings.map(recording => ({
+        id: recording.id,
+        title: recording.name,
+        createdAt: recording.createdAt,
+        duration: recording.duration,
+        keyConcepts: ['local recording'],
+        isLocal: true,
+        audioUrl: recording.audioUrl,
+        favorite: false
+      }));
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       updateFilterCounts();
@@ -141,72 +172,150 @@
       document.getElementById(`filter-${filter}`).classList.add('bg-indigo-100', 'text-indigo-700');
       document.getElementById(`filter-${filter}`).classList.remove('text-slate-600');
 
-      if (typeof appState === 'undefined') {
-        document.getElementById('lectures-list').innerHTML = '';
-        document.getElementById('empty-state').classList.remove('hidden');
-        return;
+      // Get all lectures (local + appState)
+      let allLectures = [];
+      const localLectures = getLocalLectures();
+      
+      if (typeof appState !== 'undefined') {
+        allLectures = [...localLectures, ...appState.lectures];
+      } else {
+        allLectures = localLectures;
       }
 
-      const lectures = filter === 'all' ? appState.lectures : appState.filterLectures(filter);
+      // Sort by date (newest first)
+      allLectures.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Filter lectures
+      let filteredLectures = allLectures;
+      if (filter !== 'all') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        filteredLectures = allLectures.filter(lecture => {
+          const lectureDate = new Date(lecture.createdAt);
+          
+          if (filter === 'today') {
+            return lectureDate >= today;
+          } else if (filter === 'week') {
+            return lectureDate >= weekAgo;
+          } else if (filter === 'favorites') {
+            return lecture.favorite === true;
+          }
+          return true;
+        });
+      }
+
       const container = document.getElementById('lectures-list');
       const emptyState = document.getElementById('empty-state');
 
-      if (lectures.length === 0) {
+      if (filteredLectures.length === 0) {
         container.innerHTML = '';
         emptyState.classList.remove('hidden');
         return;
       }
 
       emptyState.classList.add('hidden');
-      container.innerHTML = lectures.map(lecture => {
+      container.innerHTML = filteredLectures.map(lecture => {
         const date = new Date(lecture.createdAt);
         const dateStr = formatDate(date);
         const isFavorite = lecture.favorite || false;
+        const isLocal = lecture.isLocal || false;
 
-        return `
-          <div class="bg-white border border-slate-200 rounded-2xl p-4">
-            <div class="flex items-start justify-between mb-2">
-              <a href="lecture-detail.html?id=${lecture.id}" class="flex-1">
-                <h3 class="text-base font-semibold text-slate-800 mb-1">${lecture.title}</h3>
-                <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
-                  <span>${dateStr}</span>
-                  <span>•</span>
-                  <span>${lecture.duration || 'N/A'}</span>
+        if (isLocal) {
+          // Local recording with audio player
+          return `
+            <div class="bg-white border border-slate-200 rounded-2xl p-4">
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                  <h3 class="text-base font-semibold text-slate-800 mb-1">${lecture.title}</h3>
+                  <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                    <span>${dateStr}</span>
+                    <span>•</span>
+                    <span>${lecture.duration || 'N/A'}</span>
+                    <span>•</span>
+                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>
+                  </div>
                 </div>
-              </a>
-              <button onclick="toggleFavorite('${lecture.id}')" class="p-1 ${isFavorite ? 'text-amber-400' : 'text-slate-400'} hover:text-amber-600">
-                <svg class="w-5 h-5" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-              </button>
-            </div>
-            ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
-              <div class="flex flex-wrap gap-1.5 mb-3">
-                ${lecture.keyConcepts.slice(0, 3).map(concept => `
-                  <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
-                `).join('')}
               </div>
-            ` : ''}
-            <div class="flex gap-2">
-              <a href="lecture-detail.html?id=${lecture.id}" class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform">
-                View Details
-              </a>
-              <a href="assistant.html?lecture=${lecture.id}" class="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform">
-                Chat
-              </a>
+              <audio controls class="w-full mb-3" src="${lecture.audioUrl}"></audio>
+              ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
+                <div class="flex flex-wrap gap-1.5">
+                  ${lecture.keyConcepts.slice(0, 3).map(concept => `
+                    <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
+                  `).join('')}
+                </div>
+              ` : ''}
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          // Regular lecture
+          return `
+            <div class="bg-white border border-slate-200 rounded-2xl p-4">
+              <div class="flex items-start justify-between mb-2">
+                <a href="lecture-detail.html?id=${lecture.id}" class="flex-1">
+                  <h3 class="text-base font-semibold text-slate-800 mb-1">${lecture.title}</h3>
+                  <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                    <span>${dateStr}</span>
+                    <span>•</span>
+                    <span>${lecture.duration || 'N/A'}</span>
+                  </div>
+                </a>
+                <button onclick="toggleFavorite('${lecture.id}')" class="p-1 ${isFavorite ? 'text-amber-400' : 'text-slate-400'} hover:text-amber-600">
+                  <svg class="w-5 h-5" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                </button>
+              </div>
+              ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
+                <div class="flex flex-wrap gap-1.5 mb-3">
+                  ${lecture.keyConcepts.slice(0, 3).map(concept => `
+                    <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
+                  `).join('')}
+                </div>
+              ` : ''}
+              <div class="flex gap-2">
+                <a href="lecture-detail.html?id=${lecture.id}" class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform">
+                  View Details
+                </a>
+                <a href="assistant.html?lecture=${lecture.id}" class="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform">
+                  Chat
+                </a>
+              </div>
+            </div>
+          `;
+        }
       }).join('');
     }
 
     function updateFilterCounts() {
-      if (typeof appState === 'undefined') return;
+      // Get all lectures (local + appState)
+      let allLectures = [];
+      const localLectures = getLocalLectures();
       
-      document.getElementById('count-all').textContent = appState.lectures.length;
-      document.getElementById('count-today').textContent = appState.filterLectures('today').length;
-      document.getElementById('count-week').textContent = appState.filterLectures('week').length;
-      document.getElementById('count-favorites').textContent = appState.filterLectures('favorites').length;
+      if (typeof appState !== 'undefined') {
+        allLectures = [...localLectures, ...appState.lectures];
+      } else {
+        allLectures = localLectures;
+      }
+
+      // Sort by date (newest first)
+      allLectures.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Count lectures for each filter
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const countAll = allLectures.length;
+      const countToday = allLectures.filter(lecture => new Date(lecture.createdAt) >= today).length;
+      const countWeek = allLectures.filter(lecture => new Date(lecture.createdAt) >= weekAgo).length;
+      const countFavorites = allLectures.filter(lecture => lecture.favorite === true).length;
+
+      document.getElementById('count-all').textContent = countAll;
+      document.getElementById('count-today').textContent = countToday;
+      document.getElementById('count-week').textContent = countWeek;
+      document.getElementById('count-favorites').textContent = countFavorites;
     }
 
     function toggleFavorite(lectureId) {
