@@ -18,13 +18,13 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 
 # Hugging Face AI Configuration
-# Use environment variable for API key in production, fallback to default for development
-HUGGINGFACE_API_KEY = os.environ.get('HUGGINGFACE_API_KEY', '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')
+# Use environment variable for API key in production
+HUGGINGFACE_API_KEY = os.environ.get('HUGGINGFACE_API_KEY', '')
 HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/distilgpt2'
 
 # Deepgram Transcription Configuration (Free Alternative to Google Speech-to-Text)
-# Use environment variable for API key in production, fallback to default for development
-DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', 'ce13c31e5021793d31d23a47725e859632c4b7b6')
+# Use environment variable for API key in production
+DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', '')
 DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen'
 
 # Google Cloud Speech-to-Text: use service account from env (path to JSON key file)

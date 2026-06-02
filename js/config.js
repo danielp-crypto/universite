@@ -30,7 +30,7 @@ const CONFIG = {
 
   // Hugging Face AI Configuration
   HUGGINGFACE: {
-    API_KEY: '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', // Your Hugging Face token
+    API_KEY: '', // Set via environment variable in production
     MODEL: 'microsoft/DialoGPT-medium', // Free chat model
     BASE_URL: 'https://api-inference.huggingface.co/models',
     MAX_RETRIES: 3,
@@ -39,7 +39,7 @@ const CONFIG = {
   
   // Deepgram Transcription Configuration (Free Alternative to Google Speech-to-Text)
   DEEPGRAM: {
-    API_KEY: 'ce13c31e5021793d31d23a47725e859632c4b7b6', // Your Deepgram API key
+    API_KEY: '', // Set via environment variable in production
     MODEL: 'nova-2', // Free model
     BASE_URL: 'https://api.deepgram.com/v1',
     MAX_RETRIES: 3,
