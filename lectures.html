@@ -227,7 +227,7 @@
           return `
             <div class="bg-white border border-slate-200 rounded-2xl p-4">
               <div class="flex items-start justify-between mb-2">
-                <div class="flex-1">
+                <a href="lecture-detail.html?id=${lecture.id}" class="flex-1">
                   <h3 class="text-base font-semibold text-slate-800 mb-1">${lecture.title}</h3>
                   <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
                     <span>${dateStr}</span>
@@ -236,11 +236,19 @@
                     <span>•</span>
                     <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>
                   </div>
-                </div>
+                </a>
               </div>
               <audio controls class="w-full mb-3" src="${lecture.audioUrl}"></audio>
+              <div class="flex gap-2">
+                <a href="lecture-detail.html?id=${lecture.id}" class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform">
+                  View Details
+                </a>
+                <a href="assistant.html?lecture=${lecture.id}" class="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform">
+                  Chat
+                </a>
+              </div>
               ${lecture.keyConcepts && lecture.keyConcepts.length > 0 ? `
-                <div class="flex flex-wrap gap-1.5">
+                <div class="flex flex-wrap gap-1.5 mt-3">
                   ${lecture.keyConcepts.slice(0, 3).map(concept => `
                     <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">${concept}</span>
                   `).join('')}
