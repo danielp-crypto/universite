@@ -799,8 +799,7 @@
       // Always load lectures regardless of widget dismissal
       console.log('Calling loadRecentLectures');
       await loadRecentLectures();
-      console.log('Calling loadStats');
-      loadStats();
+      // loadStats() is no longer needed - updateWeeklyStats handles it
 
       // Check if widget was recently dismissed
       const dismissed = localStorage.getItem('profile_widget_dismissed');
@@ -884,6 +883,8 @@
           container.innerHTML = '';
           noLectures.classList.remove('hidden');
           console.log('No lectures found, showing no lectures message');
+          // Update weekly stats even if no lectures
+          updateWeeklyStats(allLectures);
           return;
         }
 
@@ -933,10 +934,77 @@
             `;
           }
         }).join('');
+
+        // Update weekly stats
+        updateWeeklyStats(allLectures);
       } catch (error) {
         console.error('Error loading recent lectures:', error);
         document.getElementById('no-lectures').classList.remove('hidden');
       }
+    }
+
+    function updateWeeklyStats(lectures) {
+      console.log('updateWeeklyStats called with', lectures.length, 'lectures');
+      
+      // Calculate week start (Monday)
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const weekStart = new Date(now.setDate(diff));
+      weekStart.setHours(0, 0, 0, 0);
+      console.log('Week start:', weekStart);
+
+      // Filter lectures from this week
+      const weeklyLectures = lectures.filter(lecture => {
+        const lectureDate = new Date(lecture.created_at || lecture.createdAt);
+        return lectureDate >= weekStart;
+      });
+      console.log('Weekly lectures:', weeklyLectures.length);
+
+      // Count lectures
+      const lectureCount = weeklyLectures.length;
+
+      // Calculate total hours (estimate from duration)
+      let totalMinutes = 0;
+      weeklyLectures.forEach(lecture => {
+        const duration = lecture.duration || '0:00';
+        const parts = duration.split(':');
+        if (parts.length === 2) {
+          totalMinutes += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+      });
+      const totalHours = (totalMinutes / 60).toFixed(1);
+      console.log('Total hours:', totalHours);
+
+      // Get flashcard count from localStorage
+      let flashcardCount = 0;
+      try {
+        const flashcards = localStorage.getItem('universite_flashcards');
+        if (flashcards) {
+          const flashcardData = JSON.parse(flashcards);
+          console.log('Total flashcards:', flashcardData.length);
+          // Filter flashcards from this week
+          const weeklyFlashcards = flashcardData.filter(card => {
+            const cardDate = new Date(card.created_at || card.createdAt);
+            return cardDate >= weekStart;
+          });
+          flashcardCount = weeklyFlashcards.length;
+          console.log('Weekly flashcards:', flashcardCount);
+        }
+      } catch (error) {
+        console.error('Error getting flashcards:', error);
+      }
+
+      // Update UI
+      const statLectures = document.getElementById('stat-lectures');
+      const statHours = document.getElementById('stat-hours');
+      const statFlashcards = document.getElementById('stat-flashcards');
+      
+      if (statLectures) statLectures.textContent = lectureCount;
+      if (statHours) statHours.textContent = totalHours;
+      if (statFlashcards) statFlashcards.textContent = flashcardCount;
+
+      console.log('Weekly stats updated:', { lectureCount, totalHours, flashcardCount });
     }
 
     function loadStats() {
