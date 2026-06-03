@@ -943,6 +943,6 @@ def transcribe_audio():
             'error': f'Transcription proxy error: {str(e)}'
         }), 500
 
-# Vercel serverless function handler
-def handler(event, context):
-    return app(event, context)
+# Vercel Python serverless function
+# Export the Flask app as a WSGI application
+application = app
