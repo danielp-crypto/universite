@@ -944,5 +944,5 @@ def transcribe_audio():
         }), 500
 
 # Vercel serverless function handler
-def handler(request):
-    return app(request.environ, lambda status, headers: None)
+def handler(environ, start_response):
+    return app(environ, start_response)
