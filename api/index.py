@@ -157,16 +157,9 @@ def consume_quota(action: str, amount: int = 1):
         return False, {"error": "quota_rpc_invalid_json", "details": resp.text}
     return True, data
 
-# Serve static files
-@app.route('/')
-def serve_home():
-    return send_from_directory('.', 'home.html')
+# Static files are served by Vercel, not Flask
 
-@app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory('.', path)
-
-@app.route('/api/chat', methods=['POST'])
+@app.route('/chat', methods=['POST'])
 def chat():
     try:
         ok, err = require_supabase_user()
@@ -259,7 +252,7 @@ Use this lecture information to provide contextually relevant responses."""
             'error': str(e)
         }), 500
 
-@app.route('/api/generate-flashcards', methods=['POST'])
+@app.route('/generate-flashcards', methods=['POST'])
 def generate_flashcards():
     try:
         ok, err = require_supabase_user()
@@ -415,7 +408,7 @@ def _transcribe_audio(audio_content: bytes, content_type: str) -> str:
 
     raise RuntimeError(f"Transcription failed after {max_retries} attempts: {last_error}")
 
-@app.route('/api/transcribe', methods=['POST'])
+@app.route('/transcribe', methods=['POST'])
 def transcribe():
     try:
         ok, err = require_supabase_user()
@@ -475,7 +468,7 @@ def transcribe():
             "error": str(e),
         }), 500
 
-@app.route('/api/process-lecture', methods=['POST'])
+@app.route('/process-lecture', methods=['POST'])
 def process_lecture():
     try:
         ok, err = require_supabase_user()
@@ -495,7 +488,7 @@ def process_lecture():
             'error': str(e)
         }), 500
 
-@app.route('/api/lectures', methods=['GET'])
+@app.route('/lectures', methods=['GET'])
 def get_lectures():
     try:
         ok, err = require_supabase_user()
@@ -541,7 +534,7 @@ def get_lectures():
             'error': str(e)
         }), 500
 
-@app.route('/api/lectures', methods=['POST'])
+@app.route('/lectures', methods=['POST'])
 def create_lecture():
     try:
         ok, err = require_supabase_user()
@@ -619,7 +612,7 @@ def create_lecture():
             'error': str(e)
         }), 500
 
-@app.route('/api/lectures/<lecture_id>', methods=['GET'])
+@app.route('/lectures/<lecture_id>', methods=['GET'])
 def get_lecture(lecture_id):
     try:
         ok, err = require_supabase_user()
@@ -662,7 +655,7 @@ def get_lecture(lecture_id):
             'error': str(e)
         }), 500
 
-@app.route('/api/lectures/<lecture_id>', methods=['PUT'])
+@app.route('/lectures/<lecture_id>', methods=['PUT'])
 def update_lecture(lecture_id):
     try:
         ok, err = require_supabase_user()
@@ -723,7 +716,7 @@ def update_lecture(lecture_id):
             'error': str(e)
         }), 500
 
-@app.route('/api/lectures/<lecture_id>', methods=['DELETE'])
+@app.route('/lectures/<lecture_id>', methods=['DELETE'])
 def delete_lecture(lecture_id):
     try:
         ok, err = require_supabase_user()
@@ -756,7 +749,7 @@ def delete_lecture(lecture_id):
             'error': str(e)
         }), 500
 
-@app.route('/api/lectures/<lecture_id>/segments', methods=['POST'])
+@app.route('/lectures/<lecture_id>/segments', methods=['POST'])
 def create_lecture_segment(lecture_id):
     try:
         ok, err = require_supabase_user()
@@ -873,7 +866,7 @@ def test_huggingface():
             'error': str(e)
         }), 500
 
-@app.route('/api/deepgram/test', methods=['GET'])
+@app.route('/deepgram/test', methods=['GET'])
 def test_deepgram():
     try:
         if not DEEPGRAM_API_KEY:
@@ -893,7 +886,7 @@ def test_deepgram():
             'error': f'Proxy error: {str(e)}'
         }), 500
 
-@app.route('/api/deepgram/transcribe', methods=['POST'])
+@app.route('/deepgram/transcribe', methods=['POST'])
 def transcribe_audio():
     try:
         ok, err = require_supabase_user()
