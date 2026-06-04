@@ -3,6 +3,14 @@
     {
       "source": "/api/:path*",
       "destination": "/api/index.py"
+    },
+    {
+      "source": "/",
+      "destination": "/home.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
     }
   ]
 }
