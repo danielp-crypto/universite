@@ -1,3 +1,0 @@
-Sitemap: https://universite.co.za/sitemap.xml
-User-agent: *
-Disallow: 
