@@ -249,28 +249,28 @@ export default function Home() {
                   <span><strong>10 AI flashcards/month</strong> - Try intelligent study cards</span>
                 </li>
                 <li className="flex items-start">
-                  <span class="mt-1 mr-2 text-emerald-600">✓</span>
+                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
                   <span><strong>5 Q&A generations/month</strong> - Ask questions about your lectures</span>
                 </li>
                 <li className="flex items-start">
-                  <span class="mt-1 mr-2 text-emerald-600">✓</span>
+                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
                   <span><strong>2 AI summaries/month</strong> - Get lecture insights</span>
                 </li>
                 <li className="flex items-start">
-                  <span class="mt-1 mr-2 text-emerald-600">✓</span>
+                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
                   <span><strong>Local storage</strong> - Your data stays on your device</span>
                 </li>
                 <li className="flex items-start">
-                  <span class="mt-1 mr-2 text-slate-400">•</span>
-                  <span class="text-slate-400">Unlimited AI features</span>
+                  <span className="mt-1 mr-2 text-slate-400">•</span>
+                  <span className="text-slate-400">Unlimited AI features</span>
                 </li>
                 <li className="flex items-start">
-                  <span class="mt-1 mr-2 text-slate-400">•</span>
-                  <span class="text-slate-400">Advanced study analytics</span>
+                  <span className="mt-1 mr-2 text-slate-400">•</span>
+                  <span className="text-slate-400">Advanced study analytics</span>
                 </li>
                 <li className="flex items-start">
-                  <span class="mt-1 mr-2 text-slate-400">•</span>
-                  <span class="text-slate-400">Priority support</span>
+                  <span className="mt-1 mr-2 text-slate-400">•</span>
+                  <span className="text-slate-400">Priority support</span>
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
