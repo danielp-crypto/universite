@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Learning Assistant - Record lectures, get transcripts, and study with AI">
+  <title>AI Learning Assistant | Universite</title>
+  <link rel="shortcut icon" href="assets/images/icon-white-removebg.png" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/theme-manager.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes typingDot {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+      }
+      30% {
+        transform: translateY(-10px);
+        opacity: 1;
+      }
+    }
+
+    .animate-typing-dot {
+      animation: typingDot 1.4s infinite;
+    }
+
+    .animation-delay-200 {
+      animation-delay: 0.2s;
+    }
+
+    .animation-delay-400 {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .animate-pulse-recording {
+      animation: pulse 2s infinite;
+    }
+
+    .safe-area-inset-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+  </style>
+  <script src="js/app-state.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script src="js/huggingface-service.js"></script>
+  <script src="js/transcription-service.js"></script>
+  <script>
+    // Capture all errors before redirect
+    window.addEventListener('error', function(e) {
+      console.error('CAPTURED ERROR:', e.error);
+      console.error('ERROR MESSAGE:', e.message);
+      console.error('ERROR FILE:', e.filename);
+      console.error('ERROR LINE:', e.lineno);
+      // Store error in sessionStorage to view after redirect
+      sessionStorage.setItem('lastError', JSON.stringify({
+        message: e.message,
+        filename: e.filename,
+        lineno: e.lineno,
+        error: e.error?.toString()
+      }));
+    });
+    
+    // Capture unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('CAPTURED PROMISE REJECTION:', e.reason);
+      sessionStorage.setItem('lastPromiseError', JSON.stringify({
+        reason: e.reason?.toString()
+      }));
+    });
+  </script>
+</head>
+<body class="bg-slate-50 h-screen overflow-hidden">
+  <div id="app" class="flex flex-col h-screen">
+    <!-- Main Container -->
+    <div class="flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+      <!-- Header -->
+      <div class="bg-white border-b border-slate-200 px-4 py-3 md:py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="assets/images/icon-removebg-preview.png-128x128.png" alt="Universite" class="w-6 h-6 md:w-7 md:h-7">
+          <h1 class="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Universite
+          </h1>
+        </div>
+        <button id="record-btn" class="p-2 text-slate-600 hover:text-indigo-600 transition-colors active:scale-95">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Messages Area -->
+      <div id="messages-area" class="flex-1 overflow-y-auto px-4 py-6 space-y-4 pb-24">
+        <!-- Welcome Message -->
+        <div id="welcome-message" class="flex flex-col items-center justify-center h-full text-center px-4">
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
+            <img src="assets/images/icon-white-removebg.png" alt="Universite logo" class="w-8 h-8 md:w-10 md:h-10 object-contain">
+          </div>
+          <h2 class="text-xl md:text-2xl font-semibold text-slate-800 mb-2">
+            Record a lecture to get started
+          </h2>
+          <p class="text-sm md:text-base text-slate-600 max-w-md mb-6">
+            Record or upload a lecture recording to generate transcripts, summaries, and study materials.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button id="start-record-btn" class="px-6 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-medium shadow-md active:scale-95 transition-transform">
+              Record Lecture
+            </button>
+            <button id="upload-record-btn" class="px-6 py-3 bg-white text-slate-700 border-2 border-slate-200 rounded-xl font-medium active:scale-95 transition-transform">
+              Upload Recording
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recording Overlay -->
+    <div id="recording-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+        <div class="text-center">
+          <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center animate-pulse-recording">
+            <div class="w-12 h-12 rounded-full bg-red-500"></div>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-800 mb-2">Recording</h3>
+          <div id="recording-timer" class="text-2xl font-mono text-slate-700 mb-4">00:00</div>
+          <div class="flex gap-3">
+            <button id="stop-record-btn" class="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-medium active:scale-95 transition-transform">
+              Stop
+            </button>
+            <button id="cancel-record-btn" class="flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processing-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+            <svg class="w-8 h-8 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-800 mb-2">Processing</h3>
+          <p id="processing-text" class="text-slate-600">Generating transcript...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="fixed bottom-16 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 md:py-4 safe-area-inset-bottom">
+      <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+        <div class="flex gap-2 items-end">
+          <div class="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 pr-12 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100">
+            <textarea
+              id="chat-input"
+              placeholder="Ask about your lecture..."
+              rows="1"
+              class="flex-1 border-none bg-transparent outline-none resize-none text-sm md:text-base text-slate-800 placeholder-slate-500 min-h-[24px] max-h-[120px] leading-relaxed"
+              style="font-family: inherit;"
+            ></textarea>
+            <button
+              id="attach-lecture-btn"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-600 hover:text-indigo-600 transition-colors active:scale-95"
+              title="Attach lecture"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+            </button>
+          </div>
+          <button
+            id="send-btn"
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-200 flex-shrink-0"
+            aria-label="Send message"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-40">
+      <div class="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+        <div class="flex items-center justify-around py-2">
+          <a href="home.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+            </svg>
+            <span class="text-xs font-medium">Home</span>
+          </a>
+          <a href="lectures.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span class="text-xs font-medium">Lectures</span>
+          </a>
+          <div class="flex flex-col items-center py-2 px-4 text-indigo-600 pointer-events-none opacity-50">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span class="text-xs font-medium">Chat</span>
+          </div>
+          <a href="settings.html" class="flex flex-col items-center py-2 px-4 text-slate-400">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="text-xs font-medium">Settings</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    // Local app state for this page
+    const localState = {
+      recordingState: 'idle', // 'idle', 'recording', 'processing', 'processed'
+      currentLecture: null,
+      recordingStartTime: null,
+      recordingTimerInterval: null,
+      messages: [],
+      mediaRecorder: null,
+      audioChunks: [],
+      audioBlob: null,
+    };
+
+    // Check for lecture ID in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const lectureId = urlParams.get('lecture');
+    if (lectureId && typeof appState !== 'undefined') {
+      localState.currentLecture = appState.getLecture(lectureId);
+      if (localState.currentLecture) {
+        localState.messages = localState.currentLecture.chatHistory || [];
+      }
+    }
+
+    const messagesArea = document.getElementById('messages-area');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const recordBtn = document.getElementById('record-btn');
+    const startRecordBtn = document.getElementById('start-record-btn');
+    const uploadRecordBtn = document.getElementById('upload-record-btn');
+    const recordingOverlay = document.getElementById('recording-overlay');
+    const stopRecordBtn = document.getElementById('stop-record-btn');
+    const cancelRecordBtn = document.getElementById('cancel-record-btn');
+    const processingOverlay = document.getElementById('processing-overlay');
+    const processingText = document.getElementById('processing-text');
+    const recordingTimer = document.getElementById('recording-timer');
+    const attachLectureBtn = document.getElementById('attach-lecture-btn');
+
+    // Audio Recording Functions
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localState.mediaRecorder = new MediaRecorder(stream);
+        localState.audioChunks = [];
+        
+        localState.mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            localState.audioChunks.push(event.data);
+          }
+        };
+        
+        localState.mediaRecorder.onstop = () => {
+          localState.audioBlob = new Blob(localState.audioChunks, { type: 'audio/webm' });
+          stream.getTracks().forEach(track => track.stop());
+        };
+        
+        localState.mediaRecorder.start();
+        localState.recordingState = 'recording';
+        localState.recordingStartTime = Date.now();
+        recordingOverlay.classList.remove('hidden');
+        startRecordingTimer();
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        alert('Could not access microphone. Please check permissions.');
+      }
+    }
+
+    async function stopRecording() {
+      if (localState.mediaRecorder && localState.recordingState === 'recording') {
+        localState.mediaRecorder.stop();
+        localState.recordingState = 'processing';
+        recordingOverlay.classList.add('hidden');
+        processingOverlay.classList.remove('hidden');
+        stopRecordingTimer();
+        
+        // Process the recording
+        await processRecording();
+      }
+    }
+
+    function cancelRecording() {
+      if (localState.mediaRecorder && localState.recordingState === 'recording') {
+        localState.mediaRecorder.stop();
+        localState.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      localState.recordingState = 'idle';
+      localState.audioChunks = [];
+      localState.audioBlob = null;
+      recordingOverlay.classList.add('hidden');
+      stopRecordingTimer();
+    }
+
+    function startRecordingTimer() {
+      localState.recordingTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - localState.recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        recordingTimer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    function stopRecordingTimer() {
+      if (localState.recordingTimerInterval) {
+        clearInterval(localState.recordingTimerInterval);
+        localState.recordingTimerInterval = null;
+      }
+    }
+
+    async function processRecording() {
+      processingText.textContent = 'Uploading audio...';
+      const token = await window.UniSupabase.getAccessToken();
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('audio', localState.audioBlob, 'recording.webm');
+        // Pass audio quality preference to backend if available
+        if (typeof appState !== 'undefined' && appState.getSetting) {
+          const quality = appState.getSetting('audioQuality') || 'high';
+          formData.append('audioQuality', quality);
+        }
+        
+        processingText.textContent = 'Generating transcript...';
+        const transcriptResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        
+        const transcriptData = await transcriptResponse.json().catch(() => ({}));
+        
+        if (transcriptResponse.ok && transcriptData.success && transcriptData.transcript) {
+          await createLectureFromTranscript(transcriptData.transcript);
+          return;
+        }
+        
+        if (transcriptResponse.status === 402 && transcriptData.error === 'quota_exceeded') {
+          processingOverlay.classList.add('hidden');
+          alert('Monthly lecture upload limit reached. Upgrade or try again next month.');
+          localState.recordingState = 'idle';
+          return;
+        }
+        
+        const errMsg = transcriptData.error || transcriptData.message || 'Transcription unavailable';
+        console.error('Transcription error:', errMsg);
+        createMockLecture();
+        
+      } catch (error) {
+        console.error('Transcription error:', error);
+        createMockLecture();
+      }
+    }
+
+    function createMockLecture() {
+      const elapsed = localState.recordingStartTime != null
+        ? Math.floor((Date.now() - localState.recordingStartTime) / 1000) : 0;
+      const duration = formatDuration(elapsed);
+      
+      const lecture = {
+        id: Date.now().toString(),
+        title: `Lecture Recording - ${new Date().toLocaleDateString()}`,
+        date: new Date().toLocaleDateString(),
+        duration: duration,
+        segments: [
+          {
+            id: '1',
+            title: 'Introduction',
+            startTime: '00:00',
+            concepts: ['introduction', 'overview', 'key topics']
+          }
+        ],
+        keyConcepts: ['lecture', 'recording'],
+        transcript: 'Transcription will be available once the audio transcription API key is configured.',
+        audioUrl: URL.createObjectURL(localState.audioBlob),
+        createdAt: new Date().toISOString()
+      };
+
+      // Save to app state (respect auto-save) and record a study session
+      if (typeof appState !== 'undefined') {
+        const shouldAutoSave = !appState.getSetting || appState.getSetting('autoSave') !== false;
+        if (shouldAutoSave) {
+          appState.addLecture(lecture);
+        }
+        const minutes = Math.max(1, Math.round(elapsed / 60));
+        appState.addStudySession({ lectureId: lecture.id, duration: minutes });
+      }
+      
+      localState.currentLecture = lecture;
+      localState.recordingState = 'processed';
+      processingOverlay.classList.add('hidden');
+      
+      if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+      }
+      
+      showLectureSummary(lecture);
+    }
+
+    async function createLectureFromTranscript(transcript) {
+      const elapsed = localState.recordingStartTime != null
+        ? Math.floor((Date.now() - localState.recordingStartTime) / 1000) : 0;
+      const duration = formatDuration(elapsed);
+      
+      const lecture = {
+        id: Date.now().toString(),
+        title: `Lecture Recording - ${new Date().toLocaleDateString()}`,
+        date: new Date().toLocaleDateString(),
+        duration: duration,
+        transcript: transcript,
+        audioUrl: URL.createObjectURL(localState.audioBlob),
+        createdAt: new Date().toISOString(),
+        segments: [],
+        keyConcepts: []
+      };
+
+      // Save to app state (respect auto-save) and track a study session
+      if (typeof appState !== 'undefined') {
+        const shouldAutoSave = !appState.getSetting || appState.getSetting('autoSave') !== false;
+        if (shouldAutoSave) {
+          appState.addLecture(lecture);
+        }
+        const minutes = Math.max(1, Math.round(elapsed / 60));
+        appState.addStudySession({ lectureId: lecture.id, duration: minutes });
+      }
+      
+      localState.currentLecture = lecture;
+      localState.recordingState = 'processed';
+      processingOverlay.classList.add('hidden');
+      
+      if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+      }
+      
+      showLectureSummary(lecture);
+    }
+
+    function formatDuration(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function showLectureSummary(lecture) {
+      const summaryDiv = document.createElement('div');
+      summaryDiv.className = 'animate-fade-in mb-4';
+      summaryDiv.innerHTML = `
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-slate-800 mb-1">${lecture.title}</h3>
+              <div class="flex items-center gap-3 text-xs text-slate-500">
+                <span>${lecture.date}</span>
+                <span>•</span>
+                <span>${lecture.duration}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <h4 class="text-sm font-semibold text-slate-700 mb-2">Key Concepts</h4>
+            <div class="flex flex-wrap gap-2">
+              ${lecture.keyConcepts.map(concept => `
+                <button class="concept-chip px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium active:scale-95 transition-transform" data-concept="${concept}">
+                  ${concept}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          
+          <div>
+            <h4 class="text-sm font-semibold text-slate-700 mb-2">Segments</h4>
+            <div class="space-y-2">
+              ${lecture.segments.map(segment => `
+                <button class="segment-item w-full text-left p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors active:scale-[0.98]" data-segment-id="${segment.id}">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm font-medium text-slate-800">${segment.title}</span>
+                    <span class="text-xs text-slate-500">${segment.startTime}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5 mt-1.5">
+                    ${segment.concepts.map(concept => `
+                      <span class="px-2 py-0.5 bg-white text-slate-600 rounded text-xs">${concept}</span>
+                    `).join('')}
+                  </div>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      messagesArea.insertBefore(summaryDiv, messagesArea.firstChild);
+      scrollToBottom();
+      
+      // Add event listeners for concept chips and segments
+      summaryDiv.querySelectorAll('.concept-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const concept = chip.getAttribute('data-concept');
+          chatInput.value = `Explain ${concept} from this lecture`;
+          chatInput.focus();
+        });
+      });
+      
+      summaryDiv.querySelectorAll('.segment-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const segmentId = item.getAttribute('data-segment-id');
+          const segment = lecture.segments.find(s => s.id === segmentId);
+          chatInput.value = `Tell me more about: ${segment.title}`;
+          chatInput.focus();
+        });
+      });
+    }
+
+    async function uploadRecording() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      // Only allow lecture uploads in mp3, mp4 and wav formats
+      input.accept = '.mp3,.mp4,.wav';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const allowedExtensions = ['mp3', 'mp4', 'wav'];
+          const extension = file.name.split('.').pop()?.toLowerCase();
+
+          if (!extension || !allowedExtensions.includes(extension)) {
+            alert('Please upload a lecture in one of these formats only: MP3, MP4, or WAV.');
+            return;
+          }
+
+          localState.audioBlob = file;
+          localState.recordingState = 'processing';
+          processingOverlay.classList.remove('hidden');
+          
+          try {
+            const token = await window.UniSupabase.getAccessToken();
+            if (!token) {
+              window.location.href = 'login.html';
+              return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio', file);
+            if (typeof appState !== 'undefined' && appState.getSetting) {
+              const quality = appState.getSetting('audioQuality') || 'high';
+              formData.append('audioQuality', quality);
+            }
+            
+            const transcriptResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` },
+              body: formData
+            });
+            
+            const transcriptData = await transcriptResponse.json().catch(() => ({}));
+            
+            if (transcriptResponse.ok && transcriptData.success && transcriptData.transcript) {
+              await createLectureFromTranscript(transcriptData.transcript);
+              return;
+            }
+            
+            if (transcriptResponse.status === 402 && transcriptData.error === 'quota_exceeded') {
+              processingOverlay.classList.add('hidden');
+              alert('Monthly lecture upload limit reached. Upgrade or try again next month.');
+              localState.recordingState = 'idle';
+              return;
+            }
+            
+            const errMsg = transcriptData.error || transcriptData.message || 'Transcription unavailable';
+            console.error('Transcription error:', errMsg);
+            alert(`Transcription failed: ${errMsg}`);
+            createMockLecture();
+          } catch (error) {
+            console.error('Upload error:', error);
+            alert(`Upload error: ${error.message}`);
+            createMockLecture();
+          }
+        }
+      };
+      input.click();
+    }
+
+    // Backend API base URL from config
+    const API_BASE_URL = window.UniversiteConfig.getConfig().BACKEND.URL;
+
+    // Context-aware AI responses using Python backend (which calls LLM API)
+    async function getContextAwareResponse(userMessage) {
+      const hasLecture = appState.currentLecture !== null;
+      
+      try {
+        const token = await window.UniSupabase.getAccessToken();
+        if (!token) {
+          window.location.href = 'login.html';
+          return 'Please sign in again.';
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message: userMessage,
+            currentLecture: localState.currentLecture,
+            messages: localState.messages
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (response.status === 401) {
+            window.location.href = 'login.html';
+            throw new Error('Not authenticated');
+          }
+          if (response.status === 402 && errorData && errorData.error === 'quota_exceeded') {
+            throw new Error('You reached your monthly quota for this feature.');
+          }
+          throw new Error(errorData.error || 'Failed to get response from server');
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.response) {
+          return data.response;
+        } else {
+          throw new Error(data.error || 'Invalid response from server');
+        }
+      } catch (error) {
+        console.error('API Error:', error);
+        // Fallback response if API fails
+        if (!hasLecture) {
+          return "I don't have any lecture content yet. Please record or upload a lecture to get started!";
+        }
+        return `Sorry, I encountered an error processing your request. Please make sure the backend server is running. Error: ${error.message}`;
+      }
+    }
+
+    function formatTime(timestamp) {
+      return new Date(timestamp).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    }
+
+    function formatContent(content) {
+      return content
+        .split("\n")
+        .map((line, index, array) => {
+          if (line.trim() === "" && index < array.length - 1) {
+            return "<br>";
+          }
+          return line;
+        })
+        .join("\n")
+        .replace(/\n/g, "<br>");
+    }
+
+    function addMessage(content, sender) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `flex gap-3 ${sender === 'user' ? 'flex-row-reverse' : ''} animate-fade-in`;
+
+      const avatar = document.createElement('div');
+      avatar.className = `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+        sender === 'user'
+          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+          : 'bg-slate-100 text-indigo-600 border-2 border-slate-200'
+      }`;
+
+      if (sender === 'user') {
+        avatar.innerHTML = `
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+          </svg>
+        `;
+      } else {
+        avatar.innerHTML = `
+          <img src="assets/images/icon-removebg-preview.png-128x128.PNG" alt="Universite" class="w-4 h-4 object-contain" style="filter: hue-rotate(200deg) saturate(1.5) brightness(1.1);" />
+        `;
+      }
+
+      const bubbleContainer = document.createElement('div');
+      bubbleContainer.className = `flex flex-col ${sender === 'user' ? 'items-end' : 'items-start'} max-w-[75%] md:max-w-[80%]`;
+
+      const bubble = document.createElement('div');
+      bubble.className = `px-3.5 py-3.5 rounded-2xl shadow-sm text-sm md:text-base leading-relaxed ${
+        sender === 'user'
+          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-md'
+          : 'bg-white text-slate-800 border border-slate-200 rounded-bl-md'
+      }`;
+
+      if (content === '') {
+        bubble.innerHTML = `
+          <div class="flex gap-1.5">
+            <div class="w-2 h-2 bg-slate-400 rounded-full animate-typing-dot"></div>
+            <div class="w-2 h-2 bg-slate-400 rounded-full animate-typing-dot animation-delay-200"></div>
+            <div class="w-2 h-2 bg-slate-400 rounded-full animate-typing-dot animation-delay-400"></div>
+          </div>
+        `;
+        bubbleContainer.appendChild(bubble);
+      } else {
+        bubble.innerHTML = `<div class="whitespace-pre-wrap break-words">${formatContent(content)}</div>`;
+        bubbleContainer.appendChild(bubble);
+
+        const time = document.createElement('div');
+        time.className = `text-xs text-slate-500 mt-1.5 px-2 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+        time.textContent = formatTime(Date.now());
+        bubbleContainer.appendChild(time);
+      }
+
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(bubbleContainer);
+      messagesArea.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    function showTypingIndicator() {
+      addMessage('', 'bot');
+    }
+
+    function scrollToBottom() {
+      messagesArea.scrollTo({
+        top: messagesArea.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    async function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      // Hide welcome message
+      if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+      }
+
+      // Add user message
+      addMessage(message, 'user');
+      localState.messages.push({ sender: 'user', content: message });
+      
+      // Save to lecture if exists
+      if (localState.currentLecture && typeof appState !== 'undefined') {
+        localState.currentLecture.chatHistory = localState.currentLecture.chatHistory || [];
+        localState.currentLecture.chatHistory.push({ sender: 'user', content: message });
+        appState.updateLecture(localState.currentLecture.id, { chatHistory: localState.currentLecture.chatHistory });
+      }
+
+      // Clear input
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+
+      // Disable input
+      chatInput.disabled = true;
+      sendBtn.disabled = true;
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      try {
+        const aiResponse = await getContextAwareResponse(message);
+        
+        // Remove loading indicator
+        const lastMessage = messagesArea.lastElementChild;
+        if (lastMessage && lastMessage.querySelector('.animate-typing-dot')) {
+          lastMessage.remove();
+        }
+        
+        addMessage(aiResponse, 'bot');
+        localState.messages.push({ sender: 'bot', content: aiResponse });
+        
+        // Save to lecture if exists
+        if (localState.currentLecture && typeof appState !== 'undefined') {
+          localState.currentLecture.chatHistory = localState.currentLecture.chatHistory || [];
+          localState.currentLecture.chatHistory.push({ sender: 'bot', content: aiResponse });
+          appState.updateLecture(localState.currentLecture.id, { chatHistory: localState.currentLecture.chatHistory });
+        }
+      } catch (error) {
+        const lastMessage = messagesArea.lastElementChild;
+        if (lastMessage && lastMessage.querySelector('.animate-typing-dot')) {
+          lastMessage.remove();
+        }
+        
+        addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+      } finally {
+        chatInput.disabled = false;
+        sendBtn.disabled = false;
+        chatInput.focus();
+      }
+    }
+
+    // Event listeners
+    startRecordBtn.addEventListener('click', startRecording);
+    uploadRecordBtn.addEventListener('click', uploadRecording);
+    stopRecordBtn.addEventListener('click', stopRecording);
+    cancelRecordBtn.addEventListener('click', cancelRecording);
+    recordBtn.addEventListener('click', () => {
+      if (localState.recordingState === 'idle') {
+        startRecording();
+      }
+    });
+    attachLectureBtn.addEventListener('click', uploadRecording);
+
+    // Load existing messages if lecture is loaded
+    if (localState.currentLecture && localState.messages.length > 0) {
+      if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+      }
+      localState.messages.forEach(msg => {
+        addMessage(msg.content, msg.sender);
+      });
+    }
+
+    // Auto-resize textarea
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Send message on button click
+    sendBtn.addEventListener('click', sendMessage);
+
+    // Send message on Enter (Shift+Enter for new line)
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Initialize
+    chatInput.focus();
+  </script>
+</body>
+</html>
+
+      }
+      localState.messages.forEach(msg => {
+        addMessage(msg.content, msg.sender);
+      });
+    }
+
+    // Auto-resize textarea
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Send message on button click
+    sendBtn.addEventListener('click', sendMessage);
+
+    // Send message on Enter (Shift+Enter for new line)
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Initialize
+    chatInput.focus();
+  </script>
+</body>
+</html>

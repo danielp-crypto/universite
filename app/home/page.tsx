@@ -1,0 +1,842 @@
+'use client';
+
+import React, { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
+import ClientLoader from '../components/ClientLoader';
+
+function HomePageContent() {
+  const [lectures, setLectures] = useState<any[]>([]);
+  const [stats, setStats] = useState({ lectures: 0, hours: '0.0', flashcards: 0 });
+  const [profileWidgetVisible, setProfileWidgetVisible] = useState(false);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Recording states
+  const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'processing'>('idle');
+  const [recordingTimer, setRecordingTimer] = useState('00:00');
+  const [processingText, setProcessingText] = useState('Saving audio...');
+
+  const mediaRecorderRef = useRef<any>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number | null>(null);
+  const recordingTimerIntervalRef = useRef<any>(null);
+
+  // Profile form refs
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const RECORDINGS_STORAGE_KEY = 'universite_recordings';
+
+  // Helper to load recordings
+  const getRecordings = () => {
+    try {
+      const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
+      return recordings ? JSON.parse(recordings) : [];
+    } catch (error) {
+      console.error('Error getting recordings:', error);
+      return [];
+    }
+  };
+
+  // Helper to save recordings
+  const saveRecordings = (recordings: any[]) => {
+    try {
+      localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
+    } catch (error) {
+      console.error('Error saving recordings:', error);
+      alert('Error saving recording. Storage may be full.');
+    }
+  };
+
+  const loadData = async () => {
+    try {
+      // Initialize localLectureManager if not done
+      const config = (window as any).UniversiteConfig.getConfig();
+      if (!(window as any).localLectureManager && (window as any).LocalLectureManager) {
+        (window as any).localLectureManager = new (window as any).LocalLectureManager(
+          config.SUPABASE.URL,
+          config.SUPABASE.ANON_KEY,
+          config.HUGGINGFACE.API_KEY,
+          config.DEEPGRAM.API_KEY,
+          config.BACKEND.URL
+        );
+      }
+
+      // Load local recordings
+      const localRecordings = getRecordings();
+      const localLectures = localRecordings.map((recording: any) => ({
+        id: recording.id,
+        title: recording.name,
+        created_at: recording.createdAt,
+        duration: recording.duration,
+        keyConcepts: ['local recording'],
+        isLocal: true,
+        audioUrl: recording.audioUrl
+      }));
+
+      let allLectures = [...localLectures];
+
+      // Load remote lectures
+      if ((window as any).localLectureManager) {
+        try {
+          const result = await (window as any).localLectureManager.getLectures(10);
+          if (result.success) {
+            allLectures = [...localLectures, ...result.lectures];
+          }
+        } catch (error) {
+          console.error('Error fetching lectures:', error);
+        }
+      }
+
+      // Sort and slice top 3
+      allLectures.sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
+      setLectures(allLectures);
+
+      // Update weekly stats
+      updateWeeklyStats(allLectures);
+    } catch (err) {
+      console.error('Error in loadData:', err);
+    }
+  };
+
+  const updateWeeklyStats = (allLectures: any[]) => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    const weekStart = new Date(now.setDate(diff));
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weeklyLectures = allLectures.filter(lecture => {
+      const lectureDate = new Date(lecture.created_at || lecture.createdAt);
+      return lectureDate >= weekStart;
+    });
+
+    const lectureCount = weeklyLectures.length;
+
+    let totalMinutes = 0;
+    weeklyLectures.forEach(lecture => {
+      const duration = lecture.duration || '0:00';
+      const parts = duration.split(':');
+      if (parts.length === 2) {
+        totalMinutes += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      }
+    });
+    const totalHours = (totalMinutes / 60).toFixed(1);
+
+    let flashcardCount = 0;
+    try {
+      const flashcards = localStorage.getItem('universite_flashcards');
+      if (flashcards) {
+        const flashcardData = JSON.parse(flashcards);
+        const weeklyFlashcards = flashcardData.filter((card: any) => {
+          const cardDate = new Date(card.created_at || card.createdAt);
+          return cardDate >= weekStart;
+        });
+        flashcardCount = weeklyFlashcards.length;
+      }
+    } catch (error) {
+      console.error('Error getting flashcards:', error);
+    }
+
+    setStats({
+      lectures: lectureCount,
+      hours: totalHours,
+      flashcards: flashcardCount
+    });
+  };
+
+  const checkProfileCompletion = async () => {
+    try {
+      const session = await (window as any).UniSupabase.getSession();
+      if (!session) return;
+
+      const userId = session.user.id;
+      const { data: profile } = await (window as any).UniSupabase.client
+        .from('profiles')
+        .select('university, major, year, study_time, learning_style, full_name')
+        .eq('id', userId)
+        .single();
+
+      setUserProfile(profile);
+
+      // Check if dismissed recently
+      const dismissed = localStorage.getItem('profile_widget_dismissed');
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+      if (dismissed && parseInt(dismissed) > sevenDaysAgo) {
+        return;
+      }
+
+      if (!profile || !profile.university || !profile.major) {
+        setProfileWidgetVisible(true);
+      }
+    } catch (error) {
+      console.error('Error checking profile:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    checkProfileCompletion();
+
+    return () => {
+      if (recordingTimerIntervalRef.current) clearInterval(recordingTimerIntervalRef.current);
+    };
+  }, []);
+
+  // Recording Handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event: any) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach(track => track.stop());
+        await saveRecording(audioBlob);
+      };
+
+      mediaRecorderRef.current.start();
+      setRecordingState('recording');
+      recordingStartTimeRef.current = Date.now();
+      
+      // Start Timer
+      recordingTimerIntervalRef.current = setInterval(() => {
+        if (recordingStartTimeRef.current) {
+          const elapsed = Math.floor((Date.now() - recordingStartTimeRef.current) / 1000);
+          const minutes = Math.floor(elapsed / 60);
+          const seconds = elapsed % 60;
+          setRecordingTimer(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+        }
+      }, 1000);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      alert('Could not access microphone. Please check permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && recordingState === 'recording') {
+      mediaRecorderRef.current.stop();
+      setRecordingState('processing');
+      setProcessingText('Saving audio...');
+      if (recordingTimerIntervalRef.current) {
+        clearInterval(recordingTimerIntervalRef.current);
+        recordingTimerIntervalRef.current = null;
+      }
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && recordingState === 'recording') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach((track: any) => track.stop());
+    }
+    setRecordingState('idle');
+    audioChunksRef.current = [];
+    if (recordingTimerIntervalRef.current) {
+      clearInterval(recordingTimerIntervalRef.current);
+      recordingTimerIntervalRef.current = null;
+    }
+  };
+
+  const saveRecording = async (blob: Blob) => {
+    try {
+      const elapsed = recordingStartTimeRef.current
+        ? Math.floor((Date.now() - recordingStartTimeRef.current) / 1000)
+        : 0;
+      
+      const mins = Math.floor(elapsed / 60);
+      const secs = elapsed % 60;
+      const durationStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = () => {
+        const base64Audio = reader.result;
+        const recording = {
+          id: Date.now().toString(),
+          name: `Recording - ${new Date().toLocaleDateString()}`,
+          date: new Date().toLocaleDateString(),
+          duration: durationStr,
+          audioUrl: base64Audio,
+          createdAt: new Date().toISOString()
+        };
+
+        const recordings = getRecordings();
+        recordings.unshift(recording);
+        saveRecordings(recordings);
+
+        setRecordingState('idle');
+        loadData();
+      };
+    } catch (error) {
+      console.error('Error saving recording:', error);
+      alert('Error saving recording. Please try again.');
+      setRecordingState('idle');
+    }
+  };
+
+  const uploadRecording = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/*';
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        setRecordingState('processing');
+        setProcessingText('Processing audio...');
+        try {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onloadend = () => {
+            const base64Audio = reader.result;
+            const recording = {
+              id: Date.now().toString(),
+              name: file.name,
+              date: new Date().toLocaleDateString(),
+              duration: 'N/A',
+              audioUrl: base64Audio,
+              createdAt: new Date().toISOString()
+            };
+
+            const recordings = getRecordings();
+            recordings.unshift(recording);
+            saveRecordings(recordings);
+
+            setRecordingState('idle');
+            loadData();
+          };
+        } catch (error) {
+          console.error('Error uploading recording:', error);
+          alert('Error uploading recording. Please try again.');
+          setRecordingState('idle');
+        }
+      }
+    };
+    input.click();
+  };
+
+  // Profile management
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formRef.current) return;
+
+    const formData = new FormData(formRef.current);
+    try {
+      const session = await (window as any).UniSupabase.getSession();
+      if (!session) return;
+
+      const userId = session.user.id;
+      const { error } = await (window as any).UniSupabase.client
+        .from('profiles')
+        .upsert({
+          id: userId,
+          full_name: formData.get('full_name'),
+          university: formData.get('university'),
+          major: formData.get('major'),
+          year: formData.get('year'),
+          study_time: formData.get('study_time'),
+          learning_style: formData.get('learning_style'),
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        alert('Error saving profile: ' + error.message);
+        return;
+      }
+
+      setUserProfile({
+        full_name: formData.get('full_name'),
+        university: formData.get('university'),
+        major: formData.get('major'),
+        year: formData.get('year'),
+        study_time: formData.get('study_time'),
+        learning_style: formData.get('learning_style')
+      });
+
+      setProfileModalVisible(false);
+      setProfileWidgetVisible(false);
+      alert('Profile saved successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving profile. Please try again.');
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
+  return (
+    <div className="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
+      <div id="app" className="flex-1 flex flex-col pb-20">
+        {/* Header */}
+        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+            <div className="flex items-center gap-3">
+              <img src="/assets/images/icon-removebg-preview.png-128x128.png" alt="Universite" className="w-6 h-6 md:w-7 md:h-7" />
+              <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Universite
+              </h1>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
+          {/* Quick Actions */}
+          <div className="mb-6">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={startRecording}
+                className="block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-md active:scale-95 transition-transform"
+              >
+                <div className="flex flex-col items-center text-center text-white">
+                  <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                  <span className="font-semibold text-sm">Record Lecture</span>
+                </div>
+              </button>
+              <button
+                onClick={uploadRecording}
+                className="block p-4 bg-white border-2 border-slate-200 rounded-2xl active:scale-95 transition-transform"
+              >
+                <div className="flex flex-col items-center text-center text-slate-700">
+                  <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span className="font-semibold text-sm">Upload Audio</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Profile Completion Widget */}
+          {profileWidgetVisible && (
+            <div id="profile-widget" className="mb-6">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-slate-800 mb-2">Complete Your Profile</h3>
+                    <p className="text-slate-600 mb-4 text-sm">Tell us about yourself to get personalized AI assistance and study recommendations</p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Better AI</span>
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Study Tips</span>
+                      <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Course Help</span>
+                    </div>
+                    <button
+                      onClick={() => setProfileModalVisible(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      Add Details (2 min)
+                    </button>
+                    <button
+                      onClick={() => {
+                        setProfileWidgetVisible(false);
+                        localStorage.setItem('profile_widget_dismissed', Date.now().toString());
+                      }}
+                      className="ml-3 text-slate-500 hover:text-slate-700 transition-colors text-sm"
+                    >
+                      Maybe Later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Recent Lectures */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-slate-800">Recent Lectures</h2>
+              <Link href="/lectures" className="text-sm text-indigo-600 font-medium">View All</Link>
+            </div>
+            
+            {lectures.length > 0 ? (
+              <div className="space-y-3">
+                {lectures.slice(0, 3).map((lecture) => {
+                  const dateStr = formatDate(new Date(lecture.created_at || lecture.createdAt));
+                  const isLocal = lecture.isLocal || !!lecture.local_audio;
+                  
+                  if (isLocal) {
+                    return (
+                      <div key={lecture.id} className="bg-white border border-slate-200 rounded-2xl p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="text-base font-semibold text-slate-800 flex-1">{lecture.title}</h3>
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                          <span>{dateStr}</span>
+                          <span>•</span>
+                          <span>{lecture.duration || 'N/A'}</span>
+                        </div>
+                        <audio controls className="w-full" src={lecture.audioUrl}></audio>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <Link
+                        key={lecture.id}
+                        href={`/lecture-detail?id=${lecture.id}`}
+                        className="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="text-base font-semibold text-slate-800 flex-1">{lecture.title}</h3>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                          <span>{dateStr}</span>
+                          <span>•</span>
+                          <span>{lecture.duration || 'N/A'}</span>
+                        </div>
+                        {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {lecture.keyConcepts.slice(0, 3).map((concept: string, idx: number) => (
+                              <span key={idx} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{concept}</span>
+                            ))}
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  }
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-white border border-slate-200 rounded-2xl">
+                <p className="text-slate-500 mb-4 text-sm">No lectures yet</p>
+                <button
+                  onClick={startRecording}
+                  className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium"
+                >
+                  Record Your First Lecture
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Study Stats */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-3">This Week</h2>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.lectures}</div>
+                <div className="text-xs text-slate-600">Lectures</div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.hours}</div>
+                <div className="text-xs text-slate-600">Hours</div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.flashcards}</div>
+                <div className="text-xs text-slate-600">Flashcards</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Study Tools Quick Links */}
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800 mb-3">Study Tools</h2>
+            <div className="space-y-2">
+              <Link href="/flashcards" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-800 text-sm">Flashcards</div>
+                    <div className="text-xs text-slate-500">Review key concepts</div>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+
+              <Link href="/notes" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-800 text-sm">Notes</div>
+                    <div className="text-xs text-slate-500">View all lecture notes</div>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+
+              <Link href="/search" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-800 text-sm">Search</div>
+                    <div className="text-xs text-slate-500">Find across all lectures</div>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
+          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+            <div className="flex items-center justify-around py-2">
+              <Link href="/home" className="flex flex-col items-center py-2 px-4 text-indigo-600">
+                <svg className="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                <span className="text-xs font-medium">Home</span>
+              </Link>
+              <Link href="/lectures" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
+                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <span className="text-xs font-medium">Lectures</span>
+              </Link>
+              <Link href="/assistant" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
+                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                <span className="text-xs font-medium">Chat</span>
+              </Link>
+              <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
+                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-xs font-medium">Settings</span>
+              </Link>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      {/* Recording Overlay */}
+      {recordingState === 'recording' && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-105 flex items-center justify-center animate-pulse-recording">
+                <div className="w-12 h-12 rounded-full bg-red-500"></div>
+              </div>
+              <h3 className="text-xl font-semibold text-slate-800 mb-2">Recording</h3>
+              <div className="text-2xl font-mono text-slate-755 mb-4">{recordingTimer}</div>
+              <div className="flex gap-3">
+                <button
+                  onClick={stopRecording}
+                  className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-650 text-white rounded-xl font-medium active:scale-95 transition-transform"
+                >
+                  Stop
+                </button>
+                <button
+                  onClick={cancelRecording}
+                  className="flex-1 px-4 py-3 bg-slate-200 hover:bg-slate-250 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Processing Overlay */}
+      {recordingState === 'processing' && (
+        <div className="fixed inset-0 bg-black/55 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+                <svg className="w-8 h-8 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-slate-800 mb-2">Processing</h3>
+              <p className="text-slate-600 text-sm">{processingText}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Completion Modal */}
+      {profileModalVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-slate-800">Complete Your Profile</h2>
+                <button
+                  onClick={() => setProfileModalVisible(false)}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form ref={formRef} onSubmit={handleSaveProfile} className="space-y-5">
+                <div>
+                  <label htmlFor="full_name" className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    id="full_name"
+                    name="full_name"
+                    defaultValue={userProfile?.full_name || ''}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="university" className="block text-sm font-medium text-slate-700 mb-2">University</label>
+                  <input
+                    type="text"
+                    id="university"
+                    name="university"
+                    defaultValue={userProfile?.university || ''}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    placeholder="Your university"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="major" className="block text-sm font-medium text-slate-700 mb-2">Major/Field of Study</label>
+                  <input
+                    type="text"
+                    id="major"
+                    name="major"
+                    defaultValue={userProfile?.major || ''}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    placeholder="e.g., Computer Science, Biology"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="year" className="block text-sm font-medium text-slate-700 mb-2">Year of Study</label>
+                  <select
+                    id="year"
+                    name="year"
+                    defaultValue={userProfile?.year || ''}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                  >
+                    <option value="">Select your year</option>
+                    <option value="freshman">Freshman</option>
+                    <option value="sophomore">Sophomore</option>
+                    <option value="junior">Junior</option>
+                    <option value="senior">Senior</option>
+                    <option value="graduate">Graduate</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="study_time" className="block text-sm font-medium text-slate-700 mb-2">Preferred Study Time</label>
+                  <select
+                    id="study_time"
+                    name="study_time"
+                    defaultValue={userProfile?.study_time || ''}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                  >
+                    <option value="">Select preference</option>
+                    <option value="morning">Morning (6AM - 12PM)</option>
+                    <option value="afternoon">Afternoon (12PM - 6PM)</option>
+                    <option value="evening">Evening (6PM - 12AM)</option>
+                    <option value="night">Night (12AM - 6AM)</option>
+                    <option value="flexible">Flexible</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="learning_style" className="block text-sm font-medium text-slate-700 mb-2">Learning Style</label>
+                  <select
+                    id="learning_style"
+                    name="learning_style"
+                    defaultValue={userProfile?.learning_style || ''}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                  >
+                    <option value="">Select your style</option>
+                    <option value="visual">Visual (diagrams, charts)</option>
+                    <option value="auditory">Auditory (lectures, discussions)</option>
+                    <option value="reading">Reading/Writing (notes, texts)</option>
+                    <option value="kinesthetic">Hands-on (practice, projects)</option>
+                    <option value="mixed">Mixed approach</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="submit" className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                    Save Profile
+                  </button>
+                  <button type="button" onClick={() => setProfileModalVisible(false)} className="px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <ClientLoader
+      scripts={[
+        '/js/theme-manager.js',
+        '/js/config.js',
+        '/js/supabase-client.js',
+        '/js/auth-guard.js',
+        '/js/app-state.js',
+        '/js/audio-recorder.js',
+        '/js/deepgram-service.js',
+        '/js/transcription-service.js',
+        '/js/transcript-processor.js',
+        '/js/local-lecture-manager.js'
+      ]}
+      requiredGlobals={['UniSupabase', 'appState', 'LocalLectureManager']}
+    >
+      <HomePageContent />
+    </ClientLoader>
+  );
+}
