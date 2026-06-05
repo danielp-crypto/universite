@@ -16,16 +16,11 @@ CORS(app)  # Enable CORS for all routes
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 
-# Hugging Face AI Configuration
-HUGGINGFACE_API_KEY = os.environ.get('HUGGINGFACE_API_KEY', '')
-HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/distilgpt2'
 
 # Deepgram Transcription Configuration
 DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', '')
 DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen'
 
-# Google Cloud Speech-to-Text
-GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', '')
 
 _jwks_client = None
 
