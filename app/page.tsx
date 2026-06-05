@@ -245,7 +245,7 @@ export default function Home() {
                   <span><strong>Unlimited transcriptions</strong> - Record as many lectures as you want</span>
                 </li>
                 <li className="flex items-start">
-                  <span class="mt-1 mr-2 text-emerald-600">✓</span>
+                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
                   <span><strong>10 AI flashcards/month</strong> - Try intelligent study cards</span>
                 </li>
                 <li className="flex items-start">
