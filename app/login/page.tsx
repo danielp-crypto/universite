@@ -2,9 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import ClientLoader from '../components/ClientLoader';
+import { useRouter } from 'next/navigation';
+import { getSession, signInWithOAuth } from '@/lib/supabase/auth';
+import { supabase } from '@/lib/supabase/client';
 
 function LoginPageContent() {
+  const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
 
@@ -12,18 +15,29 @@ function LoginPageContent() {
     // If already logged in, redirect straight to the app
     const checkSession = async () => {
       try {
-        const session = await (window as any).UniSupabase.getSession();
+        const session = await getSession();
         if (session) {
           const urlParams = new URLSearchParams(window.location.search);
           const returnTo = urlParams.get('returnTo');
-          window.location.href = returnTo || "/home";
+          router.push(returnTo || '/home');
         }
       } catch (err) {
         console.error('Session check error:', err);
       }
     };
     checkSession();
-  }, []);
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('returnTo');
+        router.push(returnTo || '/home');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -31,7 +45,7 @@ function LoginPageContent() {
       const urlParams = new URLSearchParams(window.location.search);
       const returnTo = urlParams.get('returnTo');
       const redirectTo = `${window.location.origin}/login?returnTo=${encodeURIComponent(returnTo || '/home')}`;
-      const { error } = await (window as any).UniSupabase.signInWithOAuth('google', { redirectTo });
+      const { error } = await signInWithOAuth('google', { redirectTo });
       if (error) {
         alert(error.message);
         setGoogleLoading(false);
@@ -49,7 +63,7 @@ function LoginPageContent() {
       const urlParams = new URLSearchParams(window.location.search);
       const returnTo = urlParams.get('returnTo');
       const redirectTo = `${window.location.origin}/login?returnTo=${encodeURIComponent(returnTo || '/home')}`;
-      const { error } = await (window as any).UniSupabase.signInWithOAuth('apple', { redirectTo });
+      const { error } = await signInWithOAuth('apple', { redirectTo });
       if (error) {
         alert(error.message);
         setAppleLoading(false);
@@ -223,12 +237,5 @@ function LoginPageContent() {
 }
 
 export default function LoginPage() {
-  return (
-    <ClientLoader
-      scripts={['/js/config.js', '/js/supabase-client.js']}
-      requiredGlobals={['UniSupabase']}
-    >
-      <LoginPageContent />
-    </ClientLoader>
-  );
+  return <LoginPageContent />;
 }
