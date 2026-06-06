@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import ClientLoader from '../components/ClientLoader';
-
-declare const appState: any;
+import { apiGet } from '@/lib/api/client';
+import { getSession } from '@/lib/supabase/auth';
+import { useRouter } from 'next/navigation';
 
 interface Lecture {
   id: string;
@@ -16,42 +16,60 @@ interface Lecture {
 }
 
 function NotesContent() {
+  const router = useRouter();
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [empty, setEmpty] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof appState === 'undefined') {
-      setEmpty(true);
-      return;
-    }
-    const data: Lecture[] = appState.lectures || [];
-    if (data.length === 0) {
-      setEmpty(true);
-    } else {
-      setLectures(data);
-    }
+    const loadLectures = async () => {
+      try {
+        const session = await getSession();
+        if (!session) {
+          router.push('/login');
+          return;
+        }
+
+        const data: Lecture[] = await apiGet('/api/lectures').catch(() => []);
+        if (data.length === 0) {
+          setEmpty(true);
+        } else {
+          setLectures(data);
+        }
+      } catch (error) {
+        console.error('Error loading lectures:', error);
+        setEmpty(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLectures();
   }, []);
 
-  function exportNote(lectureId: string) {
-    if (typeof appState === 'undefined') return;
-    const lecture = appState.getLecture(lectureId);
-    if (!lecture) return;
-    const content = `Lecture Notes: ${lecture.title}\n\nDate: ${new Date(lecture.createdAt).toLocaleDateString()}\nDuration: ${lecture.duration || 'N/A'}\n\nKey Concepts: ${lecture.keyConcepts?.join(', ') || 'N/A'}\n\nTranscript:\n${lecture.transcript || 'No transcript available yet.'}`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${lecture.title.replace(/[^a-z0-9]/gi, '_')}_notes.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  async function exportNote(lectureId: string) {
+    try {
+      const lecture = await apiGet(`/api/lectures/${lectureId}`);
+      if (!lecture) return;
+      const content = `Lecture Notes: ${lecture.title}\n\nDate: ${new Date(lecture.createdAt).toLocaleDateString()}\nDuration: ${lecture.duration || 'N/A'}\n\nKey Concepts: ${lecture.keyConcepts?.join(', ') || 'N/A'}\n\nTranscript:\n${lecture.transcript || 'No transcript available yet.'}`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${lecture.title.replace(/[^a-z0-9]/gi, '_')}_notes.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting note:', error);
+    }
   }
 
-  function exportAllNotes() {
-    if (typeof appState === 'undefined' || appState.lectures.length === 0) {
+  async function exportAllNotes() {
+    if (lectures.length === 0) {
       alert('No notes to export');
       return;
     }
-    const content = appState.lectures.map((l: Lecture) =>
+    const content = lectures.map((l: Lecture) =>
       `=== ${l.title} ===\nDate: ${new Date(l.createdAt).toLocaleDateString()}\nDuration: ${l.duration || 'N/A'}\n\nKey Concepts: ${l.keyConcepts?.join(', ') || 'N/A'}\n\nTranscript:\n${l.transcript || 'No transcript available yet.'}\n\n`
     ).join('\n\n');
     const blob = new Blob([content], { type: 'text/plain' });
@@ -156,9 +174,5 @@ function NotesContent() {
 }
 
 export default function NotesPage() {
-  return (
-    <ClientLoader>
-      <NotesContent />
-    </ClientLoader>
-  );
+  return <NotesContent />;
 }

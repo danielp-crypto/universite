@@ -3,9 +3,12 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import ClientLoader from '../components/ClientLoader';
+import { apiGet, apiPut } from '@/lib/api/client';
+import { getSession } from '@/lib/supabase/auth';
+import { useRouter } from 'next/navigation';
 
 function FlashcardsPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const lectureId = searchParams.get('lecture');
 
@@ -13,40 +16,59 @@ function FlashcardsPageContent() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [allSets, setAllSets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const loadFlashcards = async () => {
-    if (typeof (window as any).appState === 'undefined') return;
+    try {
+      const session = await getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
 
-    let targetSet: any = null;
+      let targetSet: any = null;
 
-    if (lectureId) {
-      targetSet = (window as any).appState.getFlashcardSet(lectureId);
-      if (!targetSet) {
-        // Fallback to generating mock flashcards locally
-        const lecture = (window as any).appState.getLecture(lectureId);
-        if (lecture) {
-          const mockCards = [
-            { question: `What are the key concepts in "${lecture.title}"?`, answer: (lecture.keyConcepts || []).join(', '), category: 'Overview', status: 'new' },
-            ...(lecture.segments || []).flatMap((seg: any) => (seg.concepts || []).map((concept: any) => ({
-              question: `Explain ${concept} from ${seg.title}`,
-              answer: `This concept was discussed in the "${seg.title}" segment of the lecture.`,
-              category: seg.title,
-              status: 'new'
-            })))
-          ];
-          targetSet = (window as any).appState.addFlashcardSet(lectureId, mockCards);
+      if (lectureId) {
+        try {
+          targetSet = await apiGet(`/api/lectures/${lectureId}/flashcards`);
+          if (!targetSet) {
+            // Fallback to generating mock flashcards
+            const lecture = await apiGet(`/api/lectures/${lectureId}`);
+            if (lecture) {
+              const mockCards = [
+                { question: `What are the key concepts in "${lecture.title}"?`, answer: (lecture.keyConcepts || []).join(', '), category: 'Overview', status: 'new' },
+                ...(lecture.segments || []).flatMap((seg: any) => (seg.concepts || []).map((concept: any) => ({
+                  question: `Explain ${concept} from ${seg.title}`,
+                  answer: `This concept was discussed in the "${seg.title}" segment of the lecture.`,
+                  category: seg.title,
+                  status: 'new'
+                })))
+              ];
+              targetSet = { id: lectureId, lectureTitle: lecture.title, flashcards: mockCards, progress: { mastered: 0, learning: 0, new: mockCards.length } };
+            }
+          }
+        } catch (error) {
+          console.error('Error loading flashcards:', error);
+        }
+      } else {
+        // Load first set if available
+        try {
+          const sets = await apiGet('/api/flashcards');
+          if (sets && sets.length > 0) {
+            targetSet = sets[0];
+          }
+        } catch (error) {
+          console.error('Error loading flashcard sets:', error);
         }
       }
-    } else {
-      // Load first set if available
-      const sets = (window as any).appState.flashcards || [];
-      if (sets.length > 0) {
-        targetSet = sets[0];
-      }
-    }
 
-    setFlashcardSet(targetSet);
-    setAllSets((window as any).appState.flashcards || []);
+      setFlashcardSet(targetSet);
+      setAllSets([]);
+    } catch (error) {
+      console.error('Error loading flashcards:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -57,7 +79,7 @@ function FlashcardsPageContent() {
     setIsFlipped(!isFlipped);
   };
 
-  const handleRate = (rating: 'hard' | 'good' | 'easy') => {
+  const handleRate = async (rating: 'hard' | 'good' | 'easy') => {
     if (!flashcardSet) return;
 
     const statusMap = {
@@ -70,8 +92,10 @@ function FlashcardsPageContent() {
     const updatedCards = [...flashcardSet.flashcards];
     updatedCards[currentCardIndex].status = status;
 
-    if (typeof (window as any).appState !== 'undefined') {
-      (window as any).appState.updateFlashcardProgress(flashcardSet.id, currentCardIndex, status);
+    try {
+      await apiPut(`/api/flashcards/${flashcardSet.id}/cards/${currentCardIndex}`, { status });
+    } catch (error) {
+      console.error('Error updating flashcard progress:', error);
     }
 
     // Recalculate progress locally
@@ -335,12 +359,5 @@ function FlashcardsPageWithSuspense() {
 }
 
 export default function FlashcardsPage() {
-  return (
-    <ClientLoader
-      scripts={['/js/theme-manager.js', '/js/config.js', '/js/supabase-client.js', '/js/auth-guard.js', '/js/app-state.js']}
-      requiredGlobals={['UniSupabase', 'appState']}
-    >
-      <FlashcardsPageWithSuspense />
-    </ClientLoader>
-  );
+  return <FlashcardsPageWithSuspense />;
 }

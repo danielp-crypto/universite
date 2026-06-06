@@ -2,9 +2,12 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import ClientLoader from '../components/ClientLoader';
+import { apiGet, apiPost } from '@/lib/api/client';
+import { getSession, createClient } from '@/lib/supabase/auth';
+import { useRouter } from 'next/navigation';
 
 function HomePageContent() {
+  const router = useRouter();
   const [lectures, setLectures] = useState<any[]>([]);
   const [stats, setStats] = useState({ lectures: 0, hours: '0.0', flashcards: 0 });
   const [profileWidgetVisible, setProfileWidgetVisible] = useState(false);
@@ -49,16 +52,10 @@ function HomePageContent() {
 
   const loadData = async () => {
     try {
-      // Initialize localLectureManager if not done
-      const config = (window as any).UniversiteConfig.getConfig();
-      if (!(window as any).localLectureManager && (window as any).LocalLectureManager) {
-        (window as any).localLectureManager = new (window as any).LocalLectureManager(
-          config.SUPABASE.URL,
-          config.SUPABASE.ANON_KEY,
-          config.HUGGINGFACE.API_KEY,
-          config.DEEPGRAM.API_KEY,
-          config.BACKEND.URL
-        );
+      const session = await getSession();
+      if (!session) {
+        router.push('/login');
+        return;
       }
 
       // Load local recordings
@@ -76,15 +73,13 @@ function HomePageContent() {
       let allLectures = [...localLectures];
 
       // Load remote lectures
-      if ((window as any).localLectureManager) {
-        try {
-          const result = await (window as any).localLectureManager.getLectures(10);
-          if (result.success) {
-            allLectures = [...localLectures, ...result.lectures];
-          }
-        } catch (error) {
-          console.error('Error fetching lectures:', error);
+      try {
+        const remoteLectures = await apiGet('/api/lectures');
+        if (remoteLectures) {
+          allLectures = [...localLectures, ...remoteLectures];
         }
+      } catch (error) {
+        console.error('Error fetching lectures:', error);
       }
 
       // Sort and slice top 3
@@ -146,11 +141,12 @@ function HomePageContent() {
 
   const checkProfileCompletion = async () => {
     try {
-      const session = await (window as any).UniSupabase.getSession();
+      const session = await getSession();
       if (!session) return;
 
+      const supabase = createClient();
       const userId = session.user.id;
-      const { data: profile } = await (window as any).UniSupabase.client
+      const { data: profile } = await supabase
         .from('profiles')
         .select('university, major, year, study_time, learning_style, full_name')
         .eq('id', userId)
@@ -330,11 +326,12 @@ function HomePageContent() {
 
     const formData = new FormData(formRef.current);
     try {
-      const session = await (window as any).UniSupabase.getSession();
+      const session = await getSession();
       if (!session) return;
 
+      const supabase = createClient();
       const userId = session.user.id;
-      const { error } = await (window as any).UniSupabase.client
+      const { error } = await supabase
         .from('profiles')
         .upsert({
           id: userId,
@@ -820,23 +817,5 @@ function HomePageContent() {
 }
 
 export default function HomePage() {
-  return (
-    <ClientLoader
-      scripts={[
-        '/js/theme-manager.js',
-        '/js/config.js',
-        '/js/supabase-client.js',
-        '/js/auth-guard.js',
-        '/js/app-state.js',
-        '/js/audio-recorder.js',
-        '/js/deepgram-service.js',
-        '/js/transcription-service.js',
-        '/js/transcript-processor.js',
-        '/js/local-lecture-manager.js'
-      ]}
-      requiredGlobals={['UniSupabase', 'appState', 'LocalLectureManager']}
-    >
-      <HomePageContent />
-    </ClientLoader>
-  );
+  return <HomePageContent />;
 }

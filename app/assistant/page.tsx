@@ -3,9 +3,12 @@
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import ClientLoader from '../components/ClientLoader';
+import { apiPost, apiGet } from '@/lib/api/client';
+import { getSession } from '@/lib/supabase/auth';
+import { useRouter } from 'next/navigation';
 
 function AssistantPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialLectureId = searchParams.get('lecture');
   const initialQuery = searchParams.get('q');
@@ -37,14 +40,18 @@ function AssistantPageContent() {
     }
   };
 
-  const loadInitialState = () => {
-    if (initialLectureId && typeof (window as any).appState !== 'undefined') {
-      const lecture = (window as any).appState.getLecture(initialLectureId);
-      if (lecture) {
-        setCurrentLecture(lecture);
-        if (lecture.chatHistory) {
-          setMessages(lecture.chatHistory);
+  const loadInitialState = async () => {
+    if (initialLectureId) {
+      try {
+        const lecture = await apiGet(`/api/lectures/${initialLectureId}`);
+        if (lecture) {
+          setCurrentLecture(lecture);
+          if (lecture.chatHistory) {
+            setMessages(lecture.chatHistory);
+          }
         }
+      } catch (error) {
+        console.error('Error loading lecture:', error);
       }
     }
 
@@ -76,24 +83,10 @@ function AssistantPageContent() {
     setInputValue('');
     setIsBotTyping(true);
 
-    // Save to lecture if exists
-    if (currentLecture && typeof (window as any).appState !== 'undefined') {
-      const chatHistory = currentLecture.chatHistory || [];
-      chatHistory.push({ sender: 'user', content: query });
-      (window as any).appState.updateLecture(currentLecture.id, { chatHistory });
-    }
-
     try {
       const aiResponse = await getContextAwareResponse(query, newMessages);
       const botMsg = { sender: 'bot', content: aiResponse, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
       setMessages((prev) => [...prev, botMsg]);
-
-      // Save to lecture if exists
-      if (currentLecture && typeof (window as any).appState !== 'undefined') {
-        const chatHistory = currentLecture.chatHistory || [];
-        chatHistory.push({ sender: 'bot', content: aiResponse });
-        (window as any).appState.updateLecture(currentLecture.id, { chatHistory });
-      }
     } catch (error) {
       console.error(error);
       setMessages((prev) => [
@@ -108,33 +101,16 @@ function AssistantPageContent() {
 
   const getContextAwareResponse = async (query: string, currentHistory: any[]) => {
     try {
-      const token = await (window as any).UniSupabase.getAccessToken();
-      if (!token) return 'Please sign in again.';
-
-      const API_BASE_URL = (window as any).UniversiteConfig.getConfig().BACKEND.URL;
-      const response = await fetch(`${API_BASE_URL}/api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          message: query,
-          currentLecture: currentLecture,
-          messages: currentHistory.map((m) => ({ sender: m.sender, content: m.content }))
-        })
+      const response = await apiPost('/api/chat', {
+        message: query,
+        currentLecture: currentLecture,
+        messages: currentHistory.map((m) => ({ sender: m.sender, content: m.content }))
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        if (response.status === 402) {
-          return "You reached your monthly quota for this feature.";
-        }
-        throw new Error(errData.error || 'Failed to get response from server');
+      if (response.success && response.response) {
+        return response.response;
       }
-
-      const data = await response.json();
-      return data.success && data.response ? data.response : 'No response content.';
+      return 'No response content.';
     } catch (e: any) {
       console.error(e);
       if (currentLecture) {
@@ -207,9 +183,9 @@ function AssistantPageContent() {
 
   const processRecording = async (blob: Blob) => {
     setProcessingText('Uploading audio...');
-    const token = await (window as any).UniSupabase.getAccessToken();
-    if (!token) {
-      window.location.href = '/login';
+    const session = await getSession();
+    if (!session) {
+      router.push('/login');
       return;
     }
 
@@ -218,16 +194,15 @@ function AssistantPageContent() {
       formData.append('audio', blob, 'recording.webm');
       
       setProcessingText('Generating transcript...');
-      const API_BASE_URL = (window as any).UniversiteConfig.getConfig().BACKEND.URL;
-      const res = await fetch(`${API_BASE_URL}/api/transcribe`, {
+      const response = await fetch('/api/transcribe', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
         body: formData
       });
       
-      const data = await res.json().catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
       
-      if (res.ok && data.success && data.transcript) {
+      if (response.ok && data.success && data.transcript) {
         createLectureFromTranscript(blob, data.transcript);
         return;
       }
@@ -258,9 +233,10 @@ function AssistantPageContent() {
       createdAt: new Date().toISOString()
     };
 
-    if (typeof (window as any).appState !== 'undefined') {
-      (window as any).appState.addLecture(lecture);
-    }
+    // Save to localStorage
+    const recordings = getRecordings();
+    recordings.push(lecture);
+    localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
 
     setCurrentLecture(lecture);
     setRecordingState('idle');
@@ -284,9 +260,10 @@ function AssistantPageContent() {
       keyConcepts: ['recording']
     };
 
-    if (typeof (window as any).appState !== 'undefined') {
-      (window as any).appState.addLecture(lecture);
-    }
+    // Save to localStorage
+    const recordings = getRecordings();
+    recordings.push(lecture);
+    localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
 
     setCurrentLecture(lecture);
     setRecordingState('idle');
@@ -302,9 +279,9 @@ function AssistantPageContent() {
         setRecordingState('processing');
         setProcessingText('Uploading audio...');
         try {
-          const token = await (window as any).UniSupabase.getAccessToken();
-          if (!token) {
-            window.location.href = '/login';
+          const session = await getSession();
+          if (!session) {
+            router.push('/login');
             return;
           }
 
@@ -312,15 +289,14 @@ function AssistantPageContent() {
           formData.append('audio', file);
           
           setProcessingText('Generating transcript...');
-          const API_BASE_URL = (window as any).UniversiteConfig.getConfig().BACKEND.URL;
-          const res = await fetch(`${API_BASE_URL}/api/transcribe`, {
+          const response = await fetch('/api/transcribe', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers: { 'Authorization': `Bearer ${session.access_token}` },
             body: formData
           });
 
-          const data = await res.json().catch(() => ({}));
-          if (res.ok && data.success && data.transcript) {
+          const data = await response.json().catch(() => ({}));
+          if (response.ok && data.success && data.transcript) {
             createLectureFromTranscript(file, data.transcript);
             return;
           }
@@ -564,7 +540,7 @@ function AssistantPageContent() {
 function AssistantPageWithSuspense() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-55 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
       </div>
     }>
@@ -574,20 +550,5 @@ function AssistantPageWithSuspense() {
 }
 
 export default function AssistantPage() {
-  return (
-    <ClientLoader
-      scripts={[
-        '/js/theme-manager.js',
-        '/js/config.js',
-        '/js/supabase-client.js',
-        '/js/auth-guard.js',
-        '/js/app-state.js',
-        '/js/huggingface-service.js',
-        '/js/transcription-service.js'
-      ]}
-      requiredGlobals={['UniSupabase', 'appState', 'HuggingFaceService', 'TranscriptionService']}
-    >
-      <AssistantPageWithSuspense />
-    </ClientLoader>
-  );
+  return <AssistantPageWithSuspense />;
 }

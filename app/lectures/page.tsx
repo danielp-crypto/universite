@@ -2,12 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import ClientLoader from '../components/ClientLoader';
+import { apiGet, apiPut } from '@/lib/api/client';
+import { getSession } from '@/lib/supabase/auth';
+import { useRouter } from 'next/navigation';
 
 function LecturesPageContent() {
+  const router = useRouter();
   const [filter, setFilter] = useState<'all' | 'today' | 'week' | 'favorites'>('all');
   const [allLectures, setAllLectures] = useState<any[]>([]);
   const [counts, setCounts] = useState({ all: 0, today: 0, week: 0, favorites: 0 });
+  const [loading, setLoading] = useState(true);
 
   const RECORDINGS_STORAGE_KEY = 'universite_recordings';
 
@@ -22,56 +26,72 @@ function LecturesPageContent() {
     }
   };
 
-  const loadLectures = () => {
-    const localRecordings = getRecordings();
-    const localLectures = localRecordings.map((recording: any) => ({
-      id: recording.id,
-      title: recording.name,
-      createdAt: recording.createdAt,
-      duration: recording.duration,
-      keyConcepts: ['local recording'],
-      isLocal: true,
-      audioUrl: recording.audioUrl,
-      favorite: false
-    }));
+  const loadLectures = async () => {
+    try {
+      const session = await getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
 
-    let appLectures: any[] = [];
-    if (typeof (window as any).appState !== 'undefined') {
-      appLectures = (window as any).appState.lectures || [];
+      // Load lectures from API
+      const apiLectures = await apiGet('/api/lectures').catch(() => []);
+
+      const localRecordings = getRecordings();
+      const localLectures = localRecordings.map((recording: any) => ({
+        id: recording.id,
+        title: recording.name,
+        createdAt: recording.createdAt,
+        duration: recording.duration,
+        keyConcepts: ['local recording'],
+        isLocal: true,
+        audioUrl: recording.audioUrl,
+        favorite: false
+      }));
+
+      const merged = [...localLectures, ...apiLectures];
+      merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setAllLectures(merged);
+
+      // Calculate Counts
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const countAll = merged.length;
+      const countToday = merged.filter(lecture => new Date(lecture.createdAt) >= today).length;
+      const countWeek = merged.filter(lecture => new Date(lecture.createdAt) >= weekAgo).length;
+      const countFavorites = merged.filter(lecture => lecture.favorite === true).length;
+
+      setCounts({
+        all: countAll,
+        today: countToday,
+        week: countWeek,
+        favorites: countFavorites
+      });
+    } catch (error) {
+      console.error('Error loading lectures:', error);
+    } finally {
+      setLoading(false);
     }
-
-    const merged = [...localLectures, ...appLectures];
-    merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    setAllLectures(merged);
-
-    // Calculate Counts
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    const countAll = merged.length;
-    const countToday = merged.filter(lecture => new Date(lecture.createdAt) >= today).length;
-    const countWeek = merged.filter(lecture => new Date(lecture.createdAt) >= weekAgo).length;
-    const countFavorites = merged.filter(lecture => lecture.favorite === true).length;
-
-    setCounts({
-      all: countAll,
-      today: countToday,
-      week: countWeek,
-      favorites: countFavorites
-    });
   };
 
   useEffect(() => {
     loadLectures();
   }, []);
 
-  const toggleFavorite = (lectureId: string) => {
-    if (typeof (window as any).appState === 'undefined') return;
-    const lecture = (window as any).appState.getLecture(lectureId);
-    if (lecture) {
-      (window as any).appState.updateLecture(lectureId, { favorite: !lecture.favorite });
+  const toggleFavorite = async (lectureId: string) => {
+    try {
+      // Update local state
+      setAllLectures(prev => prev.map(lecture => 
+        lecture.id === lectureId ? { ...lecture, favorite: !lecture.favorite } : lecture
+      ));
+
+      // Update via API
+      await apiPut(`/api/lectures/${lectureId}`, { favorite: !allLectures.find(l => l.id === lectureId)?.favorite });
       loadLectures();
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -294,12 +314,5 @@ function LecturesPageContent() {
 }
 
 export default function LecturesPage() {
-  return (
-    <ClientLoader
-      scripts={['/js/theme-manager.js', '/js/config.js', '/js/supabase-client.js', '/js/auth-guard.js', '/js/app-state.js']}
-      requiredGlobals={['UniSupabase', 'appState']}
-    >
-      <LecturesPageContent />
-    </ClientLoader>
-  );
+  return <LecturesPageContent />;
 }
