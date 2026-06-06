@@ -3,9 +3,9 @@ import { getAccessToken } from '@/lib/supabase/auth';
 export async function apiRequest(url: string, options: RequestInit = {}) {
   const token = await getAccessToken();
   
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string> || {}),
   };
 
   if (token) {
