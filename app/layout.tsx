@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   title: "Universite",
   description: "AI-powered lecture recording and study assistant",
   icons: {
-    icon: "/assets/images/icon-white-removebg.png",
-    shortcut: "/assets/images/icon-white-removebg.png",
-    apple: "/assets/images/icon-white-removebg.png",
+    icon: "/assets/images/icon-removebg-preview.png-128x128.png",
+    shortcut: "/assets/images/icon-removebg-preview.png-128x128.png",
+    apple: "/assets/images/icon-removebg-preview.png-128x128.png",
   },
 };
 
