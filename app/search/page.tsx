@@ -1,25 +1,77 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import ClientLoader from '../components/ClientLoader';
-
-declare const appState: any;
+import { apiGet } from '@/lib/api/client';
+import { getSession } from '@/lib/supabase/auth';
+import { useRouter } from 'next/navigation';
 
 interface Lecture {
   id: string;
   title: string;
   createdAt: string;
+  created_at?: string;
   duration?: string;
   transcript?: string;
   keyConcepts?: string[];
 }
 
 function SearchContent() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Lecture[]>([]);
+  const [allLectures, setAllLectures] = useState<Lecture[]>([]);
   const [showEmpty, setShowEmpty] = useState(true);
   const [showNoResults, setShowNoResults] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const RECORDINGS_STORAGE_KEY = 'universite_recordings';
+
+  const getRecordings = () => {
+    try {
+      const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
+      return recordings ? JSON.parse(recordings) : [];
+    } catch (error) {
+      console.error('Error getting recordings:', error);
+      return [];
+    }
+  };
+
+  const loadLectures = async () => {
+    try {
+      const session = await getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
+      // Load lectures from API
+      const apiLectures = await apiGet('/api/lectures').catch(() => []);
+
+      const localRecordings = getRecordings();
+      const localLectures = localRecordings.map((recording: any) => ({
+        id: recording.id,
+        title: recording.name,
+        createdAt: recording.createdAt,
+        created_at: recording.createdAt,
+        duration: recording.duration,
+        keyConcepts: recording.keyConcepts || ['local recording'],
+        transcript: recording.transcription || ''
+      }));
+
+      const merged = [...localLectures, ...apiLectures];
+      merged.sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
+      setAllLectures(merged);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading lectures:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLectures();
+  }, []);
 
   function highlightText(text: string, q: string) {
     if (!q) return text;
@@ -35,18 +87,21 @@ function SearchContent() {
       setShowNoResults(false);
       return;
     }
-    if (typeof appState === 'undefined') {
-      setShowNoResults(true);
-      setShowEmpty(false);
-      return;
-    }
-    const res: Lecture[] = appState.searchLectures(value);
-    if (res.length === 0) {
+
+    const searchLower = value.toLowerCase();
+    const filtered = allLectures.filter(lecture => {
+      const titleMatch = lecture.title.toLowerCase().includes(searchLower);
+      const conceptsMatch = lecture.keyConcepts?.some(c => c.toLowerCase().includes(searchLower));
+      const transcriptMatch = lecture.transcript?.toLowerCase().includes(searchLower);
+      return titleMatch || conceptsMatch || transcriptMatch;
+    });
+
+    if (filtered.length === 0) {
       setResults([]);
       setShowEmpty(false);
       setShowNoResults(true);
     } else {
-      setResults(res);
+      setResults(filtered);
       setShowEmpty(false);
       setShowNoResults(false);
     }
@@ -83,7 +138,13 @@ function SearchContent() {
 
       {/* Main Content */}
       <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
-        {showEmpty && (
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent mx-auto"></div>
+            <p className="text-slate-500 mt-4 text-sm">Loading lectures...</p>
+          </div>
+        )}
+        {!loading && showEmpty && (
           <div className="text-center py-12">
             <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -92,7 +153,7 @@ function SearchContent() {
             <p className="text-sm text-slate-500">Enter keywords to find lectures, concepts, or transcript content</p>
           </div>
         )}
-        {showNoResults && (
+        {!loading && showNoResults && (
           <div className="text-center py-12">
             <p className="text-slate-600 mb-2">No results found</p>
             <p className="text-sm text-slate-500">Try different keywords or check your spelling</p>
@@ -105,7 +166,7 @@ function SearchContent() {
               <Link key={lecture.id} href={`/lecture-detail?id=${lecture.id}`} className="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
                 <h3 className="text-base font-semibold text-slate-800 mb-1" dangerouslySetInnerHTML={{ __html: highlightText(lecture.title, query) }} />
                 <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
-                  <span>{new Date(lecture.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(lecture.createdAt || lecture.created_at).toLocaleDateString()}</span>
                   <span>•</span>
                   <span>{lecture.duration || 'N/A'}</span>
                 </div>
@@ -153,9 +214,5 @@ function SearchContent() {
 }
 
 export default function SearchPage() {
-  return (
-    <ClientLoader>
-      <SearchContent />
-    </ClientLoader>
-  );
+  return <SearchContent />;
 }

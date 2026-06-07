@@ -3,10 +3,13 @@
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import ClientLoader from '../components/ClientLoader';
+import { apiGet, apiPost } from '@/lib/api/client';
+import { getSession } from '@/lib/supabase/auth';
+import { useRouter } from 'next/navigation';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const lectureId = searchParams.get('id');
 
   const [currentLecture, setCurrentLecture] = useState<any>(null);
@@ -54,6 +57,13 @@ function LectureDetailPageContent() {
   const loadLecture = async (id: string) => {
     setAudioStatus('Loading lecture...');
     try {
+      // Check session
+      const session = await getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
       // 1. Check local recordings first
       const local = getLocalRecordingById(id);
       if (local) {
@@ -72,17 +82,13 @@ function LectureDetailPageContent() {
         return;
       }
 
-      // 2. Check LocalLectureManager
-      if ((window as any).localLectureManager) {
-        const result = await (window as any).localLectureManager.getLecture(id);
-        if (result.success) {
-          setCurrentLecture(result.lecture);
-          setAudioStatus('Lecture ready');
-        } else {
-          setAudioStatus('Lecture not found');
-        }
+      // 2. Load from API
+      const lecture = await apiGet(`/api/lectures/${id}`);
+      if (lecture) {
+        setCurrentLecture(lecture);
+        setAudioStatus('Lecture ready');
       } else {
-        setAudioStatus('Lecture manager not available');
+        setAudioStatus('Lecture not found');
       }
     } catch (err: any) {
       console.error('Error loading lecture:', err);
@@ -171,25 +177,19 @@ function LectureDetailPageContent() {
       return;
     }
 
-    const qaService = new (window as any).QAService((window as any).UniversiteConfig.getConfig().HUGGINGFACE.API_KEY);
-    
     try {
-      const quotaCheck = await qaService.checkQAQuota();
-      if (!quotaCheck.hasQuota) {
-        alert(`Q&A generation limit reached. You've used ${quotaCheck.used} of ${quotaCheck.limit} this month. Upgrade for unlimited questions.`);
-        return;
-      }
-
       setProcessingMessage('Generating Q&A...');
       setIsProcessing(true);
 
       const segments = createSegmentsFromTranscription(currentLecture.transcription);
-      const result = await qaService.generateLectureQA(currentLecture, segments);
+      const result = await apiPost('/api/generate-qa', {
+        lecture: currentLecture,
+        segments: segments
+      });
       
       if (result.success) {
-        await qaService.consumeQAQuota();
         localStorage.setItem(`qa_${currentLecture.id}`, JSON.stringify(result.qaPairs));
-        window.location.href = `/qa-interface?lecture=${currentLecture.id}`;
+        router.push(`/qa-interface?lecture=${currentLecture.id}`);
       } else {
         alert('Error generating Q&A: ' + result.error);
       }
@@ -208,24 +208,17 @@ function LectureDetailPageContent() {
       return;
     }
 
-    const flashcardService = new (window as any).FlashcardService((window as any).UniversiteConfig.getConfig().HUGGINGFACE.API_KEY);
-    
     try {
-      const quotaCheck = await flashcardService.checkFlashcardQuota();
-      if (!quotaCheck.hasQuota) {
-        alert(`Flashcard generation limit reached. Upgrade for unlimited AI-powered study tools!`);
-        return;
-      }
-
       setProcessingMessage('Creating Flashcards...');
       setIsProcessing(true);
 
       const segments = createSegmentsFromTranscription(currentLecture.transcription);
-      const result = await flashcardService.generateLectureFlashcards(currentLecture, segments);
+      const result = await apiPost('/api/generate-flashcards', {
+        lecture: currentLecture,
+        segments: segments
+      });
       
       if (result.success) {
-        await flashcardService.consumeFlashcardQuota(result.flashcards.length);
-        
         // Save to localStorage
         const existingStored = localStorage.getItem('universite_flashcards');
         const existing = existingStored ? JSON.parse(existingStored) : [];
@@ -237,7 +230,7 @@ function LectureDetailPageContent() {
         }));
 
         localStorage.setItem('universite_flashcards', JSON.stringify([...existing, ...newCards]));
-        window.location.href = `/study-mode?lecture=${currentLecture.id}`;
+        router.push(`/study-mode?lecture=${currentLecture.id}`);
       } else {
         alert('Error generating flashcards: ' + result.error);
       }
@@ -262,8 +255,14 @@ function LectureDetailPageContent() {
         const blob = await response.blob();
         audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
       } else if (currentLecture.file_path) {
-        const token = await (window as any).UniSupabase.getAccessToken();
-        const downloadUrl = `${(window as any).UniSupabase.client.supabaseUrl}/storage/v1/object/public/${currentLecture.file_path}`;
+        const session = await getSession();
+        if (!session) {
+          router.push('/login');
+          return;
+        }
+        const token = session.access_token;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hiruufvoyigrcdohqjkm.supabase.co';
+        const downloadUrl = `${supabaseUrl}/storage/v1/object/public/${currentLecture.file_path}`;
         const response = await fetch(downloadUrl, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -275,15 +274,13 @@ function LectureDetailPageContent() {
       }
 
       setProcessingMessage('Transcribing audio...');
-      const transcriptionService = new (window as any).TranscriptionService(
-        (window as any).UniversiteConfig.getConfig().DEEPGRAM.API_KEY,
-        (window as any).UniversiteConfig.getConfig().DEEPGRAM.MODEL
-      );
-
-      const result = await transcriptionService.transcribeAudio(audioFile, { language: 'en' });
+      const transcriptionResult = await apiPost('/api/transcribe', {
+        audio_file: audioFile,
+        language: 'en'
+      });
       
-      if (result.success) {
-        currentLecture.transcription = result.transcript;
+      if (transcriptionResult.success) {
+        currentLecture.transcription = transcriptionResult.transcript;
         setCurrentLecture({ ...currentLecture });
 
         // Update local storage if it's local
@@ -291,15 +288,15 @@ function LectureDetailPageContent() {
           const recordings = getRecordings();
           const foundIdx = recordings.findIndex((r: any) => r.id === currentLecture.id);
           if (foundIdx !== -1) {
-            recordings[foundIdx].transcription = result.transcript;
+            recordings[foundIdx].transcription = transcriptionResult.transcript;
             localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
           }
         }
 
         setProcessingMessage('Generating summary...');
-        const summary = await generateSummary(result.transcript);
+        const summary = await generateSummary(transcriptionResult.transcript);
 
-        const segments = createSegmentsFromTranscription(result.transcript);
+        const segments = createSegmentsFromTranscription(transcriptionResult.transcript);
         
         setProcessingResults({
           segmentsCount: segments.length,
@@ -310,7 +307,7 @@ function LectureDetailPageContent() {
 
         alert('Transcription and analysis completed successfully!');
       } else {
-        throw new Error(result.error || 'Transcription failed');
+        throw new Error(transcriptionResult.error || 'Transcription failed');
       }
     } catch (error: any) {
       console.error(error);
@@ -322,11 +319,10 @@ function LectureDetailPageContent() {
 
   const generateSummary = async (transcript: string) => {
     try {
-      const config = (window as any).UniversiteConfig.getConfig();
-      const huggingfaceService = new (window as any).HuggingFaceService(config.HUGGINGFACE.API_KEY, config.HUGGINGFACE.MODEL);
-      const prompt = `Please provide a concise summary of the following lecture transcript:\n\n${transcript.substring(0, 2000)}...`;
-      const result = await huggingfaceService.generateText(prompt);
-      return result.success ? result.text : null;
+      const result = await apiPost('/api/generate-summary', {
+        transcript: transcript.substring(0, 2000)
+      });
+      return result.success ? result.summary : null;
     } catch (e) {
       return null;
     }
@@ -685,7 +681,7 @@ function LectureDetailPageContent() {
   );
 }
 
-function LectureDetailPageWithSuspense() {
+export default function LectureDetailPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -694,35 +690,5 @@ function LectureDetailPageWithSuspense() {
     }>
       <LectureDetailPageContent />
     </Suspense>
-  );
-}
-
-export default function LectureDetailPage() {
-  return (
-    <ClientLoader
-      scripts={[
-        '/js/theme-manager.js',
-        '/js/config.js',
-        '/js/supabase-client.js',
-        '/js/auth-guard.js',
-        '/js/app-state.js',
-        '/js/huggingface-service.js',
-        '/js/deepgram-service.js',
-        '/js/transcription-service.js',
-        '/js/qa-service.js',
-        '/js/flashcard-service.js',
-        '/js/local-lecture-manager.js'
-      ]}
-      requiredGlobals={[
-        'UniSupabase',
-        'appState',
-        'QAService',
-        'FlashcardService',
-        'LocalLectureManager',
-        'TranscriptionService'
-      ]}
-    >
-      <LectureDetailPageWithSuspense />
-    </ClientLoader>
   );
 }
