@@ -49,7 +49,7 @@ export default function SettingsPage() {
     const name = profile?.full_name || user?.user_metadata?.full_name || user?.email || 'U';
     return name
       .split(' ')
-      .map(n => n[0])
+      .map((n: string) => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
