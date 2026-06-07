@@ -81,8 +81,8 @@ export default function SettingsPage() {
 
       console.log('Saving profile data:', profileData);
 
-      // Update user metadata instead of using profiles table
-      const { error } = await supabase.auth.updateUser({
+      // Update user metadata (same approach as settings.html)
+      const { data, error } = await supabase.auth.updateUser({
         data: profileData
       });
 
@@ -91,10 +91,14 @@ export default function SettingsPage() {
         throw error;
       }
 
-      console.log('Profile saved successfully');
+      console.log('Profile saved successfully:', data);
 
-      // Reload user data
-      await loadUserData();
+      // Update local state with the new metadata
+      if (data.user) {
+        setUser(data.user);
+        setProfile(data.user.user_metadata || {});
+      }
+
       setShowProfileModal(false);
     } catch (error: any) {
       console.error('Error saving profile:', error);
