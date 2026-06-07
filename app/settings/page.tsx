@@ -89,22 +89,30 @@ export default function SettingsPage() {
         learning_style: formData.get('learning_style'),
       };
 
-      const { error } = await supabase
+      console.log('Saving profile data:', profileData);
+
+      const { data, error } = await supabase
         .from('profiles')
         .upsert({
           id: session.user.id,
           ...profileData,
           updated_at: new Date().toISOString(),
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Profile saved successfully:', data);
 
       // Reload user data
       await loadUserData();
       setShowProfileModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving profile:', error);
-      alert('Error saving profile. Please try again.');
+      alert(`Error saving profile: ${error.message || 'Unknown error'}`);
     }
   };
 
