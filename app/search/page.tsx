@@ -166,7 +166,7 @@ function SearchContent() {
               <Link key={lecture.id} href={`/lecture-detail?id=${lecture.id}`} className="block bg-white border border-slate-200 rounded-2xl p-4 active:scale-[0.98] transition-transform">
                 <h3 className="text-base font-semibold text-slate-800 mb-1" dangerouslySetInnerHTML={{ __html: highlightText(lecture.title, query) }} />
                 <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
-                  <span>{new Date(lecture.createdAt || lecture.created_at).toLocaleDateString()}</span>
+                  <span>{new Date(lecture.createdAt || lecture.created_at || new Date()).toLocaleDateString()}</span>
                   <span>•</span>
                   <span>{lecture.duration || 'N/A'}</span>
                 </div>
