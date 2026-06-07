@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiGet, apiPost } from '@/lib/api/client';
-import { getSession, createClient } from '@/lib/supabase/auth';
+import { getSession } from '@/lib/supabase/auth';
+import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 function HomePageContent() {
@@ -144,7 +145,6 @@ function HomePageContent() {
       const session = await getSession();
       if (!session) return;
 
-      const supabase = createClient();
       const userId = session.user.id;
       const { data: profile } = await supabase
         .from('profiles')
@@ -329,7 +329,6 @@ function HomePageContent() {
       const session = await getSession();
       if (!session) return;
 
-      const supabase = createClient();
       const userId = session.user.id;
       const { error } = await supabase
         .from('profiles')
