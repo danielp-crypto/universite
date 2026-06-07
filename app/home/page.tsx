@@ -6,6 +6,7 @@ import { apiGet, apiPost } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import WaveformVisualizer from '../components/WaveformVisualizer';
 
 function HomePageContent() {
   const router = useRouter();
@@ -19,6 +20,7 @@ function HomePageContent() {
   const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'processing'>('idle');
   const [recordingTimer, setRecordingTimer] = useState('00:00');
   const [processingText, setProcessingText] = useState('Saving audio...');
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
 
   const mediaRecorderRef = useRef<any>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -183,6 +185,7 @@ function HomePageContent() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setAudioStream(stream);
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
@@ -195,6 +198,7 @@ function HomePageContent() {
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         stream.getTracks().forEach(track => track.stop());
+        setAudioStream(null);
         await saveRecording(audioBlob);
       };
 
@@ -235,6 +239,7 @@ function HomePageContent() {
       mediaRecorderRef.current.stream.getTracks().forEach((track: any) => track.stop());
     }
     setRecordingState('idle');
+    setAudioStream(null);
     audioChunksRef.current = [];
     if (recordingTimerIntervalRef.current) {
       clearInterval(recordingTimerIntervalRef.current);
@@ -647,6 +652,15 @@ function HomePageContent() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
             <div className="text-center">
+              {/* Waveform Visualizer */}
+              <div className="h-32 mb-4 bg-slate-50 rounded-xl overflow-hidden">
+                <WaveformVisualizer 
+                  stream={audioStream} 
+                  isRecording={recordingState === 'recording'}
+                  color="#6366f1"
+                />
+              </div>
+              
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-105 flex items-center justify-center animate-pulse-recording">
                 <div className="w-12 h-12 rounded-full bg-red-500"></div>
               </div>
