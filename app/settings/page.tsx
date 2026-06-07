@@ -30,17 +30,7 @@ export default function SettingsPage() {
       const session = await getSession();
       if (session?.user) {
         setUser(session.user);
-        
-        // Load profile from Supabase
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileData) {
-          setProfile(profileData);
-        }
+        setProfile(session.user.user_metadata || {});
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -91,21 +81,17 @@ export default function SettingsPage() {
 
       console.log('Saving profile data:', profileData);
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: session.user.id,
-          ...profileData,
-          updated_at: new Date().toISOString(),
-        })
-        .select();
+      // Update user metadata instead of using profiles table
+      const { error } = await supabase.auth.updateUser({
+        data: profileData
+      });
 
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
 
-      console.log('Profile saved successfully:', data);
+      console.log('Profile saved successfully');
 
       // Reload user data
       await loadUserData();
