@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { apiGet, apiPut } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
+import AudioPlayer from '../components/AudioPlayer';
 
 function LecturesPageContent() {
   const router = useRouter();
@@ -92,6 +93,35 @@ function LecturesPageContent() {
       loadLectures();
     } catch (error) {
       console.error('Error toggling favorite:', error);
+    }
+  };
+
+  const deleteRecording = async (id: string) => {
+    try {
+      const recordings = getRecordings();
+      const filtered = recordings.filter((r: any) => r.id !== id);
+      localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(filtered));
+      loadLectures();
+    } catch (error) {
+      console.error('Error deleting recording:', error);
+      alert('Error deleting recording');
+    }
+  };
+
+  const shareRecording = async (lecture: any) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: lecture.title,
+          text: `Check out this lecture: ${lecture.title}`,
+          url: window.location.href
+        });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
 
@@ -194,27 +224,44 @@ function LecturesPageContent() {
 
                 if (isLocal) {
                   return (
-                    <div key={lecture.id} className="bg-white border border-slate-200 rounded-2xl p-4">
-                      <div className="flex items-start justify-between mb-2">
+                    <div key={lecture.id} className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
                         <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1">
                           <h3 className="text-base font-semibold text-slate-800 mb-1">{lecture.title}</h3>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
                             <span>{dateStr}</span>
                             <span>•</span>
                             <span>{lecture.duration || 'N/A'}</span>
-                            <span>•</span>
                             <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>
                           </div>
                         </Link>
                       </div>
-                      <audio controls className="w-full mb-3" src={lecture.audioUrl}></audio>
+                      <AudioPlayer src={lecture.audioUrl} className="mb-3" />
                       <div className="flex gap-2">
-                        <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
+                        <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
                           View Details
                         </Link>
-                        <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
+                        <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
                           Chat
                         </Link>
+                        <button
+                          onClick={() => shareRecording(lecture)}
+                          className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm transition-colors flex items-center justify-center"
+                          title="Share"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => deleteRecording(lecture.id)}
+                          className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-sm transition-colors flex items-center justify-center"
+                          title="Delete"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
                       {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-3">

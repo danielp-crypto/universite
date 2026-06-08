@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { apiGet, apiPost } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
+import AudioPlayer from '../components/AudioPlayer';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
@@ -13,11 +14,6 @@ function LectureDetailPageContent() {
   const lectureId = searchParams.get('id');
 
   const [currentLecture, setCurrentLecture] = useState<any>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState('0:00');
-  const [duration, setDuration] = useState('0:00');
-  const [progressPercent, setProgressPercent] = useState(0);
-  const [audioStatus, setAudioStatus] = useState('Loading audio...');
   
   // Tabs
   const [activeTab, setActiveTab] = useState<'segments' | 'transcript' | 'flashcards'>('segments');
@@ -33,10 +29,6 @@ function LectureDetailPageContent() {
   } | null>(null);
 
   const [flashcards, setFlashcards] = useState<any[]>([]);
-
-  // Refs
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const progressBarContainerRef = useRef<HTMLDivElement | null>(null);
 
   const RECORDINGS_STORAGE_KEY = 'universite_recordings';
 
@@ -54,8 +46,14 @@ function LectureDetailPageContent() {
     return recordings.find((r: any) => r.id === id);
   };
 
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds)) return '0:00';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   const loadLecture = async (id: string) => {
-    setAudioStatus('Loading lecture...');
     try {
       // Check session
       const session = await getSession();
@@ -78,7 +76,6 @@ function LectureDetailPageContent() {
           segments: local.segments || [],
           keyConcepts: local.keyConcepts || ['local recording']
         });
-        setAudioStatus('Local recording ready');
         return;
       }
 
@@ -86,21 +83,15 @@ function LectureDetailPageContent() {
       const lecture = await apiGet(`/api/lectures/${id}`);
       if (lecture) {
         setCurrentLecture(lecture);
-        setAudioStatus('Lecture ready');
-      } else {
-        setAudioStatus('Lecture not found');
       }
     } catch (err: any) {
       console.error('Error loading lecture:', err);
-      setAudioStatus('Error loading lecture');
     }
   };
 
   useEffect(() => {
     if (lectureId) {
       loadLecture(lectureId);
-    } else {
-      setAudioStatus('No lecture specified');
     }
 
     // Load flashcards from localStorage
@@ -114,60 +105,6 @@ function LectureDetailPageContent() {
       console.error(e);
     }
   }, [lectureId]);
-
-  // Audio Event Handlers
-  const handlePlayPause = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      setAudioStatus('Paused');
-    } else {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-        setAudioStatus('Playing...');
-      }).catch(err => {
-        console.error(err);
-        setAudioStatus('Play failed');
-      });
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (!audioRef.current) return;
-    const current = audioRef.current.currentTime;
-    const dur = audioRef.current.duration || 0;
-    setCurrentTime(formatTime(current));
-    if (dur > 0) {
-      setProgressPercent((current / dur) * 100);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (!audioRef.current) return;
-    setDuration(formatTime(audioRef.current.duration));
-  };
-
-  const handleAudioEnded = () => {
-    setIsPlaying(false);
-    setProgressPercent(0);
-    setCurrentTime('0:00');
-    setAudioStatus('Ended');
-  };
-
-  const handleProgressBarClick = (e: React.MouseEvent) => {
-    if (!audioRef.current || !progressBarContainerRef.current) return;
-    const rect = progressBarContainerRef.current.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    audioRef.current.currentTime = percent * audioRef.current.duration;
-  };
-
-  const formatTime = (seconds: number) => {
-    if (isNaN(seconds)) return '0:00';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
 
   // AI Feature triggers
   const handleGenerateQA = async () => {
@@ -381,52 +318,9 @@ function LectureDetailPageContent() {
                 </div>
 
                 {/* Audio Player Container */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-4">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handlePlayPause}
-                      className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center active:scale-95 transition-transform shadow-md hover:bg-indigo-700"
-                    >
-                      {!isPlaying ? (
-                        <svg className="w-5 h-5 fill-current ml-0.5" viewBox="0 0 20 20">
-                          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                          <path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z" />
-                        </svg>
-                      )}
-                    </button>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                        <span>{currentTime}</span>
-                        <div
-                          ref={progressBarContainerRef}
-                          onClick={handleProgressBarClick}
-                          className="flex-1 bg-slate-200 rounded-full h-1.5 cursor-pointer relative"
-                        >
-                          <div
-                            className="bg-indigo-600 h-1.5 rounded-full absolute left-0 top-0"
-                            style={{ width: `${progressPercent}%` }}
-                          ></div>
-                        </div>
-                        <span>{duration}</span>
-                      </div>
-                      <div className="text-xs font-semibold text-slate-700">{audioStatus}</div>
-                    </div>
-                  </div>
-                  {/* HTML Audio Element */}
-                  {currentLecture.audioUrl && (
-                    <audio
-                      ref={audioRef}
-                      src={currentLecture.audioUrl}
-                      onTimeUpdate={handleTimeUpdate}
-                      onLoadedMetadata={handleLoadedMetadata}
-                      onEnded={handleAudioEnded}
-                      className="hidden"
-                    />
-                  )}
-                </div>
+                {currentLecture.audioUrl && (
+                  <AudioPlayer src={currentLecture.audioUrl} className="mb-4" />
+                )}
 
                 {/* Primary Actions */}
                 <div className="flex gap-2 mb-4">
@@ -566,12 +460,8 @@ function LectureDetailPageContent() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => {
-                              if (audioRef.current) {
-                                audioRef.current.currentTime = segment.start_time_seconds;
-                                audioRef.current.play();
-                                setIsPlaying(true);
-                                setAudioStatus('Playing...');
-                              }
+                              // TODO: Implement segment playback with AudioPlayer
+                              alert('Segment playback feature coming soon');
                             }}
                             className="flex-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold active:scale-95 transition-transform"
                           >
@@ -639,7 +529,7 @@ function LectureDetailPageContent() {
           ) : (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent mx-auto"></div>
-              <p className="text-slate-500 mt-4 text-sm">{audioStatus}</p>
+              <p className="text-slate-500 mt-4 text-sm">Loading lecture...</p>
             </div>
           )}
         </div>
