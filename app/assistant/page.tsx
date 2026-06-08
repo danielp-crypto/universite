@@ -318,7 +318,9 @@ function AssistantPageContent() {
         {/* Header */}
         <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/assets/images/icon-removebg-preview.png-128x128.png" alt="Universite" className="w-6 h-6 md:w-7 md:h-7" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+            </div>
             <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Universite Chat
             </h1>

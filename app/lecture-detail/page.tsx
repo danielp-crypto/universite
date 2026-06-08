@@ -319,6 +319,9 @@ function LectureDetailPageContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
             </Link>
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+            </div>
             <h1 className="text-lg md:text-xl font-semibold text-slate-800 flex-1">Lecture Details</h1>
           </div>
         </div>
