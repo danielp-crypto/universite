@@ -204,6 +204,12 @@ function LectureDetailPageContent() {
     setIsProcessing(true);
 
     try {
+      const session = await getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
       let audioFile: File;
 
       if (currentLecture.isLocal && currentLecture.audioUrl) {
@@ -211,11 +217,6 @@ function LectureDetailPageContent() {
         const blob = await response.blob();
         audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
       } else if (currentLecture.file_path) {
-        const session = await getSession();
-        if (!session) {
-          router.push('/login');
-          return;
-        }
         const token = session.access_token;
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hiruufvoyigrcdohqjkm.supabase.co';
         const downloadUrl = `${supabaseUrl}/storage/v1/object/public/${currentLecture.file_path}`;
@@ -230,10 +231,17 @@ function LectureDetailPageContent() {
       }
 
       setProcessingMessage('Transcribing audio...');
-      const transcriptionResult = await apiPost('/api/transcribe', {
-        audio_file: audioFile,
-        language: 'en'
+      
+      const formData = new FormData();
+      formData.append('audio', audioFile);
+      
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        body: formData
       });
+      
+      const transcriptionResult = await response.json().catch(() => ({}));
       
       if (transcriptionResult.success) {
         currentLecture.transcription = transcriptionResult.transcript;
