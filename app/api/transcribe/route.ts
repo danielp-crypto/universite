@@ -20,7 +20,7 @@ async function transcribeAudio(audioContent: Buffer, contentType: string): Promi
     else filename += '.audio';
   }
 
-  formData.append('file', new Blob([audioContent], { type: contentType || 'audio/wav' }), filename);
+  formData.append('file', new Blob([audioContent.buffer], { type: contentType || 'audio/wav' }), filename);
 
   const params = new URLSearchParams({
     model: 'nova-2',
