@@ -53,6 +53,25 @@ function LectureDetailPageContent() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const downloadRecording = async () => {
+    if (!currentLecture || !currentLecture.audioUrl) return;
+    try {
+      const response = await fetch(currentLecture.audioUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentLecture.title || 'recording'}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading recording:', error);
+      alert('Error downloading recording');
+    }
+  };
+
   const loadLecture = async (id: string) => {
     try {
       // Check session
@@ -330,6 +349,15 @@ function LectureDetailPageContent() {
                   >
                     Chat with Lecture
                   </Link>
+                  <button
+                    onClick={downloadRecording}
+                    className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-center hover:shadow-lg transition-all text-sm active:scale-95"
+                    title="Download"
+                  >
+                    <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
                 </div>
 
                 {/* Study Tools */}

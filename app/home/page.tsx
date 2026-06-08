@@ -315,6 +315,24 @@ function HomePageContent() {
     }
   };
 
+  const downloadRecording = async (lecture: any) => {
+    try {
+      const response = await fetch(lecture.audioUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${lecture.title || 'recording'}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading recording:', error);
+      alert('Error downloading recording');
+    }
+  };
+
   const uploadRecording = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -528,6 +546,15 @@ function HomePageContent() {
                         </div>
                         <AudioPlayer src={lecture.audioUrl} className="mb-3" />
                         <div className="flex gap-2">
+                          <button
+                            onClick={() => downloadRecording(lecture)}
+                            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm transition-colors flex items-center justify-center"
+                            title="Download"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
                           <button
                             onClick={() => shareRecording(lecture)}
                             className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm transition-colors flex items-center justify-center"
