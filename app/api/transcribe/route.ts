@@ -1,46 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/supabase/auth';
-import { createClient } from '@deepgram/sdk';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
+const DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen';
 
 async function transcribeAudio(audioContent: Buffer, contentType: string): Promise<string> {
   if (!DEEPGRAM_API_KEY) {
     throw new Error('DEEPGRAM_API_KEY not set');
   }
 
-  const deepgram = createClient(DEEPGRAM_API_KEY);
+  const formData = new FormData();
+  
+  let filename = 'audio';
+  if (contentType) {
+    if (contentType.includes('wav')) filename += '.wav';
+    else if (contentType.includes('mp3')) filename += '.mp3';
+    else if (contentType.includes('webm')) filename += '.webm';
+    else if (contentType.includes('flac')) filename += '.flac';
+    else filename += '.audio';
+  }
 
-  const options = {
+  formData.append('file', new Blob([audioContent], { type: contentType || 'audio/wav' }), filename);
+
+  const params = new URLSearchParams({
     model: 'nova-2',
     language: 'en-US',
-    punctuate: true,
-    utterances: true,
-  };
+    punctuate: 'true',
+    utterances: 'true'
+  });
 
-  try {
-    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
-      audioContent,
-      options
-    );
+  const maxRetries = 3;
+  let retryDelay = 1000;
+  let lastError: string = '';
 
-    if (error) {
-      throw new Error(`Deepgram API error: ${error.message}`);
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(`${DEEPGRAM_API_URL}?${params}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${DEEPGRAM_API_KEY}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.results && result.results.length > 0) {
+          const transcripts = result.results
+            .map((r: any) => r.alternatives?.[0]?.transcript || '')
+            .filter((t: string) => t.length > 0);
+          
+          return transcripts.join(' ').trim();
+        }
+        return '';
+      } else {
+        lastError = `Deepgram API error: ${response.status} - ${response.statusText}`;
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
     }
 
-    if (result && result.results && result.results.channels && result.results.channels.length > 0) {
-      const channel = result.results.channels[0];
-      const transcripts = channel.alternatives
-        .map((alt: any) => alt.transcript || '')
-        .filter((t: string) => t.length > 0);
-      
-      return transcripts.join(' ').trim();
+    if (attempt < maxRetries - 1) {
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      retryDelay *= 2;
     }
-
-    return '';
-  } catch (error) {
-    throw new Error(`Transcription failed: ${error instanceof Error ? error.message : String(error)}`);
   }
+
+  throw new Error(`Transcription failed after ${maxRetries} attempts: ${lastError}`);
 }
 
 export async function POST(request: NextRequest) {
