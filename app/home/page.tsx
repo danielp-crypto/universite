@@ -13,6 +13,7 @@ function HomePageContent() {
   const router = useRouter();
   const [lectures, setLectures] = useState<any[]>([]);
   const [stats, setStats] = useState({ lectures: 0, hours: '0.0', flashcards: 0 });
+  const [streak, setStreak] = useState(0);
   const [profileWidgetVisible, setProfileWidgetVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -32,6 +33,7 @@ function HomePageContent() {
   const formRef = useRef<HTMLFormElement>(null);
 
   const RECORDINGS_STORAGE_KEY = 'universite_recordings';
+  const STREAK_STORAGE_KEY = 'universite_streak';
 
   // Helper to load recordings
   const getRecordings = () => {
@@ -51,6 +53,55 @@ function HomePageContent() {
     } catch (error) {
       console.error('Error saving recordings:', error);
       alert('Error saving recording. Storage may be full.');
+    }
+  };
+
+  // Streak tracking functions
+  const loadStreak = () => {
+    try {
+      const streakData = localStorage.getItem(STREAK_STORAGE_KEY);
+      if (streakData) {
+        const { streak, lastActivityDate } = JSON.parse(streakData);
+        const today = new Date().toDateString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        
+        if (lastActivityDate === today) {
+          setStreak(streak);
+        } else if (lastActivityDate === yesterday) {
+          setStreak(streak);
+        } else {
+          // Streak broken
+          setStreak(0);
+          localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify({ streak: 0, lastActivityDate: today }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading streak:', error);
+      setStreak(0);
+    }
+  };
+
+  const updateStreak = () => {
+    try {
+      const streakData = localStorage.getItem(STREAK_STORAGE_KEY);
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      
+      let newStreak = 1;
+      
+      if (streakData) {
+        const { streak, lastActivityDate } = JSON.parse(streakData);
+        if (lastActivityDate === today) {
+          newStreak = streak;
+        } else if (lastActivityDate === yesterday) {
+          newStreak = streak + 1;
+        }
+      }
+      
+      setStreak(newStreak);
+      localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify({ streak: newStreak, lastActivityDate: today }));
+    } catch (error) {
+      console.error('Error updating streak:', error);
     }
   };
 
@@ -176,6 +227,7 @@ function HomePageContent() {
   useEffect(() => {
     loadData();
     checkProfileCompletion();
+    loadStreak();
 
     return () => {
       if (recordingTimerIntervalRef.current) clearInterval(recordingTimerIntervalRef.current);
@@ -274,6 +326,8 @@ function HomePageContent() {
         const recordings = getRecordings();
         recordings.unshift(recording);
         saveRecordings(recordings);
+
+        updateStreak();
 
         setRecordingState('idle');
         loadData();
@@ -619,7 +673,7 @@ function HomePageContent() {
           {/* Study Stats */}
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-slate-800 mb-3">This Week</h2>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.lectures}</div>
                 <div className="text-xs text-slate-600">Lectures</div>
@@ -631,6 +685,12 @@ function HomePageContent() {
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.flashcards}</div>
                 <div className="text-xs text-slate-600">Flashcards</div>
+              </div>
+              <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-orange-600 mb-1 flex items-center justify-center gap-1">
+                  🔥 {streak}
+                </div>
+                <div className="text-xs text-slate-600">Day Streak</div>
               </div>
             </div>
           </div>
