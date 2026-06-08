@@ -75,8 +75,9 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const session = await getSession();
     if (!session) {
+      console.error('Transcription failed: No session found');
       return NextResponse.json(
-        { success: false, error: 'unauthorized' },
+        { success: false, error: 'unauthorized', message: 'Please log in to use transcription' },
         { status: 401 }
       );
     }
