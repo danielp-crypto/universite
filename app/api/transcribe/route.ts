@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/supabase/auth';
-import { DeepgramClient } from '@deepgram/sdk';
+import { createClient } from '@deepgram/sdk';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 
@@ -9,7 +9,7 @@ async function transcribeAudio(audioContent: Buffer, contentType: string): Promi
     throw new Error('DEEPGRAM_API_KEY not set');
   }
 
-  const deepgram = new DeepgramClient(DEEPGRAM_API_KEY);
+  const deepgram = createClient(DEEPGRAM_API_KEY);
 
   const options = {
     model: 'nova-2',
