@@ -1,6 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
 
+export async function GET(request: NextRequest) {
+  try {
+    // Get token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+
+    // Verify token with Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Fetch lectures for the user
+    const { data: lectures, error } = await supabase
+      .from('lectures')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase fetch error:', error);
+      return NextResponse.json(
+        { success: false, error: 'fetch_failed' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      lectures: lectures || []
+    });
+
+  } catch (error) {
+    console.error('Get lectures error:', error);
+    return NextResponse.json(
+      { success: false, error: 'server_error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get token from Authorization header
@@ -58,7 +109,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Supabase insert error:', error);
-      throw error;
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      return NextResponse.json(
+        { success: false, error: 'supabase_error', details: error.message },
+        { status: 500 }
+      );
     }
 
     console.log('Lecture created successfully:', lecture.id);
