@@ -41,7 +41,12 @@ export async function PUT(
 
     // Update lecture
     const updateData: any = {};
-    if (data.transcription !== undefined) updateData.transcription = data.transcription;
+    if (data.transcription !== undefined) {
+      updateData.transcription = data.transcription;
+      updateData.transcription_status = 'completed';
+      updateData.has_transcription = true;
+      updateData.transcription_completed_at = new Date().toISOString();
+    }
     if (data.summary !== undefined) updateData.summary = data.summary;
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;

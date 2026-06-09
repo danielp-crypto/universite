@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json();
-    const { title, duration, audioUrl, transcription, summary } = data;
+    const { title, duration, audioUrl, transcription, summary, stored_locally, local_audio_size } = data;
 
     if (!title) {
       return NextResponse.json(
@@ -33,7 +33,12 @@ export async function POST(request: NextRequest) {
         transcription: transcription || null,
         summary: summary || null,
         status: 'completed',
-        tags: []
+        tags: [],
+        stored_locally: stored_locally || false,
+        local_audio_size: local_audio_size || 0,
+        transcription_status: transcription ? 'completed' : 'pending',
+        has_transcription: !!transcription,
+        transcription_completed_at: transcription ? new Date().toISOString() : null
       })
       .select()
       .single();

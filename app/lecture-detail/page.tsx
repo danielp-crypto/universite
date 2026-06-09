@@ -267,7 +267,9 @@ function LectureDetailPageContent() {
               body: JSON.stringify({
                 title: currentLecture.title,
                 duration: currentLecture.duration,
-                transcription: transcriptionResult.transcript
+                transcription: transcriptionResult.transcript,
+                stored_locally: true,
+                local_audio_size: currentLecture.audioSize || 0
               })
             });
             
