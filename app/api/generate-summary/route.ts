@@ -19,20 +19,43 @@ async function generateSummary(transcript: string): Promise<string> {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Generate comprehensive lecture notes for college students from this transcript. Format as structured study notes with:
+              text: `Generate comprehensive, actionable lecture notes for college students from this transcript. Format as structured study notes with the following EXACT structure:
 
-1. Main heading with lecture topic
-2. Key Concepts section with bullet points
-3. Important Definitions section
-4. Key Takeaways section
-5. Use markdown formatting with ## for headings and • for bullet points
+## Lecture Title
+[Brief title based on content]
+
+## Key Topics
+• [Topic 1]
+• [Topic 2]
+• [Topic 3]
+
+## Important Definitions
+**[Term]**: [Clear, concise definition]
+**[Term]**: [Clear, concise definition]
+
+## Core Concepts
+• [Concept with brief explanation]
+• [Concept with brief explanation]
+• [Concept with brief explanation]
+
+## Key Takeaways
+• [Actionable takeaway 1]
+• [Actionable takeaway 2]
+• [Actionable takeaway 3]
+
+## Study Questions
+1. [Question 1]
+2. [Question 2]
+3. [Question 3]
+
+Make notes concise, clear, and exam-focused. Use bullet points with • and bold text with ** for emphasis.
 
 Transcript:\n\n${transcript}`
             }]
           }],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 500,
+            maxOutputTokens: 800,
           }
         }),
       }
