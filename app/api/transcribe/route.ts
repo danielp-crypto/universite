@@ -8,19 +8,6 @@ async function transcribeAudio(audioContent: Buffer, contentType: string): Promi
     throw new Error('DEEPGRAM_API_KEY not set');
   }
 
-  const formData = new FormData();
-  
-  let filename = 'audio';
-  if (contentType) {
-    if (contentType.includes('wav')) filename += '.wav';
-    else if (contentType.includes('mp3')) filename += '.mp3';
-    else if (contentType.includes('webm')) filename += '.webm';
-    else if (contentType.includes('flac')) filename += '.flac';
-    else filename += '.audio';
-  }
-
-  formData.append('file', new Blob([new Uint8Array(audioContent)], { type: contentType || 'audio/wav' }), filename);
-
   const params = new URLSearchParams({
     model: 'nova-2',
     language: 'en-US',
@@ -38,23 +25,26 @@ async function transcribeAudio(audioContent: Buffer, contentType: string): Promi
         method: 'POST',
         headers: {
           'Authorization': `Token ${DEEPGRAM_API_KEY}`,
+          'Content-Type': contentType || 'audio/wav',
         },
-        body: formData,
+        body: audioContent,
       });
 
       if (response.ok) {
         const result = await response.json();
         
-        if (result.results && result.results.length > 0) {
-          const transcripts = result.results
-            .map((r: any) => r.alternatives?.[0]?.transcript || '')
+        if (result.results && result.results.channels && result.results.channels.length > 0) {
+          const channel = result.results.channels[0];
+          const transcripts = channel.alternatives
+            .map((alt: any) => alt.transcript || '')
             .filter((t: string) => t.length > 0);
           
           return transcripts.join(' ').trim();
         }
         return '';
       } else {
-        lastError = `Deepgram API error: ${response.status} - ${response.statusText}`;
+        const errorText = await response.text();
+        lastError = `Deepgram API error: ${response.status} - ${response.statusText} - ${errorText}`;
       }
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
