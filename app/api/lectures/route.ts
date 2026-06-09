@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
     const token = authHeader.substring(7);
 
     // Verify token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error || !user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'unauthorized' },
         { status: 401 }
