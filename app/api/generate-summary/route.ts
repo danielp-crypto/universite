@@ -19,36 +19,7 @@ async function generateSummary(transcript: string): Promise<string> {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You MUST generate comprehensive, actionable lecture notes for college students from this transcript. Follow this EXACT structure without deviation:
-
-## Lecture Title
-[Brief title based on content]
-
-## Key Topics
-• [Topic 1]
-• [Topic 2]
-• [Topic 3]
-
-## Important Definitions
-**[Term]**: [Clear, concise definition]
-**[Term]**: [Clear, concise definition]
-
-## Core Concepts
-• [Concept with brief explanation]
-• [Concept with brief explanation]
-• [Concept with brief explanation]
-
-## Key Takeaways
-• [Actionable takeaway 1]
-• [Actionable takeaway 2]
-• [Actionable takeaway 3]
-
-## Study Questions
-1. [Question 1]
-2. [Question 2]
-3. [Question 3]
-
-CRITICAL: You MUST include ALL sections above. Do not skip any section. Make notes concise, clear, and exam-focused. Use bullet points with • and bold text with ** for emphasis.
+              text: `Summarize transcripts and create notes for college students. Structure with key concepts, action items, potential exam questions.
 
 Transcript:\n\n${transcript}`
             }]
