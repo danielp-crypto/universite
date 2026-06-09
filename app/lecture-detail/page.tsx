@@ -276,7 +276,7 @@ function LectureDetailPageContent() {
             
             console.log('Create response status:', createResponse.status);
             const createData = await createResponse.json();
-            console.log('Create response data:', createData);
+            console.log('Create response data:', JSON.stringify(createData, null, 2));
             
             if (createResponse.ok) {
               if (createData.success) {
