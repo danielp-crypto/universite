@@ -255,6 +255,22 @@ function LectureDetailPageContent() {
             recordings[foundIdx].transcription = transcriptionResult.transcript;
             localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
           }
+        } else {
+          // Save transcript to Supabase
+          try {
+            await fetch(`/api/lectures/${currentLecture.id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+              },
+              body: JSON.stringify({
+                transcription: transcriptionResult.transcript
+              })
+            });
+          } catch (error) {
+            console.error('Failed to save transcript to Supabase:', error);
+          }
         }
 
         setProcessingMessage('Generating summary...');
@@ -268,6 +284,24 @@ function LectureDetailPageContent() {
           suggestionsCount: Math.min(5, segments.length * 2),
           summaryText: summary || undefined
         });
+
+        // Save summary to Supabase
+        if (summary && !currentLecture.isLocal) {
+          try {
+            await fetch(`/api/lectures/${currentLecture.id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+              },
+              body: JSON.stringify({
+                summary: summary
+              })
+            });
+          } catch (error) {
+            console.error('Failed to save summary to Supabase:', error);
+          }
+        }
 
         alert('Transcription and analysis completed successfully!');
       } else {
