@@ -16,7 +16,7 @@ function LectureDetailPageContent() {
   const [currentLecture, setCurrentLecture] = useState<any>(null);
   
   // Tabs
-  const [activeTab, setActiveTab] = useState<'segments' | 'transcript' | 'flashcards'>('segments');
+  const [activeTab, setActiveTab] = useState<'segments' | 'transcript' | 'summary' | 'flashcards'>('segments');
   
   // AI Processing states
   const [isProcessing, setIsProcessing] = useState(false);
@@ -475,6 +475,14 @@ function LectureDetailPageContent() {
                     Transcript
                   </button>
                   <button
+                    onClick={() => setActiveTab('summary')}
+                    className={`px-4 py-2 text-sm font-semibold transition-colors ${
+                      activeTab === 'summary' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Summary
+                  </button>
+                  <button
                     onClick={() => setActiveTab('flashcards')}
                     className={`px-4 py-2 text-sm font-semibold transition-colors ${
                       activeTab === 'flashcards' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
@@ -536,6 +544,27 @@ function LectureDetailPageContent() {
                         className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
                       >
                         Start Transcription
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'summary' && (
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
+                  <h3 className="text-base font-semibold text-slate-800 mb-3">Lecture Notes</h3>
+                  {processingResults?.summaryText ? (
+                    <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                      {processingResults.summaryText}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-slate-500 text-sm mb-4">No summary available for this lecture.</p>
+                      <button
+                        onClick={handleProcessTranscript}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
+                      >
+                        Generate Summary
                       </button>
                     </div>
                   )}

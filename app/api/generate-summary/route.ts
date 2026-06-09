@@ -19,12 +19,20 @@ async function generateSummary(transcript: string): Promise<string> {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Generate a concise summary with bullet points for college students from this lecture transcript. Focus on key concepts, definitions, and important takeaways. Format as bullet points using • symbol:\n\n${transcript}`
+              text: `Generate comprehensive lecture notes for college students from this transcript. Format as structured study notes with:
+
+1. Main heading with lecture topic
+2. Key Concepts section with bullet points
+3. Important Definitions section
+4. Key Takeaways section
+5. Use markdown formatting with ## for headings and • for bullet points
+
+Transcript:\n\n${transcript}`
             }]
           }],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 300,
+            maxOutputTokens: 500,
           }
         }),
       }
@@ -39,8 +47,7 @@ async function generateSummary(transcript: string): Promise<string> {
     const result = await response.json();
     const summary = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
-    // Ensure bullet point format
-    return formatAsBulletPoints(summary);
+    return summary;
   } catch (error) {
     console.error('Summary generation error:', error);
     return generateSimpleBulletPoints(transcript);
