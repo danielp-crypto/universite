@@ -19,7 +19,7 @@ async function generateSummary(transcript: string): Promise<string> {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Generate comprehensive, actionable lecture notes for college students from this transcript. Format as structured study notes with the following EXACT structure:
+              text: `You MUST generate comprehensive, actionable lecture notes for college students from this transcript. Follow this EXACT structure without deviation:
 
 ## Lecture Title
 [Brief title based on content]
@@ -48,7 +48,7 @@ async function generateSummary(transcript: string): Promise<string> {
 2. [Question 2]
 3. [Question 3]
 
-Make notes concise, clear, and exam-focused. Use bullet points with • and bold text with ** for emphasis.
+CRITICAL: You MUST include ALL sections above. Do not skip any section. Make notes concise, clear, and exam-focused. Use bullet points with • and bold text with ** for emphasis.
 
 Transcript:\n\n${transcript}`
             }]
@@ -69,6 +69,9 @@ Transcript:\n\n${transcript}`
 
     const result = await response.json();
     const summary = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    console.log('Generated summary length:', summary.length);
+    console.log('Summary preview:', summary.substring(0, 200));
     
     return summary;
   } catch (error) {
@@ -124,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Limit transcript length to avoid overwhelming the API
-    const truncatedTranscript = transcript.substring(0, 2000);
+    const truncatedTranscript = transcript.substring(0, 4000);
 
     const summary = await generateSummary(truncatedTranscript);
 
