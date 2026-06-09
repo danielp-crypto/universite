@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
-import { getSession } from '@/lib/supabase/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session) {
+    // Get token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+
+    // Verify token with Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
       return NextResponse.json(
         { success: false, error: 'unauthorized' },
         { status: 401 }
@@ -28,7 +39,7 @@ export async function POST(request: NextRequest) {
     const { data: lecture, error } = await supabase
       .from('lectures')
       .insert({
-        user_id: session.user.id,
+        user_id: user.id,
         title,
         description: '',
         duration_seconds: duration || 0,
