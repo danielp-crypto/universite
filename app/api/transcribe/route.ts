@@ -27,7 +27,7 @@ async function transcribeAudio(audioContent: Buffer, contentType: string): Promi
           'Authorization': `Token ${DEEPGRAM_API_KEY}`,
           'Content-Type': contentType || 'audio/wav',
         },
-        body: new Uint8Array(audioContent),
+        body: new Blob([new Uint8Array(audioContent)]),
       });
 
       if (response.ok) {
