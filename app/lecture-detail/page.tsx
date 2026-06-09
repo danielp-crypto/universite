@@ -258,6 +258,7 @@ function LectureDetailPageContent() {
 
           // Create lecture in Supabase for local lectures
           try {
+            console.log('Creating lecture in Supabase for local lecture:', currentLecture.title);
             const createResponse = await fetch('/api/lectures', {
               method: 'POST',
               headers: {
@@ -273,8 +274,11 @@ function LectureDetailPageContent() {
               })
             });
             
+            console.log('Create response status:', createResponse.status);
+            const createData = await createResponse.json();
+            console.log('Create response data:', createData);
+            
             if (createResponse.ok) {
-              const createData = await createResponse.json();
               if (createData.success) {
                 // Update current lecture with Supabase ID
                 currentLecture.id = createData.lecture.id;
@@ -288,6 +292,8 @@ function LectureDetailPageContent() {
                   localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
                 }
               }
+            } else {
+              console.error('Failed to create lecture:', createData.error);
             }
           } catch (error) {
             console.error('Failed to create lecture in Supabase:', error);

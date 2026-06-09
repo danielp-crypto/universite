@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     const { title, duration, audioUrl, transcription, summary, stored_locally, local_audio_size } = data;
 
+    console.log('Creating lecture with data:', { title, duration, stored_locally, local_audio_size, hasTranscription: !!transcription });
+
     if (!title) {
       return NextResponse.json(
         { success: false, error: 'title_required' },
@@ -44,8 +46,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error('Supabase insert error:', error);
       throw error;
     }
+
+    console.log('Lecture created successfully:', lecture.id);
 
     return NextResponse.json({
       success: true,
