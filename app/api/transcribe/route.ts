@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    console.log('Transcription request received, token length:', token.length);
     
     // Optionally verify the token with Supabase
     // For now, we'll trust the token since it's coming from the authenticated client
@@ -90,6 +91,8 @@ export async function POST(request: NextRequest) {
     // Get audio file from request
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File;
+    
+    console.log('Audio file received:', audioFile ? audioFile.name : 'null', 'size:', audioFile?.size);
     
     if (!audioFile) {
       return NextResponse.json(
@@ -101,6 +104,8 @@ export async function POST(request: NextRequest) {
     // Read audio content
     const audioContent = Buffer.from(await audioFile.arrayBuffer());
     
+    console.log('Audio content length:', audioContent.length);
+    
     if (audioContent.length === 0) {
       return NextResponse.json(
         { success: false, error: 'empty_audio' },
@@ -109,9 +114,12 @@ export async function POST(request: NextRequest) {
     }
 
     const contentType = audioFile.type || 'audio/wav';
+    console.log('Content type:', contentType);
 
     // Transcribe audio
+    console.log('Starting transcription...');
     const transcript = await transcribeAudio(audioContent, contentType);
+    console.log('Transcription completed, length:', transcript.length);
 
     return NextResponse.json({
       success: true,
@@ -122,6 +130,7 @@ export async function POST(request: NextRequest) {
     console.error('Transcription error:', error);
     
     const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error message:', errorMessage);
     
     if (errorMessage.includes('DEEPGRAM_API_KEY')) {
       return NextResponse.json(
