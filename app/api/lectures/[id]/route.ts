@@ -4,7 +4,7 @@ import { getSession } from '@/lib/supabase/auth';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -15,7 +15,7 @@ export async function PUT(
       );
     }
 
-    const lectureId = params.id;
+    const { id: lectureId } = await params;
     const data = await request.json();
 
     // Verify user owns the lecture

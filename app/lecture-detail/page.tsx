@@ -255,6 +255,41 @@ function LectureDetailPageContent() {
             recordings[foundIdx].transcription = transcriptionResult.transcript;
             localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
           }
+
+          // Create lecture in Supabase for local lectures
+          try {
+            const createResponse = await fetch('/api/lectures', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+              },
+              body: JSON.stringify({
+                title: currentLecture.title,
+                duration: currentLecture.duration,
+                transcription: transcriptionResult.transcript
+              })
+            });
+            
+            if (createResponse.ok) {
+              const createData = await createResponse.json();
+              if (createData.success) {
+                // Update current lecture with Supabase ID
+                currentLecture.id = createData.lecture.id;
+                currentLecture.isLocal = false;
+                setCurrentLecture({ ...currentLecture });
+                
+                // Update local storage to mark as synced
+                if (foundIdx !== -1) {
+                  recordings[foundIdx].id = createData.lecture.id;
+                  recordings[foundIdx].isLocal = false;
+                  localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Failed to create lecture in Supabase:', error);
+          }
         } else {
           // Save transcript to Supabase
           try {
@@ -286,7 +321,7 @@ function LectureDetailPageContent() {
         });
 
         // Save summary to Supabase
-        if (summary && !currentLecture.isLocal) {
+        if (summary) {
           try {
             await fetch(`/api/lectures/${currentLecture.id}`, {
               method: 'PUT',
