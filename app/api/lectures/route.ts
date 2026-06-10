@@ -38,10 +38,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      lectures: lectures || []
-    });
+    return NextResponse.json(lectures || []);
 
   } catch (error) {
     console.error('Get lectures error:', error);
