@@ -26,7 +26,12 @@ function LectureDetailPageContent() {
     summaryAvailable: boolean;
     suggestionsCount: number;
     summaryText?: string;
-  } | null>(null);
+  }>({
+    segmentsCount: 0,
+    summaryAvailable: false,
+    suggestionsCount: 0,
+    summaryText: undefined
+  });
 
   const [flashcards, setFlashcards] = useState<any[]>([]);
 
@@ -84,7 +89,6 @@ function LectureDetailPageContent() {
       // 1. Check local recordings first
       const local = getLocalRecordingById(id);
       if (local) {
-        console.log('Loading local recording:', local);
         const lectureData = {
           id: local.id,
           title: local.name,
@@ -103,13 +107,11 @@ function LectureDetailPageContent() {
           try {
             const supabaseLecture = await apiGet(`/api/lectures/${id}`);
             if (supabaseLecture && supabaseLecture.summary) {
-              console.log('Loading summary from Supabase for synced lecture:', supabaseLecture.summary);
-              setProcessingResults({
-                segmentsCount: 0,
+              setProcessingResults(prev => ({
+                ...prev,
                 summaryAvailable: true,
-                suggestionsCount: 0,
                 summaryText: supabaseLecture.summary
-              });
+              }));
             }
           } catch (error) {
             console.error('Failed to load summary from Supabase:', error);
@@ -121,19 +123,14 @@ function LectureDetailPageContent() {
       // 2. Load from API
       const lecture = await apiGet(`/api/lectures/${id}`);
       if (lecture) {
-        console.log('Loaded lecture from API:', lecture);
         setCurrentLecture(lecture);
         // If lecture has a summary, set it in processing results for display
         if (lecture.summary) {
-          console.log('Setting summary from lecture:', lecture.summary);
-          setProcessingResults({
-            segmentsCount: 0,
+          setProcessingResults(prev => ({
+            ...prev,
             summaryAvailable: true,
-            suggestionsCount: 0,
             summaryText: lecture.summary
-          });
-        } else {
-          console.log('No summary found in lecture object');
+          }));
         }
       }
     } catch (err: any) {
