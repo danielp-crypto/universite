@@ -4,8 +4,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hiruufvoyig
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_oAbDFVc8dPgLnNaJQ-QKhg_PUDOyjZp'
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!supabaseServiceRoleKey)
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
