@@ -1,6 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Get token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+
+    // Verify token with Supabase
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !user) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { id: lectureId } = await params;
+
+    // Fetch lecture and verify ownership
+    const { data: lecture, error: fetchError } = await supabaseAdmin
+      .from('lectures')
+      .select('*')
+      .eq('id', lectureId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (fetchError || !lecture) {
+      return NextResponse.json(
+        { success: false, error: 'lecture_not_found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(lecture);
+
+  } catch (error) {
+    console.error('Get lecture error:', error);
+    return NextResponse.json(
+      { success: false, error: 'server_error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
