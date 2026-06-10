@@ -267,7 +267,7 @@ function LectureDetailPageContent() {
               },
               body: JSON.stringify({
                 title: currentLecture.title,
-                duration: currentLecture.duration,
+                duration: currentLecture.duration && currentLecture.duration !== 'N/A' ? currentLecture.duration : 0,
                 transcription: transcriptionResult.transcript,
                 stored_locally: true,
                 local_audio_size: currentLecture.audioSize || 0
