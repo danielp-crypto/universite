@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const token = authHeader.substring(7);
 
     // Verify token with Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'unauthorized' },
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch lectures for the user
-    const { data: lectures, error } = await supabase
+    const { data: lectures, error } = await supabaseAdmin
       .from('lectures')
       .select('*')
       .eq('user_id', user.id)
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     const token = authHeader.substring(7);
 
     // Verify token with Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'unauthorized' },
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create lecture in Supabase
-    const { data: lecture, error } = await supabase
+    const { data: lecture, error } = await supabaseAdmin
       .from('lectures')
       .insert({
         user_id: user.id,

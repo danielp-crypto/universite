@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 export async function PUT(
   request: NextRequest,
@@ -18,7 +18,7 @@ export async function PUT(
     const token = authHeader.substring(7);
 
     // Verify token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !user) {
       return NextResponse.json(
         { success: false, error: 'unauthorized' },
@@ -30,7 +30,7 @@ export async function PUT(
     const data = await request.json();
 
     // Verify user owns the lecture
-    const { data: lecture, error: fetchError } = await supabase
+    const { data: lecture, error: fetchError } = await supabaseAdmin
       .from('lectures')
       .select('user_id')
       .eq('id', lectureId)
@@ -62,7 +62,7 @@ export async function PUT(
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
 
-    const { data: updatedLecture, error: updateError } = await supabase
+    const { data: updatedLecture, error: updateError } = await supabaseAdmin
       .from('lectures')
       .update(updateData)
       .eq('id', lectureId)
