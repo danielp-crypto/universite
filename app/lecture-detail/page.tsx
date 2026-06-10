@@ -84,6 +84,7 @@ function LectureDetailPageContent() {
       // 1. Check local recordings first
       const local = getLocalRecordingById(id);
       if (local) {
+        console.log('Loading local recording:', local);
         setCurrentLecture({
           id: local.id,
           title: local.name,
