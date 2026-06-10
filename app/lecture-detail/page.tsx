@@ -102,6 +102,14 @@ function LectureDetailPageContent() {
         };
         setCurrentLecture(lectureData);
         
+        // Set segments count from local data
+        if (local.segments && local.segments.length > 0) {
+          setProcessingResults(prev => ({
+            ...prev,
+            segmentsCount: local.segments.length
+          }));
+        }
+        
         // If the local recording has been synced to Supabase (isLocal is false), load summary from Supabase
         if (local.isLocal === false) {
           try {
@@ -132,6 +140,13 @@ function LectureDetailPageContent() {
             summaryText: lecture.summary
           }));
         }
+        // If lecture has segments, set segments count
+        if (lecture.segments && lecture.segments.length > 0) {
+          setProcessingResults(prev => ({
+            ...prev,
+            segmentsCount: lecture.segments.length
+          }));
+        }
       }
     } catch (err: any) {
       console.error('Error loading lecture:', err);
@@ -148,7 +163,13 @@ function LectureDetailPageContent() {
       const stored = localStorage.getItem('universite_flashcards');
       if (stored) {
         const parsed = JSON.parse(stored);
-        setFlashcards(parsed.filter((card: any) => card.lecture_id === lectureId));
+        const lectureFlashcards = parsed.filter((card: any) => card.lecture_id === lectureId);
+        setFlashcards(lectureFlashcards);
+        // Update flashcards count in processing results
+        setProcessingResults(prev => ({
+          ...prev,
+          suggestionsCount: lectureFlashcards.length
+        }));
       }
     } catch (e) {
       console.error(e);
