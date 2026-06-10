@@ -85,7 +85,7 @@ function LectureDetailPageContent() {
       const local = getLocalRecordingById(id);
       if (local) {
         console.log('Loading local recording:', local);
-        setCurrentLecture({
+        const lectureData = {
           id: local.id,
           title: local.name,
           created_at: local.createdAt,
@@ -95,7 +95,26 @@ function LectureDetailPageContent() {
           transcription: local.transcription || null,
           segments: local.segments || [],
           keyConcepts: local.keyConcepts || ['local recording']
-        });
+        };
+        setCurrentLecture(lectureData);
+        
+        // If the local recording has been synced to Supabase (isLocal is false), load summary from Supabase
+        if (local.isLocal === false) {
+          try {
+            const supabaseLecture = await apiGet(`/api/lectures/${id}`);
+            if (supabaseLecture && supabaseLecture.summary) {
+              console.log('Loading summary from Supabase for synced lecture:', supabaseLecture.summary);
+              setProcessingResults({
+                segmentsCount: 0,
+                summaryAvailable: true,
+                suggestionsCount: 0,
+                summaryText: supabaseLecture.summary
+              });
+            }
+          } catch (error) {
+            console.error('Failed to load summary from Supabase:', error);
+          }
+        }
         return;
       }
 
