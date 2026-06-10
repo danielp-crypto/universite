@@ -101,15 +101,19 @@ function LectureDetailPageContent() {
       // 2. Load from API
       const lecture = await apiGet(`/api/lectures/${id}`);
       if (lecture) {
+        console.log('Loaded lecture from API:', lecture);
         setCurrentLecture(lecture);
         // If lecture has a summary, set it in processing results for display
         if (lecture.summary) {
+          console.log('Setting summary from lecture:', lecture.summary);
           setProcessingResults({
             segmentsCount: 0,
             summaryAvailable: true,
             suggestionsCount: 0,
             summaryText: lecture.summary
           });
+        } else {
+          console.log('No summary found in lecture object');
         }
       }
     } catch (err: any) {
