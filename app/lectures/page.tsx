@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { apiGet, apiPut } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
-import AudioPlayer from '../components/AudioPlayer';
 
 function LecturesPageContent() {
   const router = useRouter();
@@ -13,19 +12,9 @@ function LecturesPageContent() {
   const [allLectures, setAllLectures] = useState<any[]>([]);
   const [counts, setCounts] = useState({ all: 0, today: 0, week: 0, favorites: 0 });
   const [loading, setLoading] = useState(true);
-
-  const RECORDINGS_STORAGE_KEY = 'universite_recordings';
-
-  // Helper to load recordings
-  const getRecordings = () => {
-    try {
-      const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
-      return recordings ? JSON.parse(recordings) : [];
-    } catch (error) {
-      console.error('Error getting recordings:', error);
-      return [];
-    }
-  };
+  const [uploading, setUploading] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const loadLectures = async () => {
     try {
@@ -35,22 +24,9 @@ function LecturesPageContent() {
         return;
       }
 
-      // Load lectures from API
       const apiLectures = await apiGet('/api/lectures').catch(() => []);
+      setAllLectures(apiLectures);
 
-      const localRecordings = getRecordings();
-      const localLectures = localRecordings.map((recording: any) => ({
-        id: recording.id,
-        title: recording.name,
-        createdAt: recording.createdAt,
-        duration: recording.duration,
-        keyConcepts: ['local recording'],
-        isLocal: true,
-        audioUrl: recording.audioUrl,
-        favorite: false
-      }));
-
-      // Calculate Counts
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -77,6 +53,43 @@ function LecturesPageContent() {
     loadLectures();
   }, []);
 
+  const handleFileUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', file.name);
+
+      const response = await fetch('/api/lectures', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${(await getSession())?.access_token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        await fetch(`/api/lectures/${data.lecture.id}/process`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${(await getSession())?.access_token}`
+          }
+        });
+        
+        setShowUploadModal(false);
+        loadLectures();
+      } else {
+        alert('Failed to upload document');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload document');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const toggleFavorite = async (lectureId: string) => {
     try {
       // Update local state
@@ -94,13 +107,16 @@ function LecturesPageContent() {
 
   const deleteRecording = async (id: string) => {
     try {
-      const recordings = getRecordings();
-      const filtered = recordings.filter((r: any) => r.id !== id);
-      localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(filtered));
+      await fetch(`/api/lectures/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${(await getSession())?.access_token}`
+        }
+      });
       loadLectures();
     } catch (error) {
-      console.error('Error deleting recording:', error);
-      alert('Error deleting recording');
+      console.error('Error deleting lecture:', error);
+      alert('Error deleting lecture');
     }
   };
 
