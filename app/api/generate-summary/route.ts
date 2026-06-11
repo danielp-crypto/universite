@@ -89,6 +89,23 @@ function formatAsBulletPoints(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { transcript } = await request.json();
 
     if (!transcript || typeof transcript !== 'string') {
@@ -99,23 +116,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Limit transcript length to avoid overwhelming the API
-    const truncatedTranscript = transcript.substring(0, 4000);
-
-    const summary = await generateSummary(truncatedTranscript);
-
-    return NextResponse.json({
-      success: true,
-      summary: summary
-    });
-
-  } catch (error) {
-    console.error('Summary generation error:', error);
-    return NextResponse.json(
-      { success: false, error: 'summary_generation_failed' },
-      { status: 500 }
-    );
-  }
-}
     const truncatedTranscript = transcript.substring(0, 4000);
 
     const summary = await generateSummary(truncatedTranscript);
