@@ -17,7 +17,7 @@ function SignupPageContent() {
       try {
         const session = await getSession();
         if (session) {
-          router.push('/home');
+          router.push('/dashboard');
         }
       } catch (err) {
         console.error('Session check error:', err);
@@ -38,7 +38,7 @@ function SignupPageContent() {
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/home`;
+      const redirectTo = `${window.location.origin}/dashboard`;
       const { error } = await signInWithOAuth('google', { redirectTo });
       if (error) {
         alert(error.message);
@@ -54,7 +54,7 @@ function SignupPageContent() {
   const handleAppleSignUp = async () => {
     setAppleLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/home`;
+      const redirectTo = `${window.location.origin}/dashboard`;
       const { error } = await signInWithOAuth('apple', { redirectTo });
       if (error) {
         alert(error.message);

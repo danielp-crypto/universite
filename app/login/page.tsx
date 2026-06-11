@@ -19,7 +19,7 @@ function LoginPageContent() {
         if (session) {
           const urlParams = new URLSearchParams(window.location.search);
           const returnTo = urlParams.get('returnTo');
-          router.push(returnTo || '/home');
+          router.push(returnTo || '/dashboard');
         }
       } catch (err) {
         console.error('Session check error:', err);
@@ -44,7 +44,7 @@ function LoginPageContent() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const returnTo = urlParams.get('returnTo');
-      const redirectTo = `${window.location.origin}/login?returnTo=${encodeURIComponent(returnTo || '/home')}`;
+      const redirectTo = `${window.location.origin}/login?returnTo=${encodeURIComponent(returnTo || '/dashboard')}`;
       const { error } = await signInWithOAuth('google', { redirectTo });
       if (error) {
         alert(error.message);
@@ -62,7 +62,7 @@ function LoginPageContent() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const returnTo = urlParams.get('returnTo');
-      const redirectTo = `${window.location.origin}/login?returnTo=${encodeURIComponent(returnTo || '/home')}`;
+      const redirectTo = `${window.location.origin}/login?returnTo=${encodeURIComponent(returnTo || '/dashboard')}`;
       const { error } = await signInWithOAuth('apple', { redirectTo });
       if (error) {
         alert(error.message);
