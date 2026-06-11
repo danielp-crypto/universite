@@ -56,9 +56,9 @@ function LecturesPageContent() {
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
       const countAll = apiLectures.length;
-      const countToday = apiLectures.filter(lecture => new Date(lecture.created_at) >= today).length;
-      const countWeek = apiLectures.filter(lecture => new Date(lecture.created_at) >= weekAgo).length;
-      const countFavorites = apiLectures.filter(lecture => lecture.favorite === true).length;
+      const countToday = apiLectures.filter((lecture: any) => new Date(lecture.created_at) >= today).length;
+      const countWeek = apiLectures.filter((lecture: any) => new Date(lecture.created_at) >= weekAgo).length;
+      const countFavorites = apiLectures.filter((lecture: any) => lecture.favorite === true).length;
 
       setCounts({
         all: countAll,
@@ -147,8 +147,8 @@ function LecturesPageContent() {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    return allLectures.filter(lecture => {
-      const lectureDate = new Date(lecture.createdAt);
+    return allLectures.filter((lecture: any) => {
+      const lectureDate = new Date(lecture.created_at);
       if (filter === 'today') {
         return lectureDate >= today;
       } else if (filter === 'week') {
