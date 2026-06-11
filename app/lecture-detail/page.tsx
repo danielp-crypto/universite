@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useRef, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { apiGet, apiPost } from '@/lib/api/client';
+import { apiGet } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
-import AudioPlayer from '../components/AudioPlayer';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
@@ -14,139 +13,38 @@ function LectureDetailPageContent() {
   const lectureId = searchParams.get('id');
 
   const [currentLecture, setCurrentLecture] = useState<any>(null);
-  
-  // Tabs
-  const [activeTab, setActiveTab] = useState<'segments' | 'transcript' | 'summary' | 'flashcards'>('segments');
-  
-  // AI Processing states
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingMessage, setProcessingMessage] = useState('');
-  const [processingResults, setProcessingResults] = useState<{
-    segmentsCount: number;
-    summaryAvailable: boolean;
-    suggestionsCount: number;
-    summaryText?: string;
-  }>({
-    segmentsCount: 0,
-    summaryAvailable: false,
-    suggestionsCount: 0,
-    summaryText: undefined
-  });
+  const [activeTab, setActiveTab] = useState<'transcript' | 'summary' | 'questions'>('transcript');
 
-  const [flashcards, setFlashcards] = useState<any[]>([]);
-
-  const RECORDINGS_STORAGE_KEY = 'universite_recordings';
-
-  const getRecordings = () => {
+  const downloadDocument = async () => {
+    if (!currentLecture || !currentLecture.file_content) return;
     try {
-      const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
-      return recordings ? JSON.parse(recordings) : [];
-    } catch (e) {
-      return [];
-    }
-  };
-
-  const getLocalRecordingById = (id: string) => {
-    const recordings = getRecordings();
-    return recordings.find((r: any) => r.id === id);
-  };
-
-  const formatTime = (seconds: number) => {
-    if (isNaN(seconds)) return '0:00';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const downloadRecording = async () => {
-    if (!currentLecture || !currentLecture.audioUrl) return;
-    try {
-      const response = await fetch(currentLecture.audioUrl);
-      const blob = await response.blob();
+      const buffer = Buffer.from(currentLecture.file_content, 'base64');
+      const blob = new Blob([buffer], { type: currentLecture.file_type });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${currentLecture.title || 'recording'}.webm`;
+      a.download = currentLecture.file_name || 'document';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading recording:', error);
-      alert('Error downloading recording');
+      console.error('Error downloading document:', error);
+      alert('Error downloading document');
     }
   };
 
   const loadLecture = async (id: string) => {
     try {
-      // Check session
       const session = await getSession();
       if (!session) {
         router.push('/login');
         return;
       }
 
-      // 1. Check local recordings first
-      const local = getLocalRecordingById(id);
-      if (local) {
-        const lectureData = {
-          id: local.id,
-          title: local.name,
-          created_at: local.createdAt,
-          duration: local.duration,
-          audioUrl: local.audioUrl,
-          isLocal: true,
-          transcription: local.transcription || null,
-          segments: local.segments || [],
-          keyConcepts: local.keyConcepts || ['local recording']
-        };
-        setCurrentLecture(lectureData);
-        
-        // Set segments count from local data
-        if (local.segments && local.segments.length > 0) {
-          setProcessingResults(prev => ({
-            ...prev,
-            segmentsCount: local.segments.length
-          }));
-        }
-        
-        // If the local recording has been synced to Supabase (isLocal is false), load summary from Supabase
-        if (local.isLocal === false) {
-          try {
-            const supabaseLecture = await apiGet(`/api/lectures/${id}`);
-            if (supabaseLecture && supabaseLecture.summary) {
-              setProcessingResults(prev => ({
-                ...prev,
-                summaryAvailable: true,
-                summaryText: supabaseLecture.summary
-              }));
-            }
-          } catch (error) {
-            console.error('Failed to load summary from Supabase:', error);
-          }
-        }
-        return;
-      }
-
-      // 2. Load from API
       const lecture = await apiGet(`/api/lectures/${id}`);
       if (lecture) {
         setCurrentLecture(lecture);
-        // If lecture has a summary, set it in processing results for display
-        if (lecture.summary) {
-          setProcessingResults(prev => ({
-            ...prev,
-            summaryAvailable: true,
-            summaryText: lecture.summary
-          }));
-        }
-        // If lecture has segments, set segments count
-        if (lecture.segments && lecture.segments.length > 0) {
-          setProcessingResults(prev => ({
-            ...prev,
-            segmentsCount: lecture.segments.length
-          }));
-        }
       }
     } catch (err: any) {
       console.error('Error loading lecture:', err);
@@ -157,103 +55,10 @@ function LectureDetailPageContent() {
     if (lectureId) {
       loadLecture(lectureId);
     }
-
-    // Load flashcards from localStorage
-    try {
-      const stored = localStorage.getItem('universite_flashcards');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const lectureFlashcards = parsed.filter((card: any) => card.lecture_id === lectureId);
-        setFlashcards(lectureFlashcards);
-        // Update flashcards count in processing results
-        setProcessingResults(prev => ({
-          ...prev,
-          suggestionsCount: lectureFlashcards.length
-        }));
-      }
-    } catch (e) {
-      console.error(e);
-    }
   }, [lectureId]);
 
-  // AI Feature triggers
-  const handleGenerateQA = async () => {
+  const handleReprocessDocument = async () => {
     if (!currentLecture) return;
-    if (!currentLecture.transcription) {
-      alert('This lecture has no transcription to generate Q&A from');
-      return;
-    }
-
-    try {
-      setProcessingMessage('Generating Q&A...');
-      setIsProcessing(true);
-
-      const segments = createSegmentsFromTranscription(currentLecture.transcription);
-      const result = await apiPost('/api/generate-qa', {
-        lecture: currentLecture,
-        segments: segments
-      });
-      
-      if (result.success) {
-        localStorage.setItem(`qa_${currentLecture.id}`, JSON.stringify(result.qaPairs));
-        router.push(`/qa-interface?lecture=${currentLecture.id}`);
-      } else {
-        alert('Error generating Q&A: ' + result.error);
-      }
-    } catch (e: any) {
-      console.error(e);
-      alert('Failed to generate Q&A');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleGenerateFlashcards = async () => {
-    if (!currentLecture) return;
-    if (!currentLecture.transcription) {
-      alert('This lecture has no transcription to generate flashcards from');
-      return;
-    }
-
-    try {
-      setProcessingMessage('Creating Flashcards...');
-      setIsProcessing(true);
-
-      const segments = createSegmentsFromTranscription(currentLecture.transcription);
-      const result = await apiPost('/api/generate-flashcards', {
-        lecture: currentLecture,
-        segments: segments
-      });
-      
-      if (result.success) {
-        // Save to localStorage
-        const existingStored = localStorage.getItem('universite_flashcards');
-        const existing = existingStored ? JSON.parse(existingStored) : [];
-        const newCards = result.flashcards.map((card: any) => ({
-          ...card,
-          lecture_id: currentLecture.id,
-          lecture_title: currentLecture.title,
-          created_at: new Date().toISOString()
-        }));
-
-        localStorage.setItem('universite_flashcards', JSON.stringify([...existing, ...newCards]));
-        router.push(`/study-mode?lecture=${currentLecture.id}`);
-      } else {
-        alert('Error generating flashcards: ' + result.error);
-      }
-    } catch (e: any) {
-      console.error(e);
-      alert('Failed to generate flashcards');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleProcessTranscript = async () => {
-    if (!currentLecture) return;
-    setProcessingMessage('Downloading audio file...');
-    setIsProcessing(true);
-
     try {
       const session = await getSession();
       if (!session) {
@@ -261,188 +66,20 @@ function LectureDetailPageContent() {
         return;
       }
 
-      let audioFile: File;
-
-      if (currentLecture.isLocal && currentLecture.audioUrl) {
-        const response = await fetch(currentLecture.audioUrl);
-        const blob = await response.blob();
-        audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
-      } else if (currentLecture.file_path) {
-        const token = session.access_token;
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hiruufvoyigrcdohqjkm.supabase.co';
-        const downloadUrl = `${supabaseUrl}/storage/v1/object/public/${currentLecture.file_path}`;
-        const response = await fetch(downloadUrl, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Failed to download audio file');
-        const blob = await response.blob();
-        audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
-      } else {
-        throw new Error('No audio source available');
-      }
-
-      setProcessingMessage('Transcribing audio...');
-      
-      const formData = new FormData();
-      formData.append('audio', audioFile);
-      
-      const response = await fetch('/api/transcribe', {
+      await fetch(`/api/lectures/${currentLecture.id}/process`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-        body: formData
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
       });
       
-      const transcriptionResult = await response.json().catch(() => ({}));
-      
-      if (transcriptionResult.success) {
-        currentLecture.transcription = transcriptionResult.transcript;
-        setCurrentLecture({ ...currentLecture });
-
-        // Update local storage if it's local
-        if (currentLecture.isLocal) {
-          const recordings = getRecordings();
-          const foundIdx = recordings.findIndex((r: any) => r.id === currentLecture.id);
-          if (foundIdx !== -1) {
-            recordings[foundIdx].transcription = transcriptionResult.transcript;
-            localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
-          }
-
-          // Create lecture in Supabase for local lectures
-          try {
-            console.log('Creating lecture in Supabase for local lecture:', currentLecture.title);
-            const createResponse = await fetch('/api/lectures', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({
-                title: currentLecture.title,
-                duration: currentLecture.duration && currentLecture.duration !== 'N/A' ? currentLecture.duration : 0,
-                transcription: transcriptionResult.transcript,
-                stored_locally: true,
-                local_audio_size: currentLecture.audioSize || 0
-              })
-            });
-            
-            console.log('Create response status:', createResponse.status);
-            const createData = await createResponse.json();
-            console.log('Create response data:', createData);
-            
-            if (createResponse.ok) {
-              if (createData.success) {
-                // Update current lecture with Supabase ID
-                currentLecture.id = createData.lecture.id;
-                currentLecture.isLocal = false;
-                setCurrentLecture({ ...currentLecture });
-                
-                // Update local storage to mark as synced
-                if (foundIdx !== -1) {
-                  recordings[foundIdx].id = createData.lecture.id;
-                  recordings[foundIdx].isLocal = false;
-                  localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
-                }
-              }
-            } else {
-              console.error('Failed to create lecture:', createData.error);
-            }
-          } catch (error) {
-            console.error('Failed to create lecture in Supabase:', error);
-          }
-        } else {
-          // Save transcript to Supabase
-          try {
-            await fetch(`/api/lectures/${currentLecture.id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({
-                transcription: transcriptionResult.transcript
-              })
-            });
-          } catch (error) {
-            console.error('Failed to save transcript to Supabase:', error);
-          }
-        }
-
-        setProcessingMessage('Generating summary...');
-        const summary = await generateSummary(transcriptionResult.transcript);
-
-        const segments = createSegmentsFromTranscription(transcriptionResult.transcript);
-        
-        setProcessingResults({
-          segmentsCount: segments.length,
-          summaryAvailable: !!summary,
-          suggestionsCount: Math.min(5, segments.length * 2),
-          summaryText: summary || undefined
-        });
-
-        // Save summary to Supabase
-        if (summary) {
-          try {
-            await fetch(`/api/lectures/${currentLecture.id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({
-                summary: summary
-              })
-            });
-          } catch (error) {
-            console.error('Failed to save summary to Supabase:', error);
-          }
-        }
-
-        alert('Transcription and analysis completed successfully!');
-      } else {
-        throw new Error(transcriptionResult.error || 'Transcription failed');
-      }
-    } catch (error: any) {
-      console.error(error);
-      alert(`Transcription failed: ${error.message}`);
-    } finally {
-      setIsProcessing(false);
+      loadLecture(currentLecture.id);
+      alert('Document reprocessed successfully!');
+    } catch (error) {
+      console.error('Error reprocessing document:', error);
+      alert('Failed to reprocess document');
     }
   };
-
-  const generateSummary = async (transcript: string) => {
-    try {
-      const result = await apiPost('/api/generate-summary', {
-        transcript: transcript.substring(0, 2000)
-      });
-      return result.success ? result.summary : null;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  const createSegmentsFromTranscription = (transcription: string) => {
-    if (!transcription) return [];
-    const sentences = transcription.split('. ').filter(s => s.trim().length > 0);
-    const segments = [];
-    const segmentLength = 3;
-    
-    for (let i = 0; i < sentences.length; i += segmentLength) {
-      const segmentSentences = sentences.slice(i, i + segmentLength);
-      segments.push({
-        id: `segment_${i}`,
-        content: segmentSentences.join('. '),
-        start_time_seconds: i * 30,
-        end_time_seconds: (i + segmentLength) * 30,
-        title: `Segment ${Math.floor(i / segmentLength) + 1}`,
-        concepts: ['key topic', 'lecture segment']
-      });
-    }
-    return segments;
-  };
-
-  const currentSegments = currentLecture?.transcription
-    ? createSegmentsFromTranscription(currentLecture.transcription)
-    : currentLecture?.segments || [];
 
   return (
     <div className="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
@@ -470,15 +107,18 @@ function LectureDetailPageContent() {
               <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 mb-4 shadow-sm">
                 <h2 className="text-xl font-bold text-slate-800 mb-2">{currentLecture.title}</h2>
                 <div className="flex items-center gap-3 text-sm text-slate-500 mb-4">
-                  <span>{new Date(currentLecture.created_at || currentLecture.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(currentLecture.created_at).toLocaleDateString()}</span>
                   <span>•</span>
-                  <span>{currentLecture.duration || 'N/A'}</span>
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+                    {currentLecture.status === 'processing' ? 'Processing...' : 'Completed'}
+                  </span>
+                  {currentLecture.file_name && (
+                    <>
+                      <span>•</span>
+                      <span>{currentLecture.file_name}</span>
+                    </>
+                  )}
                 </div>
-
-                {/* Audio Player Container */}
-                {currentLecture.audioUrl && (
-                  <AudioPlayer src={currentLecture.audioUrl} className="mb-4" />
-                )}
 
                 {/* Primary Actions */}
                 <div className="flex gap-2 mb-4">
@@ -489,7 +129,7 @@ function LectureDetailPageContent() {
                     Chat with Lecture
                   </Link>
                   <button
-                    onClick={downloadRecording}
+                    onClick={downloadDocument}
                     className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-center hover:shadow-lg transition-all text-sm active:scale-95"
                     title="Download"
                   >
@@ -499,101 +139,20 @@ function LectureDetailPageContent() {
                   </button>
                 </div>
 
-                {/* Study Tools */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
+                {/* Reprocess Button */}
+                <div className="pt-4 border-t border-slate-100">
                   <button
-                    onClick={handleGenerateQA}
-                    className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-semibold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
+                    onClick={handleReprocessDocument}
+                    className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Generate Q&A
-                  </button>
-                  <button
-                    onClick={handleGenerateFlashcards}
-                    className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-semibold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    Create Flashcards
+                    Reprocess Document
                   </button>
                 </div>
-
-                {/* Transcription trigger */}
-                <div className="mb-4 pt-4 border-t border-slate-100">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-slate-700">Transcript Processing</h3>
-                    <button
-                      onClick={handleProcessTranscript}
-                      disabled={isProcessing}
-                      className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-lg active:scale-95 transition-transform"
-                    >
-                      Process Transcript
-                    </button>
-                  </div>
-                  
-                  {isProcessing && (
-                    <div className="p-3 bg-slate-50 rounded-lg border flex items-center gap-3">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
-                      <span className="text-xs text-slate-600">{processingMessage}</span>
-                    </div>
-                  )}
-
-                  {processingResults && (
-                    <div className="space-y-3 mt-3">
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="text-center p-2 bg-blue-50 rounded-lg">
-                          <div className="text-base font-bold text-blue-600">{processingResults.segmentsCount}</div>
-                          <div className="text-[10px] text-blue-700">Segments</div>
-                        </div>
-                        <div className="text-center p-2 bg-green-50 rounded-lg">
-                          <div className="text-base font-bold text-green-600">{processingResults.summaryAvailable ? 'Yes' : 'No'}</div>
-                          <div className="text-[10px] text-green-700">Summary</div>
-                        </div>
-                        <div className="text-center p-2 bg-purple-50 rounded-lg">
-                          <div className="text-base font-bold text-purple-600">{processingResults.suggestionsCount}</div>
-                          <div className="text-[10px] text-purple-700">Flashcards</div>
-                        </div>
-                      </div>
-
-                      {processingResults.summaryText && (
-                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                          <h4 className="text-xs font-bold text-slate-700 mb-1">Summary</h4>
-                          <p className="text-xs text-slate-600 leading-relaxed">{processingResults.summaryText}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Key Concepts */}
-                {currentLecture.keyConcepts && currentLecture.keyConcepts.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-700 mb-2">Key Concepts</h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {currentLecture.keyConcepts.map((concept: string, idx: number) => (
-                        <span key={idx} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
-                          {concept}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Tabs Menu */}
               <div className="mb-4">
                 <div className="flex gap-2 border-b border-slate-200">
-                  <button
-                    onClick={() => setActiveTab('segments')}
-                    className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                      activeTab === 'segments' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Segments
-                  </button>
                   <button
                     onClick={() => setActiveTab('transcript')}
                     className={`px-4 py-2 text-sm font-semibold transition-colors ${
@@ -611,68 +170,25 @@ function LectureDetailPageContent() {
                     Summary
                   </button>
                   <button
-                    onClick={() => setActiveTab('flashcards')}
+                    onClick={() => setActiveTab('questions')}
                     className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                      activeTab === 'flashcards' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
+                      activeTab === 'questions' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
-                    Flashcards ({flashcards.length})
+                    Questions
                   </button>
                 </div>
               </div>
 
               {/* Tab Contents */}
-              {activeTab === 'segments' && (
-                <div className="space-y-3 animate-fade-in">
-                  {currentSegments.length > 0 ? (
-                    currentSegments.map((segment: any, idx: number) => (
-                      <div key={segment.id || idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                        <h3 className="text-base font-semibold text-slate-800 mb-1">{segment.title}</h3>
-                        <div className="text-xs text-slate-500 mb-2">
-                          {formatTime(segment.start_time_seconds)} - {formatTime(segment.end_time_seconds)}
-                        </div>
-                        <p className="text-sm text-slate-600 mb-3">{segment.content}</p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              // TODO: Implement segment playback with AudioPlayer
-                              alert('Segment playback feature coming soon');
-                            }}
-                            className="flex-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold active:scale-95 transition-transform"
-                          >
-                            Play Segment
-                          </button>
-                          <Link
-                            href={`/assistant?lecture=${currentLecture.id}&q=${encodeURIComponent(`Explain this section: "${segment.content.substring(0, 100)}..."`)}`}
-                            className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold text-center active:scale-95 transition-transform"
-                          >
-                            Ask AI
-                          </Link>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 bg-white border rounded-2xl">
-                      <p className="text-slate-500 text-sm">No segments processed. Click "Process Transcript" to analyze.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
               {activeTab === 'transcript' && (
                 <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
-                  <h3 className="text-base font-semibold text-slate-800 mb-3">Full Transcript</h3>
+                  <h3 className="text-base font-semibold text-slate-800 mb-3">Extracted Text</h3>
                   {currentLecture.transcription ? (
                     <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{currentLecture.transcription}</p>
                   ) : (
                     <div className="text-center py-6">
-                      <p className="text-slate-500 text-sm mb-4">No transcription found for this lecture.</p>
-                      <button
-                        onClick={handleProcessTranscript}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
-                      >
-                        Start Transcription
-                      </button>
+                      <p className="text-slate-500 text-sm">No text extracted yet. Click "Reprocess Document" to extract text.</p>
                     </div>
                   )}
                 </div>
@@ -681,42 +197,55 @@ function LectureDetailPageContent() {
               {activeTab === 'summary' && (
                 <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
                   <h3 className="text-base font-semibold text-slate-800 mb-3">Lecture Notes</h3>
-                  {processingResults?.summaryText ? (
+                  {currentLecture.summary ? (
                     <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                      {processingResults.summaryText}
+                      {currentLecture.summary}
                     </div>
                   ) : (
                     <div className="text-center py-6">
-                      <p className="text-slate-500 text-sm mb-4">No summary available for this lecture.</p>
-                      <button
-                        onClick={handleProcessTranscript}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
-                      >
-                        Generate Summary
-                      </button>
+                      <p className="text-slate-500 text-sm">No summary available yet. Click "Reprocess Document" to generate summary.</p>
                     </div>
                   )}
                 </div>
               )}
 
-              {activeTab === 'flashcards' && (
-                <div className="space-y-3 animate-fade-in">
-                  {flashcards.length > 0 ? (
-                    flashcards.map((card, idx) => (
-                      <div key={card.id || idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                        <div className="font-semibold text-slate-800 mb-1">Q: {card.question}</div>
-                        <div className="text-sm text-slate-600 pt-2 border-t border-slate-100">A: {card.answer}</div>
-                      </div>
-                    ))
+              {activeTab === 'questions' && (
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
+                  <h3 className="text-base font-semibold text-slate-800 mb-3">Generated Questions</h3>
+                  {currentLecture.questions ? (
+                    <div className="space-y-4">
+                      {currentLecture.questions.multipleChoice && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-700 mb-2">Multiple Choice Questions</h4>
+                          {currentLecture.questions.multipleChoice.map((q: any, idx: number) => (
+                            <div key={idx} className="mb-3 p-3 bg-slate-50 rounded-lg">
+                              <p className="text-sm font-medium text-slate-800 mb-2">{q.question}</p>
+                              <div className="space-y-1">
+                                {q.options.map((opt: string, optIdx: number) => (
+                                  <p key={optIdx} className="text-xs text-slate-600">
+                                    {String.fromCharCode(65 + optIdx)}. {opt} {q.correctAnswer === String.fromCharCode(65 + optIdx) && '✓'}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {currentLecture.questions.shortAnswer && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-700 mb-2">Short Answer Questions</h4>
+                          {currentLecture.questions.shortAnswer.map((q: any, idx: number) => (
+                            <div key={idx} className="mb-3 p-3 bg-slate-50 rounded-lg">
+                              <p className="text-sm font-medium text-slate-800 mb-1">{q.question}</p>
+                              <p className="text-xs text-slate-600">Answer: {q.answer}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ) : (
-                    <div className="text-center py-8 bg-white border rounded-2xl">
-                      <p className="text-slate-500 text-sm mb-4">No flashcards created yet.</p>
-                      <button
-                        onClick={handleGenerateFlashcards}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
-                      >
-                        Create Flashcards now
-                      </button>
+                    <div className="text-center py-6">
+                      <p className="text-slate-500 text-sm">No questions generated yet. Click "Reprocess Document" to generate questions.</p>
                     </div>
                   )}
                 </div>

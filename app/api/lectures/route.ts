@@ -71,42 +71,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await request.json();
-    const { title, duration, audioUrl, transcription, summary, stored_locally, local_audio_size } = data;
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const title = formData.get('title') as string;
 
-    console.log('Creating lecture with data:', { title, duration, stored_locally, local_audio_size, hasTranscription: !!transcription });
-
-    if (!title) {
+    if (!file) {
       return NextResponse.json(
-        { success: false, error: 'title_required' },
+        { success: false, error: 'file_required' },
         { status: 400 }
       );
     }
+
+    // Validate file type
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid file type. Please upload a PDF or Word document.' },
+        { status: 400 }
+      );
+    }
+
+    // Convert file to base64 for storage
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64 = buffer.toString('base64');
 
     // Create lecture in Supabase
     const { data: lecture, error } = await supabaseAdmin
       .from('lectures')
       .insert({
         user_id: user.id,
-        title,
+        title: title || file.name,
         description: '',
-        duration_seconds: duration || 0,
-        transcription: transcription || null,
-        summary: summary || null,
-        status: 'completed',
+        duration_seconds: 0,
+        transcription: null,
+        summary: null,
+        status: 'processing',
         tags: [],
-        stored_locally: stored_locally || false,
-        local_audio_size: local_audio_size || 0,
-        transcription_status: transcription ? 'completed' : 'pending',
-        has_transcription: !!transcription,
-        transcription_completed_at: transcription ? new Date().toISOString() : null
+        stored_locally: false,
+        local_audio_size: 0,
+        transcription_status: 'pending',
+        has_transcription: false,
+        transcription_completed_at: null,
+        file_name: file.name,
+        file_type: file.type,
+        file_size: file.size,
+        file_content: base64
       })
       .select()
       .single();
 
     if (error) {
       console.error('Supabase insert error:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
       return NextResponse.json(
         { success: false, error: 'supabase_error', details: error.message },
         { status: 500 }

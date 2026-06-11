@@ -50,19 +50,15 @@ function LecturesPageContent() {
         favorite: false
       }));
 
-      const merged = [...localLectures, ...apiLectures];
-      merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setAllLectures(merged);
-
       // Calculate Counts
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      const countAll = merged.length;
-      const countToday = merged.filter(lecture => new Date(lecture.createdAt) >= today).length;
-      const countWeek = merged.filter(lecture => new Date(lecture.createdAt) >= weekAgo).length;
-      const countFavorites = merged.filter(lecture => lecture.favorite === true).length;
+      const countAll = apiLectures.length;
+      const countToday = apiLectures.filter(lecture => new Date(lecture.created_at) >= today).length;
+      const countWeek = apiLectures.filter(lecture => new Date(lecture.created_at) >= weekAgo).length;
+      const countFavorites = apiLectures.filter(lecture => lecture.favorite === true).length;
 
       setCounts({
         all: countAll,
@@ -189,11 +185,14 @@ function LecturesPageContent() {
               </div>
               <h1 className="text-lg md:text-xl font-semibold text-slate-800">My Lectures</h1>
             </div>
-            <Link href="/home" className="p-2 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white active:scale-95 transition-transform">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="p-2 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white active:scale-95 transition-transform"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
-            </Link>
+            </button>
           </div>
         </div>
 
