@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -29,30 +47,36 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64 = buffer.toString('base64');
 
-    // Store document in localStorage-like structure (for now, using a simple approach)
-    // In production, this should be stored in Supabase or a file storage service
-    const documentData = {
-      id: documentId,
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      content: base64,
-      uploadedAt: new Date().toISOString(),
-      text: '', // Will be extracted later
-      summary: '',
-      questions: []
-    };
+    // Store document in Supabase
+    const { data: document, error: insertError } = await supabaseAdmin
+      .from('documents')
+      .insert({
+        id: documentId,
+        user_id: user.id,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        content: base64,
+        uploaded_at: new Date().toISOString(),
+        text: '',
+        summary: '',
+        questions: null
+      })
+      .select()
+      .single();
 
-    // Store in a simple in-memory storage (for development)
-    // In production, this would be stored in Supabase
-    const documents = JSON.parse(localStorage.getItem('universite_documents') || '[]');
-    documents.push(documentData);
-    localStorage.setItem('universite_documents', JSON.stringify(documents));
+    if (insertError) {
+      console.error('Supabase insert error:', insertError);
+      return NextResponse.json(
+        { error: 'Failed to save document' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       documentId: documentId,
-      document: documentData
+      document: document
     });
 
   } catch (error) {

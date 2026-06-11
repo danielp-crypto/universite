@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen';
@@ -73,10 +74,16 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     console.log('Transcription request received, token length:', token.length);
-    
-    // Optionally verify the token with Supabase
-    // For now, we'll trust the token since it's coming from the authenticated client
-    // If needed, we can add JWT verification here
+
+    // Verify token with Supabase
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+      console.error('Transcription failed: Invalid token');
+      return NextResponse.json(
+        { success: false, error: 'unauthorized', message: 'Please log in to use transcription' },
+        { status: 401 }
+      );
+    }
 
     // Get audio file from request
     const formData = await request.formData();

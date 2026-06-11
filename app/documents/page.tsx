@@ -63,11 +63,11 @@ function DocumentsPageContent() {
               Universite
             </Link>
             <nav className="flex gap-4">
-              <Link href="/lectures" className="text-slate-600 hover:text-slate-800 text-sm font-medium">
-                Lectures
-              </Link>
               <Link href="/documents" className="text-indigo-600 text-sm font-semibold">
                 Documents
+              </Link>
+              <Link href="/lectures" className="text-slate-600 hover:text-slate-800 text-sm font-medium">
+                Lectures
               </Link>
               <Link href="/flashcards" className="text-slate-600 hover:text-slate-800 text-sm font-medium">
                 Flashcards

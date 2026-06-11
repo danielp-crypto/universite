@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { text, documentId } = await request.json();
 
     if (!text) {
       return NextResponse.json(
@@ -54,6 +72,19 @@ ${text.substring(0, 10000)}`;
     }
 
     const summary = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Update document with summary in Supabase
+    if (documentId) {
+      const { error: updateError } = await supabaseAdmin
+        .from('documents')
+        .update({ summary: summary })
+        .eq('id', documentId)
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Supabase update error:', updateError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

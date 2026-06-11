@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -98,6 +99,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Limit transcript length to avoid overwhelming the API
+    const truncatedTranscript = transcript.substring(0, 4000);
+
+    const summary = await generateSummary(truncatedTranscript);
+
+    return NextResponse.json({
+      success: true,
+      summary: summary
+    });
+
+  } catch (error) {
+    console.error('Summary generation error:', error);
+    return NextResponse.json(
+      { success: false, error: 'summary_generation_failed' },
+      { status: 500 }
+    );
+  }
+}
     const truncatedTranscript = transcript.substring(0, 4000);
 
     const summary = await generateSummary(truncatedTranscript);

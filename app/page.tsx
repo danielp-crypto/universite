@@ -65,17 +65,17 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-xl text-slate-600 mb-8 leading-relaxed">
-                Start free with unlimited transcriptions, then upgrade for unlimited AI-powered study tools when you're ready.
+                Upload your PDF or Word documents to generate AI-powered summaries and exam questions instantly.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/signup" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
-                  Get Started Free
+                <Link href="/documents" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
+                  Upload Document
                 </Link>
                 <a href="#how-it-works" className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold text-lg hover:border-indigo-300 transition-all text-center">
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free plan: unlimited transcriptions • Premium $9.99/month: unlimited AI study tools</p>
+              <p className="mt-6 text-sm text-slate-500">Free plan: unlimited document uploads • Premium $9.99/month: unlimited AI study tools</p>
             </div>
             
             <div className="animate-fade-in animate-float">
