@@ -25,6 +25,18 @@ function SearchContent() {
   const [showNoResults, setShowNoResults] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const RECORDINGS_STORAGE_KEY = 'universite_recordings';
+
+  const getRecordings = () => {
+    try {
+      const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
+      return recordings ? JSON.parse(recordings) : [];
+    } catch (error) {
+      console.error('Error getting recordings:', error);
+      return [];
+    }
+  };
+
   const loadLectures = async () => {
     try {
       const session = await getSession();
@@ -33,9 +45,23 @@ function SearchContent() {
         return;
       }
 
+      // Load lectures from API
       const apiLectures = await apiGet('/api/lectures').catch(() => []);
-      apiLectures.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setAllLectures(apiLectures);
+
+      const localRecordings = getRecordings();
+      const localLectures = localRecordings.map((recording: any) => ({
+        id: recording.id,
+        title: recording.name,
+        createdAt: recording.createdAt,
+        created_at: recording.createdAt,
+        duration: recording.duration,
+        keyConcepts: recording.keyConcepts || ['local recording'],
+        transcript: recording.transcription || ''
+      }));
+
+      const merged = [...localLectures, ...apiLectures];
+      merged.sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
+      setAllLectures(merged);
       setLoading(false);
     } catch (error) {
       console.error('Error loading lectures:', error);

@@ -224,8 +224,8 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between p-4">
               <div className="text-left flex-1">
-                <div className="font-medium text-slate-800">Auto-save Documents</div>
-                <div className="text-xs text-slate-500">Automatically save lecture documents</div>
+                <div className="font-medium text-slate-800">Auto-save Recordings</div>
+                <div className="text-xs text-slate-500">Automatically save lecture recordings</div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" defaultChecked className="sr-only peer" />

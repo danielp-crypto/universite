@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Universite",
-  description: "AI-powered lecture document and study assistant",
+  description: "AI-powered lecture recording and study assistant",
   icons: {
     icon: "/assets/images/icon-removebg-preview.png-128x128.png",
     shortcut: "/assets/images/icon-removebg-preview.png-128x128.png",
