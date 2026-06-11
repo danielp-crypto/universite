@@ -176,15 +176,16 @@ function LecturesPageContent() {
     });
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const lectureDate = new Date(date);
+    const diffTime = Math.abs(now.getTime() - lectureDate.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
+    return lectureDate.toLocaleDateString();
   };
 
   const filtered = getFilteredLectures();
@@ -257,115 +258,61 @@ function LecturesPageContent() {
           {filtered.length > 0 ? (
             <div className="space-y-3">
               {filtered.map((lecture) => {
-                const dateStr = formatDate(new Date(lecture.createdAt));
-                const isLocal = lecture.isLocal || false;
+                const dateStr = formatDate(lecture.created_at);
+                const status = lecture.status || 'completed';
 
-                if (isLocal) {
-                  return (
-                    <div key={lecture.id} className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-3">
-                        <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1">
-                          <h3 className="text-base font-semibold text-slate-800 mb-1">{lecture.title}</h3>
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
-                            <span>{dateStr}</span>
-                            <span>•</span>
-                            <span>{lecture.duration || 'N/A'}</span>
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>
-                          </div>
-                        </Link>
-                      </div>
-                      <AudioPlayer src={lecture.audioUrl} className="mb-3" />
-                      <div className="flex gap-2">
-                        <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
-                          View Details
-                        </Link>
-                        <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                          Chat
-                        </Link>
-                        <button
-                          onClick={() => downloadRecording(lecture)}
-                          className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm transition-colors flex items-center justify-center"
-                          title="Download"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => shareRecording(lecture)}
-                          className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm transition-colors flex items-center justify-center"
-                          title="Share"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => deleteRecording(lecture.id)}
-                          className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-sm transition-colors flex items-center justify-center"
-                          title="Delete"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                      {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-3">
-                          {lecture.keyConcepts.slice(0, 3).map((concept: string, idx: number) => (
-                            <span key={idx} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{concept}</span>
-                          ))}
+                return (
+                  <div key={lecture.id} className="bg-white border border-slate-200 rounded-2xl p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1">
+                        <h3 className="text-base font-semibold text-slate-800 mb-1">{lecture.title}</h3>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                          <span>{dateStr}</span>
+                          <span>•</span>
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+                            {status === 'processing' ? 'Processing...' : 'Completed'}
+                          </span>
                         </div>
-                      )}
+                      </Link>
+                      <button
+                        onClick={() => toggleFavorite(lecture.id)}
+                        className={`p-1 ${lecture.favorite ? 'text-amber-400' : 'text-slate-400'} hover:text-amber-500 transition-colors`}
+                      >
+                        <svg className="w-5 h-5" fill={lecture.favorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      </button>
                     </div>
-                  );
-                } else {
-                  return (
-                    <div key={lecture.id} className="bg-white border border-slate-200 rounded-2xl p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1">
-                          <h3 className="text-base font-semibold text-slate-800 mb-1">{lecture.title}</h3>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
-                            <span>{dateStr}</span>
-                            <span>•</span>
-                            <span>{lecture.duration || 'N/A'}</span>
-                          </div>
-                        </Link>
-                        <button
-                          onClick={() => toggleFavorite(lecture.id)}
-                          className={`p-1 ${lecture.favorite ? 'text-amber-400' : 'text-slate-400'} hover:text-amber-500 transition-colors`}
-                        >
-                          <svg className="w-5 h-5" fill={lecture.favorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                          </svg>
-                        </button>
-                      </div>
-                      {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                          {lecture.keyConcepts.slice(0, 3).map((concept: string, idx: number) => (
-                            <span key={idx} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{concept}</span>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
-                          View Details
-                        </Link>
-                        <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                          Chat
-                        </Link>
-                      </div>
+                    <div className="flex gap-2">
+                      <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
+                        View Details
+                      </Link>
+                      <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
+                        Chat
+                      </Link>
+                      <button
+                        onClick={() => deleteRecording(lecture.id)}
+                        className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm transition-colors flex items-center justify-center"
+                        title="Delete"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
-                  );
-                }
+                  </div>
+                );
               })}
             </div>
           ) : (
             <div id="empty-state" className="text-center py-12 bg-white border border-slate-200 rounded-2xl">
               <p className="text-slate-500 mb-4 text-sm">No lectures found</p>
-              <Link href="/home" className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium">
-                Record Your First Lecture
-              </Link>
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium"
+              >
+                Upload Your First Lecture Document
+              </button>
             </div>
           )}
         </div>
@@ -402,6 +349,45 @@ function LecturesPageContent() {
             </div>
           </div>
         </nav>
+
+        {/* Upload Modal */}
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+              <h2 className="text-xl font-semibold text-slate-800 mb-4">Upload Lecture Document</h2>
+              <p className="text-slate-600 mb-4 text-sm">Upload a PDF or Word document to extract text and generate summaries.</p>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleFileUpload(file);
+                  }
+                }}
+                className="hidden"
+              />
+              
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+              >
+                {uploading ? 'Uploading...' : 'Select File'}
+              </button>
+              
+              <button
+                onClick={() => setShowUploadModal(false)}
+                disabled={uploading}
+                className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
