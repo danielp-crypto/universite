@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export const metadata = {
   title: 'Privacy Policy | Universite',
-  description: 'Privacy Policy for Universite - Learn how we protect your data, handle recordings, transcripts, and personal information.',
+  description: 'Privacy Policy for Universite - Learn how we protect your data, handle documents, transcripts, and personal information.',
 };
 
 export default function PrivacyPage() {
@@ -54,8 +54,8 @@ export default function PrivacyPage() {
             </ul>
             <h3 className="text-xl font-semibold text-slate-800 mb-3 mt-6">Educational Content</h3>
             <ul className="list-disc list-inside text-slate-700 mb-4 space-y-2 ml-4">
-              <li><strong>Audio Recordings:</strong> Lecture recordings and audio files you upload</li>
-              <li><strong>Transcripts:</strong> Automatically generated transcripts from your recordings</li>
+              <li><strong>Documents:</strong> Lecture documents and files you upload</li>
+              <li><strong>Transcripts:</strong> Automatically generated transcripts from your documents</li>
               <li><strong>Study Materials:</strong> Notes, flashcards, and other content you create</li>
               <li><strong>Chat History:</strong> Conversations with our AI assistant</li>
             </ul>
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside text-slate-700 mb-4 space-y-2 ml-4">
               <li><strong>Service Delivery:</strong> To provide, maintain, and improve our AI learning assistant services</li>
               <li><strong>Personalization:</strong> To personalize your learning experience</li>
-              <li><strong>Transcription Services:</strong> To generate accurate transcripts from your audio recordings</li>
+              <li><strong>Transcription Services:</strong> To generate accurate transcripts from your documents</li>
               <li><strong>AI Processing:</strong> To process your educational content and provide AI-powered tutoring</li>
               <li><strong>Security:</strong> To detect, prevent, and address technical issues and security threats</li>
             </ul>

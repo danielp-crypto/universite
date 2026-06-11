@@ -131,7 +131,7 @@ export default function TermsPage() {
             
             <h3 className="text-xl font-semibold text-slate-800 mb-3">6.1 Ownership</h3>
             <p className="text-slate-700 mb-4 leading-relaxed">
-              You retain ownership of any content you upload, record, or create using the Service (&quot;User Content&quot;), including lecture recordings, notes, and study materials.
+              You retain ownership of any content you upload, record, or create using the Service (&quot;User Content&quot;), including lecture documents, notes, and study materials.
             </p>
 
             <h3 className="text-xl font-semibold text-slate-800 mb-3 mt-6">6.2 License to Universite</h3>

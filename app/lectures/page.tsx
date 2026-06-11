@@ -105,7 +105,7 @@ function LecturesPageContent() {
     }
   };
 
-  const deleteRecording = async (id: string) => {
+  const deleteLecture = async (id: string) => {
     try {
       await fetch(`/api/lectures/${id}`, {
         method: 'DELETE',
@@ -120,7 +120,7 @@ function LecturesPageContent() {
     }
   };
 
-  const shareRecording = async (lecture: any) => {
+  const shareLecture = async (lecture: any) => {
     try {
       if (navigator.share) {
         await navigator.share({
@@ -137,21 +137,25 @@ function LecturesPageContent() {
     }
   };
 
-  const downloadRecording = async (lecture: any) => {
+  const downloadLecture = async (lecture: any) => {
     try {
-      const response = await fetch(lecture.audioUrl);
-      const blob = await response.blob();
+      if (!lecture.file_content) {
+        alert('No document available for download');
+        return;
+      }
+      const buffer = Buffer.from(lecture.file_content, 'base64');
+      const blob = new Blob([buffer], { type: lecture.file_type });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${lecture.title || 'recording'}.webm`;
+      a.download = lecture.file_name || 'document';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading recording:', error);
-      alert('Error downloading recording');
+      console.error('Error downloading document:', error);
+      alert('Error downloading document');
     }
   };
 
@@ -291,7 +295,7 @@ function LecturesPageContent() {
                         Chat
                       </Link>
                       <button
-                        onClick={() => deleteRecording(lecture.id)}
+                        onClick={() => deleteLecture(lecture.id)
                         className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm transition-colors flex items-center justify-center"
                         title="Delete"
                       >
