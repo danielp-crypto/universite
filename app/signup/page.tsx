@@ -271,25 +271,25 @@ function SignupPageContent() {
                 <svg className="w-5 h-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                <span><strong>3 lecture uploads per month</strong> with up to <strong>15 minutes</strong> of transcription per lecture</span>
+                <span><strong>20 lecture recordings/uploads per month</strong> with up to <strong>60 minutes</strong> of transcription per lecture</span>
               </li>
               <li className="flex items-start">
                 <svg className="w-5 h-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                <span><strong>Basic AI summaries</strong> of your recorded lectures</span>
+                <span><strong>Basic AI notes</strong> of your lectures</span>
               </li>
               <li className="flex items-start">
                 <svg className="w-5 h-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                <span>Access to the Universite dashboard and assistant</span>
+                <span>Access to the Universite dashboard</span>
               </li>
               <li className="flex items-start">
                 <svg className="w-5 h-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                <span><strong>Free forever plan</strong> – no credit card required.</span>
+                <span><strong>Free forever plan</strong> – no bank card required.</span>
               </li>
             </ul>
           </div>
