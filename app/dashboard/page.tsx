@@ -652,13 +652,13 @@ function HomePageContent() {
                         <div className="flex items-start justify-between mb-2">
                           <Link
                             href={`/lecture-detail?id=${lecture.id}`}
-                            className="flex-1"
+                            className="flex-1 min-w-0"
                           >
-                            <h3 className="text-base font-semibold text-slate-800 hover:text-indigo-600 transition-colors">{lecture.title}</h3>
+                            <h3 className="text-base font-semibold text-slate-800 hover:text-indigo-600 transition-colors truncate">{lecture.title}</h3>
                           </Link>
                           <button
                             onClick={(e) => deleteSupabaseLecture(lecture.id, e)}
-                            className="ml-2 p-1 text-slate-400 hover:text-red-600 transition-colors"
+                            className="ml-2 p-1 text-slate-400 hover:text-red-600 transition-colors flex-shrink-0"
                             title="Delete"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
