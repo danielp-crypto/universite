@@ -122,7 +122,7 @@ function SignupPageContent() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={emailLoading || googleLoading}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50 text-slate-900 placeholder:text-slate-400"
                     placeholder="you@example.com"
                   />
                 </div>
@@ -135,7 +135,7 @@ function SignupPageContent() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={emailLoading || googleLoading}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50 text-slate-900 placeholder:text-slate-400"
                     placeholder="••••••••"
                     minLength={6}
                   />
@@ -149,7 +149,7 @@ function SignupPageContent() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     disabled={emailLoading || googleLoading}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50 text-slate-900 placeholder:text-slate-400"
                     placeholder="••••••••"
                     minLength={6}
                   />
