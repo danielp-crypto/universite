@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
+import UpgradeModal from '../components/UpgradeModal';
 
 function HomePageContent() {
   const router = useRouter();
@@ -17,6 +18,8 @@ function HomePageContent() {
   const [profileWidgetVisible, setProfileWidgetVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState('');
 
   // Recording states
   const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'processing'>('idle');
@@ -725,7 +728,13 @@ function HomePageContent() {
           <div>
             <h2 className="text-lg font-semibold text-slate-800 mb-3">Study Tools</h2>
             <div className="space-y-2">
-              <Link href="/flashcards" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform">
+              <button
+                onClick={() => {
+                  setUpgradeFeature('Flashcards');
+                  setUpgradeModalOpen(true);
+                }}
+                className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full relative"
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                     <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -737,12 +746,21 @@ function HomePageContent() {
                     <div className="text-xs text-slate-500">Review key concepts</div>
                   </div>
                 </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                <div className="flex items-center gap-2">
+                  <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</span>
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
 
-              <Link href="/notes" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform">
+              <button
+                onClick={() => {
+                  setUpgradeFeature('AI Notes');
+                  setUpgradeModalOpen(true);
+                }}
+                className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full relative"
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                     <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -754,12 +772,21 @@ function HomePageContent() {
                     <div className="text-xs text-slate-500">View all lecture notes</div>
                   </div>
                 </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                <div className="flex items-center gap-2">
+                  <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</span>
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
 
-              <Link href="/search" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform">
+              <button
+                onClick={() => {
+                  setUpgradeFeature('AI Search');
+                  setUpgradeModalOpen(true);
+                }}
+                className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full relative"
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
                     <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -771,10 +798,13 @@ function HomePageContent() {
                     <div className="text-xs text-slate-500">Find across all lectures</div>
                   </div>
                 </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                <div className="flex items-center gap-2">
+                  <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</span>
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -991,6 +1021,13 @@ function HomePageContent() {
           </div>
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+      />
     </div>
   );
 }

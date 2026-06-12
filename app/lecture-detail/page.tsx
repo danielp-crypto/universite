@@ -7,6 +7,7 @@ import { apiGet, apiPost } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
 import AudioPlayer from '../components/AudioPlayer';
+import UpgradeModal from '../components/UpgradeModal';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
@@ -34,6 +35,8 @@ function LectureDetailPageContent() {
   });
 
   const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState('');
 
   const RECORDINGS_STORAGE_KEY = 'universite_recordings';
 
@@ -502,7 +505,10 @@ function LectureDetailPageContent() {
                 {/* Study Tools */}
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   <button
-                    onClick={() => alert('Upgrade to Premium to unlock AI Q&A!')}
+                    onClick={() => {
+                      setUpgradeFeature('AI Q&A');
+                      setUpgradeModalOpen(true);
+                    }}
                     className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-semibold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 relative"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -512,7 +518,10 @@ function LectureDetailPageContent() {
                     <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</span>
                   </button>
                   <button
-                    onClick={() => alert('Upgrade to Premium to unlock Flashcards!')}
+                    onClick={() => {
+                      setUpgradeFeature('Flashcards');
+                      setUpgradeModalOpen(true);
+                    }}
                     className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-semibold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 relative"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -731,6 +740,13 @@ function LectureDetailPageContent() {
             </div>
           )}
         </div>
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          isOpen={upgradeModalOpen}
+          onClose={() => setUpgradeModalOpen(false)}
+          feature={upgradeFeature}
+        />
 
         {/* Bottom Navigation */}
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">

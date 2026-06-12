@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { apiPost, apiGet } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
+import UpgradeModal from '../components/UpgradeModal';
 
 function AssistantPageContent() {
   const router = useRouter();
@@ -20,6 +21,8 @@ function AssistantPageContent() {
   const [processingText, setProcessingText] = useState('Generating transcript...');
   const [inputValue, setInputValue] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState('');
 
   const mediaRecorderRef = useRef<any>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -455,7 +458,10 @@ function AssistantPageContent() {
             </form>
             <div className="text-center mt-2">
               <button
-                onClick={() => alert('Upgrade to Premium to unlock AI Chat!')}
+                onClick={() => {
+                  setUpgradeFeature('AI Chat');
+                  setUpgradeModalOpen(true);
+                }}
                 className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
               >
                 Upgrade to Premium for unlimited AI chat →
@@ -526,6 +532,13 @@ function AssistantPageContent() {
           </div>
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+      />
 
       {/* Processing Overlay */}
       {recordingState === 'processing' && (
