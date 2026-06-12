@@ -65,7 +65,7 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-xl text-slate-600 mb-8 leading-relaxed">
-                Start free with unlimited transcriptions, then upgrade for unlimited AI-powered study tools when you're ready.
+                Start free with 20 transcriptions and lecture notes/month, then upgrade for unlimited transcriptions and AI-powered study tools when you're ready.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/signup" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
@@ -75,7 +75,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free plan: unlimited transcriptions • Premium $9.99/month: unlimited AI study tools</p>
+              <p className="mt-6 text-sm text-slate-500">Free plan: 20 transcriptions and lecture notes • Premium $9/month: unlimited with AI study tools</p>
             </div>
             
             <div className="animate-fade-in animate-float">
@@ -129,7 +129,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Record & Transcribe Lectures</h3>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Record/Upload & Transcribe Lectures</h3>
               <p className="text-slate-600">Record your lectures or upload audio files. Get accurate transcripts instantly with AI-powered speech recognition.</p>
             </div>
 
@@ -152,7 +152,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Smart Flashcards</h3>
-              <p className="text-slate-600">Automatically generate flashcards from your lecture content. Study key concepts efficiently with spaced repetition.</p>
+              <p className="text-slate-600">Generate flashcards from your lecture content. Study key concepts efficiently with spaced repetition.</p>
             </div>
 
             {/* Feature 4 */}
@@ -201,18 +201,18 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">1</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Record Your Lecture</h3>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Record/Upload Your Lecture</h3>
               <p className="text-slate-600">Use our app to record lectures in real-time or upload existing audio files. Works on any device.</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant Transcripts</h3>
-              <p className="text-slate-600">Free plan includes unlimited transcriptions. Record as many lectures as you want with AI-powered transcription.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant Transcripts and lecture notes</h3>
+              <p className="text-slate-600">Free plan includes 20 transcriptions and notes. Record your lectures with AI-powered transcription and notes created for you.</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">3</div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Study with AI</h3>
-              <p className="text-slate-600">Try AI study tools for free. Generate flashcards, Q&A, and summaries. Upgrade for unlimited AI-powered learning.</p>
+              <p className="text-slate-600">Upgrade for unlimited AI-powered learning and get A's in every class. Generate flashcards and Exams.</p>
             </div>
           </div>
         </div>
@@ -235,32 +235,29 @@ export default function Home() {
                 Most students start here
               </div>
               <h3 className="text-2xl font-semibold text-slate-900 mb-1">Free Plan</h3>
-              <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No credit card • Perfect for trying Universite</p>
+              <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
               <p className="text-4xl font-bold text-slate-900 mb-6">$0<span className="text-base font-medium text-slate-500 ml-1">/ forever</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Unlimited transcriptions</strong> - Record as many lectures as you want</span>
+                  <span><strong>20 transcriptions/month</strong> - Record/upload 20 lectures a month</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>10 AI flashcards/month</strong> - Try intelligent study cards</span>
+                  <span><strong>No AI flashcards</strong> - Upgrade for intelligent study cards</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>5 Q&A generations/month</strong> - Ask questions about your lectures</span>
+                  <span><strong>No Exams</strong> - Upgrade to test yourself on your lectures</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>2 AI summaries/month</strong> - Get lecture insights</span>
+                  <span><strong>20 AI notes/month</strong> - Get lecture insights on your toughest classes</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Local storage</strong> - Your data stays on your device</span>
-                </li>
+                
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">Unlimited AI features</span>
+                  <span className="text-slate-400">limited AI features</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-slate-400">•</span>
@@ -268,7 +265,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">Priority support</span>
+                  <span className="text-slate-400">Email support: 48hr</span>
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
@@ -288,7 +285,7 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-semibold text-white mb-1">Premium Plan</h3>
               <p className="text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-4xl font-bold text-white mb-2">$9.99<span className="text-base font-medium text-white/80 ml-1">/ month</span></p>
+              <p className="text-4xl font-bold text-white mb-2">$9<span className="text-base font-medium text-white/80 ml-1">/ month</span></p>
               <p className="text-sm text-white/80 mb-6">Cancel anytime • No setup fees</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
@@ -301,11 +298,11 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>100 Q&A generations/month</strong> - Unlimited contextual questions</span>
+                  <span><strong>100 Exam generations/month</strong> - Unlimited contextual questions</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>50 AI summaries/month</strong> - Unlimited lecture insights</span>
+                  <span><strong>100 AI notes/month</strong> - Unlimited lecture insights</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
@@ -328,7 +325,7 @@ export default function Home() {
 
           <div className="mt-16 text-center">
             <p className="text-slate-600">
-              Questions about our plans? <a href="mailto:support@universite.ai" className="text-indigo-600 hover:text-indigo-700 font-medium">Contact our support team</a>
+              Questions about our plans? <a href="mailto:support@universite.co.za" className="text-indigo-600 hover:text-indigo-700 font-medium">Contact our support team</a>
             </p>
           </div>
         </div>
@@ -357,7 +354,7 @@ export default function Home() {
                   <div className="text-slate-600 text-xs md:text-sm">Lecture Transcription mins processed</div>
                 </div>
                 <div>
-                  <div className="text-4xl font-bold text-indigo-600 mb-2">2500</div>
+                  <div className="text-4xl font-bold text-indigo-600 mb-2">1000</div>
                   <div className="text-slate-600 text-xs md:text-sm">Lectures Recorded</div>
                 </div>
                 <div>
