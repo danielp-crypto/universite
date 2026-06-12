@@ -49,9 +49,9 @@ function LecturesPageContent() {
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
       const countAll = merged.length;
-      const countToday = merged.filter(lecture => new Date(lecture.createdAt) >= today).length;
-      const countWeek = merged.filter(lecture => new Date(lecture.createdAt) >= weekAgo).length;
-      const countFavorites = merged.filter(lecture => lecture.favorite === true).length;
+      const countToday = merged.filter((lecture: any) => new Date(lecture.createdAt) >= today).length;
+      const countWeek = merged.filter((lecture: any) => new Date(lecture.createdAt) >= weekAgo).length;
+      const countFavorites = merged.filter((lecture: any) => lecture.favorite === true).length;
 
       setCounts({
         all: countAll,
