@@ -468,7 +468,7 @@ function LectureDetailPageContent() {
             <>
               {/* Lecture Card */}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 mb-4 shadow-sm">
-                <h2 className="text-xl font-bold text-slate-800 mb-2">{currentLecture.title}</h2>
+                <h2 className="text-xl font-bold text-slate-800 mb-2 truncate">{currentLecture.title}</h2>
                 <div className="flex items-center gap-3 text-sm text-slate-500 mb-4">
                   <span>{new Date(currentLecture.created_at || currentLecture.createdAt).toLocaleDateString()}</span>
                   <span>•</span>
