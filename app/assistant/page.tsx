@@ -445,13 +445,22 @@ function AssistantPageContent() {
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isBotTyping}
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md active:scale-95 disabled:opacity-50 transition-all flex-shrink-0"
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md active:scale-95 disabled:opacity-50 transition-all flex-shrink-0 relative"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
                 </svg>
+                <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</span>
               </button>
             </form>
+            <div className="text-center mt-2">
+              <button
+                onClick={() => alert('Upgrade to Premium to unlock AI Chat!')}
+                className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
+              >
+                Upgrade to Premium for unlimited AI chat →
+              </button>
+            </div>
           </div>
         </div>
 
