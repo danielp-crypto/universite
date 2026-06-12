@@ -125,7 +125,7 @@ function HomePageContent() {
       }
 
       // Sort and slice top 3
-      allLectures.sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
+      allLectures.sort((a: any, b: any) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
       setLectures(allLectures);
 
       // Update weekly stats
