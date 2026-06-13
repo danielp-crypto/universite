@@ -307,7 +307,7 @@ function HomePageContent() {
 
       // Initialize processing steps
       const steps = [
-        'Uploading audio to Supabase...',
+        'Processing audio for transcription...',
         'Transcribing audio with AI...',
         'Generating summary...',
         'Finalizing lecture...'
