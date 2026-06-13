@@ -79,9 +79,10 @@ function HomePageContent() {
         if (lastActivityDate === today) {
           setStreak(streak);
         } else if (lastActivityDate === yesterday) {
+          // Streak continues from yesterday, but we don't increment until user does something today
           setStreak(streak);
         } else {
-          // Streak broken
+          // Streak broken - reset to 0
           setStreak(0);
           localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify({ streak: 0, lastActivityDate: today }));
         }
@@ -103,10 +104,13 @@ function HomePageContent() {
       if (streakData) {
         const { streak, lastActivityDate } = JSON.parse(streakData);
         if (lastActivityDate === today) {
+          // Already did something today, keep same streak
           newStreak = streak;
         } else if (lastActivityDate === yesterday) {
+          // Did something yesterday, increment streak
           newStreak = streak + 1;
         }
+        // Else: streak broken, start fresh at 1
       }
       
       setStreak(newStreak);
