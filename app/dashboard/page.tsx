@@ -113,10 +113,15 @@ function HomePageContent() {
         // Else: streak broken, start fresh at 1
       }
       
+      console.log('Updating streak:', { newStreak, lastActivityDate: today });
       setStreak(newStreak);
       localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify({ streak: newStreak, lastActivityDate: today }));
     } catch (error) {
       console.error('Error updating streak:', error);
+      // Even if there's an error, try to set a default streak
+      const today = new Date().toDateString();
+      setStreak(1);
+      localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify({ streak: 1, lastActivityDate: today }));
     }
   };
 
@@ -304,6 +309,9 @@ function HomePageContent() {
 
   const saveRecording = async (blob: Blob) => {
     try {
+      // Update streak immediately when recording is saved
+      updateStreak();
+
       const elapsed = recordingStartTimeRef.current
         ? Math.floor((Date.now() - recordingStartTimeRef.current) / 1000)
         : 0;
@@ -480,6 +488,9 @@ function HomePageContent() {
 
   const uploadRecording = async (file: File) => {
     try {
+      // Update streak immediately when file is uploaded
+      updateStreak();
+
       // Initialize processing steps
       const steps = [
         'Processing audio for transcription...',
@@ -562,6 +573,7 @@ function HomePageContent() {
       setCurrentStep(3);
       setProcessingText(steps[3]);
 
+      // Update streak regardless of Supabase upload success
       updateStreak();
 
       setRecordingState('idle');
