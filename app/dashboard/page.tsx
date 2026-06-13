@@ -24,6 +24,7 @@ function HomePageContent() {
   // Processing states
   const [processingSteps, setProcessingSteps] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [processingError, setProcessingError] = useState<string | null>(null);
 
   // Recording states
   const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'processing'>('idle');
@@ -317,8 +318,7 @@ function HomePageContent() {
 
       const session = await getSession();
       if (!session) {
-        alert('Please log in to save recordings');
-        setRecordingState('idle');
+        setProcessingError('Please log in to save recordings');
         return;
       }
 
@@ -334,7 +334,8 @@ function HomePageContent() {
       });
 
       if (!transcribeResponse.ok) {
-        throw new Error('Transcription failed');
+        setProcessingError('Failed to transcribe audio. Please try again.');
+        return;
       }
 
       const transcribeData = await transcribeResponse.json();
@@ -377,7 +378,8 @@ function HomePageContent() {
       });
 
       if (!lectureResponse.ok) {
-        throw new Error('Failed to create lecture');
+        setProcessingError('Failed to save lecture to Supabase. Please try again.');
+        return;
       }
 
       setCurrentStep(3);
@@ -393,8 +395,7 @@ function HomePageContent() {
 
     } catch (error) {
       console.error('Error saving recording:', error);
-      alert('Error saving recording. Please try again.');
-      setRecordingState('idle');
+      setProcessingError('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -954,49 +955,70 @@ function HomePageContent() {
       {recordingState === 'processing' && (
         <div className="fixed inset-0 bg-black/55 z-50 flex items-center justify-center">
           <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+            {processingError ? (
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-800 mb-2">Processing Failed</h3>
+                <p className="text-slate-600 text-sm mb-4">{processingError}</p>
+                <button
+                  onClick={() => {
+                    setProcessingError(null);
+                    setRecordingState('idle');
+                  }}
+                  className="px-4 py-3 bg-slate-200 text-slate-900 rounded-xl font-medium hover:bg-slate-300 transition-colors"
+                >
+                  Close
+                </button>
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-4">Processing Recording</h3>
-              
-              {/* Progress Steps */}
-              <div className="space-y-3 mb-4">
-                {processingSteps.map((step, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                      index < currentStep 
-                        ? 'bg-green-500 text-white' 
-                        : index === currentStep 
-                        ? 'bg-indigo-600 text-white animate-pulse' 
-                        : 'bg-slate-200 text-slate-400'
-                    }`}>
-                      {index < currentStep ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <span className="text-xs">{index + 1}</span>
-                      )}
+            ) : (
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-800 mb-4">Processing Recording</h3>
+                
+                {/* Progress Steps */}
+                <div className="space-y-3 mb-4">
+                  {processingSteps.map((step, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        index < currentStep 
+                          ? 'bg-green-500 text-white' 
+                          : index === currentStep 
+                          ? 'bg-indigo-600 text-white animate-pulse' 
+                          : 'bg-slate-200 text-slate-400'
+                      }`}>
+                        {index < currentStep ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <span className="text-xs">{index + 1}</span>
+                        )}
+                      </div>
+                      <span className={`text-sm ${
+                        index < currentStep 
+                          ? 'text-green-600 line-through' 
+                          : index === currentStep 
+                          ? 'text-indigo-600 font-medium' 
+                          : 'text-slate-400'
+                      }`}>
+                        {step}
+                      </span>
                     </div>
-                    <span className={`text-sm ${
-                      index < currentStep 
-                        ? 'text-green-600 line-through' 
-                        : index === currentStep 
-                        ? 'text-indigo-600 font-medium' 
-                        : 'text-slate-400'
-                    }`}>
-                      {step}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                
+                <p className="text-slate-500 text-xs">Please wait while we process your recording...</p>
               </div>
-              
-              <p className="text-slate-500 text-xs">Please wait while we process your recording...</p>
-            </div>
+            )}
           </div>
         </div>
       )}
