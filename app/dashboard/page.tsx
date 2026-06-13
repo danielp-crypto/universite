@@ -26,6 +26,9 @@ function HomePageContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const [processingError, setProcessingError] = useState<string | null>(null);
 
+  // Drag and drop states
+  const [isDragging, setIsDragging] = useState(false);
+
   // Recording states
   const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'processing'>('idle');
   const [recordingTimer, setRecordingTimer] = useState('00:00');
@@ -471,44 +474,137 @@ function HomePageContent() {
     }
   };
 
-  const uploadRecording = () => {
+  const uploadRecording = async (file: File) => {
+    try {
+      // Initialize processing steps
+      const steps = [
+        'Processing audio for transcription...',
+        'Transcribing audio with AI...',
+        'Generating summary...',
+        'Finalizing lecture...'
+      ];
+      setProcessingSteps(steps);
+      setCurrentStep(0);
+      setProcessingText(steps[0]);
+      setRecordingState('processing');
+      setProcessingError(null);
+
+      const session = await getSession();
+      if (!session) {
+        setProcessingError('Please log in to upload recordings');
+        return;
+      }
+
+      // Step 1: Transcribe audio
+      const formData = new FormData();
+      formData.append('audio', file, file.name);
+      
+      setProcessingText(steps[0]);
+      const transcribeResponse = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        body: formData
+      });
+
+      if (!transcribeResponse.ok) {
+        setProcessingError('Failed to transcribe audio. Please try again.');
+        return;
+      }
+
+      const transcribeData = await transcribeResponse.json();
+      const transcript = transcribeData.transcript;
+
+      setCurrentStep(1);
+      setProcessingText(steps[1]);
+
+      // Step 2: Generate summary
+      const summaryResponse = await fetch('/api/generate-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript })
+      });
+
+      let summary = '';
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        summary = summaryData.summary;
+      }
+
+      setCurrentStep(2);
+      setProcessingText(steps[2]);
+
+      // Step 3: Create lecture in Supabase
+      const lectureResponse = await fetch('/api/lectures', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          duration: 0,
+          transcription: transcript,
+          summary: summary,
+          stored_locally: true,
+          local_audio_size: file.size
+        })
+      });
+
+      if (!lectureResponse.ok) {
+        setProcessingError('Failed to save lecture to Supabase. Please try again.');
+        return;
+      }
+
+      setCurrentStep(3);
+      setProcessingText(steps[3]);
+
+      updateStreak();
+
+      setRecordingState('idle');
+      loadData();
+
+    } catch (error) {
+      console.error('Error uploading recording:', error);
+      setProcessingError('An unexpected error occurred. Please try again.');
+    }
+  };
+
+  const handleFileUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'audio/*';
     input.onchange = async (e: any) => {
       const file = e.target.files[0];
       if (file) {
-        setRecordingState('processing');
-        setProcessingText('Processing audio...');
-        try {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onloadend = () => {
-            const base64Audio = reader.result;
-            const recording = {
-              id: Date.now().toString(),
-              name: file.name,
-              date: new Date().toLocaleDateString(),
-              duration: 'N/A',
-              audioUrl: base64Audio,
-              createdAt: new Date().toISOString()
-            };
-
-            const recordings = getRecordings();
-            recordings.unshift(recording);
-            saveRecordings(recordings);
-
-            setRecordingState('idle');
-            loadData();
-          };
-        } catch (error) {
-          console.error('Error uploading recording:', error);
-          alert('Error uploading recording. Please try again.');
-          setRecordingState('idle');
-        }
+        await uploadRecording(file);
       }
     };
     input.click();
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('audio/')) {
+        await uploadRecording(file);
+      } else {
+        setProcessingError('Please upload an audio file');
+      }
+    }
   };
 
   // Profile management
@@ -602,17 +698,22 @@ function HomePageContent() {
                   <span className="font-semibold text-sm">Record Lecture</span>
                 </div>
               </button>
-              <button
-                onClick={uploadRecording}
-                className="block p-4 bg-white border-2 border-slate-200 rounded-2xl active:scale-95 transition-transform"
+              <div
+                onClick={handleFileUpload}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`block p-4 bg-white border-2 rounded-2xl active:scale-95 transition-transform cursor-pointer ${
+                  isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200'
+                }`}
               >
                 <div className="flex flex-col items-center text-center text-slate-700">
                   <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  <span className="font-semibold text-sm">Upload Audio</span>
+                  <span className="font-semibold text-sm">{isDragging ? 'Drop audio file here' : 'Upload Audio'}</span>
                 </div>
-              </button>
+              </div>
             </div>
           </div>
 
