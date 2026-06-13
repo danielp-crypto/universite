@@ -930,7 +930,7 @@ function HomePageContent() {
                 <div className="w-12 h-12 rounded-full bg-red-500"></div>
               </div>
               <h3 className="text-xl font-semibold text-slate-800 mb-2">Recording</h3>
-              <div className="text-2xl font-mono text-slate-755 mb-4">{recordingTimer}</div>
+              <div className="text-2xl font-mono text-slate-900 mb-4">{recordingTimer}</div>
               <div className="flex gap-3">
                 <button
                   onClick={stopRecording}
@@ -940,7 +940,7 @@ function HomePageContent() {
                 </button>
                 <button
                   onClick={cancelRecording}
-                  className="flex-1 px-4 py-3 bg-slate-200 hover:bg-slate-250 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform"
+                  className="flex-1 px-4 py-3 bg-slate-200 hover:bg-slate-250 text-slate-900 rounded-xl font-medium active:scale-95 transition-transform"
                 >
                   Cancel
                 </button>
