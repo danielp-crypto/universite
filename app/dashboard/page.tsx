@@ -21,6 +21,10 @@ function HomePageContent() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
 
+  // Processing states
+  const [processingSteps, setProcessingSteps] = useState<string[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+
   // Recording states
   const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'processing'>('idle');
   const [recordingTimer, setRecordingTimer] = useState('00:00');
@@ -300,6 +304,86 @@ function HomePageContent() {
       const secs = elapsed % 60;
       const durationStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
+      // Initialize processing steps
+      const steps = [
+        'Uploading audio to Supabase...',
+        'Transcribing audio with AI...',
+        'Generating summary...',
+        'Finalizing lecture...'
+      ];
+      setProcessingSteps(steps);
+      setCurrentStep(0);
+      setProcessingText(steps[0]);
+
+      const session = await getSession();
+      if (!session) {
+        alert('Please log in to save recordings');
+        setRecordingState('idle');
+        return;
+      }
+
+      // Step 1: Upload audio to Supabase
+      const formData = new FormData();
+      formData.append('audio', blob, 'recording.webm');
+      
+      setProcessingText(steps[0]);
+      const transcribeResponse = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        body: formData
+      });
+
+      if (!transcribeResponse.ok) {
+        throw new Error('Transcription failed');
+      }
+
+      const transcribeData = await transcribeResponse.json();
+      const transcript = transcribeData.transcript;
+
+      setCurrentStep(1);
+      setProcessingText(steps[1]);
+
+      // Step 2: Generate summary
+      const summaryResponse = await fetch('/api/generate-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript })
+      });
+
+      let summary = '';
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        summary = summaryData.summary;
+      }
+
+      setCurrentStep(2);
+      setProcessingText(steps[2]);
+
+      // Step 3: Create lecture in Supabase
+      const lectureResponse = await fetch('/api/lectures', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: `Recording - ${new Date().toLocaleDateString()}`,
+          duration: elapsed,
+          transcription: transcript,
+          summary: summary,
+          stored_locally: true,
+          local_audio_size: blob.size
+        })
+      });
+
+      if (!lectureResponse.ok) {
+        throw new Error('Failed to create lecture');
+      }
+
+      setCurrentStep(3);
+      setProcessingText(steps[3]);
+
+      // Also save to localStorage as backup
       const reader = new FileReader();
       reader.readAsDataURL(blob);
       reader.onloadend = () => {
@@ -310,6 +394,8 @@ function HomePageContent() {
           date: new Date().toLocaleDateString(),
           duration: durationStr,
           audioUrl: base64Audio,
+          transcript: transcript,
+          summary: summary,
           createdAt: new Date().toISOString()
         };
 
@@ -322,6 +408,7 @@ function HomePageContent() {
         setRecordingState('idle');
         loadData();
       };
+
     } catch (error) {
       console.error('Error saving recording:', error);
       alert('Error saving recording. Please try again.');
@@ -886,14 +973,47 @@ function HomePageContent() {
         <div className="fixed inset-0 bg-black/55 z-50 flex items-center justify-center">
           <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
-                <svg className="w-8 h-8 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">Processing</h3>
-              <p className="text-slate-600 text-sm">{processingText}</p>
+              <h3 className="text-xl font-semibold text-slate-800 mb-4">Processing Recording</h3>
+              
+              {/* Progress Steps */}
+              <div className="space-y-3 mb-4">
+                {processingSteps.map((step, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                      index < currentStep 
+                        ? 'bg-green-500 text-white' 
+                        : index === currentStep 
+                        ? 'bg-indigo-600 text-white animate-pulse' 
+                        : 'bg-slate-200 text-slate-400'
+                    }`}>
+                      {index < currentStep ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <span className="text-xs">{index + 1}</span>
+                      )}
+                    </div>
+                    <span className={`text-sm ${
+                      index < currentStep 
+                        ? 'text-green-600 line-through' 
+                        : index === currentStep 
+                        ? 'text-indigo-600 font-medium' 
+                        : 'text-slate-400'
+                    }`}>
+                      {step}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              <p className="text-slate-500 text-xs">Please wait while we process your recording...</p>
             </div>
           </div>
         </div>
