@@ -383,31 +383,13 @@ function HomePageContent() {
       setCurrentStep(3);
       setProcessingText(steps[3]);
 
-      // Also save to localStorage as backup
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = () => {
-        const base64Audio = reader.result;
-        const recording = {
-          id: Date.now().toString(),
-          name: `Recording - ${new Date().toLocaleDateString()}`,
-          date: new Date().toLocaleDateString(),
-          duration: durationStr,
-          audioUrl: base64Audio,
-          transcript: transcript,
-          summary: summary,
-          createdAt: new Date().toISOString()
-        };
+      // Discard audio blob - don't save to localStorage to save space
+      // The lecture is now stored in Supabase with transcript and summary
+      
+      updateStreak();
 
-        const recordings = getRecordings();
-        recordings.unshift(recording);
-        saveRecordings(recordings);
-
-        updateStreak();
-
-        setRecordingState('idle');
-        loadData();
-      };
+      setRecordingState('idle');
+      loadData();
 
     } catch (error) {
       console.error('Error saving recording:', error);
