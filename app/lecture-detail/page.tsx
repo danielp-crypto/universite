@@ -17,7 +17,7 @@ function LectureDetailPageContent() {
   const [currentLecture, setCurrentLecture] = useState<any>(null);
   
   // Tabs
-  const [activeTab, setActiveTab] = useState<'segments' | 'transcript' | 'summary' | 'flashcards'>('segments');
+  const [activeTab, setActiveTab] = useState<'segments' | 'transcript' | 'summary'>('segments');
   
   // AI Processing states
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,7 +34,6 @@ function LectureDetailPageContent() {
     summaryText: undefined
   });
 
-  const [flashcards, setFlashcards] = useState<any[]>([]);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
 
@@ -61,22 +60,36 @@ function LectureDetailPageContent() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const downloadRecording = async () => {
-    if (!currentLecture || !currentLecture.audioUrl) return;
+  const exportToPDF = async () => {
+    if (!currentLecture) return;
+
     try {
-      const response = await fetch(currentLecture.audioUrl);
-      const blob = await response.blob();
+      // Create a simple text content for the PDF
+      const content = `
+Lecture: ${currentLecture.title || 'Untitled'}
+Date: ${currentLecture.date || new Date().toLocaleDateString()}
+Duration: ${currentLecture.duration || 'N/A'}
+
+TRANSCRIPT
+${currentLecture.transcription || 'No transcript available'}
+
+SUMMARY
+${currentLecture.summary || 'No summary available'}
+      `.trim();
+
+      // Create a blob with the content
+      const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${currentLecture.title || 'recording'}.webm`;
+      a.download = `${currentLecture.title || 'lecture'}-notes.txt`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading recording:', error);
-      alert('Error downloading recording');
+      console.error('Error exporting notes:', error);
+      alert('Error exporting notes');
     }
   };
 
@@ -160,23 +173,6 @@ function LectureDetailPageContent() {
     if (lectureId) {
       loadLecture(lectureId);
     }
-
-    // Load flashcards from localStorage
-    try {
-      const stored = localStorage.getItem('universite_flashcards');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const lectureFlashcards = parsed.filter((card: any) => card.lecture_id === lectureId);
-        setFlashcards(lectureFlashcards);
-        // Update flashcards count in processing results
-        setProcessingResults(prev => ({
-          ...prev,
-          suggestionsCount: lectureFlashcards.length
-        }));
-      }
-    } catch (e) {
-      console.error(e);
-    }
   }, [lectureId]);
 
   // AI Feature triggers
@@ -206,47 +202,6 @@ function LectureDetailPageContent() {
     } catch (e: any) {
       console.error(e);
       alert('Failed to generate Q&A');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleGenerateFlashcards = async () => {
-    if (!currentLecture) return;
-    if (!currentLecture.transcription) {
-      alert('This lecture has no transcription to generate flashcards from');
-      return;
-    }
-
-    try {
-      setProcessingMessage('Creating Flashcards...');
-      setIsProcessing(true);
-
-      const segments = createSegmentsFromTranscription(currentLecture.transcription);
-      const result = await apiPost('/api/generate-flashcards', {
-        lecture: currentLecture,
-        segments: segments
-      });
-      
-      if (result.success) {
-        // Save to localStorage
-        const existingStored = localStorage.getItem('universite_flashcards');
-        const existing = existingStored ? JSON.parse(existingStored) : [];
-        const newCards = result.flashcards.map((card: any) => ({
-          ...card,
-          lecture_id: currentLecture.id,
-          lecture_title: currentLecture.title,
-          created_at: new Date().toISOString()
-        }));
-
-        localStorage.setItem('universite_flashcards', JSON.stringify([...existing, ...newCards]));
-        router.push(`/study-mode?lecture=${currentLecture.id}`);
-      } else {
-        alert('Error generating flashcards: ' + result.error);
-      }
-    } catch (e: any) {
-      console.error(e);
-      alert('Failed to generate flashcards');
     } finally {
       setIsProcessing(false);
     }
@@ -492,18 +447,18 @@ function LectureDetailPageContent() {
                     Chat with Lecture
                   </Link>
                   <button
-                    onClick={downloadRecording}
+                    onClick={exportToPDF}
                     className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-center hover:shadow-lg transition-all text-sm active:scale-95"
-                    title="Download"
+                    title="Export to PDF"
                   >
                     <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </button>
                 </div>
 
                 {/* Study Tools */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="grid grid-cols-1 gap-2 mb-4">
                   <button
                     onClick={() => {
                       setUpgradeFeature('AI Q&A');
@@ -515,19 +470,6 @@ function LectureDetailPageContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Generate Q&A
-                    <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setUpgradeFeature('Flashcards');
-                      setUpgradeModalOpen(true);
-                    }}
-                    className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-semibold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 relative"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    Create Flashcards
                     <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">PRO</span>
                   </button>
                 </div>
@@ -573,14 +515,6 @@ function LectureDetailPageContent() {
                     }`}
                   >
                     Summary
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('flashcards')}
-                    className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                      activeTab === 'flashcards' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Flashcards ({flashcards.length})
                   </button>
                 </div>
               </div>
@@ -657,29 +591,6 @@ function LectureDetailPageContent() {
                         className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
                       >
                         Generate Summary
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'flashcards' && (
-                <div className="space-y-3 animate-fade-in">
-                  {flashcards.length > 0 ? (
-                    flashcards.map((card, idx) => (
-                      <div key={card.id || idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                        <div className="font-semibold text-slate-800 mb-1">Q: {card.question}</div>
-                        <div className="text-sm text-slate-600 pt-2 border-t border-slate-100">A: {card.answer}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 bg-white border rounded-2xl">
-                      <p className="text-slate-500 text-sm mb-4">No flashcards created yet.</p>
-                      <button
-                        onClick={handleGenerateFlashcards}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
-                      >
-                        Create Flashcards now
                       </button>
                     </div>
                   )}
