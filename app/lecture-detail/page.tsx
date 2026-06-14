@@ -532,53 +532,6 @@ function LectureDetailPageContent() {
                   </button>
                 </div>
 
-                {/* Transcription trigger */}
-                <div className="mb-4 pt-4 border-t border-slate-100">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-slate-700">Transcript Processing</h3>
-                    <button
-                      onClick={handleProcessTranscript}
-                      disabled={isProcessing}
-                      className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-lg active:scale-95 transition-transform"
-                    >
-                      Process Transcript
-                    </button>
-                  </div>
-                  
-                  {isProcessing && (
-                    <div className="p-3 bg-slate-50 rounded-lg border flex items-center gap-3">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
-                      <span className="text-xs text-slate-600">{processingMessage}</span>
-                    </div>
-                  )}
-
-                  {processingResults && (
-                    <div className="space-y-3 mt-3">
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="text-center p-2 bg-blue-50 rounded-lg">
-                          <div className="text-base font-bold text-blue-600">{processingResults.segmentsCount}</div>
-                          <div className="text-[10px] text-blue-700">Segments</div>
-                        </div>
-                        <div className="text-center p-2 bg-green-50 rounded-lg">
-                          <div className="text-base font-bold text-green-600">{processingResults.summaryAvailable ? 'Yes' : 'No'}</div>
-                          <div className="text-[10px] text-green-700">Summary</div>
-                        </div>
-                        <div className="text-center p-2 bg-purple-50 rounded-lg">
-                          <div className="text-base font-bold text-purple-600">{processingResults.suggestionsCount}</div>
-                          <div className="text-[10px] text-purple-700">Flashcards</div>
-                        </div>
-                      </div>
-
-                      {processingResults.summaryText && (
-                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                          <h4 className="text-xs font-bold text-slate-700 mb-1">Summary</h4>
-                          <p className="text-xs text-slate-600 leading-relaxed">{processingResults.summaryText}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
                 {/* Key Concepts */}
                 {currentLecture.keyConcepts && currentLecture.keyConcepts.length > 0 && (
                   <div>
