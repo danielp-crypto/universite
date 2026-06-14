@@ -8,6 +8,7 @@ import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
 import AudioPlayer from '../components/AudioPlayer';
 import UpgradeModal from '../components/UpgradeModal';
+import jsPDF from 'jspdf';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
@@ -64,29 +65,56 @@ function LectureDetailPageContent() {
     if (!currentLecture) return;
 
     try {
-      // Create a simple text content for the PDF
-      const content = `
-Lecture: ${currentLecture.title || 'Untitled'}
-Date: ${currentLecture.date || new Date().toLocaleDateString()}
-Duration: ${currentLecture.duration || 'N/A'}
-
-TRANSCRIPT
-${currentLecture.transcription || 'No transcript available'}
-
-SUMMARY
-${currentLecture.summary || 'No summary available'}
-      `.trim();
-
-      // Create a blob with the content
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${currentLecture.title || 'lecture'}-notes.txt`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const pdf = new jsPDF();
+      
+      // Add title
+      pdf.setFontSize(20);
+      pdf.text(currentLecture.title || 'Untitled Lecture', 20, 20);
+      
+      // Add metadata
+      pdf.setFontSize(12);
+      pdf.text(`Date: ${currentLecture.date || new Date().toLocaleDateString()}`, 20, 30);
+      pdf.text(`Duration: ${currentLecture.duration || 'N/A'}`, 20, 38);
+      
+      // Add transcript section
+      pdf.setFontSize(16);
+      pdf.text('TRANSCRIPT', 20, 55);
+      pdf.setFontSize(12);
+      
+      const transcript = currentLecture.transcription || 'No transcript available';
+      const transcriptLines = pdf.splitTextToSize(transcript, 170);
+      let yPosition = 65;
+      
+      transcriptLines.forEach((line: string) => {
+        if (yPosition > 270) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        pdf.text(line, 20, yPosition);
+        yPosition += 7;
+      });
+      
+      // Add summary section on new page
+      pdf.addPage();
+      pdf.setFontSize(16);
+      pdf.text('SUMMARY', 20, 20);
+      pdf.setFontSize(12);
+      
+      const summary = currentLecture.summary || 'No summary available';
+      const summaryLines = pdf.splitTextToSize(summary, 170);
+      yPosition = 30;
+      
+      summaryLines.forEach((line: string) => {
+        if (yPosition > 270) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        pdf.text(line, 20, yPosition);
+        yPosition += 7;
+      });
+      
+      // Save the PDF
+      pdf.save(`${currentLecture.title || 'lecture'}-notes.pdf`);
     } catch (error) {
       console.error('Error exporting notes:', error);
       alert('Error exporting notes');
