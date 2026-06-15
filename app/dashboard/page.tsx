@@ -510,6 +510,18 @@ function HomePageContent() {
         return;
       }
 
+      // Get audio duration from file
+      const audioDuration = await new Promise<number>((resolve) => {
+        const audio = new Audio();
+        audio.onloadedmetadata = () => {
+          resolve(audio.duration);
+        };
+        audio.onerror = () => {
+          resolve(0);
+        };
+        audio.src = URL.createObjectURL(file);
+      });
+
       // Step 1: Transcribe audio
       const formData = new FormData();
       formData.append('audio', file, file.name);
@@ -557,7 +569,7 @@ function HomePageContent() {
         },
         body: JSON.stringify({
           title: file.name.replace(/\.[^/.]+$/, ''),
-          duration: 0,
+          duration: Math.floor(audioDuration),
           transcription: transcript,
           summary: summary,
           stored_locally: true,
