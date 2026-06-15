@@ -38,20 +38,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Format duration for each lecture
-    const formattedLectures = (lectures || []).map((lecture: any) => {
-      const durationSeconds = lecture.duration_seconds || 0;
-      const minutes = Math.floor(durationSeconds / 60);
-      const seconds = durationSeconds % 60;
-      const duration = `${minutes}:${String(seconds).padStart(2, '0')}`;
-      
-      return {
-        ...lecture,
-        duration
-      };
-    });
-
-    return NextResponse.json(formattedLectures);
+    return NextResponse.json(lectures || []);
 
   } catch (error) {
     console.error('Get lectures error:', error);

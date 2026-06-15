@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen';
 
-async function transcribeAudio(audioContent: Buffer, contentType: string): Promise<string> {
+async function transcribeAudio(audioContent: Buffer, contentType: string): Promise<{ transcript: string; duration: number }> {
   if (!DEEPGRAM_API_KEY) {
     throw new Error('DEEPGRAM_API_KEY not set');
   }
@@ -39,9 +39,15 @@ async function transcribeAudio(audioContent: Buffer, contentType: string): Promi
             .map((alt: any) => alt.transcript || '')
             .filter((t: string) => t.length > 0);
           
-          return transcripts.join(' ').trim();
+          // Extract duration from Deepgram response if available
+          const duration = result.metadata?.duration || 0;
+          
+          return {
+            transcript: transcripts.join(' ').trim(),
+            duration: duration
+          };
         }
-        return '';
+        return { transcript: '', duration: 0 };
       } else {
         const errorText = await response.text();
         lastError = `Deepgram API error: ${response.status} - ${response.statusText} - ${errorText}`;
@@ -108,12 +114,13 @@ export async function POST(request: NextRequest) {
 
     // Transcribe audio
     console.log('Starting transcription...');
-    const transcript = await transcribeAudio(audioContent, contentType);
-    console.log('Transcription completed, length:', transcript.length);
+    const transcribeResult = await transcribeAudio(audioContent, contentType);
+    console.log('Transcription completed, length:', transcribeResult.transcript.length, 'duration:', transcribeResult.duration);
 
     return NextResponse.json({
       success: true,
-      transcript: transcript
+      transcript: transcribeResult.transcript,
+      duration: transcribeResult.duration
     });
 
   } catch (error) {
