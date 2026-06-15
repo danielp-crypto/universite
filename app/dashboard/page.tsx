@@ -510,6 +510,18 @@ function HomePageContent() {
         return;
       }
 
+      // Get audio duration from file
+      const audioDuration = await new Promise<number>((resolve) => {
+        const audio = new Audio();
+        audio.onloadedmetadata = () => {
+          resolve(audio.duration);
+        };
+        audio.onerror = () => {
+          resolve(0);
+        };
+        audio.src = URL.createObjectURL(file);
+      });
+
       // Step 1: Transcribe audio
       const formData = new FormData();
       formData.append('audio', file, file.name);
@@ -528,7 +540,6 @@ function HomePageContent() {
 
       const transcribeData = await transcribeResponse.json();
       const transcript = transcribeData.transcript;
-      const audioDuration = transcribeData.duration || 0;
 
       setCurrentStep(1);
       setProcessingText(steps[1]);
