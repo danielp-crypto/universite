@@ -49,8 +49,8 @@ function LecturesPageContent() {
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
       const countAll = merged.length;
-      const countToday = merged.filter((lecture: any) => new Date(lecture.createdAt) >= today).length;
-      const countWeek = merged.filter((lecture: any) => new Date(lecture.createdAt) >= weekAgo).length;
+      const countToday = merged.filter((lecture: any) => new Date(lecture.created_at || lecture.createdAt) >= today).length;
+      const countWeek = merged.filter((lecture: any) => new Date(lecture.created_at || lecture.createdAt) >= weekAgo).length;
       const countFavorites = merged.filter((lecture: any) => lecture.favorite === true).length;
 
       setCounts({
@@ -163,7 +163,7 @@ function LecturesPageContent() {
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     return allLectures.filter(lecture => {
-      const lectureDate = new Date(lecture.createdAt);
+      const lectureDate = new Date(lecture.created_at || lecture.createdAt);
       if (filter === 'today') {
         return lectureDate >= today;
       } else if (filter === 'week') {
