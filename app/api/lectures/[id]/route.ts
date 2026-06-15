@@ -43,7 +43,18 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(lecture);
+    // Format duration for the lecture
+    const durationSeconds = lecture.duration_seconds || 0;
+    const minutes = Math.floor(durationSeconds / 60);
+    const seconds = durationSeconds % 60;
+    const duration = `${minutes}:${String(seconds).padStart(2, '0')}`;
+
+    const formattedLecture = {
+      ...lecture,
+      duration
+    };
+
+    return NextResponse.json(formattedLecture);
 
   } catch (error) {
     console.error('Get lecture error:', error);
