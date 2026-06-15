@@ -253,7 +253,7 @@ function LecturesPageContent() {
           {filtered.length > 0 ? (
             <div className="space-y-3">
               {filtered.map((lecture) => {
-                const dateStr = formatDate(new Date(lecture.createdAt));
+                const dateStr = formatDate(new Date(lecture.created_at || lecture.createdAt));
 
                 return (
                   <div key={lecture.id} className="bg-white border border-slate-200 rounded-2xl p-4">
