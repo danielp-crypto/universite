@@ -520,7 +520,6 @@ function LectureDetailPageContent() {
                     </div>
                   )}
                 </div>
-              )}
             </>
           ) : (
             <div className="text-center py-12">
