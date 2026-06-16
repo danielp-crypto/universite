@@ -51,7 +51,8 @@ export async function GET(
 
     const formattedLecture = {
       ...lecture,
-      duration
+      duration,
+      favorite: lecture.favorite || false
     };
 
     return NextResponse.json(formattedLecture);
@@ -125,6 +126,7 @@ export async function PUT(
     if (data.summary !== undefined) updateData.summary = data.summary;
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
+    if (data.favorite !== undefined) updateData.favorite = data.favorite;
 
     const { data: updatedLecture, error: updateError } = await supabaseAdmin
       .from('lectures')

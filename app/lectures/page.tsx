@@ -72,13 +72,18 @@ function LecturesPageContent() {
 
   const toggleFavorite = async (lectureId: string) => {
     try {
+      const currentLecture = allLectures.find(l => l.id === lectureId);
+      if (!currentLecture) return;
+
+      const newFavoriteValue = !currentLecture.favorite;
+
       // Update local state
       setAllLectures(prev => prev.map(lecture => 
-        lecture.id === lectureId ? { ...lecture, favorite: !lecture.favorite } : lecture
+        lecture.id === lectureId ? { ...lecture, favorite: newFavoriteValue } : lecture
       ));
 
       // Update via API
-      await apiPut(`/api/lectures/${lectureId}`, { favorite: !allLectures.find(l => l.id === lectureId)?.favorite });
+      await apiPut(`/api/lectures/${lectureId}`, { favorite: newFavoriteValue });
       loadLectures();
     } catch (error) {
       console.error('Error toggling favorite:', error);

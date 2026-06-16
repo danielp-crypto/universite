@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
       
       return {
         ...lecture,
-        duration
+        duration,
+        favorite: lecture.favorite || false
       };
     });
 
