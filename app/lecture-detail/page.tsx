@@ -18,7 +18,7 @@ function LectureDetailPageContent() {
   const [currentLecture, setCurrentLecture] = useState<any>(null);
   
   // Tabs
-  const [activeTab, setActiveTab] = useState<'segments' | 'transcript' | 'summary'>('segments');
+  const [activeTab, setActiveTab] = useState<'summary'>('summary');
   
   // AI Processing states
   const [isProcessing, setIsProcessing] = useState(false);
@@ -501,94 +501,7 @@ function LectureDetailPageContent() {
                 )}
               </div>
 
-              {/* Tabs Menu */}
-              <div className="mb-4">
-                <div className="flex gap-2 border-b border-slate-200">
-                  <button
-                    onClick={() => setActiveTab('segments')}
-                    className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                      activeTab === 'segments' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Segments
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('transcript')}
-                    className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                      activeTab === 'transcript' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Transcript
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('summary')}
-                    className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                      activeTab === 'summary' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Summary
-                  </button>
-                </div>
-              </div>
 
-              {/* Tab Contents */}
-              {activeTab === 'segments' && (
-                <div className="space-y-3 animate-fade-in">
-                  {currentSegments.length > 0 ? (
-                    currentSegments.map((segment: any, idx: number) => (
-                      <div key={segment.id || idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                        <h3 className="text-base font-semibold text-slate-800 mb-1">{segment.title}</h3>
-                        <div className="text-xs text-slate-500 mb-2">
-                          {formatTime(segment.start_time_seconds)} - {formatTime(segment.end_time_seconds)}
-                        </div>
-                        <p className="text-sm text-slate-600 mb-3">{segment.content}</p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              // TODO: Implement segment playback with AudioPlayer
-                              alert('Segment playback feature coming soon');
-                            }}
-                            className="flex-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold active:scale-95 transition-transform"
-                          >
-                            Play Segment
-                          </button>
-                          <Link
-                            href={`/assistant?lecture=${currentLecture.id}&q=${encodeURIComponent(`Explain this section: "${segment.content.substring(0, 100)}..."`)}`}
-                            className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold text-center active:scale-95 transition-transform"
-                          >
-                            Ask AI
-                          </Link>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 bg-white border rounded-2xl">
-                      <p className="text-slate-500 text-sm">No segments processed. Click "Process Transcript" to analyze.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'transcript' && (
-                <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
-                  <h3 className="text-base font-semibold text-slate-800 mb-3">Full Transcript</h3>
-                  {currentLecture.transcription ? (
-                    <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{currentLecture.transcription}</p>
-                  ) : (
-                    <div className="text-center py-6">
-                      <p className="text-slate-500 text-sm mb-4">No transcription found for this lecture.</p>
-                      <button
-                        onClick={handleProcessTranscript}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
-                      >
-                        Start Transcription
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'summary' && (
                 <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
                   <h3 className="text-base font-semibold text-slate-800 mb-3">Lecture Notes</h3>
                   {processingResults?.summaryText ? (
@@ -597,7 +510,7 @@ function LectureDetailPageContent() {
                     </div>
                   ) : (
                     <div className="text-center py-6">
-                      <p className="text-slate-500 text-sm mb-4">No summary available for this lecture.</p>
+                      <p className="text-slate-500 text-sm mb-4">No notes available for this lecture.</p>
                       <button
                         onClick={handleProcessTranscript}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
