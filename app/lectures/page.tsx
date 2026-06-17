@@ -10,10 +10,14 @@ import AudioPlayer from '../components/AudioPlayer';
 
 function LecturesPageContent() {
   const router = useRouter();
-  const [filter, setFilter] = useState<'all' | 'today' | 'week' | 'favorites'>('all');
+  const [filter, setFilter] = useState<'all' | 'today' | 'week' | 'favorites' | 'module'>('all');
   const [allLectures, setAllLectures] = useState<any[]>([]);
   const [counts, setCounts] = useState({ all: 0, today: 0, week: 0, favorites: 0 });
   const [loading, setLoading] = useState(true);
+
+  // Modules state
+  const [modules, setModules] = useState<any[]>([]);
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
 
   const RECORDINGS_STORAGE_KEY = 'universite_recordings';
 
@@ -25,6 +29,26 @@ function LecturesPageContent() {
     } catch (error) {
       console.error('Error getting recordings:', error);
       return [];
+    }
+  };
+
+  const loadModules = async () => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/modules', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const modulesData = await response.json();
+        setModules(modulesData || []);
+      }
+    } catch (error) {
+      console.error('Error loading modules:', error);
     }
   };
 
@@ -68,6 +92,7 @@ function LecturesPageContent() {
 
   useEffect(() => {
     loadLectures();
+    loadModules();
   }, []);
 
   const toggleFavorite = async (lectureId: string) => {
@@ -162,6 +187,9 @@ function LecturesPageContent() {
   // Filter the lectures based on selected tab
   const getFilteredLectures = () => {
     if (filter === 'all') return allLectures;
+    if (filter === 'module' && selectedModule) {
+      return allLectures.filter(lecture => lecture.module_id === selectedModule);
+    }
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -249,6 +277,25 @@ function LecturesPageContent() {
               >
                 Favorites ({counts.favorites})
               </button>
+              {modules.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedModule || ''}
+                    onChange={(e) => {
+                      setSelectedModule(e.target.value || null);
+                      setFilter(e.target.value ? 'module' : 'all');
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                      filter === 'module' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <option value="">Modules</option>
+                    {modules.map((module) => (
+                      <option key={module.id} value={module.id}>{module.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch lectures for the user
+    // Fetch lectures for the user with module information
     const { data: lectures, error } = await supabaseAdmin
       .from('lectures')
-      .select('*')
+      .select('*, modules(id, name, color)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Format duration for each lecture
+    // Format duration and module information for each lecture
     const formattedLectures = (lectures || []).map((lecture: any) => {
       const durationSeconds = lecture.duration_seconds || 0;
       const minutes = Math.floor(durationSeconds / 60);
@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
       return {
         ...lecture,
         duration,
-        favorite: lecture.favorite || false
+        favorite: lecture.favorite || false,
+        module: lecture.modules || null
       };
     });
 

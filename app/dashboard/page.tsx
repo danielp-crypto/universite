@@ -21,6 +21,10 @@ function HomePageContent() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
 
+  // Modules state
+  const [modules, setModules] = useState<any[]>([]);
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
+
   // Processing states
   const [processingSteps, setProcessingSteps] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -122,6 +126,50 @@ function HomePageContent() {
       const today = new Date().toDateString();
       setStreak(1);
       localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify({ streak: 1, lastActivityDate: today }));
+    }
+  };
+
+  const loadModules = async () => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/modules', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const modulesData = await response.json();
+        setModules(modulesData || []);
+      }
+    } catch (error) {
+      console.error('Error loading modules:', error);
+    }
+  };
+
+  const createModule = async (name: string) => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/modules', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name })
+      });
+
+      if (response.ok) {
+        const newModule = await response.json();
+        setModules([...modules, newModule]);
+        setSelectedModule(newModule.id);
+      }
+    } catch (error) {
+      console.error('Error creating module:', error);
     }
   };
 
@@ -233,6 +281,7 @@ function HomePageContent() {
 
   useEffect(() => {
     loadData();
+    loadModules();
     checkProfileCompletion();
     loadStreak();
 
@@ -387,6 +436,7 @@ function HomePageContent() {
           duration: elapsed,
           transcription: transcript,
           summary: summary,
+          module_id: selectedModule,
           stored_locally: true,
           local_audio_size: blob.size
         })
@@ -572,6 +622,7 @@ function HomePageContent() {
           duration: Math.floor(audioDuration),
           transcription: transcript,
           summary: summary,
+          module_id: selectedModule,
           stored_locally: true,
           local_audio_size: file.size
         })
@@ -712,6 +763,34 @@ function HomePageContent() {
 
         {/* Main Content */}
         <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
+          {/* Module Selector */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Select Module (Optional)</label>
+            <div className="flex gap-2">
+              <select
+                value={selectedModule || ''}
+                onChange={(e) => setSelectedModule(e.target.value || null)}
+                className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">No Module</option>
+                {modules.map((module) => (
+                  <option key={module.id} value={module.id}>{module.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => {
+                  const name = prompt('Enter module name:');
+                  if (name) {
+                    createModule(name);
+                  }
+                }}
+                className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+              >
+                + New
+              </button>
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="mb-6">
             <div className="grid grid-cols-2 gap-3">
