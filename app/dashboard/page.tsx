@@ -770,7 +770,7 @@ function HomePageContent() {
               <select
                 value={selectedModule || ''}
                 onChange={(e) => setSelectedModule(e.target.value || null)}
-                className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">No Module</option>
                 {modules.map((module) => (
@@ -930,6 +930,17 @@ function HomePageContent() {
                           <span>{dateStr}</span>
                           <span>•</span>
                           <span>{lecture.duration || 'N/A'}</span>
+                          {lecture.module && (
+                            <>
+                              <span>•</span>
+                              <div className="flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                </svg>
+                                <span className="text-indigo-600 font-medium">{lecture.module.name}</span>
+                              </div>
+                            </>
+                          )}
                         </div>
                         {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mb-3">
