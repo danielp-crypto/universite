@@ -127,6 +127,7 @@ export async function PUT(
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.favorite !== undefined) updateData.favorite = data.favorite;
+    if (data.module_id !== undefined) updateData.module_id = data.module_id;
 
     const { data: updatedLecture, error: updateError } = await supabaseAdmin
       .from('lectures')
