@@ -2,26 +2,41 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
-async function generateSummary(transcript: string): Promise<string> {
-  if (!GEMINI_API_KEY) {
-    // Fallback to simple bullet point extraction if no API key
-    return generateSimpleBulletPoints(transcript);
-  }
+const MAP_PROMPT = `You are a content extractor for lecture transcripts. Your ONLY job: extract key academic content. Ignore everything else.
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are "Exam Buddy", a Unisa tutor with 10 years experience. Your only job: turn 90min rambly lectures into notes that help a working student pass tomorrow's test.
+INPUT: A 10-minute chunk of a South African university lecture transcript.
 
-INPUT: Full transcript of 1 South African university lecture. Audio may have Afrikaans, Zulu, "um", loadshedding cuts, lecturer going off-topic.
+EXTRACT ONLY:
+1. Definitions (term + explanation)
+2. Formulas (equation + when to use it)
+3. Lists (enumerated items)
+4. Cause→effect relationships
+5. Comparisons (X vs Y)
+6. Anything said after: "important", "exam", "remember", "test you on", "this always comes up"
+
+IGNORE:
+- Admin talk, jokes, "can you hear me"
+- Registration, assignment dates (unless marks mentioned)
+- "um", "okay so", "right", filler words
+- Loadshedding interruptions
+- Lecturer going off-topic
+
+OUTPUT FORMAT:
+Return bullets only. Each bullet must include:
+- The content (definition, formula, etc.)
+- Approximate timestamp if mentioned
+- No explanations, no fluff
+
+Example output:
+- Photosynthesis = process where plants convert light energy to chemical energy [12:34]
+- Newton's Second Law: F = ma, used when calculating force from mass and acceleration [15:20]
+- "This will be on the exam" [23:45]
+
+Transcript chunk:\n\n`;
+
+const REDUCE_PROMPT = `You are "Exam Buddy", a Unisa tutor with 10 years experience. Your only job: turn 90min rambly lectures into notes that help a working student pass tomorrow's test.
+
+INPUT: Extracted key content from a South African university lecture (already cleaned of fluff).
 
 OUTPUT RULES:
 1. IGNORE: admin talk, jokes, "can you hear me", registration, assignment dates unless marks are mentioned.
@@ -54,7 +69,72 @@ Q5 [Evaluate]: Which is better for ___ and why? [timestamp]
 
 CONTEXT: Student is at Unisa. Works full time. Studies on taxi. Has 20min to revise. Make every word count.
 
-Transcript:\n\n${transcript}`
+Extracted content:\n\n`;
+
+// Split transcript into chunks (approximately 10 minutes each, ~2000 tokens)
+function splitIntoChunks(transcript: string, chunkSize: number = 2000): string[] {
+  const words = transcript.split(' ');
+  const chunks: string[] = [];
+  
+  for (let i = 0; i < words.length; i += chunkSize) {
+    const chunk = words.slice(i, i + chunkSize).join(' ');
+    chunks.push(chunk);
+  }
+  
+  return chunks;
+}
+
+// Map step: Extract key info from each chunk
+async function mapChunk(chunk: string): Promise<string> {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: MAP_PROMPT + chunk
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1500,
+          }
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Map chunk error:', await response.text());
+      return '';
+    }
+
+    const result = await response.json();
+    return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  } catch (error) {
+    console.error('Map chunk error:', error);
+    return '';
+  }
+}
+
+// Reduce step: Generate final summary from extracted content
+async function reduceSummary(extractedContent: string): Promise<string> {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: REDUCE_PROMPT + extractedContent
             }]
           }],
           generationConfig: {
@@ -67,12 +147,42 @@ Transcript:\n\n${transcript}`
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', errorText);
-      throw new Error('Gemini API error');
+      console.error('Reduce summary error:', errorText);
+      throw new Error('Reduce summary error');
     }
 
     const result = await response.json();
-    const summary = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  } catch (error) {
+    console.error('Reduce summary error:', error);
+    throw error;
+  }
+}
+
+async function generateSummary(transcript: string): Promise<string> {
+  if (!GEMINI_API_KEY) {
+    // Fallback to simple bullet point extraction if no API key
+    return generateSimpleBulletPoints(transcript);
+  }
+
+  try {
+    // Step 1: Split transcript into chunks
+    const chunks = splitIntoChunks(transcript, 2000);
+    console.log(`Split transcript into ${chunks.length} chunks`);
+
+    // Step 2: Map - Extract key info from each chunk
+    const mapResults = await Promise.all(chunks.map(chunk => mapChunk(chunk)));
+    const extractedContent = mapResults.filter(result => result.length > 0).join('\n\n');
+    
+    console.log('Extracted content length:', extractedContent.length);
+    
+    if (extractedContent.length === 0) {
+      // If no content extracted, fall back to simple bullet points
+      return generateSimpleBulletPoints(transcript);
+    }
+
+    // Step 3: Reduce - Generate final summary from extracted content
+    const summary = await reduceSummary(extractedContent);
     
     console.log('Generated summary length:', summary.length);
     console.log('Summary preview:', summary.substring(0, 200));
