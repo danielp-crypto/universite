@@ -11,12 +11,10 @@ export default function SettingsPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAppearance, setShowAppearance] = useState(false);
   const [showDailyGoal, setShowDailyGoal] = useState(false);
-  const [showAudioQuality, setShowAudioQuality] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [theme, setTheme] = useState('light');
   const [dailyGoal, setDailyGoal] = useState(3);
-  const [audioQuality, setAudioQuality] = useState('high');
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -206,32 +204,6 @@ export default function SettingsPage() {
               <span className="text-slate-400">→</span>
             </button>
 
-            <button
-              onClick={() => setShowAudioQuality(true)}
-              className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  🎵
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-slate-800">Audio Quality</div>
-                  <div className="text-xs text-slate-500 capitalize">{audioQuality} (better transcripts)</div>
-                </div>
-              </div>
-              <span className="text-slate-400">→</span>
-            </button>
-
-            <div className="flex items-center justify-between p-4">
-              <div className="text-left flex-1">
-                <div className="font-medium text-slate-800">Auto-save Recordings</div>
-                <div className="text-xs text-slate-500">Automatically save lecture recordings</div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" defaultChecked className="sr-only peer" />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-              </label>
-            </div>
           </div>
         </div>
 
@@ -437,61 +409,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {showAudioQuality && (
-        <div className="fixed inset-0 z-50">
-          <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-800">Audio Quality</h2>
-                <button onClick={() => setShowAudioQuality(false)} className="p-2 hover:bg-slate-100 rounded-lg">
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {['low', 'medium', 'high', 'ultra'].map((quality) => (
-                  <div
-                    key={quality}
-                    onClick={() => setAudioQuality(quality)}
-                    className={`p-4 border rounded-xl cursor-pointer transition-colors ${
-                      audioQuality === quality ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-slate-800 capitalize">{quality} Quality</div>
-                        <div className="text-sm text-slate-500">
-                          {quality === 'low' && '64 kbps • Faster uploads • Basic transcripts'}
-                          {quality === 'medium' && '128 kbps • Balanced performance • Good transcripts'}
-                          {quality === 'high' && '256 kbps • Best transcripts • Slower uploads'}
-                          {quality === 'ultra' && '320 kbps • Premium transcripts • Slowest uploads'}
-                        </div>
-                      </div>
-                      {audioQuality === quality && <span className="text-xs text-green-600">Current setting</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <span className="text-amber-600 mt-0.5">⚠️</span>
-                  <div>
-                    <div className="text-sm font-medium text-amber-800">Higher quality = Better transcripts</div>
-                    <div className="text-xs text-amber-700 mt-1">But uploads may take longer with high-quality audio</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 flex gap-3">
-                <button onClick={() => setShowAudioQuality(false)} className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700">
-                  Save Quality
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showHelp && (
         <div className="fixed inset-0 z-50">
