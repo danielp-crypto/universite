@@ -28,10 +28,10 @@ export async function GET(
 
     const { id: lectureId } = await params;
 
-    // Fetch lecture and verify ownership
+    // Fetch lecture and verify ownership with module information
     const { data: lecture, error: fetchError } = await supabaseAdmin
       .from('lectures')
-      .select('*')
+      .select('*, modules(id, name, color)')
       .eq('id', lectureId)
       .eq('user_id', user.id)
       .single();
@@ -52,7 +52,8 @@ export async function GET(
     const formattedLecture = {
       ...lecture,
       duration,
-      favorite: lecture.favorite || false
+      favorite: lecture.favorite || false,
+      module: lecture.modules || null
     };
 
     return NextResponse.json(formattedLecture);
