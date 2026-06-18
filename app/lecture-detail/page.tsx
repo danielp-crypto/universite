@@ -64,6 +64,12 @@ function LectureDetailPageContent() {
   const exportToPDF = async () => {
     if (!currentLecture) return;
 
+    // Check if user is premium (for now, always show upgrade modal)
+    // TODO: Implement actual premium check from user profile
+    setUpgradeFeature('PDF Export');
+    setUpgradeModalOpen(true);
+    return;
+
     try {
       const pdf = new jsPDF();
       
@@ -580,6 +586,12 @@ function LectureDetailPageContent() {
           </div>
         </nav>
       </div>
+
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+      />
     </div>
   );
 }
