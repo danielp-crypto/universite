@@ -364,7 +364,7 @@ function HomePageContent() {
       const elapsed = recordingStartTimeRef.current
         ? Math.floor((Date.now() - recordingStartTimeRef.current) / 1000)
         : 0;
-      
+
       const mins = Math.floor(elapsed / 60);
       const secs = elapsed % 60;
       const durationStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -425,6 +425,9 @@ function HomePageContent() {
       setProcessingText(steps[2]);
 
       // Step 3: Create lecture in Supabase
+      // Generate lecture number based on existing lectures
+      const lectureNumber = lectures.length + 1;
+
       const lectureResponse = await fetch('/api/lectures', {
         method: 'POST',
         headers: {
@@ -432,7 +435,7 @@ function HomePageContent() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: `Recording - ${new Date().toLocaleDateString()}`,
+          title: `Lecture ${lectureNumber}`,
           duration: elapsed,
           transcription: transcript,
           summary: summary,
