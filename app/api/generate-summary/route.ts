@@ -96,7 +96,7 @@ function splitIntoChunks(transcript: string, wordsPerChunk: number = 1400): stri
 async function mapChunk(chunk: string, index: number): Promise<string> {
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
       {
         method: 'POST',
         headers: {
@@ -112,6 +112,9 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
           generationConfig: {
             temperature: 0.2,
             maxOutputTokens: 500,
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
           }
         }),
       }
@@ -141,7 +144,7 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
 async function reduceSummary(extractedContent: string): Promise<string> {
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
       {
         method: 'POST',
         headers: {
@@ -157,6 +160,9 @@ async function reduceSummary(extractedContent: string): Promise<string> {
           generationConfig: {
             temperature: 0.2,
             maxOutputTokens: 2048,
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
           }
         }),
       }
@@ -286,8 +292,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      summary: summary,
-      _v: 'debug-4'
+      summary: summary
     });
 
   } catch (error) {
