@@ -96,11 +96,12 @@ function splitIntoChunks(transcript: string, wordsPerChunk: number = 1400): stri
 async function mapChunk(chunk: string, index: number): Promise<string> {
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_API_KEY,
         },
         body: JSON.stringify({
           contents: [{
@@ -140,11 +141,12 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
 async function reduceSummary(extractedContent: string): Promise<string> {
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_API_KEY,
         },
         body: JSON.stringify({
           contents: [{
@@ -269,17 +271,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // TEMP DEBUG — remove this block once we've confirmed the key is set.
-    // Returns immediately, before any Gemini calls happen, so we can see
-    // exactly what this deployment thinks GEMINI_API_KEY is.
-    return NextResponse.json({
-      debug_key_exists: !!GEMINI_API_KEY,
-      debug_key_length: GEMINI_API_KEY.length,
-      debug_key_prefix: GEMINI_API_KEY.substring(0, 4),
-      debug_node_env: process.env.NODE_ENV,
-      debug_vercel_env: process.env.VERCEL_ENV,
-    });
 
     // Only cap extremely long inputs as a safety net — this is no longer
     // the silent 4000-char truncation that was eating most lectures.
