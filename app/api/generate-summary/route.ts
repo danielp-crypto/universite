@@ -285,7 +285,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      summary: summary
+      summary: summary,
+      _v: 'debug-4'
     });
 
   } catch (error) {
