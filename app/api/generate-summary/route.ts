@@ -134,9 +134,9 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
 
     return text;
   } catch (error) {
-    // Re-throw with context instead of swallowing — let the caller decide
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`mapChunk[${index}]: ${message}`);
+    console.error(`mapChunk[${index}] failed, skipping this chunk:`, message);
+    return '';
   }
 }
 
@@ -191,8 +191,8 @@ async function reduceSummary(extractedContent: string): Promise<string> {
 
 async function generateSummary(transcript: string): Promise<string> {
   if (!GEMINI_API_KEY) {
-    // Fallback to simple bullet point extraction if no API key
-    return '[FALLBACK REASON: GEMINI_API_KEY is falsy]\n' + generateSimpleBulletPoints(transcript);
+    console.warn('GEMINI_API_KEY is not set — using simple bullet point fallback');
+    return generateSimpleBulletPoints(transcript);
   }
 
   try {
@@ -227,8 +227,9 @@ async function generateSummary(transcript: string): Promise<string> {
 
     return summary;
   } catch (error) {
-    // TEMP: surface the real error in the response so we can diagnose it
-    throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Summary generation failed, using simple bullet point fallback:', message);
+    return generateSimpleBulletPoints(transcript);
   }
 }
 
