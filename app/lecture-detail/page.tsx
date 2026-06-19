@@ -598,9 +598,11 @@ function LectureDetailPageContent() {
                       // Parse Summary section
                       const summaryMatch = text.match(/Summary:?\s*([\s\S]*?)(?=\n\n|$)/i);
                       if (summaryMatch) {
+                        const summaryItems = summaryMatch[1].split(/[\n•\-\*]/).filter(s => s.trim());
+                        const summaryContent = summaryItems.join('|||');
                         sections.push({
                           title: '5-Bullet Pass Guarantee',
-                          content: summaryMatch[1],
+                          content: summaryContent,
                           icon: '🎯',
                           style: 'emerald'
                         });
