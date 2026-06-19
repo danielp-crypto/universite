@@ -119,8 +119,7 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Map chunk ${index} error (status ${response.status}):`, errorText);
-      return '';
+      throw new Error(`Map chunk ${index} failed (status ${response.status}): ${errorText}`);
     }
 
     const result = await response.json();
@@ -221,8 +220,8 @@ async function generateSummary(transcript: string): Promise<string> {
 
     return summary;
   } catch (error) {
-    console.error('Summary generation error:', error);
-    return generateSimpleBulletPoints(transcript);
+    // TEMP: surface the real error in the response so we can diagnose it
+    throw error;
   }
 }
 
@@ -290,9 +289,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Summary generation error:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { success: false, error: 'summary_generation_failed' },
+      { success: false, error: 'summary_generation_failed', detail: message },
       { status: 500 }
     );
   }
