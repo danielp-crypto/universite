@@ -432,6 +432,39 @@ function LectureDetailPageContent() {
     return segments;
   };
 
+  // ---- Lecture Notes formatting helpers ----
+
+  // Renders a line of note text, turning **bold** markdown into real bold,
+  // and auto-bolding a leading "Term:" label when no markdown bold is present.
+  const formatNoteText = (raw: string, keyPrefix: string) => {
+    const text = raw.trim();
+
+    if (text.includes('**')) {
+      const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+      return parts.map((part, i) =>
+        part.startsWith('**') && part.endsWith('**') ? (
+          <strong key={`${keyPrefix}-${i}`} className="font-semibold text-slate-900">
+            {part.slice(2, -2)}
+          </strong>
+        ) : (
+          <React.Fragment key={`${keyPrefix}-${i}`}>{part}</React.Fragment>
+        )
+      );
+    }
+
+    const labelMatch = text.match(/^([^:]{2,40}):\s*(.+)$/);
+    if (labelMatch) {
+      return (
+        <>
+          <strong className="font-semibold text-slate-900">{labelMatch[1]}:</strong>{' '}
+          {labelMatch[2]}
+        </>
+      );
+    }
+
+    return text;
+  };
+
   const currentSegments = currentLecture?.transcription
     ? createSegmentsFromTranscription(currentLecture.transcription)
     : currentLecture?.segments || [];
@@ -518,116 +551,161 @@ function LectureDetailPageContent() {
                 )}
               </div>
 
-
-                <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
-                  <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                    📝 Lecture Notes
+              {/* Lecture Notes */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <span className="text-xl leading-none">📝</span>
+                    <span>Lecture Notes</span>
                   </h3>
-                  {processingResults?.summaryText ? (
-                    <div className="space-y-4">
-                      {(() => {
-                        const text = processingResults.summaryText;
-                        const sections: { title: string; content: string; icon: string; style: string }[] = [];
-                        
-                        // Parse Key Concepts section
-                        const keyConceptsMatch = text.match(/Key Concepts?:?\s*([\s\S]*?)(?=\n\n|\nExam Hints|\nSummary:|$)/i);
-                        if (keyConceptsMatch) {
-                          const concepts = keyConceptsMatch[1].split(/[\n•\-\*]/).filter(c => c.trim());
-                          sections.push({
-                            title: 'Key Concepts',
-                            content: concepts.join('|||'),
-                            icon: '🔑',
-                            style: 'indigo'
-                          });
+                  {processingResults?.summaryText && (
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      AI Generated
+                    </span>
+                  )}
+                </div>
+
+                {processingResults?.summaryText ? (
+                  <div className="space-y-4">
+                    {(() => {
+                      const text = processingResults.summaryText;
+                      const sections: { title: string; content: string; icon: string; style: string }[] = [];
+
+                      // Parse Key Concepts section
+                      const keyConceptsMatch = text.match(/Key Concepts?:?\s*([\s\S]*?)(?=\n\n|\nExam Hints|\nSummary:|$)/i);
+                      if (keyConceptsMatch) {
+                        const concepts = keyConceptsMatch[1].split(/[\n•\-\*]/).filter(c => c.trim());
+                        sections.push({
+                          title: 'Key Concepts',
+                          content: concepts.join('|||'),
+                          icon: '🔑',
+                          style: 'indigo'
+                        });
+                      }
+
+                      // Parse Exam Hints section
+                      const examHintsMatch = text.match(/Exam Hints?:?\s*([\s\S]*?)(?=\n\n|\nSummary:|$)/i);
+                      if (examHintsMatch) {
+                        const hints = examHintsMatch[1].split(/[\n•\-\*]/).filter(h => h.trim());
+                        sections.push({
+                          title: 'Exam Hints',
+                          content: hints.join('|||'),
+                          icon: '⚠️',
+                          style: 'amber'
+                        });
+                      }
+
+                      // Parse Summary section
+                      const summaryMatch = text.match(/Summary:?\s*([\s\S]*?)(?=\n\n|$)/i);
+                      if (summaryMatch) {
+                        sections.push({
+                          title: '5-Bullet Pass Guarantee',
+                          content: summaryMatch[1],
+                          icon: '🎯',
+                          style: 'emerald'
+                        });
+                      }
+
+                      // If no structured sections found, display as formatted plain text
+                      if (sections.length === 0) {
+                        return (
+                          <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                            {formatNoteText(text, 'plain')}
+                          </div>
+                        );
+                      }
+
+                      const styleMap: Record<string, { border: string; bg: string; badge: string; chip: string }> = {
+                        indigo: {
+                          border: 'border-indigo-100',
+                          bg: 'from-indigo-50/80 to-white',
+                          badge: 'bg-indigo-100',
+                          chip: 'bg-white border-indigo-200 text-indigo-700'
+                        },
+                        amber: {
+                          border: 'border-amber-100',
+                          bg: 'from-amber-50/80 to-white',
+                          badge: 'bg-amber-100',
+                          chip: ''
+                        },
+                        emerald: {
+                          border: 'border-emerald-100',
+                          bg: 'from-emerald-50/80 to-white',
+                          badge: 'bg-emerald-100',
+                          chip: ''
                         }
-                        
-                        // Parse Exam Hints section
-                        const examHintsMatch = text.match(/Exam Hints?:?\s*([\s\S]*?)(?=\n\n|\nSummary:|$)/i);
-                        if (examHintsMatch) {
-                          const hints = examHintsMatch[1].split(/[\n•\-\*]/).filter(h => h.trim());
-                          sections.push({
-                            title: 'Exam Hints',
-                            content: hints.join('|||'),
-                            icon: '⚠️',
-                            style: 'amber'
-                          });
-                        }
-                        
-                        // Parse Summary section
-                        const summaryMatch = text.match(/Summary:?\s*([\s\S]*?)(?=\n\n|$)/i);
-                        if (summaryMatch) {
-                          sections.push({
-                            title: '5-Bullet Pass Guarantee',
-                            content: summaryMatch[1],
-                            icon: '🎯',
-                            style: 'emerald'
-                          });
-                        }
-                        
-                        // If no structured sections found, display as plain text
-                        if (sections.length === 0) {
-                          return (
-                            <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                              {text}
-                            </div>
-                          );
-                        }
-                        
-                        return sections.map((section, idx) => (
-                          <div key={idx} className="rounded-xl p-4 bg-slate-50 border border-slate-100">
+                      };
+
+                      return sections.map((section, idx) => {
+                        const items = section.content.split('|||').map(i => i.trim()).filter(Boolean);
+                        const colors = styleMap[section.style];
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`rounded-xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4`}
+                          >
                             <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                              <span>{section.icon}</span>
+                              <span className={`flex items-center justify-center w-6 h-6 rounded-full ${colors.badge} text-sm`}>
+                                {section.icon}
+                              </span>
                               <span>{section.title}</span>
+                              <span className="ml-auto text-[11px] font-medium text-slate-400">
+                                {items.length}
+                              </span>
                             </h4>
+
                             {section.style === 'indigo' ? (
-                              <div className="flex flex-wrap gap-3">
-                                {section.content.split('|||').map((item, i) => (
-                                  item.trim() && (
-                                    <span key={i} className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-medium">
-                                      {item.trim()}
-                                    </span>
-                                  )
+                              <div className="flex flex-wrap gap-2">
+                                {items.map((item, i) => (
+                                  <span
+                                    key={i}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold shadow-sm ${colors.chip}`}
+                                  >
+                                    <span className="text-indigo-400 text-[10px]">●</span>
+                                    {formatNoteText(item, `kc-${i}`)}
+                                  </span>
                                 ))}
                               </div>
                             ) : section.style === 'amber' ? (
-                              <div className="space-y-2">
-                                {section.content.split('|||').map((item, i) => (
-                                  item.trim() && (
-                                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700">
-                                      <span className="text-amber-500 mt-0.5">💡</span>
-                                      <span>{item.trim()}</span>
-                                    </div>
-                                  )
+                              <ul className="space-y-2.5">
+                                {items.map((item, i) => (
+                                  <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                                    <span className="mt-0.5 flex-shrink-0">💡</span>
+                                    <span>{formatNoteText(item, `eh-${i}`)}</span>
+                                  </li>
                                 ))}
-                              </div>
+                              </ul>
                             ) : (
-                              <div className="space-y-3">
-                                {section.content.split(/[\n•\-\*]/).map((item, i) => (
-                                  item.trim() && (
-                                    <div key={i} className="flex items-start gap-3 text-sm text-slate-700 leading-relaxed">
-                                      <span className="text-emerald-500 mt-0.5 flex-shrink-0">✓</span>
-                                      <span>{item.trim()}</span>
-                                    </div>
-                                  )
+                              <ul className="space-y-2.5">
+                                {items.map((item, i) => (
+                                  <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                                    <span className="mt-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex-shrink-0">
+                                      ✓
+                                    </span>
+                                    <span>{formatNoteText(item, `sm-${i}`)}</span>
+                                  </li>
                                 ))}
-                              </div>
+                              </ul>
                             )}
                           </div>
-                        ));
-                      })()}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <p className="text-slate-500 text-sm mb-4">No notes available for this lecture.</p>
-                      <button
-                        onClick={handleProcessTranscript}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
-                      >
-                        Generate Summary
-                      </button>
-                    </div>
-                  )}
-                </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-3xl mb-2">🗒️</div>
+                    <p className="text-slate-500 text-sm mb-4">No notes available for this lecture yet.</p>
+                    <button
+                      onClick={handleProcessTranscript}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
+                    >
+                      ✨ Generate Summary
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <div className="text-center py-12">
