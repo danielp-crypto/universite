@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
+// Safety cap to avoid runaway cost/quota usage on pathological inputs.
+// This is generous on purpose — a 90min lecture transcript is typically
+// 60k-100k characters. Raise further if you expect longer lectures.
+const MAX_TRANSCRIPT_CHARS = 200000;
+
 const MAP_PROMPT = `You are a content extractor for lecture transcripts. Your ONLY job: extract key academic content. Ignore everything else.
 
 INPUT: A 10-minute chunk of a South African university lecture transcript.
@@ -71,21 +76,24 @@ CONTEXT: Student is at Unisa. Works full time. Studies on taxi. Has 20min to rev
 
 Extracted content:\n\n`;
 
-// Split transcript into chunks (approximately 10 minutes each, ~2000 tokens)
-function splitIntoChunks(transcript: string, chunkSize: number = 2000): string[] {
-  const words = transcript.split(' ');
+// Split transcript into chunks by WORD COUNT (~10 minutes of speech each).
+// Average spoken English is roughly 130-150 words/minute, so ~1300-1500
+// words covers a 10-minute chunk. Bumped default from 2000 to a more
+// accurate ~1400, but exposed as a param so it's easy to tune.
+function splitIntoChunks(transcript: string, wordsPerChunk: number = 1400): string[] {
+  const words = transcript.split(/\s+/).filter(Boolean);
   const chunks: string[] = [];
-  
-  for (let i = 0; i < words.length; i += chunkSize) {
-    const chunk = words.slice(i, i + chunkSize).join(' ');
+
+  for (let i = 0; i < words.length; i += wordsPerChunk) {
+    const chunk = words.slice(i, i + wordsPerChunk).join(' ');
     chunks.push(chunk);
   }
-  
+
   return chunks;
 }
 
 // Map step: Extract key info from each chunk
-async function mapChunk(chunk: string): Promise<string> {
+async function mapChunk(chunk: string, index: number): Promise<string> {
   try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -102,21 +110,28 @@ async function mapChunk(chunk: string): Promise<string> {
           }],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 1500,
+            maxOutputTokens: 500,
           }
         }),
       }
     );
 
     if (!response.ok) {
-      console.error('Map chunk error:', await response.text());
+      const errorText = await response.text();
+      console.error(`Map chunk ${index} error (status ${response.status}):`, errorText);
       return '';
     }
 
     const result = await response.json();
-    return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    if (!text) {
+      console.warn(`Map chunk ${index} produced no output. Finish reason:`, result.candidates?.[0]?.finishReason);
+    }
+
+    return text;
   } catch (error) {
-    console.error('Map chunk error:', error);
+    console.error(`Map chunk ${index} error:`, error);
     return '';
   }
 }
@@ -139,7 +154,7 @@ async function reduceSummary(extractedContent: string): Promise<string> {
           }],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 1500,
+            maxOutputTokens: 2048,
           }
         }),
       }
@@ -152,7 +167,14 @@ async function reduceSummary(extractedContent: string): Promise<string> {
     }
 
     const result = await response.json();
-    return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const finishReason = result.candidates?.[0]?.finishReason;
+
+    if (finishReason === 'MAX_TOKENS') {
+      console.warn('Reduce summary was cut off by maxOutputTokens — consider raising the limit further.');
+    }
+
+    return text;
   } catch (error) {
     console.error('Reduce summary error:', error);
     throw error;
@@ -167,26 +189,34 @@ async function generateSummary(transcript: string): Promise<string> {
 
   try {
     // Step 1: Split transcript into chunks
-    const chunks = splitIntoChunks(transcript, 2000);
+    const chunks = splitIntoChunks(transcript);
+    console.log(`Transcript length: ${transcript.length} chars, ${transcript.split(/\s+/).length} words`);
     console.log(`Split transcript into ${chunks.length} chunks`);
 
-    // Step 2: Map - Extract key info from each chunk
-    const mapResults = await Promise.all(chunks.map(chunk => mapChunk(chunk)));
+    // Step 2: Map - Extract key info from each chunk (with index for debugging)
+    const mapResults = await Promise.all(
+      chunks.map((chunk, index) => mapChunk(chunk, index))
+    );
+
+    const successfulChunks = mapResults.filter(result => result.length > 0).length;
+    console.log(`${successfulChunks}/${chunks.length} chunks produced content`);
+
     const extractedContent = mapResults.filter(result => result.length > 0).join('\n\n');
-    
+
     console.log('Extracted content length:', extractedContent.length);
-    
+
     if (extractedContent.length === 0) {
       // If no content extracted, fall back to simple bullet points
+      console.warn('No content extracted from any chunk — falling back to simple bullet points');
       return generateSimpleBulletPoints(transcript);
     }
 
     // Step 3: Reduce - Generate final summary from extracted content
     const summary = await reduceSummary(extractedContent);
-    
+
     console.log('Generated summary length:', summary.length);
     console.log('Summary preview:', summary.substring(0, 200));
-    
+
     return summary;
   } catch (error) {
     console.error('Summary generation error:', error);
@@ -240,8 +270,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Limit transcript length to avoid overwhelming the API
-    const truncatedTranscript = transcript.substring(0, 4000);
+    // Only cap extremely long inputs as a safety net — this is no longer
+    // the silent 4000-char truncation that was eating most lectures.
+    const truncatedTranscript = transcript.length > MAX_TRANSCRIPT_CHARS
+      ? transcript.substring(0, MAX_TRANSCRIPT_CHARS)
+      : transcript;
+
+    if (transcript.length > MAX_TRANSCRIPT_CHARS) {
+      console.warn(`Transcript truncated from ${transcript.length} to ${MAX_TRANSCRIPT_CHARS} chars`);
+    }
 
     const summary = await generateSummary(truncatedTranscript);
 
