@@ -520,10 +520,101 @@ function LectureDetailPageContent() {
 
 
                 <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
-                  <h3 className="text-base font-semibold text-slate-800 mb-3">Lecture Notes</h3>
+                  <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    📝 Lecture Notes
+                  </h3>
                   {processingResults?.summaryText ? (
-                    <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                      {processingResults.summaryText}
+                    <div className="space-y-4">
+                      {(() => {
+                        const text = processingResults.summaryText;
+                        const sections: { title: string; content: string; icon: string; style: string }[] = [];
+                        
+                        // Parse Key Concepts section
+                        const keyConceptsMatch = text.match(/Key Concepts?:?\s*([\s\S]*?)(?=\n\n|\nExam Hints|\nSummary:|$)/i);
+                        if (keyConceptsMatch) {
+                          const concepts = keyConceptsMatch[1].split(/[\n•\-\*]/).filter(c => c.trim());
+                          sections.push({
+                            title: 'Key Concepts',
+                            content: concepts.join('|||'),
+                            icon: '🔑',
+                            style: 'indigo'
+                          });
+                        }
+                        
+                        // Parse Exam Hints section
+                        const examHintsMatch = text.match(/Exam Hints?:?\s*([\s\S]*?)(?=\n\n|\nSummary:|$)/i);
+                        if (examHintsMatch) {
+                          const hints = examHintsMatch[1].split(/[\n•\-\*]/).filter(h => h.trim());
+                          sections.push({
+                            title: 'Exam Hints',
+                            content: hints.join('|||'),
+                            icon: '⚠️',
+                            style: 'amber'
+                          });
+                        }
+                        
+                        // Parse Summary section
+                        const summaryMatch = text.match(/Summary:?\s*([\s\S]*?)(?=\n\n|$)/i);
+                        if (summaryMatch) {
+                          sections.push({
+                            title: '5-Bullet Pass Guarantee',
+                            content: summaryMatch[1],
+                            icon: '🎯',
+                            style: 'emerald'
+                          });
+                        }
+                        
+                        // If no structured sections found, display as plain text
+                        if (sections.length === 0) {
+                          return (
+                            <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                              {text}
+                            </div>
+                          );
+                        }
+                        
+                        return sections.map((section, idx) => (
+                          <div key={idx} className="rounded-xl p-4 bg-slate-50 border border-slate-100">
+                            <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                              <span>{section.icon}</span>
+                              <span>{section.title}</span>
+                            </h4>
+                            {section.style === 'indigo' ? (
+                              <div className="flex flex-wrap gap-2">
+                                {section.content.split('|||').map((item, i) => (
+                                  item.trim() && (
+                                    <span key={i} className="px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-medium">
+                                      {item.trim()}
+                                    </span>
+                                  )
+                                ))}
+                              </div>
+                            ) : section.style === 'amber' ? (
+                              <div className="space-y-2">
+                                {section.content.split('|||').map((item, i) => (
+                                  item.trim() && (
+                                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                                      <span className="text-amber-500 mt-0.5">💡</span>
+                                      <span>{item.trim()}</span>
+                                    </div>
+                                  )
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {section.content.split(/[\n•\-\*]/).map((item, i) => (
+                                  item.trim() && (
+                                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                                      <span className="text-emerald-500 mt-0.5">✓</span>
+                                      <span>{item.trim()}</span>
+                                    </div>
+                                  )
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ));
+                      })()}
                     </div>
                   ) : (
                     <div className="text-center py-6">
