@@ -580,10 +580,10 @@ function LectureDetailPageContent() {
                               <span>{section.title}</span>
                             </h4>
                             {section.style === 'indigo' ? (
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-3">
                                 {section.content.split('|||').map((item, i) => (
                                   item.trim() && (
-                                    <span key={i} className="px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-medium">
+                                    <span key={i} className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-medium">
                                       {item.trim()}
                                     </span>
                                   )
@@ -601,11 +601,11 @@ function LectureDetailPageContent() {
                                 ))}
                               </div>
                             ) : (
-                              <div className="space-y-2">
+                              <div className="space-y-3">
                                 {section.content.split(/[\n•\-\*]/).map((item, i) => (
                                   item.trim() && (
-                                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700">
-                                      <span className="text-emerald-500 mt-0.5">✓</span>
+                                    <div key={i} className="flex items-start gap-3 text-sm text-slate-700 leading-relaxed">
+                                      <span className="text-emerald-500 mt-0.5 flex-shrink-0">✓</span>
                                       <span>{item.trim()}</span>
                                     </div>
                                   )
