@@ -49,11 +49,21 @@ export async function GET(
     const seconds = durationSeconds % 60;
     const duration = `${minutes}:${String(seconds).padStart(2, '0')}`;
 
+    // Parse key concepts from summary if available
+    let keyConcepts: string[] = [];
+    if (lecture.summary) {
+      const keyConceptsMatch = lecture.summary.match(/##\s*Key Concepts[^\n]*\n([\s\S]*?)(?=\n##|$)/i);
+      if (keyConceptsMatch) {
+        keyConcepts = keyConceptsMatch[1].split(/[\n•\-\*]/).filter((c: string) => c.trim());
+      }
+    }
+
     const formattedLecture = {
       ...lecture,
       duration,
       favorite: lecture.favorite || false,
-      module: lecture.modules || null
+      module: lecture.modules || null,
+      keyConcepts
     };
 
     return NextResponse.json(formattedLecture);
