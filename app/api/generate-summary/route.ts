@@ -11,13 +11,13 @@ const MAP_PROMPT = `You are a content extractor for lecture transcripts. Your ON
 
 INPUT: A 10-minute chunk of a South African university lecture transcript.
 
-EXTRACT ONLY:
-1. Definitions (term + explanation)
-2. Formulas (equation + when to use it)
-3. Lists (enumerated items)
-4. Cause→effect relationships
-5. Comparisons (X vs Y)
-6. Anything said after: "important", "exam", "remember", "test you on", "this always comes up"
+EXTRACT ONLY, and tag each bullet with exactly one of these prefixes so it can be filtered and ranked later:
+[DEF] Definitions — term, then "::", then the lecturer's OWN explanation as they actually said it. Do NOT write a generic textbook definition — use their specific wording, numbers, or examples.
+[FORMULA] Formulas — equation, then "::", then when to use it.
+[LIST] Enumerated lists.
+[CAUSE] Cause→effect relationships.
+[COMPARE] Comparisons (X vs Y).
+[FLAG] Anything said after: "important", "exam", "remember", "test you on", "this always comes up". Note which term/topic it was about.
 
 IGNORE:
 - Admin talk, jokes, "can you hear me"
@@ -26,31 +26,44 @@ IGNORE:
 - Loadshedding interruptions
 - Lecturer going off-topic
 
+RULES:
+- For [DEF] and [FORMULA], the term must be the actual name of the concept — 1 to 4 words, exactly as it would appear in a glossary or index. Never a full sentence or clause.
+- If you're not confident something is a real key concept (vs. the lecturer thinking aloud or a one-off aside), leave it out. Fewer accurate bullets beats more vague ones.
+- No explanations, no fluff, no editorializing.
+
 OUTPUT FORMAT:
-Return bullets only. Each bullet must include:
-- The content (definition, formula, etc.)
-- Approximate timestamp if mentioned
-- No explanations, no fluff
+One tagged bullet per line. Include approximate timestamp if mentioned.
 
 Example output:
-- Photosynthesis = process where plants convert light energy to chemical energy [12:34]
-- Newton's Second Law: F = ma, used when calculating force from mass and acceleration [15:20]
-- "This will be on the exam" [23:45]
+- [DEF] Photosynthesis :: plants convert light energy into chemical energy stored as glucose — lecturer's example was a sunflower turning toward the sun [12:34]
+- [FORMULA] Newton's Second Law :: F = ma, used when calculating force from mass and acceleration [15:20]
+- [FLAG] "This will always come up" — re: difference between mitosis and meiosis [23:45]
 
 Transcript chunk:\n\n`;
 
 const REDUCE_PROMPT = `You are "Exam Buddy", a Unisa tutor with 10 years experience. Your only job: turn 90min rambly lectures into notes that help a working student pass tomorrow's test.
 
-INPUT: Extracted key content from a South African university lecture (already cleaned of fluff).
+INPUT: Extracted key content from a South African university lecture, already tagged by type ([DEF], [FORMULA], [LIST], [CAUSE], [COMPARE], [FLAG]) and cleaned of fluff.
 
 OUTPUT RULES:
 1. IGNORE: admin talk, jokes, "can you hear me", registration, assignment dates unless marks are mentioned.
-2. FIND: definitions, formulas, lists, cause→effect, comparisons, and anything said after "important", "exam", "remember", "test you on".
-3. FORMAT: Use this exact structure, no deviation:
+2. FORMAT: Use this exact structure, no deviation:
 
-## Key Concepts [3-5 only]
-- **[Term]**: Definition in 1 sentence, like you'd explain to a friend. [timestamp]
-- **Formula**: Name = equation + when to use it [timestamp]
+## Key Concepts [exactly 3-5]
+Pick which [DEF]/[FORMULA] items to keep using this priority order, in this order:
+  1. Anything whose term also appears in a [FLAG] item — these are confirmed exam-relevant. Always include first.
+  2. Terms that show up in [DEF]/[FORMULA] bullets from more than one chunk — repetition means the lecturer kept returning to it.
+  3. Foundational terms the rest of the lecture depends on, over one-off mentions.
+Skip anything mentioned only once in passing with no other signal of importance. If fewer than 3 terms meet this bar, it's fine to return fewer than 5 — never pad with filler to hit the count.
+
+Term rules — get this right, it matters most:
+- Term = 1 to 4 words MAX. The actual name of the concept, as it would appear in a glossary or index. Never a sentence, question, or clause.
+- Definition = 1 sentence, using the lecturer's own specific explanation, example, or numbers from the transcript — never a generic textbook definition you already knew. If they gave a specific example or analogy, keep it.
+- Format exactly: **Term**: Definition. [timestamp]
+
+GOOD: **Mitosis**: Cell splits into two identical daughter cells with the same chromosome number — same example as skin healing after a cut. [14:02]
+BAD: **The process of cell division**: This is when a cell goes through several phases in order to divide into new cells. [14:02]
+(BAD is wrong on two counts: the term is a clause, not a glossary entry, and the definition is generic — it ignores what the lecturer actually said.)
 
 ## Exam Hints Detected
 - "He said 'this always comes up' at 23:14"
@@ -68,9 +81,9 @@ Q3 [Apply]: If ___, calculate ___ [timestamp]
 Q4 [Analyze]: Compare X vs Y from lecture [timestamp]
 Q5 [Evaluate]: Which is better for ___ and why? [timestamp]
 
-4. TONE: 8th grade English. Short sentences. No "furthermore". No "it is important to note".
-5. HALLUCINATION BAN: If info not in transcript, write "Not covered in this lecture". Never invent.
-6. SA CONTEXT: Keep ZAR, Unisa module codes, South African examples. Don't convert to USD.
+3. TONE: 8th grade English. Short sentences. No "furthermore". No "it is important to note".
+4. HALLUCINATION BAN: If info not in transcript, write "Not covered in this lecture". Never invent.
+5. SA CONTEXT: Keep ZAR, Unisa module codes, South African examples. Don't convert to USD.
 
 CONTEXT: Student is at Unisa. Works full time. Studies on taxi. Has 20min to revise. Make every word count.
 
@@ -111,7 +124,7 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
           }],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 500,
+            maxOutputTokens: 600,
             thinkingConfig: {
               thinkingBudget: 0
             }
