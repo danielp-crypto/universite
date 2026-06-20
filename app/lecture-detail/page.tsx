@@ -38,6 +38,21 @@ function LectureDetailPageContent() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
 
+  // Tracks which Key Concept bubbles are tapped open to reveal their
+  // definition (mobile has no hover, so tap-to-expand replaces tooltips).
+  const [expandedConcepts, setExpandedConcepts] = useState<Set<number>>(new Set());
+  const toggleConcept = (i: number) => {
+    setExpandedConcepts(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) {
+        next.delete(i);
+      } else {
+        next.add(i);
+      }
+      return next;
+    });
+  };
+
   const RECORDINGS_STORAGE_KEY = 'universite_recordings';
 
   const getRecordings = () => {
@@ -687,19 +702,60 @@ function LectureDetailPageContent() {
                               </span>
                             </h4>
 
-                            {section.style === 'indigo' ? (
-                              <div className="flex flex-wrap gap-2">
-                                {items.map((item, i) => (
-                                  <span
-                                    key={i}
-                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold shadow-sm ${colors.chip}`}
-                                  >
-                                    <span className="text-indigo-400 text-[10px]">●</span>
-                                    {formatNoteText(item, `kc-${i}`)}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : section.style === 'amber' ? (
+                            {section.style === 'indigo' ? (() => {
+                              // Bubbles show just the bolded term. Tapping a
+                              // bubble (mobile has no hover) reveals its full
+                              // definition in a panel below the row.
+                              const concepts = items.map((item) => {
+                                const termMatch = item.match(/^\*\*\[?([^*\]]+)\]?\*\*\s*:?\s*([\s\S]*)$/);
+                                const term = termMatch ? termMatch[1].trim() : item.split(':')[0].replace(/\*\*/g, '').trim();
+                                const definition = termMatch ? termMatch[2].trim() : item.split(':').slice(1).join(':').trim();
+                                return { term, definition };
+                              });
+                              const hasExpanded = concepts.some((_, i) => expandedConcepts.has(i));
+
+                              return (
+                                <div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {concepts.map((c, i) => {
+                                      const isExpanded = expandedConcepts.has(i);
+                                      return (
+                                        <button
+                                          key={i}
+                                          type="button"
+                                          onClick={() => toggleConcept(i)}
+                                          aria-expanded={isExpanded}
+                                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold shadow-sm transition-colors active:scale-95 ${
+                                            isExpanded
+                                              ? 'bg-indigo-600 border-indigo-600 text-white'
+                                              : colors.chip
+                                          }`}
+                                        >
+                                          <span className={`text-[10px] ${isExpanded ? 'text-indigo-200' : 'text-indigo-400'}`}>●</span>
+                                          {c.term}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {hasExpanded && (
+                                    <div className="mt-3 space-y-2">
+                                      {concepts.map((c, i) =>
+                                        expandedConcepts.has(i) && c.definition ? (
+                                          <div
+                                            key={i}
+                                            className="text-xs text-slate-600 bg-white border border-indigo-100 rounded-lg px-3 py-2 leading-relaxed"
+                                          >
+                                            <span className="font-semibold text-slate-800">{c.term}: </span>
+                                            {c.definition}
+                                          </div>
+                                        ) : null
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })() : section.style === 'amber' ? (
                               <ul className="space-y-2.5">
                                 {items.map((item, i) => (
                                   <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
