@@ -379,7 +379,7 @@ function HomePageContent() {
       const steps = [
         'Processing audio for transcription...',
         'Transcribing audio with AI...',
-        'Generating summary...',
+        'Generating your notes+ exam questions...',
         'Finalizing lecture...'
       ];
       setProcessingSteps(steps);
