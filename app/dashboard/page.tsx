@@ -292,6 +292,12 @@ function HomePageContent() {
 
   // Recording Handlers
   const startRecording = async () => {
+    // Check if module is selected
+    if (!selectedModule) {
+      alert('Please select or create a module before recording a lecture.');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setAudioStream(stream);
@@ -540,6 +546,12 @@ function HomePageContent() {
   };
 
   const uploadRecording = async (file: File) => {
+    // Check if module is selected
+    if (!selectedModule) {
+      alert('Please select or create a module before uploading a lecture.');
+      return;
+    }
+
     try {
       // Update streak immediately when file is uploaded
       updateStreak();
@@ -768,14 +780,14 @@ function HomePageContent() {
         <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
           {/* Module Selector */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Select Module (Optional)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Select Module (Required)</label>
             <div className="flex gap-2">
               <select
                 value={selectedModule || ''}
                 onChange={(e) => setSelectedModule(e.target.value || null)}
                 className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">No Module</option>
+                <option value="">Select a module...</option>
                 {modules.map((module) => (
                   <option key={module.id} value={module.id}>{module.name}</option>
                 ))}
