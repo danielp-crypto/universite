@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
 import UpgradeModal from '../components/UpgradeModal';
+import Alert from '../components/Alert';
 
 function HomePageContent() {
   const router = useRouter();
