@@ -1,833 +1,306 @@
-'use client';
+import { NextRequest, NextResponse } from 'next/server';
 
-import React, { useEffect, useState, useRef, Suspense } from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { apiGet, apiPost } from '@/lib/api/client';
-import { getSession } from '@/lib/supabase/auth';
-import { useRouter } from 'next/navigation';
-import AudioPlayer from '../components/AudioPlayer';
-import UpgradeModal from '../components/UpgradeModal';
-import jsPDF from 'jspdf';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
-function LectureDetailPageContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const lectureId = searchParams.get('id');
+// Safety cap to avoid runaway cost/quota usage on pathological inputs.
+// This is generous on purpose — a 90min lecture transcript is typically
+// 60k-100k characters. Raise further if you expect longer lectures.
+const MAX_TRANSCRIPT_CHARS = 200000;
 
-  const [currentLecture, setCurrentLecture] = useState<any>(null);
-  
-  // Tabs
-  const [activeTab, setActiveTab] = useState<'summary'>('summary');
-  
-  // AI Processing states
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingMessage, setProcessingMessage] = useState('');
-  const [processingResults, setProcessingResults] = useState<{
-    segmentsCount: number;
-    summaryAvailable: boolean;
-    suggestionsCount: number;
-    summaryText?: string;
-  }>({
-    segmentsCount: 0,
-    summaryAvailable: false,
-    suggestionsCount: 0,
-    summaryText: undefined
-  });
+const MAP_PROMPT = `You are a content extractor for lecture transcripts. Your ONLY job: extract key academic content. Ignore everything else.
 
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeFeature, setUpgradeFeature] = useState('');
+INPUT: A 10-minute chunk of a South African university lecture transcript.
 
-  const RECORDINGS_STORAGE_KEY = 'universite_recordings';
+EXTRACT ONLY:
+1. Definitions (term + explanation)
+2. Formulas (equation + when to use it)
+3. Lists (enumerated items)
+4. Cause→effect relationships
+5. Comparisons (X vs Y)
+6. Anything said after: "important", "exam", "remember", "test you on", "this always comes up"
 
-  const getRecordings = () => {
-    try {
-      const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
-      return recordings ? JSON.parse(recordings) : [];
-    } catch (e) {
-      return [];
-    }
-  };
+IGNORE:
+- Admin talk, jokes, "can you hear me"
+- Registration, assignment dates (unless marks mentioned)
+- "um", "okay so", "right", filler words
+- Loadshedding interruptions
+- Lecturer going off-topic
 
-  const getLocalRecordingById = (id: string) => {
-    const recordings = getRecordings();
-    return recordings.find((r: any) => r.id === id);
-  };
+OUTPUT FORMAT:
+Return bullets only. Each bullet must include:
+- The content (definition, formula, etc.)
+- Approximate timestamp if mentioned
+- No explanations, no fluff
 
-  const formatTime = (seconds: number) => {
-    if (isNaN(seconds)) return '0:00';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+Example output:
+- Photosynthesis = process where plants convert light energy to chemical energy [12:34]
+- Newton's Second Law: F = ma, used when calculating force from mass and acceleration [15:20]
+- "This will be on the exam" [23:45]
 
-  const exportToPDF = async () => {
-    if (!currentLecture) return;
+Transcript chunk:\n\n`;
 
-    // Check if user is premium (for now, always show upgrade modal)
-    // TODO: Implement actual premium check from user profile
-    setUpgradeFeature('PDF Export');
-    setUpgradeModalOpen(true);
-    return;
+const REDUCE_PROMPT = `You are "Exam Buddy", a Unisa tutor with 10 years experience. Your only job: turn 90min rambly lectures into notes that help a working student pass tomorrow's test.
 
-    try {
-      const pdf = new jsPDF();
-      
-      // Add title
-      pdf.setFontSize(20);
-      pdf.text(currentLecture.title || 'Untitled Lecture', 20, 20);
-      
-      // Add metadata
-      pdf.setFontSize(12);
-      pdf.text(`Date: ${currentLecture.date || new Date().toLocaleDateString()}`, 20, 30);
-      pdf.text(`Duration: ${currentLecture.duration || 'N/A'}`, 20, 38);
-      
-      // Add transcript section
-      pdf.setFontSize(16);
-      pdf.text('TRANSCRIPT', 20, 55);
-      pdf.setFontSize(12);
-      
-      const transcript = currentLecture.transcription || 'No transcript available';
-      const transcriptLines = pdf.splitTextToSize(transcript, 170);
-      let yPosition = 65;
-      
-      transcriptLines.forEach((line: string) => {
-        if (yPosition > 270) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        pdf.text(line, 20, yPosition);
-        yPosition += 7;
-      });
-      
-      // Add summary section on new page
-      pdf.addPage();
-      pdf.setFontSize(16);
-      pdf.text('SUMMARY', 20, 20);
-      pdf.setFontSize(12);
-      
-      const summary = currentLecture.summary || 'No summary available';
-      const summaryLines = pdf.splitTextToSize(summary, 170);
-      yPosition = 30;
-      
-      summaryLines.forEach((line: string) => {
-        if (yPosition > 270) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        pdf.text(line, 20, yPosition);
-        yPosition += 7;
-      });
-      
-      // Save the PDF
-      pdf.save(`${currentLecture.title || 'lecture'}-notes.pdf`);
-    } catch (error) {
-      console.error('Error exporting notes:', error);
-      alert('Error exporting notes');
-    }
-  };
+INPUT: Extracted key content from a South African university lecture (already cleaned of fluff).
 
-  const loadLecture = async (id: string) => {
-    try {
-      // Check session
-      const session = await getSession();
-      if (!session) {
-        router.push('/login');
-        return;
-      }
+OUTPUT RULES:
+1. IGNORE: admin talk, jokes, "can you hear me", registration, assignment dates unless marks are mentioned.
+2. FIND: definitions, formulas, lists, cause→effect, comparisons, and anything said after "important", "exam", "remember", "test you on".
+3. FORMAT: Use this exact structure, no deviation:
 
-      // 1. Check local recordings first
-      const local = getLocalRecordingById(id);
-      if (local) {
-        const lectureData = {
-          id: local.id,
-          title: local.name,
-          created_at: local.createdAt,
-          duration: local.duration,
-          audioUrl: local.audioUrl,
-          isLocal: true,
-          transcription: local.transcription || null,
-          segments: local.segments || [],
-          keyConcepts: local.keyConcepts || ['local recording']
-        };
-        setCurrentLecture(lectureData);
-        
-        // Set segments count from local data
-        if (local.segments && local.segments.length > 0) {
-          setProcessingResults(prev => ({
-            ...prev,
-            segmentsCount: local.segments.length
-          }));
-        }
-        
-        // If the local recording has been synced to Supabase (isLocal is false), load summary from Supabase
-        if (local.isLocal === false) {
-          try {
-            const supabaseLecture = await apiGet(`/api/lectures/${id}`);
-            if (supabaseLecture && supabaseLecture.summary) {
-              setProcessingResults(prev => ({
-                ...prev,
-                summaryAvailable: true,
-                summaryText: supabaseLecture.summary
-              }));
-            }
-          } catch (error) {
-            console.error('Failed to load summary from Supabase:', error);
-          }
-        }
-        return;
-      }
+## Key Concepts [3-5 only]
+- **[Term]**: Definition in 1 sentence, like you'd explain to a friend. [timestamp]
+- **Formula**: Name = equation + when to use it [timestamp]
 
-      // 2. Load from API
-      const lecture = await apiGet(`/api/lectures/${id}`);
-      if (lecture) {
-        setCurrentLecture(lecture);
-        // If lecture has a summary, set it in processing results for display
-        if (lecture.summary) {
-          setProcessingResults(prev => ({
-            ...prev,
-            summaryAvailable: true,
-            summaryText: lecture.summary
-          }));
-        }
-        // If lecture has segments, set segments count
-        if (lecture.segments && lecture.segments.length > 0) {
-          setProcessingResults(prev => ({
-            ...prev,
-            segmentsCount: lecture.segments.length
-          }));
-        }
-      }
-    } catch (err: any) {
-      console.error('Error loading lecture:', err);
-    }
-  };
+## Exam Hints Detected
+- "He said 'this always comes up' at 23:14"
+- "Repeated 3x: difference between X and Y" [12:03, 45:22, 78:01]
 
-  useEffect(() => {
-    if (lectureId) {
-      loadLecture(lectureId);
-    }
-  }, [lectureId]);
+## Summary: 5-Bullet Pass Guarantee
+1. If you only study 5 things, study these. Each = 1 sentence. No fluff.
 
-  // AI Feature triggers
-  const handleGenerateQA = async () => {
-    if (!currentLecture) return;
-    if (!currentLecture.transcription) {
-      alert('This lecture has no transcription to generate Q&A from');
-      return;
-    }
+## Test Yourself: 5 Questions
+Create 5 questions using Bloom's taxonomy. Base ONLY on transcript facts.
+Format:
+Q1 [Recall]: What is ___? [timestamp]
+Q2 [Understand]: Explain why ___ happens [timestamp]
+Q3 [Apply]: If ___, calculate ___ [timestamp]
+Q4 [Analyze]: Compare X vs Y from lecture [timestamp]
+Q5 [Evaluate]: Which is better for ___ and why? [timestamp]
 
-    try {
-      setProcessingMessage('Generating Q&A...');
-      setIsProcessing(true);
+4. TONE: 8th grade English. Short sentences. No "furthermore". No "it is important to note".
+5. HALLUCINATION BAN: If info not in transcript, write "Not covered in this lecture". Never invent.
+6. SA CONTEXT: Keep ZAR, Unisa module codes, South African examples. Don't convert to USD.
 
-      const segments = createSegmentsFromTranscription(currentLecture.transcription);
-      const result = await apiPost('/api/generate-qa', {
-        lecture: currentLecture,
-        segments: segments
-      });
-      
-      if (result.success) {
-        localStorage.setItem(`qa_${currentLecture.id}`, JSON.stringify(result.qaPairs));
-        router.push(`/qa-interface?lecture=${currentLecture.id}`);
-      } else {
-        alert('Error generating Q&A: ' + result.error);
-      }
-    } catch (e: any) {
-      console.error(e);
-      alert('Failed to generate Q&A');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+CONTEXT: Student is at Unisa. Works full time. Studies on taxi. Has 20min to revise. Make every word count.
 
-  const handleProcessTranscript = async () => {
-    if (!currentLecture) return;
-    setProcessingMessage('Downloading audio file...');
-    setIsProcessing(true);
+Extracted content:\n\n`;
 
-    try {
-      const session = await getSession();
-      if (!session) {
-        router.push('/login');
-        return;
-      }
+// Split transcript into chunks by WORD COUNT (~10 minutes of speech each).
+// Average spoken English is roughly 130-150 words/minute, so ~1300-1500
+// words covers a 10-minute chunk. Bumped default from 2000 to a more
+// accurate ~1400, but exposed as a param so it's easy to tune.
+function splitIntoChunks(transcript: string, wordsPerChunk: number = 1400): string[] {
+  const words = transcript.split(/\s+/).filter(Boolean);
+  const chunks: string[] = [];
 
-      let audioFile: File;
+  for (let i = 0; i < words.length; i += wordsPerChunk) {
+    const chunk = words.slice(i, i + wordsPerChunk).join(' ');
+    chunks.push(chunk);
+  }
 
-      if (currentLecture.isLocal && currentLecture.audioUrl) {
-        const response = await fetch(currentLecture.audioUrl);
-        const blob = await response.blob();
-        audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
-      } else if (currentLecture.file_path) {
-        const token = session.access_token;
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hiruufvoyigrcdohqjkm.supabase.co';
-        const downloadUrl = `${supabaseUrl}/storage/v1/object/public/${currentLecture.file_path}`;
-        const response = await fetch(downloadUrl, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Failed to download audio file');
-        const blob = await response.blob();
-        audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
-      } else {
-        throw new Error('No audio source available');
-      }
+  return chunks;
+}
 
-      setProcessingMessage('Transcribing audio...');
-      
-      const formData = new FormData();
-      formData.append('audio', audioFile);
-      
-      const response = await fetch('/api/transcribe', {
+// Map step: Extract key info from each chunk
+async function mapChunk(chunk: string, index: number): Promise<string> {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+      {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-        body: formData
-      });
-      
-      const transcriptionResult = await response.json().catch(() => ({}));
-      
-      if (transcriptionResult.success) {
-        currentLecture.transcription = transcriptionResult.transcript;
-        setCurrentLecture({ ...currentLecture });
-
-        // Update local storage if it's local
-        if (currentLecture.isLocal) {
-          const recordings = getRecordings();
-          const foundIdx = recordings.findIndex((r: any) => r.id === currentLecture.id);
-          if (foundIdx !== -1) {
-            recordings[foundIdx].transcription = transcriptionResult.transcript;
-            localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
-          }
-
-          // Create lecture in Supabase for local lectures
-          try {
-            console.log('Creating lecture in Supabase for local lecture:', currentLecture.title);
-            const createResponse = await fetch('/api/lectures', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({
-                title: currentLecture.title,
-                duration: currentLecture.duration && currentLecture.duration !== 'N/A' ? currentLecture.duration : 0,
-                transcription: transcriptionResult.transcript,
-                stored_locally: true,
-                local_audio_size: currentLecture.audioSize || 0
-              })
-            });
-            
-            console.log('Create response status:', createResponse.status);
-            const createData = await createResponse.json();
-            console.log('Create response data:', createData);
-            
-            if (createResponse.ok) {
-              if (createData.success) {
-                // Update current lecture with Supabase ID
-                currentLecture.id = createData.lecture.id;
-                currentLecture.isLocal = false;
-                setCurrentLecture({ ...currentLecture });
-                
-                // Update local storage to mark as synced
-                if (foundIdx !== -1) {
-                  recordings[foundIdx].id = createData.lecture.id;
-                  recordings[foundIdx].isLocal = false;
-                  localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
-                }
-              }
-            } else {
-              console.error('Failed to create lecture:', createData.error);
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_API_KEY,
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: MAP_PROMPT + chunk
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 500,
+            thinkingConfig: {
+              thinkingBudget: 0
             }
-          } catch (error) {
-            console.error('Failed to create lecture in Supabase:', error);
           }
-        } else {
-          // Save transcript to Supabase
-          try {
-            await fetch(`/api/lectures/${currentLecture.id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({
-                transcription: transcriptionResult.transcript
-              })
-            });
-          } catch (error) {
-            console.error('Failed to save transcript to Supabase:', error);
-          }
-        }
-
-        setProcessingMessage('Generating summary...');
-        const summary = await generateSummary(transcriptionResult.transcript);
-
-        const segments = createSegmentsFromTranscription(transcriptionResult.transcript);
-        
-        setProcessingResults({
-          segmentsCount: segments.length,
-          summaryAvailable: !!summary,
-          suggestionsCount: Math.min(5, segments.length * 2),
-          summaryText: summary || undefined
-        });
-
-        // Save summary to Supabase
-        if (summary) {
-          try {
-            await fetch(`/api/lectures/${currentLecture.id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({
-                summary: summary
-              })
-            });
-          } catch (error) {
-            console.error('Failed to save summary to Supabase:', error);
-          }
-        }
-
-        alert('Transcription and analysis completed successfully!');
-      } else {
-        throw new Error(transcriptionResult.error || 'Transcription failed');
+        }),
       }
-    } catch (error: any) {
-      console.error(error);
-      alert(`Transcription failed: ${error.message}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    );
 
-  const generateSummary = async (transcript: string) => {
-    try {
-      const result = await apiPost('/api/generate-summary', {
-        transcript: transcript.substring(0, 2000)
-      });
-      return result.success ? result.summary : null;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  const createSegmentsFromTranscription = (transcription: string) => {
-    if (!transcription) return [];
-    const sentences = transcription.split('. ').filter(s => s.trim().length > 0);
-    const segments = [];
-    const segmentLength = 3;
-    
-    for (let i = 0; i < sentences.length; i += segmentLength) {
-      const segmentSentences = sentences.slice(i, i + segmentLength);
-      segments.push({
-        id: `segment_${i}`,
-        content: segmentSentences.join('. '),
-        start_time_seconds: i * 30,
-        end_time_seconds: (i + segmentLength) * 30,
-        title: `Segment ${Math.floor(i / segmentLength) + 1}`,
-        concepts: ['key topic', 'lecture segment']
-      });
-    }
-    return segments;
-  };
-
-  // ---- Lecture Notes formatting helpers ----
-
-  // Renders a line of note text, turning **bold** markdown into real bold,
-  // and auto-bolding a leading "Term:" label when no markdown bold is present.
-  const formatNoteText = (raw: string, keyPrefix: string) => {
-    const text = raw.trim();
-
-    if (text.includes('**')) {
-      const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
-      return parts.map((part, i) =>
-        part.startsWith('**') && part.endsWith('**') ? (
-          <strong key={`${keyPrefix}-${i}`} className="font-semibold text-slate-900">
-            {part.slice(2, -2)}
-          </strong>
-        ) : (
-          <React.Fragment key={`${keyPrefix}-${i}`}>{part}</React.Fragment>
-        )
-      );
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Map chunk ${index} failed (status ${response.status}): ${errorText}`);
     }
 
-    const labelMatch = text.match(/^([^:]{2,40}):\s*(.+)$/);
-    if (labelMatch) {
-      return (
-        <>
-          <strong className="font-semibold text-slate-900">{labelMatch[1]}:</strong>{' '}
-          {labelMatch[2]}
-        </>
-      );
+    const result = await response.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    if (!text) {
+      console.warn(`Map chunk ${index} produced no output. Finish reason:`, result.candidates?.[0]?.finishReason);
     }
 
     return text;
-  };
-
-  const currentSegments = currentLecture?.transcription
-    ? createSegmentsFromTranscription(currentLecture.transcription)
-    : currentLecture?.segments || [];
-
-  return (
-    <div className="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
-      <div id="app" className="flex-1 flex flex-col pb-20">
-        {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
-          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
-            <Link href="/lectures" className="p-1 text-slate-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
-            </div>
-            <h1 className="text-lg md:text-xl font-semibold text-slate-800 flex-1">Lecture Details</h1>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
-          {currentLecture ? (
-            <>
-              {/* Lecture Card */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 mb-4 shadow-sm">
-                <h2 className="text-xl font-bold text-slate-800 mb-2 truncate">{currentLecture.title}</h2>
-                <div className="flex items-center gap-3 text-sm text-slate-500 mb-4">
-                  <span>{new Date(currentLecture.created_at || currentLecture.createdAt).toLocaleDateString()}</span>
-                  <span>•</span>
-                  <span>{currentLecture.duration || 'N/A'}</span>
-                  {currentLecture.module && (
-                    <>
-                      <span>•</span>
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                        </svg>
-                        <span className="text-indigo-600 font-medium">{currentLecture.module.name}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Audio Player Container */}
-                {currentLecture.audioUrl && (
-                  <AudioPlayer src={currentLecture.audioUrl} className="mb-4" />
-                )}
-
-                {/* Primary Actions */}
-                <div className="flex gap-2 mb-4">
-                  <Link
-                    href={`/assistant?lecture=${currentLecture.id}`}
-                    className="flex-1 px-4 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-semibold text-center hover:shadow-lg transition-all text-sm active:scale-95"
-                  >
-                    Chat with Lecture
-                  </Link>
-                  <button
-                    onClick={exportToPDF}
-                    className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-center hover:shadow-lg transition-all text-sm active:scale-95 relative"
-                    title="Export to PDF"
-                  >
-                    <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <a href="/#pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Premium</a>
-                  </button>
-                </div>
-
-                {/* Key Concepts */}
-                {currentLecture.keyConcepts && currentLecture.keyConcepts.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-700 mb-2">Key Concepts</h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {currentLecture.keyConcepts.map((concept: string, idx: number) => (
-                        <span key={idx} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
-                          {concept}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Lecture Notes */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                    <span className="text-xl leading-none">📝</span>
-                    <span>Lecture Notes</span>
-                  </h3>
-                  {processingResults?.summaryText && (
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                      AI Generated
-                    </span>
-                  )}
-                </div>
-
-                {processingResults?.summaryText ? (
-                  <div className="space-y-4">
-                    {(() => {
-                      const text = processingResults.summaryText;
-                      const sections: { title: string; content: string; icon: string; style: string }[] = [];
-
-                      // Sections are matched against the actual "## Heading" markers the
-                      // REDUCE_PROMPT produces, and each capture stops at the NEXT "##"
-                      // heading (or end of string) so sections can never bleed into each
-                      // other regardless of order or spacing.
-                      const sectionRegex = (heading: string) =>
-                        new RegExp(`##\\s*${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
-
-                      // Parse Key Concepts section
-                      const keyConceptsMatch = text.match(sectionRegex('Key Concepts'));
-                      if (keyConceptsMatch) {
-                        const concepts = keyConceptsMatch[1].split(/[\n•\-\*]/).filter(c => c.trim());
-                        sections.push({
-                          title: 'Key Concepts',
-                          content: concepts.join('|||'),
-                          icon: '🔑',
-                          style: 'indigo'
-                        });
-                      }
-
-                      // Parse Exam Hints section
-                      const examHintsMatch = text.match(sectionRegex('Exam Hints'));
-                      if (examHintsMatch) {
-                        const hints = examHintsMatch[1].split(/[\n•\-\*]/).filter(h => h.trim());
-                        sections.push({
-                          title: 'Exam Hints',
-                          content: hints.join('|||'),
-                          icon: '⚠️',
-                          style: 'amber'
-                        });
-                      }
-
-                      // Parse Summary section
-                      const summaryMatch = text.match(sectionRegex('Summary'));
-                      if (summaryMatch) {
-                        const summaryText = summaryMatch[1].trim();
-                        // Split by numbered items (1., 2., 3., etc.) and clean up
-                        const summaryItems = summaryText.split(/\d+\.\s*/).filter(s => s.trim());
-                        const summaryContent = summaryItems.join('|||');
-                        sections.push({
-                          title: '5-Bullet Pass Guarantee',
-                          content: summaryContent,
-                          icon: '🎯',
-                          style: 'emerald'
-                        });
-                      }
-
-                      // Parse Test Yourself section (Q1-Q5, Bloom's taxonomy questions)
-                      const testYourselfMatch = text.match(sectionRegex('Test Yourself'));
-                      if (testYourselfMatch) {
-                        const questions = testYourselfMatch[1]
-                          .split(/\n(?=Q\d)/)
-                          .map(q => q.trim())
-                          .filter(Boolean);
-                        sections.push({
-                          title: 'Test Yourself',
-                          content: questions.join('|||'),
-                          icon: '🧠',
-                          style: 'violet'
-                        });
-                      }
-
-                      // If no structured sections found, display as formatted plain text
-                      if (sections.length === 0) {
-                        return (
-                          <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                            {formatNoteText(text, 'plain')}
-                          </div>
-                        );
-                      }
-
-                      const styleMap: Record<string, { border: string; bg: string; badge: string; chip: string }> = {
-                        indigo: {
-                          border: 'border-indigo-100',
-                          bg: 'from-indigo-50/80 to-white',
-                          badge: 'bg-indigo-100',
-                          chip: 'bg-white border-indigo-200 text-indigo-700'
-                        },
-                        amber: {
-                          border: 'border-amber-100',
-                          bg: 'from-amber-50/80 to-white',
-                          badge: 'bg-amber-100',
-                          chip: ''
-                        },
-                        emerald: {
-                          border: 'border-emerald-100',
-                          bg: 'from-emerald-50/80 to-white',
-                          badge: 'bg-emerald-100',
-                          chip: ''
-                        },
-                        violet: {
-                          border: 'border-violet-100',
-                          bg: 'from-violet-50/80 to-white',
-                          badge: 'bg-violet-100',
-                          chip: ''
-                        }
-                      };
-
-                      return sections.map((section, idx) => {
-                        const items = section.content.split('|||').map(i => i.trim()).filter(Boolean);
-                        const colors = styleMap[section.style];
-
-                        return (
-                          <div
-                            key={idx}
-                            className={`rounded-xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4`}
-                          >
-                            <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                              <span className={`flex items-center justify-center w-6 h-6 rounded-full ${colors.badge} text-sm`}>
-                                {section.icon}
-                              </span>
-                              <span>{section.title}</span>
-                              <span className="ml-auto text-[11px] font-medium text-slate-400">
-                                {items.length}
-                              </span>
-                            </h4>
-
-                            {section.style === 'indigo' ? (
-                              <div className="flex flex-wrap gap-2">
-                                {items.map((item, i) => (
-                                  <span
-                                    key={i}
-                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold shadow-sm ${colors.chip}`}
-                                  >
-                                    <span className="text-indigo-400 text-[10px]">●</span>
-                                    {formatNoteText(item, `kc-${i}`)}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : section.style === 'amber' ? (
-                              <ul className="space-y-2.5">
-                                {items.map((item, i) => (
-                                  <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
-                                    <span className="mt-0.5 flex-shrink-0">💡</span>
-                                    <span>{formatNoteText(item, `eh-${i}`)}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : section.style === 'violet' ? (
-                              <ol className="space-y-3">
-                                {items.map((item, i) => {
-                                  const qMatch = item.match(/^Q\d+\s*\[([^\]]+)\]:\s*([\s\S]+)$/i);
-                                  const level = qMatch ? qMatch[1] : null;
-                                  const body = qMatch ? qMatch[2].trim() : item;
-                                  return (
-                                    <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
-                                      <span className="mt-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-violet-500 text-white text-[10px] font-bold flex-shrink-0">
-                                        {i + 1}
-                                      </span>
-                                      <span>
-                                        {level && (
-                                          <span className="mr-1.5 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-violet-100 text-violet-700">
-                                            {level}
-                                          </span>
-                                        )}
-                                        {formatNoteText(body, `ty-${i}`)}
-                                      </span>
-                                    </li>
-                                  );
-                                })}
-                              </ol>
-                            ) : (
-                              <ul className="space-y-2.5">
-                                {items.map((item, i) => (
-                                  <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
-                                    <span className="mt-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex-shrink-0">
-                                      ✓
-                                    </span>
-                                    <span>{formatNoteText(item, `sm-${i}`)}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="text-3xl mb-2">🗒️</div>
-                    <p className="text-slate-500 text-sm mb-4">No notes available for this lecture yet.</p>
-                    <button
-                      onClick={handleProcessTranscript}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
-                    >
-                      ✨ Generate Summary
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent mx-auto"></div>
-              <p className="text-slate-500 mt-4 text-sm">Loading lecture...</p>
-            </div>
-          )}
-        </div>
-
-        {/* Upgrade Modal */}
-        <UpgradeModal
-          isOpen={upgradeModalOpen}
-          onClose={() => setUpgradeModalOpen(false)}
-          feature={upgradeFeature}
-        />
-
-        {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
-          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
-            <div className="flex items-center justify-around py-2">
-              <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
-                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span className="text-xs font-medium">Home</span>
-              </Link>
-              <Link href="/lectures" className="flex flex-col items-center py-2 px-4 text-indigo-600">
-                <svg className="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-                </svg>
-                <span className="text-xs font-medium">Lectures</span>
-              </Link>
-              <Link href="/assistant" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
-                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                <span className="text-xs font-medium">Chat</span>
-              </Link>
-              <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
-                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="text-xs font-medium">Settings</span>
-              </Link>
-            </div>
-          </div>
-        </nav>
-      </div>
-
-      <UpgradeModal
-        isOpen={upgradeModalOpen}
-        onClose={() => setUpgradeModalOpen(false)}
-        feature={upgradeFeature}
-      />
-    </div>
-  );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`mapChunk[${index}] failed, skipping this chunk:`, message);
+    return '';
+  }
 }
 
-export default function LectureDetailPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
-      </div>
-    }>
-      <LectureDetailPageContent />
-    </Suspense>
-  );
+// Reduce step: Generate final summary from extracted content
+async function reduceSummary(extractedContent: string): Promise<string> {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_API_KEY,
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: REDUCE_PROMPT + extractedContent
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 2048,
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
+          }
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Reduce summary error:', errorText);
+      throw new Error('Reduce summary error');
+    }
+
+    const result = await response.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const finishReason = result.candidates?.[0]?.finishReason;
+
+    if (finishReason === 'MAX_TOKENS') {
+      console.warn('Reduce summary was cut off by maxOutputTokens — consider raising the limit further.');
+    }
+
+    return text;
+  } catch (error) {
+    console.error('Reduce summary error:', error);
+    throw error;
+  }
+}
+
+async function generateSummary(transcript: string): Promise<string> {
+  if (!GEMINI_API_KEY) {
+    console.warn('GEMINI_API_KEY is not set — using simple bullet point fallback');
+    return generateSimpleBulletPoints(transcript);
+  }
+
+  try {
+    // Step 1: Split transcript into chunks
+    const chunks = splitIntoChunks(transcript);
+    console.log(`Transcript length: ${transcript.length} chars, ${transcript.split(/\s+/).length} words`);
+    console.log(`Split transcript into ${chunks.length} chunks`);
+
+    // Step 2: Map - Extract key info from each chunk (with index for debugging)
+    const mapResults = await Promise.all(
+      chunks.map((chunk, index) => mapChunk(chunk, index))
+    );
+
+    const successfulChunks = mapResults.filter(result => result.length > 0).length;
+    console.log(`${successfulChunks}/${chunks.length} chunks produced content`);
+
+    const extractedContent = mapResults.filter(result => result.length > 0).join('\n\n');
+
+    console.log('Extracted content length:', extractedContent.length);
+
+    if (extractedContent.length === 0) {
+      // If no content extracted, fall back to simple bullet points
+      console.warn('No content extracted from any chunk — falling back to simple bullet points');
+      return generateSimpleBulletPoints(transcript);
+    }
+
+    // Step 3: Reduce - Generate final summary from extracted content
+    const summary = await reduceSummary(extractedContent);
+
+    console.log('Generated summary length:', summary.length);
+    console.log('Summary preview:', summary.substring(0, 200));
+
+    return summary;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Summary generation failed, using simple bullet point fallback:', message);
+    return generateSimpleBulletPoints(transcript);
+  }
+}
+
+function generateSimpleBulletPoints(transcript: string): string {
+  // Split transcript into sentences
+  const sentences = transcript
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 10);
+
+  // Select key sentences (every 3rd sentence to get main points)
+  const keyPoints = sentences
+    .filter((_, index) => index % 3 === 0)
+    .slice(0, 5);
+
+  // Format as bullet points
+  return keyPoints
+    .map(point => `• ${point}`)
+    .join('\n');
+}
+
+function formatAsBulletPoints(text: string): string {
+  // If already has bullet points, return as is
+  if (text.includes('•') || text.includes('-') || text.includes('*')) {
+    return text;
+  }
+
+  // Split into sentences and format as bullet points
+  const sentences = text
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 10);
+
+  return sentences
+    .map(sentence => `• ${sentence}`)
+    .join('\n');
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { transcript } = await request.json();
+
+    if (!transcript || typeof transcript !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'missing_transcript' },
+        { status: 400 }
+      );
+    }
+
+    // Only cap extremely long inputs as a safety net — this is no longer
+    // the silent 4000-char truncation that was eating most lectures.
+    const truncatedTranscript = transcript.length > MAX_TRANSCRIPT_CHARS
+      ? transcript.substring(0, MAX_TRANSCRIPT_CHARS)
+      : transcript;
+
+    if (transcript.length > MAX_TRANSCRIPT_CHARS) {
+      console.warn(`Transcript truncated from ${transcript.length} to ${MAX_TRANSCRIPT_CHARS} chars`);
+    }
+
+    const summary = await generateSummary(truncatedTranscript);
+
+    return NextResponse.json({
+      success: true,
+      summary: summary
+    });
+
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      { success: false, error: 'summary_generation_failed', detail: message },
+      { status: 500 }
+    );
+  }
 }

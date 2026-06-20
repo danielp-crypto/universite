@@ -571,8 +571,15 @@ function LectureDetailPageContent() {
                       const text = processingResults.summaryText;
                       const sections: { title: string; content: string; icon: string; style: string }[] = [];
 
+                      // Sections are matched against the actual "## Heading" markers the
+                      // REDUCE_PROMPT produces, and each capture stops at the NEXT "##"
+                      // heading (or end of string) so sections can never bleed into each
+                      // other regardless of order or spacing.
+                      const sectionRegex = (heading: string) =>
+                        new RegExp(`##\\s*${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+
                       // Parse Key Concepts section
-                      const keyConceptsMatch = text.match(/Key Concepts?:?\s*([\s\S]*?)(?=\n\n|\nExam Hints|\nSummary:|$)/i);
+                      const keyConceptsMatch = text.match(sectionRegex('Key Concepts'));
                       if (keyConceptsMatch) {
                         const concepts = keyConceptsMatch[1].split(/[\n•\-\*]/).filter(c => c.trim());
                         sections.push({
@@ -584,7 +591,7 @@ function LectureDetailPageContent() {
                       }
 
                       // Parse Exam Hints section
-                      const examHintsMatch = text.match(/Exam Hints?:?\s*([\s\S]*?)(?=\n\n|\nSummary:|$)/i);
+                      const examHintsMatch = text.match(sectionRegex('Exam Hints'));
                       if (examHintsMatch) {
                         const hints = examHintsMatch[1].split(/[\n•\-\*]/).filter(h => h.trim());
                         sections.push({
@@ -596,7 +603,7 @@ function LectureDetailPageContent() {
                       }
 
                       // Parse Summary section
-                      const summaryMatch = text.match(/Summary:?\s*([\s\S]*?)(?=\n\n|$)/i);
+                      const summaryMatch = text.match(sectionRegex('Summary'));
                       if (summaryMatch) {
                         const summaryText = summaryMatch[1].trim();
                         // Split by numbered items (1., 2., 3., etc.) and clean up
@@ -607,6 +614,21 @@ function LectureDetailPageContent() {
                           content: summaryContent,
                           icon: '🎯',
                           style: 'emerald'
+                        });
+                      }
+
+                      // Parse Test Yourself section (Q1-Q5, Bloom's taxonomy questions)
+                      const testYourselfMatch = text.match(sectionRegex('Test Yourself'));
+                      if (testYourselfMatch) {
+                        const questions = testYourselfMatch[1]
+                          .split(/\n(?=Q\d)/)
+                          .map(q => q.trim())
+                          .filter(Boolean);
+                        sections.push({
+                          title: 'Test Yourself',
+                          content: questions.join('|||'),
+                          icon: '🧠',
+                          style: 'violet'
                         });
                       }
 
@@ -636,6 +658,12 @@ function LectureDetailPageContent() {
                           border: 'border-emerald-100',
                           bg: 'from-emerald-50/80 to-white',
                           badge: 'bg-emerald-100',
+                          chip: ''
+                        },
+                        violet: {
+                          border: 'border-violet-100',
+                          bg: 'from-violet-50/80 to-white',
+                          badge: 'bg-violet-100',
                           chip: ''
                         }
                       };
@@ -680,6 +708,29 @@ function LectureDetailPageContent() {
                                   </li>
                                 ))}
                               </ul>
+                            ) : section.style === 'violet' ? (
+                              <ol className="space-y-3">
+                                {items.map((item, i) => {
+                                  const qMatch = item.match(/^Q\d+\s*\[([^\]]+)\]:\s*([\s\S]+)$/i);
+                                  const level = qMatch ? qMatch[1] : null;
+                                  const body = qMatch ? qMatch[2].trim() : item;
+                                  return (
+                                    <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                                      <span className="mt-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-violet-500 text-white text-[10px] font-bold flex-shrink-0">
+                                        {i + 1}
+                                      </span>
+                                      <span>
+                                        {level && (
+                                          <span className="mr-1.5 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-violet-100 text-violet-700">
+                                            {level}
+                                          </span>
+                                        )}
+                                        {formatNoteText(body, `ty-${i}`)}
+                                      </span>
+                                    </li>
+                                  );
+                                })}
+                              </ol>
                             ) : (
                               <ul className="space-y-2.5">
                                 {items.map((item, i) => (
