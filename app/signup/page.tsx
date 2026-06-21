@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSession, signInWithOAuth, signUpWithEmail } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabase/client';
+import Alert from '../components/Alert';
 
 function SignupPageContent() {
   const router = useRouter();
@@ -15,6 +16,19 @@ function SignupPageContent() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Alert state
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'error' | 'warning' | 'info' | 'success'>('info');
+
+  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertOpen(true);
+  };
 
   useEffect(() => {
     // If already logged in, redirect straight to the app
@@ -46,12 +60,12 @@ function SignupPageContent() {
       const redirectTo = `${window.location.origin}/dashboard`;
       const { error } = await signInWithOAuth('google', { redirectTo });
       if (error) {
-        alert(error.message);
+        showAlert('Error', error.message, 'error');
         setGoogleLoading(false);
       }
     } catch (e: any) {
       console.error('Google signup error:', e);
-      alert("Google signup failed. Please try again.");
+      showAlert('Error', 'Google signup failed. Please try again.', 'error');
       setGoogleLoading(false);
     }
   };
@@ -59,25 +73,25 @@ function SignupPageContent() {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      showAlert('Error', 'Passwords do not match', 'error');
       return;
     }
     if (password.length < 6) {
-      alert('Password must be at least 6 characters');
+      showAlert('Error', 'Password must be at least 6 characters', 'error');
       return;
     }
     setEmailLoading(true);
     try {
       const { error } = await signUpWithEmail(email, password);
       if (error) {
-        alert(error.message);
+        showAlert('Error', error.message, 'error');
         setEmailLoading(false);
       } else {
         router.push('/dashboard');
       }
     } catch (e: any) {
       console.error('Email signup error:', e);
-      alert("Email signup failed. Please try again.");
+      showAlert('Error', 'Email signup failed. Please try again.', 'error');
       setEmailLoading(false);
     }
   };
@@ -321,6 +335,14 @@ function SignupPageContent() {
           </div>
         </div>
       </footer>
+
+      <Alert
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
+      />
     </div>
   );
 }

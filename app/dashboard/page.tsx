@@ -1386,6 +1386,7 @@ function HomePageContent() {
         isOpen={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
+        onUpgrade={() => showAlert('Coming Soon', 'Premium upgrade coming soon!', 'info')}
       />
 
       {/* Alert Modal */}

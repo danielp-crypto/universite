@@ -6,9 +6,10 @@ interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   feature: string;
+  onUpgrade?: () => void;
 }
 
-export default function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
+export default function UpgradeModal({ isOpen, onClose, feature, onUpgrade }: UpgradeModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -26,7 +27,7 @@ export default function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalP
           </p>
           <div className="space-y-3">
             <button
-              onClick={() => alert('Premium upgrade coming soon!')}
+              onClick={onUpgrade || onClose}
               className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95"
             >
               Upgrade Now

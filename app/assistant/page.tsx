@@ -7,6 +7,7 @@ import { apiPost, apiGet } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
 import UpgradeModal from '../components/UpgradeModal';
+import Alert from '../components/Alert';
 
 function AssistantPageContent() {
   const router = useRouter();
@@ -23,6 +24,19 @@ function AssistantPageContent() {
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
+
+  // Alert state
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'error' | 'warning' | 'info' | 'success'>('info');
+
+  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertOpen(true);
+  };
 
   const mediaRecorderRef = useRef<any>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -156,7 +170,7 @@ function AssistantPageContent() {
       }, 1000);
     } catch (error) {
       console.error(error);
-      alert('Microphone access denied.');
+      showAlert('Error', 'Microphone access denied.', 'error');
     }
   };
 
@@ -210,7 +224,7 @@ function AssistantPageContent() {
         return;
       }
 
-      alert('API transcription failed, saving mock local lecture instead.');
+      showAlert('Warning', 'API transcription failed, saving mock local lecture instead.', 'warning');
       createMockLecture(blob);
     } catch (error) {
       console.error(error);
@@ -303,11 +317,11 @@ function AssistantPageContent() {
             createLectureFromTranscript(file, data.transcript);
             return;
           }
-          alert('Transcription failed');
+          showAlert('Error', 'Transcription failed', 'error');
           setRecordingState('idle');
         } catch (error) {
           console.error(error);
-          alert('Upload failed');
+          showAlert('Error', 'Upload failed', 'error');
           setRecordingState('idle');
         }
       }
@@ -538,6 +552,16 @@ function AssistantPageContent() {
         isOpen={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
+        onUpgrade={() => showAlert('Coming Soon', 'Premium upgrade coming soon!', 'info')}
+      />
+
+      {/* Alert Modal */}
+      <Alert
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
       />
 
       {/* Processing Overlay */}

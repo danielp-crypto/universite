@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSession, signInWithOAuth, signInWithEmail } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabase/client';
+import Alert from '../components/Alert';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -13,6 +14,19 @@ function LoginPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // Alert state
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'error' | 'warning' | 'info' | 'success'>('info');
+
+  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertOpen(true);
+  };
 
   useEffect(() => {
     // If already logged in, redirect straight to the app
@@ -50,12 +64,12 @@ function LoginPageContent() {
       const redirectTo = `${window.location.origin}/login?returnTo=${encodeURIComponent(returnTo || '/dashboard')}`;
       const { error } = await signInWithOAuth('google', { redirectTo });
       if (error) {
-        alert(error.message);
+        showAlert('Error', error.message, 'error');
         setGoogleLoading(false);
       }
     } catch (e: any) {
       console.error('Google login error:', e);
-      alert("Google login failed. Please try again.");
+      showAlert('Error', 'Google login failed. Please try again.', 'error');
       setGoogleLoading(false);
     }
   };
@@ -66,7 +80,7 @@ function LoginPageContent() {
     try {
       const { error } = await signInWithEmail(email, password);
       if (error) {
-        alert(error.message);
+        showAlert('Error', error.message, 'error');
         setEmailLoading(false);
       } else {
         const urlParams = new URLSearchParams(window.location.search);
@@ -75,7 +89,7 @@ function LoginPageContent() {
       }
     } catch (e: any) {
       console.error('Email login error:', e);
-      alert("Email login failed. Please try again.");
+      showAlert('Error', 'Email login failed. Please try again.', 'error');
       setEmailLoading(false);
     }
   };
@@ -293,6 +307,14 @@ function LoginPageContent() {
           </div>
         </div>
       </footer>
+
+      <Alert
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
+      />
     </div>
   );
 }

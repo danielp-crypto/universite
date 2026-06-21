@@ -7,6 +7,7 @@ import { getSession } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import AudioPlayer from '../components/AudioPlayer';
+import Alert from '../components/Alert';
 
 function LecturesPageContent() {
   const router = useRouter();
@@ -18,6 +19,19 @@ function LecturesPageContent() {
   // Modules state
   const [modules, setModules] = useState<any[]>([]);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+
+  // Alert state
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'error' | 'warning' | 'info' | 'success'>('info');
+
+  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertOpen(true);
+  };
 
   const RECORDINGS_STORAGE_KEY = 'universite_recordings';
 
@@ -123,7 +137,7 @@ function LecturesPageContent() {
       loadLectures();
     } catch (error) {
       console.error('Error deleting recording:', error);
-      alert('Error deleting recording');
+      showAlert('Error', 'Error deleting recording', 'error');
     }
   };
 
@@ -138,14 +152,14 @@ function LecturesPageContent() {
         .eq('id', id);
 
       if (error) {
-        alert('Error deleting lecture: ' + error.message);
+        showAlert('Error', 'Error deleting lecture: ' + error.message, 'error');
         return;
       }
 
       loadLectures();
     } catch (error) {
       console.error('Error deleting lecture:', error);
-      alert('Error deleting lecture');
+      showAlert('Error', 'Error deleting lecture', 'error');
     }
   };
 
@@ -159,7 +173,7 @@ function LecturesPageContent() {
         });
       } else {
         navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard');
+        showAlert('Success', 'Link copied to clipboard', 'success');
       }
     } catch (error) {
       console.error('Error sharing:', error);
@@ -180,7 +194,7 @@ function LecturesPageContent() {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading recording:', error);
-      alert('Error downloading recording');
+      showAlert('Error', 'Error downloading recording', 'error');
     }
   };
 
@@ -410,6 +424,14 @@ function LecturesPageContent() {
             </div>
           </div>
         </nav>
+
+        <Alert
+          isOpen={alertOpen}
+          onClose={() => setAlertOpen(false)}
+          title={alertTitle}
+          message={alertMessage}
+          type={alertType}
+        />
       </div>
     </div>
   );

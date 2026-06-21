@@ -8,6 +8,7 @@ import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
 import AudioPlayer from '../components/AudioPlayer';
 import UpgradeModal from '../components/UpgradeModal';
+import Alert from '../components/Alert';
 import jsPDF from 'jspdf';
 
 function LectureDetailPageContent() {
@@ -37,6 +38,19 @@ function LectureDetailPageContent() {
 
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
+
+  // Alert state
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'error' | 'warning' | 'info' | 'success'>('info');
+
+  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertOpen(true);
+  };
 
   // Tracks which Key Concept bubbles are tapped open to reveal their
   // definition (mobile has no hover, so tap-to-expand replaces tooltips).
@@ -138,7 +152,7 @@ function LectureDetailPageContent() {
       pdf.save(`${currentLecture.title || 'lecture'}-notes.pdf`);
     } catch (error) {
       console.error('Error exporting notes:', error);
-      alert('Error exporting notes');
+      showAlert('Error', 'Error exporting notes', 'error');
     }
   };
 
@@ -228,7 +242,7 @@ function LectureDetailPageContent() {
   const handleGenerateQA = async () => {
     if (!currentLecture) return;
     if (!currentLecture.transcription) {
-      alert('This lecture has no transcription to generate Q&A from');
+      showAlert('No Transcription', 'This lecture has no transcription to generate Q&A from', 'warning');
       return;
     }
 
@@ -246,11 +260,11 @@ function LectureDetailPageContent() {
         localStorage.setItem(`qa_${currentLecture.id}`, JSON.stringify(result.qaPairs));
         router.push(`/qa-interface?lecture=${currentLecture.id}`);
       } else {
-        alert('Error generating Q&A: ' + result.error);
+        showAlert('Error', 'Error generating Q&A: ' + result.error, 'error');
       }
     } catch (e: any) {
       console.error(e);
-      alert('Failed to generate Q&A');
+      showAlert('Error', 'Failed to generate Q&A', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -404,13 +418,13 @@ function LectureDetailPageContent() {
           }
         }
 
-        alert('Transcription and analysis completed successfully!');
+        showAlert('Success', 'Transcription and analysis completed successfully!', 'success');
       } else {
         throw new Error(transcriptionResult.error || 'Transcription failed');
       }
     } catch (error: any) {
       console.error(error);
-      alert(`Transcription failed: ${error.message}`);
+      showAlert('Error', `Transcription failed: ${error.message}`, 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -831,6 +845,7 @@ function LectureDetailPageContent() {
           isOpen={upgradeModalOpen}
           onClose={() => setUpgradeModalOpen(false)}
           feature={upgradeFeature}
+          onUpgrade={() => showAlert('Coming Soon', 'Premium upgrade coming soon!', 'info')}
         />
 
         {/* Bottom Navigation */}
@@ -871,6 +886,14 @@ function LectureDetailPageContent() {
         isOpen={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
+      />
+
+      <Alert
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
       />
     </div>
   );
