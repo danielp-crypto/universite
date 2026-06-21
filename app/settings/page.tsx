@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { signOut, getSession } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import Alert from '../components/Alert';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -18,6 +19,19 @@ export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Alert state
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'error' | 'warning' | 'info' | 'success'>('info');
+
+  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertOpen(true);
+  };
 
   useEffect(() => {
     loadUserData();
@@ -100,7 +114,7 @@ export default function SettingsPage() {
       setShowProfileModal(false);
     } catch (error: any) {
       console.error('Error saving profile:', error);
-      alert(`Error saving profile: ${error.message || 'Unknown error'}`);
+      showAlert('Error', `Error saving profile: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -599,6 +613,14 @@ export default function SettingsPage() {
           </div>
         </div>
       </nav>
+
+      <Alert
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
+      />
     </div>
   );
 }
