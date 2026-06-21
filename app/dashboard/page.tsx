@@ -22,6 +22,19 @@ function HomePageContent() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
 
+  // Alert state
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'error' | 'warning' | 'info' | 'success'>('info');
+
+  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertOpen(true);
+  };
+
   // Modules state
   const [modules, setModules] = useState<any[]>([]);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
@@ -68,7 +81,7 @@ function HomePageContent() {
       localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
     } catch (error) {
       console.error('Error saving recordings:', error);
-      alert('Error saving recording. Storage may be full.');
+      showAlert('Error', 'Error saving recording. Storage may be full.', 'error');
     }
   };
 
@@ -295,7 +308,7 @@ function HomePageContent() {
   const startRecording = async () => {
     // Check if module is selected
     if (!selectedModule) {
-      alert('Please select or create a module before recording a lecture.');
+      showAlert('Module Required', 'Please select or create a module before recording a lecture.', 'warning');
       return;
     }
 
@@ -333,7 +346,7 @@ function HomePageContent() {
       }, 1000);
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      alert('Could not access microphone. Please check permissions.');
+      showAlert('Microphone Error', 'Could not access microphone. Please check permissions.', 'error');
     }
   };
 
@@ -482,7 +495,7 @@ function HomePageContent() {
       loadData();
     } catch (error) {
       console.error('Error deleting recording:', error);
-      alert('Error deleting recording');
+      showAlert('Error', 'Error deleting recording', 'error');
     }
   };
 
@@ -499,14 +512,14 @@ function HomePageContent() {
         .eq('id', id);
 
       if (error) {
-        alert('Error deleting lecture: ' + error.message);
+        showAlert('Error', 'Error deleting lecture: ' + error.message, 'error');
         return;
       }
 
       loadData();
     } catch (error) {
       console.error('Error deleting lecture:', error);
-      alert('Error deleting lecture');
+      showAlert('Error', 'Error deleting lecture', 'error');
     }
   };
 
@@ -521,7 +534,7 @@ function HomePageContent() {
       } else {
         // Fallback: copy to clipboard
         navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard');
+        showAlert('Success', 'Link copied to clipboard', 'success');
       }
     } catch (error) {
       console.error('Error sharing:', error);
@@ -542,14 +555,14 @@ function HomePageContent() {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading recording:', error);
-      alert('Error downloading recording');
+      showAlert('Error', 'Error downloading recording', 'error');
     }
   };
 
   const uploadRecording = async (file: File) => {
     // Check if module is selected
     if (!selectedModule) {
-      alert('Please select or create a module before uploading a lecture.');
+      showAlert('Module Required', 'Please select or create a module before uploading a lecture.', 'warning');
       return;
     }
 
@@ -727,7 +740,7 @@ function HomePageContent() {
         });
 
       if (error) {
-        alert('Error saving profile: ' + error.message);
+        showAlert('Error', 'Error saving profile: ' + error.message, 'error');
         return;
       }
 
@@ -742,10 +755,10 @@ function HomePageContent() {
 
       setProfileModalVisible(false);
       setProfileWidgetVisible(false);
-      alert('Profile saved successfully!');
+      showAlert('Success', 'Profile saved successfully!', 'success');
     } catch (err) {
       console.error(err);
-      alert('Error saving profile. Please try again.');
+      showAlert('Error', 'Error saving profile. Please try again.', 'error');
     }
   };
 
@@ -1373,6 +1386,15 @@ function HomePageContent() {
         isOpen={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
+      />
+
+      {/* Alert Modal */}
+      <Alert
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
       />
     </div>
   );
