@@ -42,7 +42,19 @@ export default function SettingsPage() {
       const session = await getSession();
       if (session?.user) {
         setUser(session.user);
-        setProfile(session.user.user_metadata || {});
+
+        // Load profile from profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile) {
+          setProfile(profile);
+        } else {
+          setProfile(session.user.user_metadata || {});
+        }
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -93,10 +105,27 @@ export default function SettingsPage() {
 
       console.log('Saving profile data:', profileData);
 
-      // Update user metadata (same approach as settings.html)
-      const { data, error } = await supabase.auth.updateUser({
-        data: profileData
-      });
+      // Get current user
+      const session = await getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // Save to profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: session.user.id,
+          full_name: profileData.full_name,
+          university: profileData.university,
+          major: profileData.major,
+          year: profileData.year,
+          study_time: profileData.study_time,
+          learning_style: profileData.learning_style,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error:', error);
@@ -105,10 +134,9 @@ export default function SettingsPage() {
 
       console.log('Profile saved successfully:', data);
 
-      // Update local state with the new metadata
-      if (data.user) {
-        setUser(data.user);
-        setProfile(data.user.user_metadata || {});
+      // Update local state with the new profile data
+      if (data) {
+        setProfile(data);
       }
 
       setShowProfileModal(false);

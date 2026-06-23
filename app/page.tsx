@@ -207,12 +207,12 @@ export default function Home() {
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant Transcripts and lecture notes</h3>
-              <p className="text-slate-600">Free plan includes 20 transcriptions and notes. Record your lectures with AI-powered transcription and notes created for you.</p>
+              <p className="text-slate-600">Free trial includes  AI notes and exam questions. Record/Upload your lectures and get  AI-powered notes and exam questions created for you.</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">3</div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Study with AI</h3>
-              <p className="text-slate-600">Upgrade for unlimited AI-powered learning and get A's in every class. Generate flashcards and Exams.</p>
+              <p className="text-slate-600">Upgrade for unlimited AI-powered learning and get A's in every class.</p>
             </div>
           </div>
         </div>
@@ -224,35 +224,35 @@ export default function Home() {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Start with transcriptions and notes/month and upgrade for unlimited AI study tools.
+              Start with our free trial,Record/upload 3 lectures on us. Break it, pass your test, tell uswhat sucked.After 15 July: R299 / semester.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Free Plan */}
+            {/* Free trial */}
             <div className="relative bg-slate-50 rounded-3xl border border-slate-200 p-8 md:p-10">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4">
-                Most students start here
+                Free Trial
               </div>
-              <h3 className="text-2xl font-semibold text-slate-900 mb-1">Free Plan</h3>
+              <h3 className="text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
               <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
-              <p className="text-4xl font-bold text-slate-900 mb-6">$0<span className="text-base font-medium text-slate-500 ml-1">/ forever</span></p>
+              <p className="text-4xl font-bold text-slate-900 mb-6">$0<span className="text-base font-medium text-slate-500 ml-1">/ Until 15 July</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>20 transcriptions/month</strong> - Record/upload 20 lectures a month</span>
+                  <span><strong>Record/Upload 3lectures</strong> - upload: Audio/Video up to 2 hours per file </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>No AI flashcards</strong> - Upgrade for intelligent study cards</span>
+                  <span><strong>No "Regenerate" button</strong> - Upgrade</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>No Exams</strong> - Upgrade to test yourself on your lectures</span>
+                  <span><strong>No "Add personal note"</strong> - Upgrade to add your personal touch</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>20 AI notes/month</strong> - Get lecture insights on your toughest classes</span>
+                  <span><strong>AI notes + 5 questions per lecture</strong> - Get lecture insights on your toughest classes</span>
                 </li>
                 
                 <li className="flex items-start">
@@ -265,7 +265,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">Email support: 48hr</span>
+                  <span className="text-slate-400">No Email support</span>
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
@@ -283,10 +283,10 @@ export default function Home() {
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold mb-4">
                 Unlimited AI Power
               </div>
-              <h3 className="text-2xl font-semibold text-white mb-1">Premium Plan</h3>
+              <h3 className="text-2xl font-semibold text-white mb-1">Semester Pack</h3>
               <p className="text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-4xl font-bold text-white mb-2">$9<span className="text-base font-medium text-white/80 ml-1">/ month</span></p>
-              <p className="text-sm text-white/80 mb-6">Cancel anytime • No setup fees</p>
+              <p className="text-4xl font-bold text-white mb-2">R299/per module<span className="text-base font-medium text-white/80 ml-1">/ month</span></p>
+              <p className="text-sm text-white/80 mb-6">Valid whole semester</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
@@ -294,15 +294,15 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>200 AI flashcards/month</strong> - Unlimited study cards</span>
+                  <span><strong>10 exam question</strong> - Unlimited study cards</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>100 Exam generations/month</strong> - Unlimited contextual questions</span>
+                  <span><strong>8 lecture recordings/uploads  per month</strong> - for one module per semester</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>100 AI notes/month</strong> - Unlimited lecture insights</span>
+                  <span><strong>5 AI notes per lecture</strong> - Unlimited lecture insights</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
