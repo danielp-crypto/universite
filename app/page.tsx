@@ -236,11 +236,11 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
               <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
-              <p className="text-4xl font-bold text-slate-900 mb-6">$0<span className="text-base font-medium text-slate-500 ml-1">/ Until 15 July</span></p>
+              <p className="text-4xl font-bold text-slate-900 mb-6">R0<span className="text-base font-medium text-slate-500 ml-1">/ Valid for 7 days</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload 3lectures</strong> - upload: Audio/Video up to 2 hours per file </span>
+                  <span><strong>Record/Upload 3 lectures</strong> - upload: Audio/Video up to 2 hours per file </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -252,12 +252,19 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>AI notes + 5 questions per lecture</strong> - Get lecture insights on your toughest classes</span>
+                  <span><strong>AI notes + 5 questions per lecture</strong> - Get lecture insights on your toughest modules</span>
                 </li>
-                
+                <li className="flex items-start">
+                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
+                  <span><strong>.ac.za email required</strong> - Give us feedback</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
+                  <span><strong>No lecture Recordings/Uploads stored</strong> - Deleted post-transcription</span>
+                </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">limited AI features</span>
+                  <span className="text-slate-400">AI chat</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-slate-400">•</span>
@@ -265,7 +272,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">No Email support</span>
+                  <span className="text-slate-400">Email support</span>
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
@@ -283,9 +290,9 @@ export default function Home() {
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold mb-4">
                 Unlimited AI Power
               </div>
-              <h3 className="text-2xl font-semibold text-white mb-1">Semester Pack</h3>
+              <h3 className="text-2xl font-semibold text-white mb-1">Module Pass</h3>
               <p className="text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-4xl font-bold text-white mb-2">R299/per module<span className="text-base font-medium text-white/80 ml-1">/ month</span></p>
+              <p className="text-4xl font-bold text-white mb-2">R299<span className="text-base font-medium text-white/80 ml-1">/ module</span></p>
               <p className="text-sm text-white/80 mb-6">Valid whole semester</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
@@ -294,19 +301,35 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>10 exam question</strong> - Unlimited study cards</span>
+                  <span><strong>10 AI exam questions</strong> - Quiz yourself</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>8 lecture recordings/uploads  per month</strong> - for one module per semester</span>
+                  <span><strong>8 lecture credits</strong> - for one module</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>5 AI notes per lecture</strong> - Unlimited lecture insights</span>
+                  <span><strong>AI notes per lecture</strong> - Unlimited lecture insights</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>1000 AI requests/month</strong> - Unlimited AI usage</span>
+                  <span><strong>1000 AI requests/month</strong> - Unlimited AI usage for that module only</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mt-1 mr-2 text-emerald-400">✓</span>
+                  <span><strong>Exam Mode</strong> - 1 Full mock paper + memo for the module</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mt-1 mr-2 text-emerald-400">✓</span>
+                  <span><strong>Study Plan</strong> - "Exam is 18 Oct, plan my FAC1502"</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mt-1 mr-2 text-emerald-400">✓</span>
+                  <span><strong>PDF export</strong> - Export everything to view offline</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mt-1 mr-2 text-emerald-400">✓</span>
+                  <span><strong>No lecture Recordings/Uploads stored</strong> - Deleted post-transcription</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
@@ -338,13 +361,13 @@ export default function Home() {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">About Universite</h2>
               <p className="text-lg text-slate-600 mb-4">
-                Universite is an AI-powered learning platform designed specifically for university/college students. We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
+                Universite is an app that helps university/college students ace their exams. We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
               </p>
               <p className="text-lg text-slate-600 mb-4">
                 Our mission is to make education more accessible and efficient by leveraging cutting-edge AI technology. With Universite, you can focus on learning rather than worrying about note-taking or finding study materials.
               </p>
               <p className="text-lg text-slate-600">
-                Join thousands of students who are already using Universite to excel in their studies and achieve their academic goals.
+                Create a Universite account to excel in your studies and achieve your academic goals.
               </p>
             </div>
             <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl p-8">
