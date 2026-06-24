@@ -105,12 +105,6 @@ export default function SettingsPage() {
 
       console.log('Saving profile data:', profileData);
 
-      // Get current user
-      const session = await getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
       // Save to profiles table
       const { data, error } = await supabase
         .from('profiles')
