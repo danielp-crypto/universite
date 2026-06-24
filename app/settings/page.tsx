@@ -106,13 +106,14 @@ export default function SettingsPage() {
       console.log('Saving profile data:', profileData);
 
       // Save to profiles table
+      const fullName = profileData.full_name?.toString() || '';
       const { data, error } = await supabase
         .from('profiles')
         .upsert({
           user_id: session.user.id,
-          full_name: profileData.full_name,
-          first_name: profileData.full_name?.split(' ')[0] || '',
-          last_name: profileData.full_name?.split(' ').slice(1).join(' ') || '',
+          full_name: fullName,
+          first_name: fullName.split(' ')[0] || '',
+          last_name: fullName.split(' ').slice(1).join(' ') || '',
           university: profileData.university,
           major: profileData.major,
           year: profileData.year,
