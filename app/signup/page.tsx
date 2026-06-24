@@ -117,13 +117,13 @@ function SignupPageContent() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
+      <main className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
         <div className="w-full max-w-md">
           {/* Signup Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10 border border-slate-200 animate-fade-in">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">Get Started Free</h1>
-              <p className="text-slate-600">Join thousands of students transforming their learning</p>
+          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 md:p-10 border border-slate-200 animate-fade-in">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Get Started Free</h1>
+              <p className="text-sm sm:text-base text-slate-600">Join thousands of students transforming their learning</p>
             </div>
 
             {/* Social Signup */}

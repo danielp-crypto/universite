@@ -115,18 +115,18 @@ function LoginPageContent() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
+      <main className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
         <div className="w-full max-w-md">
           {/* Login Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10 border border-slate-200 animate-fade-in">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 md:p-10 border border-slate-200 animate-fade-in">
+            <div className="text-center mb-6 sm:mb-8">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h1>
-              <p className="text-slate-600">Sign in to continue your learning journey</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Welcome Back</h1>
+              <p className="text-sm sm:text-base text-slate-600">Sign in to continue your learning journey</p>
             </div>
 
             {/* Social Login */}

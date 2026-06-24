@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     // Smooth scrolling for anchor links
     const handleAnchorClick = (e: MouseEvent) => {
@@ -48,12 +50,37 @@ export default function Home() {
               <a href="#pricing" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">Pricing</a>
               <a href="#about" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">About</a>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               <Link href="/login" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Login</Link>
               <Link href="/signup" className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all">Sign Up</Link>
             </div>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-slate-200 px-4 py-4 space-y-3">
+            <a href="#features" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="#how-it-works" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
+            <a href="#pricing" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+            <a href="#about" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>About</a>
+            <div className="pt-3 border-t border-slate-200 space-y-3">
+              <Link href="/login" className="block text-slate-600 hover:text-indigo-600 font-medium transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+              <Link href="/signup" className="block px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all text-center" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -61,10 +88,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-in">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
-              <p className="text-xl text-slate-600 mb-8 leading-relaxed">
+              <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
                 Start free with 20 transcriptions and lecture notes/month, then upgrade for unlimited transcriptions and AI-powered study tools when you're ready.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -77,11 +104,11 @@ export default function Home() {
               </div>
               <p className="mt-6 text-sm text-slate-500">Free plan: 20 transcriptions and lecture notes • Premium $9/month: unlimited with AI study tools</p>
             </div>
-            
-            <div className="animate-fade-in animate-float">
+
+            <div className="animate-fade-in animate-float order-first md:order-last">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-3xl transform rotate-6 opacity-20"></div>
-                <div className="relative bg-white rounded-3xl shadow-2xl p-8 border border-slate-200">
+                <div className="relative bg-white rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 border border-slate-200">
                   <div className="flex items-center mb-4">
                     <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
                     <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
@@ -115,13 +142,13 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
+      <section id="features" className="py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Powerful Features for Your Studies</h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">Everything you need to excel in your courses</p>
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Powerful Features for Your Studies</h2>
+            <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">Everything you need to excel in your courses</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {/* Feature 1 */}
             <div className="bg-slate-50 rounded-2xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
@@ -192,13 +219,13 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
+      <section id="how-it-works" className="py-16 md:py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">How It Works</h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">Get started in minutes and transform your study routine</p>
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">How It Works</h2>
+            <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">Get started in minutes and transform your study routine</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">1</div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Record/Upload Your Lecture</h3>
@@ -219,24 +246,24 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-white border-t border-slate-100">
+      <section id="pricing" className="py-16 md:py-20 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+          <div className="text-center mb-10 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
+            <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
               Start with our free trial,Record/upload 3 lectures on us. Break it, pass your test, tell uswhat sucked.After 15 July: R299 / semester.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
             {/* Free trial */}
-            <div className="relative bg-slate-50 rounded-3xl border border-slate-200 p-8 md:p-10">
+            <div className="relative bg-slate-50 rounded-3xl border border-slate-200 p-6 sm:p-8 md:p-10">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4">
                 Free Trial
               </div>
-              <h3 className="text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
-              <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
-              <p className="text-4xl font-bold text-slate-900 mb-6">R0<span className="text-base font-medium text-slate-500 ml-1">/ Valid for 7 days</span></p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
+              <p className="text-xs sm:text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
+              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ Valid for 7 days</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -275,24 +302,24 @@ export default function Home() {
                   <span className="text-slate-400">Email support</span>
                 </li>
               </ul>
-              <Link href="/signup" className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
+              <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
                 Get Started Free
               </Link>
             </div>
 
             {/* Premium Plan */}
-            <div className="relative bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-8 md:p-10 text-white">
+            <div className="relative bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-6 sm:p-8 md:p-10 text-white">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 text-emerald-900 text-sm font-semibold shadow-lg">
+                <div className="inline-flex items-center px-3 sm:px-4 py-1 sm:py-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 text-emerald-900 text-xs sm:text-sm font-semibold shadow-lg">
                   🔥 Most Popular
                 </div>
               </div>
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold mb-4">
                 Unlimited AI Power
               </div>
-              <h3 className="text-2xl font-semibold text-white mb-1">Module Pass</h3>
-              <p className="text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-4xl font-bold text-white mb-2">R299<span className="text-base font-medium text-white/80 ml-1">/ module</span></p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Module Pass</h3>
+              <p className="text-xs sm:text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
+              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R299<span className="text-sm sm:text-base font-medium text-white/80 ml-1">/ module</span></p>
               <p className="text-sm text-white/80 mb-6">Valid whole semester</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
@@ -340,7 +367,7 @@ export default function Home() {
                   <span><strong>Priority support</strong> - Get help when you need it</span>
                 </li>
               </ul>
-              <Link href="/signup" className="w-full inline-flex justify-center items-center px-6 py-3 border border-white/30 text-base font-medium rounded-lg text-white hover:bg-white/10 transition-all text-center font-semibold">
+              <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-white/30 text-sm sm:text-base font-medium rounded-lg text-white hover:bg-white/10 transition-all text-center font-semibold">
                 Upgrade to Premium
               </Link>
             </div>
@@ -355,33 +382,33 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-20 bg-white">
+      <section id="about" className="py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">About Universite</h2>
-              <p className="text-lg text-slate-600 mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-6">About Universite</h2>
+              <p className="text-base sm:text-lg text-slate-600 mb-4">
                 Universite is an app that helps university/college students ace their exams. We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
               </p>
-              <p className="text-lg text-slate-600 mb-4">
+              <p className="text-base sm:text-lg text-slate-600 mb-4">
                 Our mission is to make education more accessible and efficient by leveraging cutting-edge AI technology. With Universite, you can focus on learning rather than worrying about note-taking or finding study materials.
               </p>
-              <p className="text-lg text-slate-600">
+              <p className="text-base sm:text-lg text-slate-600">
                 Create a Universite account to excel in your studies and achieve your academic goals.
               </p>
             </div>
-            <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl p-8">
+            <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl p-6 sm:p-8">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <div className="text-4xl font-bold text-indigo-600 mb-2">37.5k</div>
+                  <div className="text-3xl sm:text-4xl font-bold text-indigo-600 mb-2">37.5k</div>
                   <div className="text-slate-600 text-xs md:text-sm">Lecture Transcription mins processed</div>
                 </div>
                 <div>
-                  <div className="text-4xl font-bold text-indigo-600 mb-2">1000</div>
+                  <div className="text-3xl sm:text-4xl font-bold text-indigo-600 mb-2">1000</div>
                   <div className="text-slate-600 text-xs md:text-sm">Lectures Recorded</div>
                 </div>
                 <div>
-                  <div className="text-4xl font-bold text-indigo-600 mb-2">99%</div>
+                  <div className="text-3xl sm:text-4xl font-bold text-indigo-600 mb-2">99%</div>
                   <div className="text-slate-600 text-xs md:text-sm">AI Accuracy Rate</div>
                 </div>
               </div>
@@ -391,15 +418,15 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-indigo-600 to-purple-600">
+      <section className="py-16 md:py-20 bg-gradient-to-r from-indigo-600 to-purple-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to Transform Your Learning?</h2>
-          <p className="text-xl text-indigo-100 mb-8">Join thousands of students already using Universite to excel in their studies.</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6">Ready to Transform Your Learning?</h2>
+          <p className="text-lg sm:text-xl text-indigo-100 mb-8">Join thousands of students already using Universite to excel in their studies.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup" className="px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105">
+            <Link href="/signup" className="px-6 sm:px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold text-base sm:text-lg hover:shadow-xl transition-all transform hover:scale-105">
               Get Started Free
             </Link>
-            <Link href="/login" className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-semibold text-lg hover:bg-white/10 transition-all">
+            <Link href="/login" className="px-6 sm:px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-white/10 transition-all">
               Sign In
             </Link>
           </div>
@@ -407,9 +434,9 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300 py-12">
+      <footer className="bg-slate-900 text-slate-300 py-10 md:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
             <div>
               <div className="flex items-center mb-4">
                 <img src="/assets/images/icon-white-removebg.png" alt="Universite logo" className="h-8 w-8 mr-2" />
