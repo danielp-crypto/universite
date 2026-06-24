@@ -47,7 +47,7 @@ export default function SettingsPage() {
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('user_id', session.user.id)
           .single();
 
         if (profile) {
@@ -109,8 +109,10 @@ export default function SettingsPage() {
       const { data, error } = await supabase
         .from('profiles')
         .upsert({
-          id: session.user.id,
+          user_id: session.user.id,
           full_name: profileData.full_name,
+          first_name: profileData.full_name?.split(' ')[0] || '',
+          last_name: profileData.full_name?.split(' ').slice(1).join(' ') || '',
           university: profileData.university,
           major: profileData.major,
           year: profileData.year,

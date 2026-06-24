@@ -272,7 +272,7 @@ function HomePageContent() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('university, major, year, study_time, learning_style, full_name')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single();
 
       setUserProfile(profile);
@@ -726,11 +726,14 @@ function HomePageContent() {
       if (!session) return;
 
       const userId = session.user.id;
+      const fullName = formData.get('full_name');
       const { error } = await supabase
         .from('profiles')
         .upsert({
-          id: userId,
-          full_name: formData.get('full_name'),
+          user_id: userId,
+          full_name: fullName,
+          first_name: fullName?.toString().split(' ')[0] || '',
+          last_name: fullName?.toString().split(' ').slice(1).join(' ') || '',
           university: formData.get('university'),
           major: formData.get('major'),
           year: formData.get('year'),
