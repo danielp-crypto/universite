@@ -1,7 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
+import ffmpeg from 'fluent-ffmpeg';
+import { promisify } from 'util';
+import { writeFile, unlink } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen';
+
+const execAsync = promisify(require('child_process').exec);
+
+async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Promise<Buffer> {
+  const tempDir = tmpdir();
+  const videoPath = join(tempDir, `input_${Date.now()}.${mimeType.split('/')[1]}`);
+  const audioPath = join(tempDir, `output_${Date.now()}.wav`);
+
+  try {
+    // Write video file to disk
+    await writeFile(videoPath, videoBuffer);
+
+    // Extract audio using ffmpeg
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(videoPath)
+        .toFormat('wav')
+        .audioChannels(1)
+        .audioFrequency(16000)
+        .on('end', () => resolve())
+        .on('error', (err) => reject(err))
+        .save(audioPath);
+    });
+
+    // Read the extracted audio
+    const fs = require('fs');
+    const audioBuffer = fs.readFileSync(audioPath);
+
+    // Clean up temporary files
+    await unlink(videoPath).catch(() => {});
+    await unlink(audioPath).catch(() => {});
+
+    return audioBuffer;
+  } catch (error) {
+    // Clean up on error
+    try {
+      await unlink(videoPath).catch(() => {});
+      await unlink(audioPath).catch(() => {});
+    } catch (cleanupError) {
+      console.error('Cleanup error:', cleanupError);
+    }
+    throw error;
+  }
+}
 
 async function transcribeAudio(audioContent: Buffer, contentType: string): Promise<string> {
   if (!DEEPGRAM_API_KEY) {
@@ -78,24 +126,48 @@ export async function POST(request: NextRequest) {
     // For now, we'll trust the token since it's coming from the authenticated client
     // If needed, we can add JWT verification here
 
-    // Get audio file from request
+    // Get audio/video file from request
     const formData = await request.formData();
-    const audioFile = formData.get('audio') as File;
-    
-    console.log('Audio file received:', audioFile ? audioFile.name : 'null', 'size:', audioFile?.size);
-    
-    if (!audioFile) {
+    const mediaFile = formData.get('audio') as File;
+
+    console.log('Media file received:', mediaFile ? mediaFile.name : 'null', 'size:', mediaFile?.size, 'type:', mediaFile?.type);
+
+    if (!mediaFile) {
       return NextResponse.json(
         { success: false, error: 'missing_audio' },
         { status: 400 }
       );
     }
 
-    // Read audio content
-    const audioContent = Buffer.from(await audioFile.arrayBuffer());
-    
+    let audioContent: Buffer;
+    let contentType: string;
+
+    // Check if file is video
+    const videoTypes = ['video/mp4', 'video/webm', 'video/x-matroska', 'video/quicktime'];
+    const isVideo = videoTypes.includes(mediaFile.type) || mediaFile.name.match(/\.(mp4|webm|mkv|mov)$/i);
+
+    if (isVideo) {
+      console.log('Video file detected, extracting audio...');
+      try {
+        const videoBuffer = Buffer.from(await mediaFile.arrayBuffer());
+        audioContent = await extractAudioFromVideo(videoBuffer, mediaFile.type);
+        contentType = 'audio/wav';
+        console.log('Audio extraction completed');
+      } catch (error) {
+        console.error('Audio extraction failed:', error);
+        return NextResponse.json(
+          { success: false, error: 'audio_extraction_failed', details: error instanceof Error ? error.message : String(error) },
+          { status: 500 }
+        );
+      }
+    } else {
+      // Audio file - use directly
+      audioContent = Buffer.from(await mediaFile.arrayBuffer());
+      contentType = mediaFile.type || 'audio/wav';
+    }
+
     console.log('Audio content length:', audioContent.length);
-    
+
     if (audioContent.length === 0) {
       return NextResponse.json(
         { success: false, error: 'empty_audio' },
@@ -103,7 +175,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contentType = audioFile.type || 'audio/wav';
     console.log('Content type:', contentType);
 
     // Transcribe audio

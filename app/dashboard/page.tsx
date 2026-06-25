@@ -745,7 +745,7 @@ function HomePageContent() {
   const handleFileUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'audio/*';
+    input.accept = 'audio/*,video/*,.mp4,.webm,.mkv,.mov';
     input.onchange = async (e: any) => {
       const file = e.target.files[0];
       if (file) {
@@ -768,14 +768,17 @@ function HomePageContent() {
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      if (file.type.startsWith('audio/')) {
+      const isAudio = file.type.startsWith('audio/');
+      const isVideo = file.type.startsWith('video/') || file.name.match(/\.(mp4|webm|mkv|mov)$/i);
+
+      if (isAudio || isVideo) {
         await uploadRecording(file);
       } else {
-        setProcessingError('Please upload an audio file');
+        setProcessingError('Please upload an audio or video file');
       }
     }
   };
@@ -904,7 +907,7 @@ function HomePageContent() {
                   <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  <span className="font-semibold text-sm">{isDragging ? 'Drop audio file here' : 'Upload Audio'}</span>
+                  <span className="font-semibold text-sm">{isDragging ? 'Drop audio/video file here' : 'Upload Audio/Video'}</span>
                 </div>
               </div>
             </div>
