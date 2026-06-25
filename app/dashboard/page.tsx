@@ -874,17 +874,6 @@ function HomePageContent() {
                   <option key={module.id} value={module.id}>{module.name}</option>
                 ))}
               </select>
-              <button
-                onClick={() => {
-                  const name = prompt('Enter module name:');
-                  if (name) {
-                    createModule(name);
-                  }
-                }}
-                className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
-              >
-                + New
-              </button>
             </div>
           </div>
 
