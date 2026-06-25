@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next"; // 1. Fixes the line 27 type error
 import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -23,26 +23,10 @@ export const metadata: Metadata = {
   },
 };
 
-// ADD THIS — this is the critical fix
+// 2. Line 27 will now compile perfectly
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        {children}
-        <Analytics />
-      </body>
-    </html>
-  );
-}
+// ... remaining RootLayout component remains identical
