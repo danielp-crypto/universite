@@ -38,6 +38,7 @@ function HomePageContent() {
   // Modules state
   const [modules, setModules] = useState<any[]>([]);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [userModule, setUserModule] = useState<any>(null);
 
   // Processing states
   const [processingSteps, setProcessingSteps] = useState<string[]>([]);
@@ -157,6 +158,10 @@ function HomePageContent() {
       if (response.ok) {
         const modulesData = await response.json();
         setModules(modulesData || []);
+        // Set the first module as user's module
+        if (modulesData && modulesData.length > 0) {
+          setUserModule(modulesData[0]);
+        }
       }
     } catch (error) {
       console.error('Error loading modules:', error);
@@ -470,12 +475,34 @@ function HomePageContent() {
         return;
       }
 
+      const lectureData = await lectureResponse.json();
+
       setCurrentStep(3);
       setProcessingText(steps[3]);
 
+      // Deduct credit from module
+      if (selectedModule) {
+        const { error: creditError } = await supabase
+          .from('modules')
+          .update({ credits_used: (userModule?.credits_used || 0) + 1 })
+          .eq('id', selectedModule);
+
+        if (!creditError) {
+          // Record credit usage
+          await supabase.from('credits').insert({
+            user_id: session.user.id,
+            module_id: selectedModule,
+            lecture_id: lectureData.id,
+            used_for: 'recording'
+          });
+          // Reload modules to update credit display
+          loadModules();
+        }
+      }
+
       // Discard audio blob - don't save to localStorage to save space
       // The lecture is now stored in Supabase with transcript and summary
-      
+
       updateStreak();
 
       setRecordingState('idle');
@@ -662,8 +689,30 @@ function HomePageContent() {
         return;
       }
 
+      const lectureData = await lectureResponse.json();
+
       setCurrentStep(3);
       setProcessingText(steps[3]);
+
+      // Deduct credit from module
+      if (selectedModule) {
+        const { error: creditError } = await supabase
+          .from('modules')
+          .update({ credits_used: (userModule?.credits_used || 0) + 1 })
+          .eq('id', selectedModule);
+
+        if (!creditError) {
+          // Record credit usage
+          await supabase.from('credits').insert({
+            user_id: session.user.id,
+            module_id: selectedModule,
+            lecture_id: lectureData.id,
+            used_for: 'upload'
+          });
+          // Reload modules to update credit display
+          loadModules();
+        }
+      }
 
       // Update streak regardless of Supabase upload success
       updateStreak();
@@ -1031,6 +1080,32 @@ function HomePageContent() {
               </div>
             </div>
           </div>
+
+          {/* Credits Display */}
+          {userModule && (
+            <div className="mb-6">
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-800 mb-1">{userModule.name}</h3>
+                    <p className="text-xs text-slate-600">Credits Used</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-indigo-600">
+                      {userModule.credits_used}/{userModule.credits_allocated}
+                    </div>
+                    <div className="text-xs text-slate-600">Credits</div>
+                  </div>
+                </div>
+                <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                    style={{ width: `${(userModule.credits_used / userModule.credits_allocated) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Study Tools Quick Links */}
           <div>

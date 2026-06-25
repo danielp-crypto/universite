@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, color } = body;
+    const { name, description, color, credits_allocated, credits_used } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -84,7 +84,9 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         name,
         description: description || null,
-        color: color || '#6366f1'
+        color: color || '#6366f1',
+        credits_allocated: credits_allocated || 2,
+        credits_used: credits_used || 0
       })
       .select()
       .single();
