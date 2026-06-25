@@ -92,7 +92,7 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start free with 20 transcriptions and lecture notes/month, then upgrade for unlimited transcriptions and AI-powered study tools when you're ready.
+                Start with our free trial, Get 2 lecture credits on us. Break it, pass your test, tell us what sucked.After 15 July: R299 / semester FOR 6 credits.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/signup" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
@@ -251,7 +251,7 @@ export default function Home() {
           <div className="text-center mb-10 md:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-              Start with our free trial,Record/upload 3 lectures on us. Break it, pass your test, tell uswhat sucked.After 15 July: R299 / semester.
+              Start with our free trial, Get 2 lecture credits on us. Break it, pass your test, tell us what sucked.After 15 July: R299 / semester FOR 6 credits.
             </p>
           </div>
 
