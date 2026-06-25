@@ -102,7 +102,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free plan: 20 transcriptions and lecture notes • Premium $9/month: unlimited with AI study tools</p>
+              <p className="mt-6 text-sm text-slate-500">Free plan: Get 2 lecture credits for your worst module </p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
