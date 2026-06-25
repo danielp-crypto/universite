@@ -23,6 +23,12 @@ export const metadata: Metadata = {
   },
 };
 
+// ADD THIS — this is the critical fix
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
