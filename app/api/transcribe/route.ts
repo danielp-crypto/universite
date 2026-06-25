@@ -1,38 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ffmpeg from 'fluent-ffmpeg';
+import { exec } from 'child_process';
 import { promisify } from 'util';
-import { writeFile, unlink } from 'fs/promises';
+import { writeFile, unlink, readFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen';
 
-const execAsync = promisify(require('child_process').exec);
+const execAsync = promisify(exec);
 
 async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Promise<Buffer> {
   const tempDir = tmpdir();
-  const videoPath = join(tempDir, `input_${Date.now()}.${mimeType.split('/')[1]}`);
-  const audioPath = join(tempDir, `output_${Date.now()}.wav`);
+  const timestamp = Date.now();
+  const videoPath = join(tempDir, `input_${timestamp}.${mimeType.split('/')[1]}`);
+  const audioPath = join(tempDir, `output_${timestamp}.wav`);
 
   try {
     // Write video file to disk
     await writeFile(videoPath, videoBuffer);
 
-    // Extract audio using ffmpeg
-    await new Promise<void>((resolve, reject) => {
-      ffmpeg(videoPath)
-        .toFormat('wav')
-        .audioChannels(1)
-        .audioFrequency(16000)
-        .on('end', () => resolve())
-        .on('error', (err) => reject(err))
-        .save(audioPath);
-    });
+    // Extract audio using ffmpeg directly
+    const command = `ffmpeg -i "${videoPath}" -vn -acodec pcm_s16le -ar 16000 -ac 1 "${audioPath}" -y`;
+    await execAsync(command);
 
     // Read the extracted audio
-    const fs = require('fs');
-    const audioBuffer = fs.readFileSync(audioPath);
+    const audioBuffer = await readFile(audioPath);
 
     // Clean up temporary files
     await unlink(videoPath).catch(() => {});
