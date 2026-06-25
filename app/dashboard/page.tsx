@@ -317,6 +317,14 @@ function HomePageContent() {
       return;
     }
 
+    // Check if user has credits available
+    if (!userModule || userModule.credits_used >= userModule.credits_allocated) {
+      showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
+      setUpgradeModalOpen(true);
+      setUpgradeFeature('Record lectures');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setAudioStream(stream);
@@ -590,6 +598,14 @@ function HomePageContent() {
     // Check if module is selected
     if (!selectedModule) {
       showAlert('Module Required', 'Please select or create a module before uploading a lecture.', 'warning');
+      return;
+    }
+
+    // Check if user has credits available
+    if (!userModule || userModule.credits_used >= userModule.credits_allocated) {
+      showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
+      setUpgradeModalOpen(true);
+      setUpgradeFeature('Upload lectures');
       return;
     }
 
