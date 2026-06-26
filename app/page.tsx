@@ -96,13 +96,13 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/signup" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
-                  Get Started Free
+                  Get Started
                 </Link>
                 <a href="#how-it-works" className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold text-lg hover:border-indigo-300 transition-all text-center">
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free plan: Get 2 lecture credits for your worst module </p>
+              <p className="mt-6 text-sm text-slate-500">Module Pass: Get AI notes, exam questions, and a tutor 24/7 to help you pass your worst module </p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -157,10 +157,21 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Record/Upload & Transcribe Lectures</h3>
-              <p className="text-slate-600">Record your lectures or upload audio files. Get accurate transcripts instantly with AI-powered speech recognition.</p>
+              <p className="text-slate-600">Record your lectures or upload audio/ video files.</p>
             </div>
 
-            {/* Feature 2 */}
+             {/* Feature 2 */}
+            <div className="bg-slate-50 rounded-2xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Auto-Generated Notes and Exam Questions</h3>
+              <p className="text-slate-600">Get comprehensive notes and exam questions automatically generated from your lectures.</p>
+            </div>
+
+            {/* Feature 3 */}
             <div className="bg-slate-50 rounded-2xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,40 +182,18 @@ export default function Home() {
               <p className="text-slate-600">Ask questions about your lectures and get instant, personalized explanations tailored to your learning style.</p>
             </div>
 
-            {/* Feature 3 */}
+            {/* Feature 4 */}
             <div className="bg-slate-50 rounded-2xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Smart Flashcards</h3>
-              <p className="text-slate-600">Generate flashcards from your lecture content. Study key concepts efficiently with spaced repetition.</p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="bg-slate-50 rounded-2xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Auto-Generated Notes</h3>
-              <p className="text-slate-600">Get comprehensive notes automatically generated from your lectures. Organize and search through all your study materials.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Exam Mode</h3>
+              <p className="text-slate-600">Analyze how ready you are for your exam.Take a mock exam that simulates real exam conditions to test yourself and improve before your real test.</p>
             </div>
 
             {/* Feature 5 */}
-            <div className="bg-slate-50 rounded-2xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Smart Search</h3>
-              <p className="text-slate-600">Search across all your lectures, notes, and transcripts. Find exactly what you're looking for in seconds.</p>
-            </div>
-
-            {/* Feature 6 */}
             <div className="bg-slate-50 rounded-2xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,18 +217,23 @@ export default function Home() {
           <div className="grid sm:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">1</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Record/Upload Your Lecture</h3>
-              <p className="text-slate-600">Use our app to record lectures in real-time or upload existing audio files. Works on any device.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Select your module and Record/Upload Your Lecture</h3>
+              <p className="text-slate-600">Use our app to record lectures in real-time or upload existing audio and video files. Works on any device.</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant Transcripts and lecture notes</h3>
-              <p className="text-slate-600">Free trial includes  AI notes and exam questions. Record/Upload your lectures and get  AI-powered notes and exam questions created for you.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant notes and study questions.</h3>
+              <p className="text-slate-600">Each credit includes AI notes and exam questions. Our AI Saves you time by extracting key concepts from your lecture and taking notes as well as appropriate exam questions so that you only focus on learning.</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">3</div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Study with AI</h3>
-              <p className="text-slate-600">Upgrade for unlimited AI-powered learning and get A's in every class.</p>
+              <p className="text-slate-600">Ask our AI questions about every lecture in your module, get clarity on concepts you misunderstand and receive quality tuition personalised to you.</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Take a mock Exam</h3>
+              <p className="text-slate-600">Tell us the date for your exam and we will help you prepare by  curating a mock test before your exam, identify the areas you should work on and help you improve before the big day.</p>
             </div>
           </div>
         </div>
@@ -251,23 +245,23 @@ export default function Home() {
           <div className="text-center mb-10 md:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-              Start with our free trial, Get 2 lecture credits on us. Break it, pass your test, tell us what sucked.After 15 July: R299 / semester FOR 6 credits.
+              Buy credits for 1 module or all of your modules,upgrade when they run out.  
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
-            {/* Free trial */}
+            {/* Module Pass */}
             <div className="relative bg-slate-50 rounded-3xl border border-slate-200 p-6 sm:p-8 md:p-10">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4">
-                Free Trial
+                Module Pass
               </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
-              <p className="text-xs sm:text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
-              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ Valid for 7 days</span></p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Module Pass</h3>
+              <p className="text-xs sm:text-sm uppercase tracking-wide text-slate-500 mb-4">For your hardest module • Perfect for trying Universite</p>
+              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R299<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ once-off</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload 3 lectures</strong> - upload: Audio/Video up to 2 hours per file </span>
+                  <span><strong>6 credits to use on 1 module</strong> - upload: Audio/Video up to 2 hours per file </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -289,25 +283,14 @@ export default function Home() {
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
                   <span><strong>No lecture Recordings/Uploads stored</strong> - Deleted post-transcription</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">AI chat</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">Advanced study analytics</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">Email support</span>
-                </li>
+                
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
-                Get Started Free
+                Module Pass
               </Link>
             </div>
 
-            {/* Premium Plan */}
+            {/* Semester Pass */}
             <div className="relative bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-6 sm:p-8 md:p-10 text-white">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <div className="inline-flex items-center px-3 sm:px-4 py-1 sm:py-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 text-emerald-900 text-xs sm:text-sm font-semibold shadow-lg">
@@ -315,16 +298,16 @@ export default function Home() {
                 </div>
               </div>
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold mb-4">
-                Unlimited AI Power
+                Excel the whole semester
               </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Module Pass</h3>
+              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Semester Pass</h3>
               <p className="text-xs sm:text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R299<span className="text-sm sm:text-base font-medium text-white/80 ml-1">/ module</span></p>
-              <p className="text-sm text-white/80 mb-6">Valid whole semester</p>
+              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R1 200<span className="text-sm sm:text-base font-medium text-white/80 ml-1">for 6 modules</span></p>
+              <p className="text-sm text-white/80 mb-6">6 credits each module</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>Everything in Free</strong>, plus...</span>
+                  <span><strong>Everything in Module Pass</strong>, but for 6 modules</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
@@ -332,7 +315,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>8 lecture credits</strong> - for one module</span>
+                  <span><strong>6 credits</strong> - per module</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
@@ -368,7 +351,7 @@ export default function Home() {
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-white/30 text-sm sm:text-base font-medium rounded-lg text-white hover:bg-white/10 transition-all text-center font-semibold">
-                Upgrade to Premium
+                Semester Pass
               </Link>
             </div>
           </div>
@@ -401,11 +384,11 @@ export default function Home() {
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-3xl sm:text-4xl font-bold text-indigo-600 mb-2">37.5k</div>
-                  <div className="text-slate-600 text-xs md:text-sm">Lecture Transcription mins processed</div>
+                  <div className="text-slate-600 text-xs md:text-sm">Lectures processed</div>
                 </div>
                 <div>
                   <div className="text-3xl sm:text-4xl font-bold text-indigo-600 mb-2">1000</div>
-                  <div className="text-slate-600 text-xs md:text-sm">Lectures Recorded</div>
+                  <div className="text-slate-600 text-xs md:text-sm"></div>Notes and Exam questions generated
                 </div>
                 <div>
                   <div className="text-3xl sm:text-4xl font-bold text-indigo-600 mb-2">99%</div>
@@ -424,7 +407,7 @@ export default function Home() {
           <p className="text-lg sm:text-xl text-indigo-100 mb-8">Join thousands of students already using Universite to excel in their studies.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup" className="px-6 sm:px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold text-base sm:text-lg hover:shadow-xl transition-all transform hover:scale-105">
-              Get Started Free
+              Get Started
             </Link>
             <Link href="/login" className="px-6 sm:px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-white/10 transition-all">
               Sign In
