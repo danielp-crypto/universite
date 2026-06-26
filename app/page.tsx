@@ -92,7 +92,7 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start with our free trial, Get 2 lecture credits on us. Break it, pass your test, tell us what sucked.After 15 July: R299 / semester FOR 6 credits.
+                Use it on your hardest module and ace your exam.Only R299
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/signup" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
@@ -230,11 +230,7 @@ export default function Home() {
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Study with AI</h3>
               <p className="text-slate-600">Ask our AI questions about every lecture in your module, get clarity on concepts you misunderstand and receive quality tuition personalised to you.</p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Take a mock Exam</h3>
-              <p className="text-slate-600">Tell us the date for your exam and we will help you prepare by  curating a mock test before your exam, identify the areas you should work on and help you improve before the big day.</p>
-            </div>
+            
           </div>
         </div>
       </section>
