@@ -644,7 +644,7 @@ function HomePageContent() {
         audio.src = URL.createObjectURL(file);
       });
 
-      // Step 1: Transcribe audio
+      // Step 1: Transcribe audio (server-side will handle video extraction if needed)
       const formData = new FormData();
       formData.append('audio', file, file.name);
       

@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import ffmpeg from 'fluent-ffmpeg';
 import { writeFile, unlink, readFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen';
-
-const execAsync = promisify(exec);
 
 async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Promise<Buffer> {
   const tempDir = tmpdir();
@@ -20,9 +17,17 @@ async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Pro
     // Write video file to disk
     await writeFile(videoPath, videoBuffer);
 
-    // Extract audio using ffmpeg directly
-    const command = `ffmpeg -i "${videoPath}" -vn -acodec pcm_s16le -ar 16000 -ac 1 "${audioPath}" -y`;
-    await execAsync(command);
+    // Extract audio using ffmpeg
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(videoPath)
+        .output(audioPath)
+        .audioCodec('pcm_s16le')
+        .audioFrequency(16000)
+        .audioChannels(1)
+        .on('end', () => resolve())
+        .on('error', (err) => reject(err))
+        .run();
+    });
 
     // Read the extracted audio
     const audioBuffer = await readFile(audioPath);
@@ -44,7 +49,7 @@ async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Pro
   }
 }
 
-async function transcribeAudio(audioContent: Buffer, contentType: string): Promise<string> {
+async function transcribeAudio(audioContent: Uint8Array | Buffer, contentType: string): Promise<string> {
   if (!DEEPGRAM_API_KEY) {
     throw new Error('DEEPGRAM_API_KEY not set');
   }
@@ -68,7 +73,7 @@ async function transcribeAudio(audioContent: Buffer, contentType: string): Promi
           'Authorization': `Token ${DEEPGRAM_API_KEY}`,
           'Content-Type': contentType || 'audio/wav',
         },
-        body: new Blob([new Uint8Array(audioContent)]),
+        body: new Blob([audioContent]),
       });
 
       if (response.ok) {
