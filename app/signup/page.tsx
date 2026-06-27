@@ -505,7 +505,36 @@ function SignupPageContent() {
             </div>
           </div>
 
-         
+          {/* Benefits Section */}
+          <div className="mt-8 bg-white rounded-xl p-6 border border-slate-200">
+            <h3 className="font-semibold text-slate-900 mb-4 text-center">What you get on the Free plan:</h3>
+            <ul className="space-y-3 text-slate-700">
+              <li className="flex items-start">
+                <svg className="w-5 h-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span><strong>1 module with 2 credits</strong> to get started</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="w-5 h-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span><strong>Each credit = 1 lecture recording/upload</strong> with transcript + AI notes</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="w-5 h-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Access to the Universite dashboard</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="w-5 h-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span><strong>Free forever plan</strong> – no bank card required.</span>
+              </li>
+            </ul>
+          </div>
 
           {/* Privacy Note */}
           <div className="mt-6 text-center text-sm text-slate-500">
