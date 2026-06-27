@@ -1,53 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ffmpeg from 'fluent-ffmpeg';
-import { writeFile, unlink, readFile } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen';
-
-async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Promise<Buffer> {
-  const tempDir = tmpdir();
-  const timestamp = Date.now();
-  const videoPath = join(tempDir, `input_${timestamp}.${mimeType.split('/')[1]}`);
-  const audioPath = join(tempDir, `output_${timestamp}.wav`);
-
-  try {
-    // Write video file to disk
-    await writeFile(videoPath, videoBuffer);
-
-    // Extract audio using ffmpeg
-    await new Promise<void>((resolve, reject) => {
-      ffmpeg(videoPath)
-        .output(audioPath)
-        .audioCodec('pcm_s16le')
-        .audioFrequency(16000)
-        .audioChannels(1)
-        .on('end', () => resolve())
-        .on('error', (err) => reject(err))
-        .run();
-    });
-
-    // Read the extracted audio
-    const audioBuffer = await readFile(audioPath);
-
-    // Clean up temporary files
-    await unlink(videoPath).catch(() => {});
-    await unlink(audioPath).catch(() => {});
-
-    return audioBuffer;
-  } catch (error) {
-    // Clean up on error
-    try {
-      await unlink(videoPath).catch(() => {});
-      await unlink(audioPath).catch(() => {});
-    } catch (cleanupError) {
-      console.error('Cleanup error:', cleanupError);
-    }
-    throw error;
-  }
-}
 
 async function transcribeAudio(audioContent: Uint8Array | Buffer, contentType: string): Promise<string> {
   if (!DEEPGRAM_API_KEY) {
@@ -107,7 +61,6 @@ async function transcribeAudio(audioContent: Uint8Array | Buffer, contentType: s
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication - extract token from Authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.error('Transcription failed: No authorization header');
@@ -117,14 +70,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = authHeader.substring(7);
     console.log('Transcription request received, token length:', token.length);
-    
-    // Optionally verify the token with Supabase
-    // For now, we'll trust the token since it's coming from the authenticated client
-    // If needed, we can add JWT verification here
 
-    // Get audio/video file from request
     const formData = await request.formData();
     const mediaFile = formData.get('audio') as File;
 
@@ -137,32 +85,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let audioContent: Buffer;
-    let contentType: string;
-
-    // Check if file is video
-    const videoTypes = ['video/mp4', 'video/webm', 'video/x-matroska', 'video/quicktime'];
-    const isVideo = videoTypes.includes(mediaFile.type) || mediaFile.name.match(/\.(mp4|webm|mkv|mov)$/i);
-
-    if (isVideo) {
-      console.log('Video file detected, extracting audio...');
-      try {
-        const videoBuffer = Buffer.from(await mediaFile.arrayBuffer());
-        audioContent = await extractAudioFromVideo(videoBuffer, mediaFile.type);
-        contentType = 'audio/wav';
-        console.log('Audio extraction completed');
-      } catch (error) {
-        console.error('Audio extraction failed:', error);
-        return NextResponse.json(
-          { success: false, error: 'audio_extraction_failed', details: error instanceof Error ? error.message : String(error) },
-          { status: 500 }
-        );
-      }
-    } else {
-      // Audio file - use directly
-      audioContent = Buffer.from(await mediaFile.arrayBuffer());
-      contentType = mediaFile.type || 'audio/wav';
-    }
+    const audioContent = Buffer.from(await mediaFile.arrayBuffer());
+    const contentType = mediaFile.type || 'audio/wav';
 
     console.log('Audio content length:', audioContent.length);
 
@@ -174,8 +98,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Content type:', contentType);
-
-    // Transcribe audio
     console.log('Starting transcription...');
     const transcript = await transcribeAudio(audioContent, contentType);
     console.log('Transcription completed, length:', transcript.length);
