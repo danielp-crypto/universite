@@ -318,7 +318,7 @@ function HomePageContent() {
     }
 
     // Check if user has credits available
-    if (!userModule || userModule.credits_used >= userModule.credits_allocated) {
+    if (!userModule || (userModule.credits_used || 0) >= (userModule.credits_allocated || 2)) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       setUpgradeModalOpen(true);
       setUpgradeFeature('Record lectures');
@@ -488,24 +488,16 @@ function HomePageContent() {
       setCurrentStep(3);
       setProcessingText(steps[3]);
 
-      // Deduct credit from module
+      // Record credit usage
       if (selectedModule) {
-        const { error: creditError } = await supabase
-          .from('modules')
-          .update({ credits_used: (userModule?.credits_used || 0) + 1 })
-          .eq('id', selectedModule);
-
-        if (!creditError) {
-          // Record credit usage
-          await supabase.from('credits').insert({
-            user_id: session.user.id,
-            module_id: selectedModule,
-            lecture_id: lectureData.id,
-            used_for: 'recording'
-          });
-          // Reload modules to update credit display
-          loadModules();
-        }
+        await supabase.from('credits').insert({
+          user_id: session.user.id,
+          module_id: selectedModule,
+          lecture_id: lectureData.id,
+          used_for: 'recording'
+        });
+        // Reload modules to update credit display
+        loadModules();
       }
 
       // Discard audio blob - don't save to localStorage to save space
@@ -602,7 +594,7 @@ function HomePageContent() {
     }
 
     // Check if user has credits available
-    if (!userModule || userModule.credits_used >= userModule.credits_allocated) {
+    if (!userModule || (userModule.credits_used || 0) >= (userModule.credits_allocated || 2)) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       setUpgradeModalOpen(true);
       setUpgradeFeature('Upload lectures');
@@ -710,24 +702,16 @@ function HomePageContent() {
       setCurrentStep(3);
       setProcessingText(steps[3]);
 
-      // Deduct credit from module
+      // Record credit usage
       if (selectedModule) {
-        const { error: creditError } = await supabase
-          .from('modules')
-          .update({ credits_used: (userModule?.credits_used || 0) + 1 })
-          .eq('id', selectedModule);
-
-        if (!creditError) {
-          // Record credit usage
-          await supabase.from('credits').insert({
-            user_id: session.user.id,
-            module_id: selectedModule,
-            lecture_id: lectureData.id,
-            used_for: 'upload'
-          });
-          // Reload modules to update credit display
-          loadModules();
-        }
+        await supabase.from('credits').insert({
+          user_id: session.user.id,
+          module_id: selectedModule,
+          lecture_id: lectureData.id,
+          used_for: 'upload'
+        });
+        // Reload modules to update credit display
+        loadModules();
       }
 
       // Update streak regardless of Supabase upload success

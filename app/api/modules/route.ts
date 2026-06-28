@@ -21,12 +21,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch modules for the user
+    // Fetch modules for the user with credit counts
     const { data: modules, error } = await supabaseAdmin
       .from('modules')
-      .select('*')
+      .select(`
+        *,
+        credits(count)
+      `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
+
+    // Add credit allocation and usage to each module
+    const modulesWithCredits = (modules || []).map(module => ({
+      ...module,
+      credits_allocated: 2, // Free tier gets 2 credits
+      credits_used: module.credits?.[0]?.count || 0
+    }));
 
     if (error) {
       console.error('Supabase fetch error:', error);
@@ -36,7 +46,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(modules || []);
+    return NextResponse.json(modulesWithCredits || []);
 
   } catch (error) {
     console.error('Get modules error:', error);
@@ -68,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, color, credits_allocated, credits_used } = body;
+    const { name, description, color } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -84,9 +94,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         name,
         description: description || null,
-        color: color || '#6366f1',
-        credits_allocated: credits_allocated || 2,
-        credits_used: credits_used || 0
+        color: color || '#6366f1'
       })
       .select()
       .single();
