@@ -147,12 +147,10 @@ function SignupPageContent() {
         updated_at: new Date().toISOString()
       });
 
-      // Create module with 2 credits
+      // Create module
       const { data: module, error: moduleError } = await supabase.from('modules').insert({
         user_id: session.user.id,
-        name: moduleName,
-        credits_allocated: 2,
-        credits_used: 0
+        name: moduleName
       }).select().single();
 
       if (moduleError) {
