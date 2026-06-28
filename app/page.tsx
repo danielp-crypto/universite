@@ -92,7 +92,7 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start with our free trial, Get 2 lecture credits on us. Break it, pass your test, tell us what sucked.After 15 July: R299 / semester FOR 6 credits.
+                Start with our free trial, Get 4 credits on us to use on your worst module. Break it, pass your test, tell us what sucked. After 15 July: R299 / module FOR 6 credits.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/signup" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
@@ -102,7 +102,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free plan: 20 transcriptions and lecture notes • Premium $9/month: unlimited with AI study tools</p>
+              <p className="mt-6 text-sm text-slate-500">Free plan: lecture notes + exam questions • Module Pass R299/ module, once-off: with unlimited AI Tools</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -156,8 +156,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Record/Upload & Transcribe Lectures</h3>
-              <p className="text-slate-600">Record your lectures or upload audio files. Get accurate transcripts instantly with AI-powered speech recognition.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Record/Upload Lectures</h3>
+              <p className="text-slate-600">Record your lectures or upload audio files. Upload: maximum 2 hours per audio file.</p>
             </div>
 
             {/* Feature 2 */}
@@ -178,8 +178,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Smart Flashcards</h3>
-              <p className="text-slate-600">Generate flashcards from your lecture content. Study key concepts efficiently with spaced repetition.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Exam Mode</h3>
+              <p className="text-slate-600">Take a mock test under exam conditions so you can see how ready you are for the real thing.</p>
             </div>
 
             {/* Feature 4 */}
@@ -189,8 +189,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Auto-Generated Notes</h3>
-              <p className="text-slate-600">Get comprehensive notes automatically generated from your lectures. Organize and search through all your study materials.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Auto-Generated Notes and exam questions</h3>
+              <p className="text-slate-600">Get comprehensive notes ans exam questions automatically generated from your lectures.</p>
             </div>
 
             {/* Feature 5 */}
@@ -233,13 +233,13 @@ export default function Home() {
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant Transcripts and lecture notes</h3>
-              <p className="text-slate-600">Free trial includes  AI notes and exam questions. Record/Upload your lectures and get  AI-powered notes and exam questions created for you.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant AI notes and exam questions.</h3>
+              <p className="text-slate-600">Free trial excludes exam mode. Record/Upload your lectures and get  AI-powered notes and exam questions created for you.</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">3</div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Study with AI</h3>
-              <p className="text-slate-600">Upgrade for unlimited AI-powered learning and get A's in every class.</p>
+              <p className="text-slate-600">Get 24/7 personalised tutoring for all your difficult modules.</p>
             </div>
           </div>
         </div>
@@ -251,7 +251,7 @@ export default function Home() {
           <div className="text-center mb-10 md:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-              Start with our free trial, Get 2 lecture credits on us. Break it, pass your test, tell us what sucked.After 15 July: R299 / semester FOR 6 credits.
+              Start with our free trial, Get 4 lecture credits on us. Break it, pass your test, tell us what sucked. After 15 July: R299 / semester FOR 6 credits.
             </p>
           </div>
 
@@ -267,7 +267,7 @@ export default function Home() {
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload 3 lectures</strong> - upload: Audio/Video up to 2 hours per file </span>
+                  <span><strong>Record/Upload 4 lectures for one module</strong> - upload: Audio/Video up to 2 hours per file </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -279,7 +279,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>AI notes + 5 questions per lecture</strong> - Get lecture insights on your toughest modules</span>
+                  <span><strong>AI notes + 10 questions per lecture</strong> - Get lecture insights on your toughest modules</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -332,7 +332,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>8 lecture credits</strong> - for one module</span>
+                  <span><strong>6 lecture credits</strong> - for one module</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
@@ -388,7 +388,7 @@ export default function Home() {
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-6">About Universite</h2>
               <p className="text-base sm:text-lg text-slate-600 mb-4">
-                Universite is an app that helps university/college students ace their exams. We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
+                Universite is an app that helps university/college students do better in their studies and  ace their exams. We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
               </p>
               <p className="text-base sm:text-lg text-slate-600 mb-4">
                 Our mission is to make education more accessible and efficient by leveraging cutting-edge AI technology. With Universite, you can focus on learning rather than worrying about note-taking or finding study materials.
