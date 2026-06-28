@@ -195,6 +195,26 @@ function SignupPageContent() {
         return;
       }
 
+      // Create 2 free credits for the module
+      const { error: creditsError } = await supabase.from('credits').insert([
+        {
+          user_id: session.user.id,
+          module_id: module.id,
+          used_for: 'free_tier_credit',
+          used_at: new Date().toISOString()
+        },
+        {
+          user_id: session.user.id,
+          module_id: module.id,
+          used_for: 'free_tier_credit',
+          used_at: new Date().toISOString()
+        }
+      ]);
+
+      if (creditsError) {
+        console.error('Failed to create credits:', creditsError);
+      }
+
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Error completing signup:', error);
