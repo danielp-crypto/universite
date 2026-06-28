@@ -51,7 +51,7 @@ function SignupPageContent() {
           // Check if user has completed profile setup
           const { data: profile } = await supabase
             .from('profiles')
-            .select('full_name, university, major')
+            .select('full_name, university, major, year, study_time, learning_style')
             .eq('user_id', session.user.id)
             .single();
           
@@ -86,7 +86,7 @@ function SignupPageContent() {
         // Check if user has completed profile setup
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, university, major')
+          .select('full_name, university, major, year, study_time, learning_style')
           .eq('user_id', session.user.id)
           .single();
         
