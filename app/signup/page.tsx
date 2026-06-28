@@ -43,12 +43,36 @@ function SignupPageContent() {
   };
 
   useEffect(() => {
-    // If already logged in, redirect straight to the app
+    // If already logged in with completed profile, redirect to dashboard
     const checkSession = async () => {
       try {
         const session = await getSession();
         if (session) {
-          router.push('/dashboard');
+          // Check if user has completed profile setup
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, university, major')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          // Only redirect if profile has required fields
+          if (profile && profile.full_name && profile.university && profile.major) {
+            router.push('/dashboard');
+          } else if (profile) {
+            // User is logged in but hasn't completed profile, move to step 2
+            setStep(2);
+            if (profile.full_name) {
+              setProfileData(prev => ({
+                ...prev,
+                full_name: profile.full_name || '',
+                university: profile.university || '',
+                major: profile.major || '',
+                year: profile.year || '',
+                study_time: profile.study_time || '',
+                learning_style: profile.learning_style || ''
+              }));
+            }
+          }
         }
       } catch (err) {
         console.error('Session check error:', err);
@@ -56,10 +80,23 @@ function SignupPageContent() {
     };
     checkSession();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Listen for auth state changes - move to step 2 if user just signed in
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        router.push('/dashboard');
+        // Check if user has completed profile setup
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, university, major')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        // Only redirect if profile has required fields
+        if (profile && profile.full_name && profile.university && profile.major) {
+          router.push('/dashboard');
+        } else {
+          // Move to step 2 to complete profile
+          setStep(2);
+        }
       }
     });
 
@@ -69,7 +106,7 @@ function SignupPageContent() {
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/dashboard`;
+      const redirectTo = `${window.location.origin}/signup`;
       const { error } = await signInWithOAuth('google', { redirectTo });
       if (error) {
         showAlert('Error', error.message, 'error');
