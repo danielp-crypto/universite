@@ -372,10 +372,10 @@ function LecturesPageContent() {
                     )}
                     <div className="flex gap-2">
                       <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
-                        View Details
+                        View
                       </Link>
                       <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                        Chat
+                        Ask AI
                       </Link>
                     </div>
                   </div>
@@ -386,7 +386,7 @@ function LecturesPageContent() {
             <div id="empty-state" className="text-center py-12 bg-white border border-slate-200 rounded-2xl">
               <p className="text-slate-500 mb-4 text-sm">No lectures found</p>
               <Link href="/dashboard" className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium">
-                Record Your First Lecture
+                Record or Upload Your First Lecture
               </Link>
             </div>
           )}
