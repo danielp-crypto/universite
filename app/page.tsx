@@ -190,7 +190,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Auto-Generated Notes and exam questions</h3>
-              <p className="text-slate-600">Get comprehensive notes ans exam questions automatically generated from your lectures.</p>
+              <p className="text-slate-600">Get comprehensive notes and exam questions automatically generated from your lectures.</p>
             </div>
 
             {/* Feature 5 */}
