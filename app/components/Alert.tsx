@@ -8,10 +8,18 @@ interface AlertProps {
   title: string;
   message: string;
   type?: 'error' | 'warning' | 'info' | 'success';
+  actionUrl?: string;
 }
 
-export default function Alert({ isOpen, onClose, title, message, type = 'info' }: AlertProps) {
+export default function Alert({ isOpen, onClose, title, message, type = 'info', actionUrl }: AlertProps) {
   if (!isOpen) return null;
+
+  const handleAction = () => {
+    if (actionUrl) {
+      window.location.href = actionUrl;
+    }
+    onClose();
+  };
 
   const colors = {
     error: 'bg-red-50 border-red-200 text-red-800',
@@ -54,10 +62,10 @@ export default function Alert({ isOpen, onClose, title, message, type = 'info' }
         </div>
         <div className="mt-4">
           <button
-            onClick={onClose}
+            onClick={handleAction}
             className="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
           >
-            OK
+            {actionUrl ? 'View' : 'OK'}
           </button>
         </div>
       </div>

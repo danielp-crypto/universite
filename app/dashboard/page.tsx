@@ -27,11 +27,13 @@ function HomePageContent() {
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState<'error' | 'warning' | 'info' | 'success'>('info');
+  const [alertActionUrl, setAlertActionUrl] = useState<string | undefined>(undefined);
 
-  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info') => {
+  const showAlert = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success' = 'info', actionUrl?: string) => {
     setAlertTitle(title);
     setAlertMessage(message);
     setAlertType(type);
+    setAlertActionUrl(actionUrl);
     setAlertOpen(true);
   };
 
@@ -508,6 +510,14 @@ function HomePageContent() {
       setRecordingState('idle');
       loadData();
 
+      // Show notification with view button
+      showAlert(
+        'Your study assets are ready',
+        lectureData.title,
+        'success',
+        `/lecture-detail?id=${lectureData.id}`
+      );
+
     } catch (error) {
       console.error('Error saving recording:', error);
       setProcessingError('An unexpected error occurred. Please try again.');
@@ -719,6 +729,14 @@ function HomePageContent() {
 
       setRecordingState('idle');
       loadData();
+
+      // Show notification with view button
+      showAlert(
+        'Your study assets are ready',
+        lectureData.title,
+        'success',
+        `/lecture-detail?id=${lectureData.id}`
+      );
 
     } catch (error) {
       console.error('Error uploading recording:', error);
@@ -1463,6 +1481,7 @@ function HomePageContent() {
         title={alertTitle}
         message={alertMessage}
         type={alertType}
+        actionUrl={alertActionUrl}
       />
     </div>
   );
