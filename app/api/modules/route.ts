@@ -21,21 +21,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch modules for the user with credit counts
+    // Fetch modules for the user
     const { data: modules, error } = await supabaseAdmin
       .from('modules')
-      .select(`
-        *,
-        credits(count)
-      `)
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    // Add credit allocation and usage to each module
-    const modulesWithCredits = (modules || []).map(module => ({
-      ...module,
-      credits_allocated: 2, // Free tier gets 2 credits
-      credits_used: module.credits?.[0]?.count || 0
+    // Count used credits for each module (credits with lecture_id)
+    const modulesWithCredits = await Promise.all((modules || []).map(async (module) => {
+      const { data: creditsData } = await supabaseAdmin
+        .from('credits')
+        .select('id')
+        .eq('module_id', module.id)
+        .not('lecture_id', 'is', null);
+      
+      return {
+        ...module,
+        credits_allocated: 2, // Free tier gets 2 credits
+        credits_used: creditsData?.length || 0
+      };
     }));
 
     if (error) {
