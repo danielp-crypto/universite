@@ -28,13 +28,13 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    // Count used credits for each module (credits with lecture_id)
+    // Count used credits for each module (exclude free_tier_credit)
     const modulesWithCredits = await Promise.all((modules || []).map(async (module) => {
       const { data: creditsData } = await supabaseAdmin
         .from('credits')
         .select('id')
         .eq('module_id', module.id)
-        .not('lecture_id', 'is', null);
+        .neq('used_for', 'free_tier_credit');
       
       return {
         ...module,
