@@ -102,7 +102,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free plan: lecture notes + exam questions • Module Pass R299/ module, once-off: with unlimited AI Tools</p>
+              <p className="mt-6 text-sm text-slate-500">Free plan: full lecture notes + exam questions + memo + cheat sheet • Module Pass R299/ module, once-off: with unlimited AI Tools</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -157,7 +157,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Record/Upload Lectures</h3>
-              <p className="text-slate-600">Record your lectures or upload audio files. Upload: maximum 2 hours per audio file.</p>
+              <p className="text-slate-600">Record your lectures or upload audio files. Upload: maximum 90 minutes per audio file.</p>
             </div>
 
             {/* Feature 2 */}
@@ -178,8 +178,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Exam Mode</h3>
-              <p className="text-slate-600">Take a mock test under exam conditions so you can see how ready you are for the real thing.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">PDF export</h3>
+              <p className="text-slate-600">Download pdf of individual lectures or for the entire module for offline studying. </p>
             </div>
 
             {/* Feature 4 */}
@@ -189,8 +189,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Auto-Generated Notes and exam questions</h3>
-              <p className="text-slate-600">Get comprehensive notes and exam questions automatically generated from your lectures.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Auto-Generated Notes and exam questions + memos ,cheat sheet containing formulas and definitions,</h3>
+              <p className="text-slate-600">Get all of these automatically generated from your lectures and sent to you via whatsapp.</p>
             </div>
 
             {/* Feature 5 */}
@@ -233,8 +233,8 @@ export default function Home() {
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant AI notes and exam questions.</h3>
-              <p className="text-slate-600">Free trial excludes exam mode. Record/Upload your lectures and get  AI-powered notes and exam questions created for you.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant study assests</h3>
+              <p className="text-slate-600">Record/Upload your lectures and get  AI-powered study materials created for you and sent via whatsapp.</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">3</div>
@@ -267,7 +267,7 @@ export default function Home() {
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload 4 lectures for one module</strong> - upload: Audio/Video up to 2 hours per file </span>
+                  <span><strong>Record/Upload 4 lectures for one module</strong> - upload: Audio/Video up to 90 minutes per file </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -279,7 +279,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>AI notes + 10 questions per lecture</strong> - Get lecture insights on your toughest modules</span>
+                  <span><strong>AI notes + 10 exam questions per lecture</strong> - Get lecture insights on your toughest modules</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -336,16 +336,13 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>AI notes per lecture</strong> - Unlimited lecture insights</span>
+                  <span><strong>AI study assets per lecture</strong> - Unlimited lecture insights</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
                   <span><strong>1000 AI requests/month</strong> - Unlimited AI usage for that module only</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>Exam Mode</strong> - 1 Full mock paper + memo for the module</span>
-                </li>
+                
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
                   <span><strong>Study Plan</strong> - "Exam is 18 Oct, plan my FAC1502"</span>

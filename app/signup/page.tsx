@@ -431,7 +431,7 @@ function SignupPageContent() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="university" className="block text-sm font-medium text-slate-700 mb-1">University *</label>
+                    <label htmlFor="university" className="block text-sm font-medium text-slate-700 mb-1">University/college *</label>
                     <input
                       id="university"
                       type="text"
@@ -525,7 +525,7 @@ function SignupPageContent() {
                       onChange={(e) => setModuleName(e.target.value)}
                       required
                       className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-slate-900 placeholder:text-slate-400"
-                      placeholder="e.g., Calculus 101, Physics, etc."
+                      placeholder="e.g., Calculus 101, Physics, Chem1048 etc."
                     />
                   </div>
                   <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-200">
@@ -536,9 +536,9 @@ function SignupPageContent() {
                       <span className="text-sm font-semibold text-indigo-900">Free Trial Includes:</span>
                     </div>
                     <ul className="text-sm text-indigo-800 space-y-1 ml-7">
-                      <li>• 1 module with 2 credits</li>
+                      <li>• 1 module with 4 credits</li>
                       <li>• Each credit = 1 lecture recording/upload</li>
-                      <li>• Transcript + AI notes included</li>
+                      <li>• Study assets included</li>
                     </ul>
                   </div>
                   <button

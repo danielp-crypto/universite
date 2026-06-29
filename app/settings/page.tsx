@@ -508,14 +508,14 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="university" className="block text-sm font-medium text-slate-700 mb-2">University</label>
+                  <label htmlFor="university" className="block text-sm font-medium text-slate-700 mb-2">University/College</label>
                   <input
                     type="text"
                     id="university"
                     name="university"
                     defaultValue={profile?.university || ''}
                     className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
-                    placeholder="Your university"
+                    placeholder="Your university or college"
                     required
                   />
                 </div>
