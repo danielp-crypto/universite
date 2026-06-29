@@ -441,6 +441,63 @@ function LectureDetailPageContent() {
     }
   };
 
+  const handleRegenerateSummary = async () => {
+    if (!currentLecture) return;
+    
+    setIsProcessing(true);
+    setProcessingMessage('Regenerating summary...');
+    
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      // Get the existing transcription from the lecture
+      const transcript = currentLecture.transcription || '';
+      if (!transcript) {
+        showAlert('Error', 'No transcription available to regenerate summary', 'error');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Generate new summary
+      const summary = await generateSummary(transcript);
+      
+      if (summary) {
+        // Update processing results
+        setProcessingResults(prev => ({
+          ...prev,
+          summaryAvailable: true,
+          summaryText: summary
+        }));
+
+        // Save new summary to Supabase
+        try {
+          await fetch(`/api/lectures/${currentLecture.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              summary: summary
+            })
+          });
+          showAlert('Success', 'Summary regenerated successfully', 'success');
+        } catch (error) {
+          console.error('Failed to save summary to Supabase:', error);
+          showAlert('Error', 'Failed to save summary', 'error');
+        }
+      } else {
+        showAlert('Error', 'Failed to regenerate summary', 'error');
+      }
+    } catch (error) {
+      console.error('Error regenerating summary:', error);
+      showAlert('Error', 'Failed to regenerate summary', 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const createSegmentsFromTranscription = (transcription: string) => {
     if (!transcription) return [];
     const sentences = transcription.split('. ').filter(s => s.trim().length > 0);
@@ -587,11 +644,22 @@ function LectureDetailPageContent() {
                     <span className="text-xl leading-none">📝</span>
                     <span>Lecture Notes</span>
                   </h3>
-                  {processingResults?.summaryText && (
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                      AI Generated
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {processingResults?.summaryText && (
+                      <>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                          AI Generated
+                        </span>
+                        <button
+                          onClick={handleRegenerateSummary}
+                          disabled={isProcessing}
+                          className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider disabled:opacity-50"
+                        >
+                          🔄 Regenerate
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {processingResults?.summaryText ? (
