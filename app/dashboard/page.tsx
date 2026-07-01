@@ -1068,7 +1068,7 @@ function HomePageContent() {
           {/* Study Stats */}
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-slate-800 mb-3">This Week</h2>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.lectures}</div>
                 <div className="text-xs text-slate-600">Lectures</div>
@@ -1076,10 +1076,6 @@ function HomePageContent() {
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.hours}</div>
                 <div className="text-xs text-slate-600">Hours Saved</div>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.flashcards}</div>
-                <div className="text-xs text-slate-600">Flashcards</div>
               </div>
               <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-orange-600 mb-1 flex items-center justify-center gap-1">
