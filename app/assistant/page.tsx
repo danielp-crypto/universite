@@ -127,9 +127,16 @@ function AssistantPageContent(): React.ReactNode {
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                 <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
               </div>
-              <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Tutor
-              </h1>
+              <div>
+                <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  Tutor
+                </h1>
+                {currentLecture && (
+                  <p className="text-xs md:text-sm text-slate-500 truncate max-w-[200px] md:max-w-[300px]">
+                    {currentLecture.title || currentLecture.name || 'Current Lecture'}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -142,10 +149,10 @@ function AssistantPageContent(): React.ReactNode {
                 <img src="/assets/images/icon-white-removebg.png" alt="Universite logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">
-                Chat with your lectures
+                No lecture selected
               </h2>
               <p className="text-sm md:text-base text-slate-600 max-w-md mb-6">
-                Use the "Ask AI" button on any lecture to start asking questions about the content.
+                Use the "Ask AI" button on any lecture to start chatting about its content.
               </p>
               <Link
                 href="/dashboard"
