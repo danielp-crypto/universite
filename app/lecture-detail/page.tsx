@@ -93,32 +93,42 @@ function LectureDetailPageContent() {
   const exportToPDF = async () => {
     if (!currentLecture) return;
 
-    // Check if user is premium (for now, always show upgrade modal)
-    // TODO: Implement actual premium check from user profile
-    setUpgradeFeature('PDF Export');
-    setUpgradeModalOpen(true);
-    return;
-
     try {
       const pdf = new jsPDF();
       
+      // Add logo image
+      const logoImg = new Image();
+      logoImg.src = '/new-logo-black-removebg-preview.png';
+      await new Promise((resolve) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = resolve; // Continue even if image fails to load
+      });
+      
+      // Add logo to PDF (width 40, height proportional)
+      pdf.addImage(logoImg, 'PNG', 20, 10, 40, 40);
+      
       // Add title
       pdf.setFontSize(20);
-      pdf.text(currentLecture.title || 'Untitled Lecture', 20, 20);
+      pdf.text(currentLecture.title || 'Untitled Lecture', 70, 30);
       
       // Add metadata
       pdf.setFontSize(12);
-      pdf.text(`Date: ${currentLecture.date || new Date().toLocaleDateString()}`, 20, 30);
-      pdf.text(`Duration: ${currentLecture.duration || 'N/A'}`, 20, 38);
+      pdf.text(`Date: ${currentLecture.date || new Date().toLocaleDateString()}`, 70, 40);
+      pdf.text(`Duration: ${currentLecture.duration || 'N/A'}`, 70, 48);
+      
+      // Add module name if available
+      if (currentLecture.module && currentLecture.module.name) {
+        pdf.text(`Module: ${currentLecture.module.name}`, 70, 56);
+      }
       
       // Add transcript section
       pdf.setFontSize(16);
-      pdf.text('TRANSCRIPT', 20, 55);
+      pdf.text('TRANSCRIPT', 20, 75);
       pdf.setFontSize(12);
       
       const transcript = currentLecture.transcription || 'No transcript available';
       const transcriptLines = pdf.splitTextToSize(transcript, 170);
-      let yPosition = 65;
+      let yPosition = 85;
       
       transcriptLines.forEach((line: string) => {
         if (yPosition > 270) {
