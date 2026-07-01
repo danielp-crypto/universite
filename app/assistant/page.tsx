@@ -149,17 +149,21 @@ function AssistantPageContent(): React.ReactNode {
                 <img src="/assets/images/icon-white-removebg.png" alt="Universite logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">
-                No lecture selected
+                {currentLecture ? currentLecture.title || currentLecture.name || 'Current Lecture' : 'No lecture selected'}
               </h2>
-              <p className="text-sm md:text-base text-slate-600 max-w-md mb-6">
-                Use the "Ask AI" button on any lecture to start chatting about its content.
-              </p>
-              <Link
-                href="/dashboard"
-                className="px-6 py-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-medium shadow-md active:scale-95 transition-transform"
-              >
-                Go to Dashboard
-              </Link>
+              {!currentLecture && (
+                <>
+                  <p className="text-sm md:text-base text-slate-600 max-w-md mb-6">
+                    Use the "Ask AI" button on any lecture to start chatting about its content.
+                  </p>
+                  <Link
+                    href="/dashboard"
+                    className="px-6 py-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-medium shadow-md active:scale-95 transition-transform"
+                  >
+                    Go to Dashboard
+                  </Link>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
