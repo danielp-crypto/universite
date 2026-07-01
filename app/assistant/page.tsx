@@ -385,27 +385,29 @@ function AssistantPageContent() {
               {messages.map((msg, index) => {
                 const isUser = msg.sender === 'user';
                 return (
-                  <div key={index} className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''} animate-fade-in`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      isUser ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white' : 'bg-slate-100 text-indigo-600 border border-slate-200'
+                  <div key={index} className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''} animate-fade-in`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      isUser ? 'bg-indigo-100' : 'bg-gradient-to-br from-indigo-500 to-purple-600'
                     }`}>
                       {isUser ? (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                         </svg>
                       ) : (
-                        <img src="/assets/images/icon-removebg-preview.png-128x128.png" alt="Universite" className="w-4 h-4 object-contain" />
+                        <img src="/assets/images/icon-white-removebg.png" alt="Universite AI Assistant" className="w-6 h-6" />
                       )}
                     </div>
 
-                    <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[75%] md:max-w-[80%]`}>
-                      <div className={`px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed ${
-                        isUser ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none'
+                    <div className={`flex-1 max-w-[75%] md:max-w-[80%]`}>
+                      <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                        isUser 
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-tr-sm' 
+                          : 'bg-slate-100 text-slate-700 rounded-tl-sm'
                       }`}>
                         <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                       </div>
                       {msg.timestamp && (
-                        <span className="text-[10px] text-slate-400 mt-1 px-1">{msg.timestamp}</span>
+                        <span className={`text-[10px] text-slate-400 mt-1 px-1 block ${isUser ? 'text-right' : ''}`}>{msg.timestamp}</span>
                       )}
                     </div>
                   </div>
@@ -413,14 +415,16 @@ function AssistantPageContent() {
               })}
 
               {isBotTyping && (
-                <div className="flex gap-3 animate-fade-in">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-200">
-                    <img src="/assets/images/icon-removebg-preview.png-128x128.png" alt="Universite" className="w-4 h-4 object-contain" />
+                <div className="flex items-start gap-3 animate-fade-in">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <img src="/assets/images/icon-white-removebg.png" alt="Universite AI Assistant" className="w-6 h-6" />
                   </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-typing-dot"></div>
-                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-typing-dot animation-delay-200"></div>
-                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-typing-dot animation-delay-400"></div>
+                  <div className="bg-slate-100 rounded-2xl rounded-tl-sm p-4 flex-1">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
                   </div>
                 </div>
               )}
