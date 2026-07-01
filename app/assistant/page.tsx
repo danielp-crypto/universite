@@ -145,7 +145,7 @@ function AssistantPageContent(): React.ReactNode {
                 Chat with your lectures
               </h2>
               <p className="text-sm md:text-base text-slate-600 max-w-md mb-6">
-                Select a lecture from the dashboard to start asking questions about the content.
+                Use the "Ask AI" button on any lecture to start asking questions about the content.
               </p>
               <Link
                 href="/dashboard"
