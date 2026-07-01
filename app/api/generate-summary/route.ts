@@ -49,7 +49,7 @@ OUTPUT RULES:
 1. IGNORE: admin talk, jokes, "can you hear me", registration, assignment dates unless marks are mentioned.
 2. FORMAT: Use this exact structure, no deviation:
 
-## Key Concepts [exactly 3-5]
+## Key Concepts [one-word terms]
 Pick which [DEF]/[FORMULA] items to keep using this priority order, in this order:
   1. Anything whose term also appears in a [FLAG] item — these are confirmed exam-relevant. Always include first.
   2. Terms that show up in [DEF]/[FORMULA] bullets from more than one chunk — repetition means the lecturer kept returning to it.
@@ -57,13 +57,26 @@ Pick which [DEF]/[FORMULA] items to keep using this priority order, in this orde
 Skip anything mentioned only once in passing with no other signal of importance. If fewer than 3 terms meet this bar, it's fine to return fewer than 5 — never pad with filler to hit the count.
 
 Term rules — get this right, it matters most:
-- Term = 1 to 4 words MAX. The actual name of the concept, as it would appear in a glossary or index. Never a sentence, question, or clause.
+- Term = 1 word MAX. The actual name of the concept, as it would appear in a glossary or index. Never a sentence, question, or clause.
 - Definition = 1 sentence, using the lecturer's own specific explanation, example, or numbers from the transcript — never a generic textbook definition you already knew. If they gave a specific example or analogy, keep it.
 - Format exactly: **Term**: Definition. [timestamp]
 
 GOOD: **Mitosis**: Cell splits into two identical daughter cells with the same chromosome number — same example as skin healing after a cut. [14:02]
 BAD: **The process of cell division**: This is when a cell goes through several phases in order to divide into new cells. [14:02]
 (BAD is wrong on two counts: the term is a clause, not a glossary entry, and the definition is generic — it ignores what the lecturer actually said.)
+
+## Full Notes with Slide References
+Provide comprehensive notes organized by topics. Include slide numbers if mentioned in the transcript. Use bullet points for key information. Include examples and explanations from the lecturer.
+
+Format:
+### Topic 1 [Slide X if mentioned]
+- Key point 1 [timestamp]
+- Key point 2 [timestamp]
+- Example from lecturer [timestamp]
+
+### Topic 2 [Slide Y if mentioned]
+- Key point 1 [timestamp]
+- Key point 2 [timestamp]
 
 ## Exam Hints Detected
 - "He said 'this always comes up' at 23:14"
@@ -72,14 +85,51 @@ BAD: **The process of cell division**: This is when a cell goes through several 
 ## Summary: 5-Bullet Pass Guarantee
 1. If you only study 5 things, study these. Each = 1 sentence. No fluff.
 
-## Test Yourself: 5 Questions
-Create 5 questions using Bloom's taxonomy. Base ONLY on transcript facts.
+## Exam-Style Questions (10 Questions) + Memo
+Create 10 exam-style questions using Bloom's taxonomy. Base ONLY on transcript facts. Include a memo/model answer for each question.
+
 Format:
 Q1 [Recall]: What is ___? [timestamp]
+A1: [Detailed model answer based on transcript]
+
 Q2 [Understand]: Explain why ___ happens [timestamp]
+A2: [Detailed model answer based on transcript]
+
 Q3 [Apply]: If ___, calculate ___ [timestamp]
+A3: [Detailed model answer based on transcript]
+
 Q4 [Analyze]: Compare X vs Y from lecture [timestamp]
+A4: [Detailed model answer based on transcript]
+
 Q5 [Evaluate]: Which is better for ___ and why? [timestamp]
+A5: [Detailed model answer based on transcript]
+
+Q6 [Recall]: ___ [timestamp]
+A6: [Detailed model answer based on transcript]
+
+Q7 [Understand]: ___ [timestamp]
+A7: [Detailed model answer based on transcript]
+
+Q8 [Apply]: ___ [timestamp]
+A8: [Detailed model answer based on transcript]
+
+Q9 [Analyze]: ___ [timestamp]
+A9: [Detailed model answer based on transcript]
+
+Q10 [Evaluate]: ___ [timestamp]
+A10: [Detailed model answer based on transcript]
+
+## Cheat Sheet
+
+### Formulas
+List all formulas mentioned in the lecture with when to use them:
+- Formula 1: When to use it [timestamp]
+- Formula 2: When to use it [timestamp]
+
+### Glossary of Definitions
+List ALL definitions mentioned in the lecture (not just the key concepts):
+- **Term**: Definition [timestamp]
+- **Term**: Definition [timestamp]
 
 3. TONE: 8th grade English. Short sentences. No "furthermore". No "it is important to note".
 4. HALLUCINATION BAN: If info not in transcript, write "Not covered in this lecture". Never invent.
@@ -172,7 +222,7 @@ async function reduceSummary(extractedContent: string): Promise<string> {
           }],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 8192,
             thinkingConfig: {
               thinkingBudget: 0
             }
