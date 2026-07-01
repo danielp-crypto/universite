@@ -408,7 +408,7 @@ function HomePageContent() {
       const steps = [
         'Processing audio for transcription...',
         'Transcribing audio with AI...',
-        'Generating your notes+ exam questions...',
+        'Generating your study assets...',
         'Finalizing lecture...'
       ];
       setProcessingSteps(steps);
@@ -600,7 +600,7 @@ function HomePageContent() {
   const uploadRecording = async (file: File) => {
     // Check if module is selected
     if (!selectedModule) {
-      showAlert('Module Required', 'Please select or create a module before uploading a lecture.', 'warning');
+      showAlert('Module Required', 'Please select a module before uploading a lecture.', 'warning');
       return;
     }
 
@@ -620,7 +620,7 @@ function HomePageContent() {
       const steps = [
         'Processing audio for transcription...',
         'Transcribing audio with AI...',
-        'Generating summary...',
+        'Generating your study assets...',
         'Finalizing lecture...'
       ];
       setProcessingSteps(steps);
@@ -1130,7 +1130,7 @@ function HomePageContent() {
                     </svg>
                   </div>
                   <div>
-                    <div className="font-medium text-slate-800 text-sm">Exam Mode</div>
+                    <div className="font-medium text-slate-800 text-sm">Self-Test Mode</div>
                     <div className="text-xs text-slate-500">Review key concepts</div>
                   </div>
                 </div>
@@ -1282,7 +1282,7 @@ function HomePageContent() {
                   ))}
                 </div>
                 
-                <p className="text-slate-500 text-xs">Please wait while we process your recording...</p>
+                <p className="text-slate-500 text-xs">Please wait while we process your lecture...</p>
               </div>
             )}
           </div>
