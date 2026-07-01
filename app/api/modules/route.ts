@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       
       return {
         ...module,
-        credits_allocated: 2, // Free tier gets 2 credits
+        credits_allocated: 4, // Free tier gets 4 credits
         credits_used: creditsData?.length || 0
       };
     }));

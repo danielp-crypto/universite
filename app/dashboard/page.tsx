@@ -320,7 +320,7 @@ function HomePageContent() {
     }
 
     // Check if user has credits available
-    if (!userModule || (userModule.credits_used || 0) >= (userModule.credits_allocated || 2)) {
+    if (!userModule || (userModule.credits_used || 0) >= (userModule.credits_allocated || 4)) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       setUpgradeModalOpen(true);
       setUpgradeFeature('Record lectures');
@@ -605,7 +605,7 @@ function HomePageContent() {
     }
 
     // Check if user has credits available
-    if (!userModule || (userModule.credits_used || 0) >= (userModule.credits_allocated || 2)) {
+    if (!userModule || (userModule.credits_used || 0) >= (userModule.credits_allocated || 4)) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       setUpgradeModalOpen(true);
       setUpgradeFeature('Upload lectures');
