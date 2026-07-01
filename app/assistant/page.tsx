@@ -1,5 +1,7 @@
 'use client';
 
+// Assistant page with Gemini chat integration
+
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -8,7 +10,7 @@ import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
 import Alert from '../components/Alert';
 
-function AssistantPageContent() {
+function AssistantPageContent(): React.ReactNode {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialLectureId = searchParams.get('lecture');
@@ -112,6 +114,7 @@ function AssistantPageContent() {
         return `Sorry, I encountered an error processing your request. Please ensure the backend is running. Error: ${e.message}`;
       }
       return "I don't have any lecture context yet. Please select a lecture from the dashboard to chat about it.";
+    }
   };
 
   return (
