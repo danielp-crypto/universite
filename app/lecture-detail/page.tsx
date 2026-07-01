@@ -687,7 +687,14 @@ function LectureDetailPageContent() {
                       // Parse Key Concepts section
                       const keyConceptsMatch = text.match(sectionRegex('Key Concepts'));
                       if (keyConceptsMatch) {
-                        const concepts = keyConceptsMatch[1].split(/[\n•\-\*]/).filter(c => c.trim());
+                        const concepts = keyConceptsMatch[1]
+                          .split(/[\n•\-\*]/)
+                          .map(line => {
+                            // Extract just the term (before the colon) from "**Term**: Definition" format
+                            const termMatch = line.match(/\*\*([^*]+)\*\*/);
+                            return termMatch ? termMatch[1].trim() : line.trim();
+                          })
+                          .filter(c => c.trim());
                         sections.push({
                           title: 'Key Concepts',
                           content: concepts.join('|||'),
