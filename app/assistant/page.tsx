@@ -6,7 +6,6 @@ import { useSearchParams } from 'next/navigation';
 import { apiPost, apiGet } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
-import UpgradeModal from '../components/UpgradeModal';
 import Alert from '../components/Alert';
 
 function AssistantPageContent() {
@@ -17,13 +16,8 @@ function AssistantPageContent() {
 
   const [messages, setMessages] = useState<any[]>([]);
   const [currentLecture, setCurrentLecture] = useState<any>(null);
-  const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'processing'>('idle');
-  const [recordingTimer, setRecordingTimer] = useState('00:00');
-  const [processingText, setProcessingText] = useState('Generating transcript...');
   const [inputValue, setInputValue] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeFeature, setUpgradeFeature] = useState('');
 
   // Alert state
   const [alertOpen, setAlertOpen] = useState(false);
@@ -38,24 +32,8 @@ function AssistantPageContent() {
     setAlertOpen(true);
   };
 
-  const mediaRecorderRef = useRef<any>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordingStartTimeRef = useRef<number | null>(null);
-  const recordingTimerIntervalRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const RECORDINGS_STORAGE_KEY = 'universite_recordings';
-
-  // Helper to load recordings
-  const getRecordings = () => {
-    try {
-      const recordings = localStorage.getItem(RECORDINGS_STORAGE_KEY);
-      return recordings ? JSON.parse(recordings) : [];
-    } catch (e) {
-      return [];
-    }
-  };
 
   const loadInitialState = async () => {
     if (initialLectureId) {
@@ -133,223 +111,24 @@ function AssistantPageContent() {
       if (currentLecture) {
         return `Sorry, I encountered an error processing your request. Please ensure the backend is running. Error: ${e.message}`;
       }
-      return "I don't have any lecture context yet. Record or upload a lecture to get started!";
-    }
-  };
-
-  // Recording Functionalities
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-
-      mediaRecorderRef.current.ondataavailable = (event: any) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        stream.getTracks().forEach(track => track.stop());
-        await processRecording(audioBlob);
-      };
-
-      mediaRecorderRef.current.start();
-      setRecordingState('recording');
-      recordingStartTimeRef.current = Date.now();
-      
-      recordingTimerIntervalRef.current = setInterval(() => {
-        if (recordingStartTimeRef.current) {
-          const elapsed = Math.floor((Date.now() - recordingStartTimeRef.current) / 1000);
-          const minutes = Math.floor(elapsed / 60);
-          const seconds = elapsed % 60;
-          setRecordingTimer(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-        }
-      }, 1000);
-    } catch (error) {
-      console.error(error);
-      showAlert('Error', 'Microphone access denied.', 'error');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && recordingState === 'recording') {
-      mediaRecorderRef.current.stop();
-      setRecordingState('processing');
-      if (recordingTimerIntervalRef.current) {
-        clearInterval(recordingTimerIntervalRef.current);
-        recordingTimerIntervalRef.current = null;
-      }
-    }
-  };
-
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current && recordingState === 'recording') {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach((track: any) => track.stop());
-    }
-    setRecordingState('idle');
-    audioChunksRef.current = [];
-    if (recordingTimerIntervalRef.current) {
-      clearInterval(recordingTimerIntervalRef.current);
-      recordingTimerIntervalRef.current = null;
-    }
-  };
-
-  const processRecording = async (blob: Blob) => {
-    setProcessingText('Uploading audio...');
-    const session = await getSession();
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('audio', blob, 'recording.webm');
-      
-      setProcessingText('Generating transcript...');
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-        body: formData
-      });
-      
-      const data = await response.json().catch(() => ({}));
-      
-      if (response.ok && data.success && data.transcript) {
-        createLectureFromTranscript(blob, data.transcript);
-        return;
-      }
-
-      showAlert('Warning', 'API transcription failed, saving mock local lecture instead.', 'warning');
-      createMockLecture(blob);
-    } catch (error) {
-      console.error(error);
-      createMockLecture(blob);
-    }
-  };
-
-  const createMockLecture = (blob: Blob) => {
-    const elapsed = recordingStartTimeRef.current ? Math.floor((Date.now() - recordingStartTimeRef.current) / 1000) : 0;
-    const mins = Math.floor(elapsed / 60);
-    const secs = elapsed % 60;
-    const duration = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
-    const lecture = {
-      id: Date.now().toString(),
-      title: `Lecture Recording - ${new Date().toLocaleDateString()}`,
-      date: new Date().toLocaleDateString(),
-      duration: duration,
-      segments: [{ id: '1', title: 'Introduction', startTime: '00:00', concepts: ['intro'] }],
-      keyConcepts: ['lecture', 'recording'],
-      transcript: 'Mock transcript content.',
-      audioUrl: URL.createObjectURL(blob),
-      createdAt: new Date().toISOString()
-    };
-
-    // Save to localStorage
-    const recordings = getRecordings();
-    recordings.push(lecture);
-    localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
-
-    setCurrentLecture(lecture);
-    setRecordingState('idle');
-  };
-
-  const createLectureFromTranscript = (blob: Blob, transcript: string) => {
-    const elapsed = recordingStartTimeRef.current ? Math.floor((Date.now() - recordingStartTimeRef.current) / 1000) : 0;
-    const mins = Math.floor(elapsed / 60);
-    const secs = elapsed % 60;
-    const duration = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
-    const lecture = {
-      id: Date.now().toString(),
-      title: `Lecture Recording - ${new Date().toLocaleDateString()}`,
-      date: new Date().toLocaleDateString(),
-      duration: duration,
-      transcript: transcript,
-      audioUrl: URL.createObjectURL(blob),
-      createdAt: new Date().toISOString(),
-      segments: [],
-      keyConcepts: ['recording']
-    };
-
-    // Save to localStorage
-    const recordings = getRecordings();
-    recordings.push(lecture);
-    localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(recordings));
-
-    setCurrentLecture(lecture);
-    setRecordingState('idle');
-  };
-
-  const uploadRecording = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.mp3,.mp4,.wav';
-    input.onchange = async (e: any) => {
-      const file = e.target.files[0];
-      if (file) {
-        setRecordingState('processing');
-        setProcessingText('Uploading audio...');
-        try {
-          const session = await getSession();
-          if (!session) {
-            router.push('/login');
-            return;
-          }
-
-          const formData = new FormData();
-          formData.append('audio', file);
-          
-          setProcessingText('Generating transcript...');
-          const response = await fetch('/api/transcribe', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${session.access_token}` },
-            body: formData
-          });
-
-          const data = await response.json().catch(() => ({}));
-          if (response.ok && data.success && data.transcript) {
-            createLectureFromTranscript(file, data.transcript);
-            return;
-          }
-          showAlert('Error', 'Transcription failed', 'error');
-          setRecordingState('idle');
-        } catch (error) {
-          console.error(error);
-          showAlert('Error', 'Upload failed', 'error');
-          setRecordingState('idle');
-        }
-      }
-    };
-    input.click();
+      return "I don't have any lecture context yet. Please select a lecture from the dashboard to chat about it.";
   };
 
   return (
     <div className="bg-slate-50 h-screen overflow-hidden font-sans flex flex-col justify-between">
       <div id="app" className="flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+              </div>
+              <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Universite Chat
+              </h1>
             </div>
-            <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Universite Chat
-            </h1>
           </div>
-          <button
-            onClick={() => recordingState === 'idle' ? startRecording() : null}
-            className="p-2 text-slate-600 hover:text-indigo-600 transition-colors active:scale-95"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
-          </button>
         </div>
 
         {/* Message Area */}
@@ -360,25 +139,17 @@ function AssistantPageContent() {
                 <img src="/assets/images/icon-white-removebg.png" alt="Universite logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">
-                Record a lecture to get started
+                Chat with your lectures
               </h2>
               <p className="text-sm md:text-base text-slate-600 max-w-md mb-6">
-                Record or upload a lecture recording to generate transcripts, summaries, and study materials.
+                Select a lecture from the dashboard to start asking questions about the content.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={startRecording}
-                  className="px-6 py-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-medium shadow-md active:scale-95 transition-transform"
-                >
-                  Record Lecture
-                </button>
-                <button
-                  onClick={uploadRecording}
-                  className="px-6 py-2.5 bg-white text-slate-700 border-2 border-slate-200 rounded-xl font-medium active:scale-95 transition-transform"
-                >
-                  Upload Recording
-                </button>
-              </div>
+              <Link
+                href="/dashboard"
+                className="px-6 py-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-medium shadow-md active:scale-95 transition-transform"
+              >
+                Go to Dashboard
+              </Link>
             </div>
           ) : (
             <div className="space-y-4">
@@ -437,7 +208,7 @@ function AssistantPageContent() {
         <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 safe-area-inset-bottom z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <form onSubmit={handleSend} className="flex gap-2 items-end">
-              <div className="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-2 pr-10 focus-within:border-indigo-500 transition-all">
+              <div className="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-2 focus-within:border-indigo-500 transition-all">
                 <textarea
                   ref={inputRef}
                   value={inputValue}
@@ -452,39 +223,17 @@ function AssistantPageContent() {
                   rows={1}
                   className="flex-1 border-none bg-transparent outline-none resize-none text-sm text-slate-800 placeholder-slate-400 min-h-[24px] max-h-[80px]"
                 />
-                <button
-                  type="button"
-                  onClick={uploadRecording}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-indigo-600 transition-colors"
-                  title="Attach lecture"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                  </svg>
-                </button>
               </div>
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isBotTyping}
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md active:scale-95 disabled:opacity-50 transition-all flex-shrink-0 relative"
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md active:scale-95 disabled:opacity-50 transition-all flex-shrink-0"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
                 </svg>
-                <a href="/#pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Premium</a>
               </button>
             </form>
-            <div className="text-center mt-2">
-              <button
-                onClick={() => {
-                  setUpgradeFeature('AI Chat');
-                  setUpgradeModalOpen(true);
-                }}
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
-              >
-                Upgrade to Premium for unlimited AI chat →
-              </button>
-            </div>
           </div>
         </div>
 
@@ -522,43 +271,6 @@ function AssistantPageContent() {
         </nav>
       </div>
 
-      {/* Recording Overlay */}
-      {recordingState === 'recording' && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
-            <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center animate-pulse-recording">
-                <div className="w-12 h-12 rounded-full bg-red-500"></div>
-              </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">Recording</h3>
-              <div className="text-2xl font-mono text-slate-700 mb-4">{recordingTimer}</div>
-              <div className="flex gap-3">
-                <button
-                  onClick={stopRecording}
-                  className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-medium active:scale-95 transition-transform"
-                >
-                  Stop
-                </button>
-                <button
-                  onClick={cancelRecording}
-                  className="flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={upgradeModalOpen}
-        onClose={() => setUpgradeModalOpen(false)}
-        feature={upgradeFeature}
-        onUpgrade={() => showAlert('Coming Soon', 'Premium upgrade coming soon!', 'info')}
-      />
-
       {/* Alert Modal */}
       <Alert
         isOpen={alertOpen}
@@ -567,24 +279,6 @@ function AssistantPageContent() {
         message={alertMessage}
         type={alertType}
       />
-
-      {/* Processing Overlay */}
-      {recordingState === 'processing' && (
-        <div className="fixed inset-0 bg-black/55 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
-                <svg className="w-8 h-8 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">Processing</h3>
-              <p className="text-slate-600 text-sm">{processingText}</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
