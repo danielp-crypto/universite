@@ -485,7 +485,8 @@ function HomePageContent() {
         return;
       }
 
-      const lectureData = await lectureResponse.json();
+      const lectureResponseData = await lectureResponse.json();
+      const lectureData = lectureResponseData.lecture;
 
       setCurrentStep(3);
       setProcessingText(steps[3]);
@@ -707,7 +708,8 @@ function HomePageContent() {
         return;
       }
 
-      const lectureData = await lectureResponse.json();
+      const lectureResponseData = await lectureResponse.json();
+      const lectureData = lectureResponseData.lecture;
 
       setCurrentStep(3);
       setProcessingText(steps[3]);
