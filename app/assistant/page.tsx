@@ -151,6 +151,15 @@ function AssistantPageContent(): React.ReactNode {
               <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">
                 {currentLecture ? currentLecture.title || currentLecture.name || 'Current Lecture' : 'No lecture selected'}
               </h2>
+              {currentLecture && currentLecture.key_concepts && (
+                <div className="flex flex-wrap gap-2 justify-center mb-4">
+                  {currentLecture.key_concepts.map((concept: string, index: number) => (
+                    <span key={index} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs md:text-sm font-medium">
+                      {concept}
+                    </span>
+                  ))}
+                </div>
+              )}
               {!currentLecture && (
                 <>
                   <p className="text-sm md:text-base text-slate-600 max-w-md mb-6">
