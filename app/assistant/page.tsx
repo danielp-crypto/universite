@@ -129,7 +129,7 @@ function AssistantPageContent(): React.ReactNode {
               </div>
               <div>
                 <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  Tutor
+                  AI Lecturer
                 </h1>
                 {currentLecture && (
                   <p className="text-xs md:text-sm text-slate-500 truncate max-w-[200px] md:max-w-[300px]">
