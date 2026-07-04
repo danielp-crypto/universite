@@ -92,7 +92,7 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start free with 5 lectures, then upgrade for unlimited AI-powered study tools.
+                Start free with 3 lectures, then upgrade for unlimited AI-powered study tools.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="#pricing" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
@@ -102,7 +102,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free trial: notes + exam questions + memo + cheat sheet for 5 lectures • Semester Pass: R299 for one module: unlimited lectures and AI study tools.</p>
+              <p className="mt-6 text-sm text-slate-500">Free : notes + exam questions + memo + cheat sheet for 5 lectures • Semester Pass: R299 for one module: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">

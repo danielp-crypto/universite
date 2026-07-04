@@ -16,6 +16,7 @@ function SignupPageContent() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Multi-step form state
   const [step, setStep] = useState(1);
@@ -246,11 +247,32 @@ function SignupPageContent() {
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
             </Link>
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               <Link href="/" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Home</Link>
               <Link href="/login" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Login</Link>
             </div>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden py-4 border-t border-slate-200">
+              <div className="flex flex-col space-y-3">
+                <Link href="/" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors py-2">Home</Link>
+                <Link href="/login" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors py-2">Login</Link>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -545,12 +567,12 @@ function SignupPageContent() {
                       <svg className="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-sm font-semibold text-indigo-900">Free Trial Includes:</span>
+                      <span className="text-sm font-semibold text-indigo-900">Each Plan Includes:</span>
                     </div>
                     <ul className="text-sm text-indigo-800 space-y-1 ml-7">
-                      <li>• 1 module with 4 credits</li>
-                      <li>• Each credit = 1 lecture recording/upload</li>
-                      <li>• Study assets included</li>
+                      <li>• Lecture recording/upload</li>
+                      <li>• Study Assets</li>
+                      <li>• AI Lecture chat</li>
                     </ul>
                   </div>
                   <button
