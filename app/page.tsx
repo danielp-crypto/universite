@@ -92,7 +92,7 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start free with unlimited transcriptions, then upgrade for unlimited AI-powered study tools.
+                Start free with 5 lectures, then upgrade for unlimited AI-powered study tools.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="#pricing" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
@@ -381,7 +381,7 @@ export default function Home() {
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-6">About Universite</h2>
               <p className="text-base sm:text-lg text-slate-600 mb-4">
-                Universite is the AI study companion built for university and college students.. We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
+                Universite is the AI study companion built for university and college students.We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
               </p>
               <p className="text-base sm:text-lg text-slate-600 mb-4">
                 Our mission is to make education more accessible and efficient by leveraging cutting-edge AI technology. With Universite, you can focus on learning rather than worrying about note-taking or finding study materials.
