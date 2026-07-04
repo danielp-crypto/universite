@@ -92,17 +92,17 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start with our Module Pass, Get 8 credits to use on your worst module.
+                Start free with unlimited transcriptions, then upgrade for unlimited AI-powered study tools.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="#pricing" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
-                  Get Started
+                  Get Started Free
                 </Link>
                 <a href="#how-it-works" className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold text-lg hover:border-indigo-300 transition-all text-center">
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Ace your studies: full lecture notes + exam questions + memo + cheat sheet • Module Pass R299 / module. Semester Pass R1 200 / 6 modules.</p>
+              <p className="mt-6 text-sm text-slate-500">Free trial: notes + exam questions + memo + cheat sheet for 5 lectures • Semester Pass: R299 for one module: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -251,7 +251,7 @@ export default function Home() {
           <div className="text-center mb-10 md:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-              Pass your worst module for R299 or ace your entire semester for R1 200!
+              Start with 5 lectures and upgrade for unlimited AI study tools.
             </p>
           </div>
 
@@ -259,19 +259,19 @@ export default function Home() {
             {/* Free trial */}
             <div className="relative bg-slate-50 rounded-3xl border border-slate-200 p-6 sm:p-8 md:p-10">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4">
-              Module Pass
+              Most students start here
               </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Module Pass</h3>
-              
-              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R299<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ 8 credits for your toughest module</span></p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
+              <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No credit card • Perfect for trying Universite</p>
+              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 5 lectures</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload 4 lectures for one module</strong> - upload: Audio/Video up to 90 minutes per file </span>
+                  <span><strong>Record/Upload up to 5 lectures</strong> - upload up to 90 minutes per lecture </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>No "Regenerate" button</strong> - Upgrade</span>
+                  <span><strong> Mobile & web access</strong> - Any device </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -279,24 +279,27 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>AI notes + 10 exam questions per lecture</strong> - Get lecture insights on your toughest modules</span>
+                  <span><strong>AI notes + 10 exam questions per lecture</strong> - Get lecture insights</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>20 AI messages per lecture</strong></span>
+                  <span><strong>AI Chat</strong></span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
                   <span><strong>No lecture Recordings/Uploads stored</strong> - Deleted post-transcription</span>
                 </li>
-                
+                <li className="flex items-start">
+                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
+                  <span><strong> Great for trying the platform</strong></span>
+                </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-slate-400">•</span>
-                  <span className="text-slate-400">Priority support</span>
+                  <span className="text-slate-400">Priority processing</span>
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
-                Module Pass
+                Get Started Free
               </Link>
             </div>
 
@@ -310,22 +313,22 @@ export default function Home() {
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold mb-4">
                 Unlimited AI Power
               </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Semester Pass</h3>
+              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Module Pass</h3>
               <p className="text-xs sm:text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R1 200<span className="text-sm sm:text-base font-medium text-white/80 ml-1">/ module</span></p>
-              <p className="text-sm text-white/80 mb-6">Covers 6 modules</p>
+              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R299<span className="text-sm sm:text-base font-medium text-white/80 ml-1">Covers one module</span></p>
+              <p className="text-sm text-white/80 mb-6">Everything you need to pass your worst module</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>Everything in Module pass</strong>, times 6...</span>
+                  <span><strong>Everything in Free</strong>, plus...</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>10 AI exam questions</strong> - Quiz yourself</span>
+                  <span><strong>Self-Test Mode</strong> - Quiz yourself</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>8 lecture credits</strong> - 6 modules module</span>
+                  <span><strong> Unlimited lectures for that module</strong> - record/upload up to 90 minutes per lecture </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
@@ -333,7 +336,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>20 AI messages</strong> - AI usage for each lecture</span>
+                  <span><strong>AI Chat</strong> - Unlimited AI usage for each lecture</span>
                 </li>
                 
                 <li className="flex items-start">
@@ -354,7 +357,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>Priority support</strong> - Get help when you need it</span>
+                  <span><strong>Priority processing</strong> - Get help when you need it</span>
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-white/30 text-sm sm:text-base font-medium rounded-lg text-white hover:bg-white/10 transition-all text-center font-semibold">
@@ -378,7 +381,7 @@ export default function Home() {
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-6">About Universite</h2>
               <p className="text-base sm:text-lg text-slate-600 mb-4">
-                Universite is an app that helps university/college students do better in their studies and  ace their exams. We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
+                Universite is the AI study companion built for university and college students.. We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
               </p>
               <p className="text-base sm:text-lg text-slate-600 mb-4">
                 Our mission is to make education more accessible and efficient by leveraging cutting-edge AI technology. With Universite, you can focus on learning rather than worrying about note-taking or finding study materials.
