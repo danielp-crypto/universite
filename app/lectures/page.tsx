@@ -375,7 +375,7 @@ function LecturesPageContent() {
                         View
                       </Link>
                       <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                        Ask AI Lecturer
+                        Ask Lecture
                       </Link>
                     </div>
                   </div>

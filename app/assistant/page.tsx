@@ -129,7 +129,7 @@ function AssistantPageContent(): React.ReactNode {
               </div>
               <div>
                 <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  AI Lecturer
+                  Universite
                 </h1>
                 {currentLecture && (
                   <p className="text-xs md:text-sm text-slate-500 truncate max-w-[200px] md:max-w-[300px]">
@@ -163,7 +163,7 @@ function AssistantPageContent(): React.ReactNode {
               {!currentLecture && (
                 <>
                   <p className="text-sm md:text-base text-slate-600 max-w-md mb-6">
-                    Use the "Ask AI" button on any lecture to start chatting about its content.
+                    Use the "Ask Lecture" button on any lecture to start chatting about its content.
                   </p>
                   <Link
                     href="/dashboard"

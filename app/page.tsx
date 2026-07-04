@@ -102,7 +102,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Ace your studies: full lecture notes + exam questions + memo + cheat sheet • Module Pass R299 / module, Semester Pass R1 200 / 6 modules</p>
+              <p className="mt-6 text-sm text-slate-500">Ace your studies: full lecture notes + exam questions + memo + cheat sheet • Module Pass R299 / module. Semester Pass R1 200 / 6 modules.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -168,7 +168,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">AI-Powered Tutoring</h3>
-              <p className="text-slate-600">Ask questions about your lectures and get instant, personalized explanations from our AI lecturer tailored to your learning style.</p>
+              <p className="text-slate-600">Ask your lectures questions and get instant, personalized explanations tailored to your learning style.</p>
             </div>
 
             {/* Feature 3 */}
@@ -190,7 +190,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Auto-Generated Notes and exam questions + memos ,cheat sheet containing formulas and definitions,</h3>
-              <p className="text-slate-600">Get all of these automatically generated from your lectures and sent to you via whatsapp.</p>
+              <p className="text-slate-600">Get all of these automatically generated from your lectures.</p>
             </div>
 
             {/* Feature 5 */}
@@ -238,7 +238,7 @@ export default function Home() {
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">3</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Study with AI Lecturer</h3>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Study with AI</h3>
               <p className="text-slate-600">Get 24/7 personalised tutoring for all your difficult modules.</p>
             </div>
           </div>
@@ -283,7 +283,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>20 AI Lecturer messages per lecture</strong></span>
+                  <span><strong>20 AI messages per lecture</strong></span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -333,7 +333,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>20 AI Lecturer messages</strong> - AI usage for each lecture per module</span>
+                  <span><strong>20 AI messages</strong> - AI usage for each lecture</span>
                 </li>
                 
                 <li className="flex items-start">
