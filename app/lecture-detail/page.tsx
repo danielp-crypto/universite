@@ -703,12 +703,24 @@ function LectureDetailPageContent() {
                         });
                       }
 
-                      // Parse Exam Hints section
-                      const examHintsMatch = text.match(sectionRegex('Exam Hints'));
-                      if (examHintsMatch) {
-                        const hints = examHintsMatch[1].split(/[\n•\-\*]/).filter(h => h.trim());
+                      // Parse Full Lecture Notes section
+                      const fullNotesMatch = text.match(sectionRegex('Full Lecture Notes'));
+                      if (fullNotesMatch) {
+                        const notes = fullNotesMatch[1].trim();
                         sections.push({
-                          title: 'Exam Hints',
+                          title: 'Full Lecture Notes',
+                          content: notes,
+                          icon: '📝',
+                          style: 'blue'
+                        });
+                      }
+
+                      // Parse Assessment Hints section
+                      const assessmentHintsMatch = text.match(sectionRegex('Assessment Hints'));
+                      if (assessmentHintsMatch) {
+                        const hints = assessmentHintsMatch[1].split(/[\n•\-\*]/).filter(h => h.trim());
+                        sections.push({
+                          title: 'Assessment Hints',
                           content: hints.join('|||'),
                           icon: '⚠️',
                           style: 'amber'
@@ -723,25 +735,37 @@ function LectureDetailPageContent() {
                         const summaryItems = summaryText.split(/\d+\.\s*/).filter(s => s.trim());
                         const summaryContent = summaryItems.join('|||');
                         sections.push({
-                          title: '5-Bullet Pass Guarantee',
+                          title: '10-Bullet Pass Guarantee',
                           content: summaryContent,
                           icon: '🎯',
                           style: 'emerald'
                         });
                       }
 
-                      // Parse Test Yourself section (Q1-Q5, Bloom's taxonomy questions)
-                      const testYourselfMatch = text.match(sectionRegex('Test Yourself'));
-                      if (testYourselfMatch) {
-                        const questions = testYourselfMatch[1]
+                      // Parse Test Predictor section
+                      const testPredictorMatch = text.match(sectionRegex('Test Predictor'));
+                      if (testPredictorMatch) {
+                        const questions = testPredictorMatch[1]
                           .split(/\n(?=Q\d)/)
                           .map(q => q.trim())
                           .filter(Boolean);
                         sections.push({
-                          title: 'Test Yourself',
+                          title: 'Test Predictor',
                           content: questions.join('|||'),
                           icon: '🧠',
                           style: 'violet'
+                        });
+                      }
+
+                      // Parse Glossary section
+                      const glossaryMatch = text.match(sectionRegex('Glossary'));
+                      if (glossaryMatch) {
+                        const glossary = glossaryMatch[1].trim();
+                        sections.push({
+                          title: 'Glossary',
+                          content: glossary,
+                          icon: '📚',
+                          style: 'rose'
                         });
                       }
 
@@ -761,6 +785,12 @@ function LectureDetailPageContent() {
                           badge: 'bg-indigo-100',
                           chip: 'bg-white border-indigo-200 text-indigo-700'
                         },
+                        blue: {
+                          border: 'border-blue-100',
+                          bg: 'from-blue-50/80 to-white',
+                          badge: 'bg-blue-100',
+                          chip: ''
+                        },
                         amber: {
                           border: 'border-amber-100',
                           bg: 'from-amber-50/80 to-white',
@@ -777,6 +807,12 @@ function LectureDetailPageContent() {
                           border: 'border-violet-100',
                           bg: 'from-violet-50/80 to-white',
                           badge: 'bg-violet-100',
+                          chip: ''
+                        },
+                        rose: {
+                          border: 'border-rose-100',
+                          bg: 'from-rose-50/80 to-white',
+                          badge: 'bg-rose-100',
                           chip: ''
                         }
                       };
@@ -885,6 +921,14 @@ function LectureDetailPageContent() {
                                   );
                                 })}
                               </ol>
+                            ) : section.style === 'blue' ? (
+                              <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                {formatNoteText(section.content, `notes-${idx}`)}
+                              </div>
+                            ) : section.style === 'rose' ? (
+                              <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                {formatNoteText(section.content, `glossary-${idx}`)}
+                              </div>
                             ) : (
                               <ul className="space-y-2.5">
                                 {items.map((item, i) => (

@@ -29,20 +29,21 @@ IGNORE:
 - Off-topic tangents
 
 RULES:
-- For [DEF] and [FORMULA], the term must be the actual name of the concept — 1 to 4 words, exactly as it would appear in a glossary or index. Never a full sentence or clause.
+- For [DEF] and [FORMULA], the term must be the actual name of the concept — 1 word MAX, exactly as it would appear in a glossary or index. Never a full sentence or clause.
 - For [SLIDE], include what the visual aid showed — if professor points to slide 5, note "Slide 5:" and the content. This helps students review without recording.
 - If you're not confident something is a real key concept (vs. the lecturer thinking aloud or a one-off aside), leave it out. Fewer accurate bullets beats more vague ones.
 - No explanations, no fluff, no editorializing.
+- DO NOT include timestamps.
 
 OUTPUT FORMAT:
-One tagged bullet per line. Include approximate timestamp if mentioned.
+One tagged bullet per line. NO timestamps.
 
 Example output:
-- [SLIDE] Slide 2: Photosynthesis has two stages — Light Reactions (in thylakoid) and Calvin Cycle (in stroma) [02:15]
-- [DEF] Photosynthesis :: plants convert light energy into chemical energy stored as glucose — lecturer's example: sunflower follows the sun [12:34]
-- [FORMULA] Einstein's E = mc², used to calculate energy release in nuclear reactions [15:20]
-- [FLAG] "This always comes up in the exam" — re: difference between mitosis and meiosis [23:45]
-- [EXAMPLE] SA context: Eskom load shedding affects water treatment plants, which rely on photosynthesis in water bodies for oxygen [25:12]
+- [SLIDE] Slide 2: Photosynthesis has two stages — Light Reactions (in thylakoid) and Calvin Cycle (in stroma)
+- [DEF] Photosynthesis :: plants convert light energy into chemical energy stored as glucose — lecturer's example: sunflower follows the sun
+- [FORMULA] Einstein's E = mc², used to calculate energy release in nuclear reactions
+- [FLAG] "This always comes up in the exam" — re: difference between mitosis and meiosis
+- [EXAMPLE] SA context: Eskom load shedding affects water treatment plants, which rely on photosynthesis in water bodies for oxygen
 
 Transcript chunk:\n\n`;
 
@@ -53,103 +54,114 @@ INPUT: Extracted key content from a South African university lecture, already ta
 OUTPUT RULES:
 1. IGNORE: admin talk, jokes, "can you hear me", registration, assignment dates unless marks are mentioned.
 2. FORMAT: Use this exact structure, no deviation:
+3. DO NOT include timestamps anywhere in the output.
 
 ## Key Concepts [one-word terms]
 Pick which [DEF]/[FORMULA] items to keep using this priority order, in this order:
   1. Anything whose term also appears in a [FLAG] item — these are confirmed exam-relevant. Always include first.
   2. Terms that show up in [DEF]/[FORMULA] bullets from more than one chunk — repetition means the lecturer kept returning to it.
   3. Foundational terms the rest of the lecture depends on, over one-off mentions.
-Skip anything mentioned only once in passing with no other signal of importance. If fewer than 3 terms meet this bar, it's fine to return fewer than 5 — never pad with filler to hit the count.
+Skip anything mentioned only once in passing with no other signal of importance. If fewer than 3 terms meet this bar, it's fine to return fewer — never pad with filler to hit the count.
 
 Term rules — get this right, it matters most:
 - Term = 1 word MAX. The actual name of the concept, as it would appear in a glossary or index. Never a sentence, question, or clause.
 - Definition = 1 sentence, using the lecturer's own specific explanation, example, or numbers from the transcript — never a generic textbook definition you already knew. If they gave a specific example or analogy, keep it.
-- Format exactly: **Term**: Definition. [timestamp]
+- Format exactly: **Term**: Definition
 
-GOOD: **Mitosis**: Cell splits into two identical daughter cells with the same chromosome number — same example as skin healing after a cut. [14:02]
-BAD: **The process of cell division**: This is when a cell goes through several phases in order to divide into new cells. [14:02]
+GOOD: **Mitosis**: Cell splits into two identical daughter cells with the same chromosome number — same example as skin healing after a cut.
+BAD: **The process of cell division**: This is when a cell goes through several phases in order to divide into new cells.
 (BAD is wrong on two counts: the term is a clause, not a glossary entry, and the definition is generic — it ignores what the lecturer actually said.)
 
-## Full Notes with Slide References
+## Full Lecture Notes
 Provide comprehensive notes organized by topics. ALWAYS include slide numbers/references when mentioned — this helps students who may not have recorded the visuals. Use bullet points for key information. Include examples and explanations from the lecturer.
 
 Format:
 ### Topic 1 [Slide X, Y, Z if mentioned]
 **Slide Content:**
-- Heading/visual from slide [timestamp]
-- Key diagram or list shown [timestamp]
+- Heading/visual from slide
+- Key diagram or list shown
 
 **Key Points from Lecture:**
-- Key point 1 [timestamp]
-- Key point 2 [timestamp]
-- Real example (SA context if given) [timestamp]
+- Key point 1
+- Key point 2
+- Real example (SA context if given)
 
 ### Topic 2 [Slide A, B if mentioned]
 **Slide Content:**
-- Main content from slide [timestamp]
+- Main content from slide
 
 **Key Points from Lecture:**
-- Key point 1 [timestamp]
-- Key point 2 [timestamp]
+- Key point 1
+- Key point 2
 
 ## Assessment Hints Detected
 (Flag anything the lecturer emphasized — these are likely exam/test/assignment questions)
-- "This always comes up in the exam" — Topic [timestamp]
-- "You'll see this in your assessment" — Concept [timestamp]
-- "Repeated X times" — Concept appears strongly emphasized [timestamps]
+- "This always comes up in the exam" — Topic
+- "You'll see this in your assessment" — Concept
+- "Repeated X times" — Concept appears strongly emphasized
 
-## Summary: 5-Bullet Pass Guarantee
-1. If you only study 5 things, study these. Each = 1 sentence. No fluff.
+## Summary: 10-Bullet Pass Guarantee
+If you only study 10 things, study these. Each = 1 sentence. No fluff.
+1. [First key point]
+2. [Second key point]
+3. [Third key point]
+4. [Fourth key point]
+5. [Fifth key point]
+6. [Sixth key point]
+7. [Seventh key point]
+8. [Eighth key point]
+9. [Ninth key point]
+10. [Tenth key point]
 
-## Exam-Style Questions (10 Questions) + Memo
-Create 10 exam-style questions using Bloom's taxonomy. Base ONLY on transcript facts. Include a memo/model answer for each question.
+## Test Predictor: 10 Exam-Style Questions + Memo
+Create 10 exam-style questions using Bloom's taxonomy. Base ONLY on transcript facts. Include a memo/model answer for each question. These are "Test Predictor" questions designed to predict what will appear on actual exams.
 
 Format:
-Q1 [Recall]: What is ___? [timestamp]
+Q1 [Recall]: What is ___?
 A1: [Detailed model answer based on transcript]
 
-Q2 [Understand]: Explain why ___ happens [timestamp]
+Q2 [Understand]: Explain why ___ happens
 A2: [Detailed model answer based on transcript]
 
-Q3 [Apply]: If ___, calculate ___ [timestamp]
+Q3 [Apply]: If ___, calculate ___
 A3: [Detailed model answer based on transcript]
 
-Q4 [Analyze]: Compare X vs Y from lecture [timestamp]
+Q4 [Analyze]: Compare X vs Y from lecture
 A4: [Detailed model answer based on transcript]
 
-Q5 [Evaluate]: Which is better for ___ and why? [timestamp]
+Q5 [Evaluate]: Which is better for ___ and why?
 A5: [Detailed model answer based on transcript]
 
-Q6 [Recall]: ___ [timestamp]
+Q6 [Recall]: ___
 A6: [Detailed model answer based on transcript]
 
-Q7 [Understand]: ___ [timestamp]
+Q7 [Understand]: ___
 A7: [Detailed model answer based on transcript]
 
-Q8 [Apply]: ___ [timestamp]
+Q8 [Apply]: ___
 A8: [Detailed model answer based on transcript]
 
-Q9 [Analyze]: ___ [timestamp]
+Q9 [Analyze]: ___
 A9: [Detailed model answer based on transcript]
 
-Q10 [Evaluate]: ___ [timestamp]
+Q10 [Evaluate]: ___
 A10: [Detailed model answer based on transcript]
 
-## Cheat Sheet
+## Glossary
 
 ### Formulas
 List all formulas mentioned in the lecture with when to use them:
-- Formula 1: When to use it [timestamp]
-- Formula 2: When to use it [timestamp]
+- Formula 1: When to use it
+- Formula 2: When to use it
 
-### Glossary of Definitions
+### Definitions
 List ALL definitions mentioned in the lecture (not just the key concepts):
-- **Term**: Definition [timestamp]
-- **Term**: Definition [timestamp]
+- **Term**: Definition
+- **Term**: Definition
 
-3. TONE: Clear, direct English. Short sentences. No "furthermore". No "it is important to note". Suit South African university students.
-4. HALLUCINATION BAN: If info not in transcript, write "Not covered in this lecture". Never invent.
-5. SA CONTEXT: Keep ZAR, South African examples (Eskom, provinces, SA legislation, case studies). Include slide references. Don't convert currency to other units.
+4. TONE: Clear, direct English. Short sentences. No "furthermore". No "it is important to note". Suit South African university students.
+5. HALLUCINATION BAN: If info not in transcript, write "Not covered in this lecture". Never invent.
+6. SA CONTEXT: Keep ZAR, South African examples (Eskom, provinces, SA legislation, case studies). Include slide references. Don't convert currency to other units.
 
 CONTEXT: Student is at a South African university. May be at contact or distance education institution. Attends lectures with slides. Needs notes for tests, assignments, and exams. Make every word count. Include slide references since student may not have recorded the lecture visuals.
 
