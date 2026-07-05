@@ -14,7 +14,7 @@ import Alert from '../components/Alert';
 function HomePageContent() {
   const router = useRouter();
   const [lectures, setLectures] = useState<any[]>([]);
-  const [stats, setStats] = useState({ lectures: 0, hours: '0.0', flashcards: 0 });
+  const [stats, setStats] = useState({ lectures: 0, minutes: 0, flashcards: 0 });
   const [streak, setStreak] = useState(0);
   const [profileWidgetVisible, setProfileWidgetVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
@@ -265,7 +265,7 @@ function HomePageContent() {
 
     setStats({
       lectures: lectureCount,
-      hours: totalHours,
+      minutes: totalMinutes,
       flashcards: flashcardCount
     });
   };
@@ -1074,7 +1074,7 @@ function HomePageContent() {
                 <div className="text-xs text-slate-600">Lectures</div>
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.hours}</div>
+                <div className="text-2xl font-bold text-indigo-600 mb-1">{(stats.minutes / 60).toFixed(1)}</div>
                 <div className="text-xs text-slate-600">Hours Saved</div>
               </div>
               <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl p-3 text-center">
