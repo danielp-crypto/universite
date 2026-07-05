@@ -2,13 +2,6 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Terms of Service | Universite - User Agreement & Legal Terms',
-  description: 'Terms of Service for Universite - Read our terms and conditions for using the AI learning assistant platform. Understand your rights and responsibilities.',
-  keywords: 'terms of service, terms and conditions, user agreement, legal terms, Universite terms, service agreement',
-};
 
 export default function TermsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

@@ -3,11 +3,6 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-export const metadata = {
-  title: 'Privacy Policy | Universite',
-  description: 'Privacy Policy for Universite - Learn how we protect your data, handle recordings, transcripts, and personal information.',
-};
-
 export default function PrivacyPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
