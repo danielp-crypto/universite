@@ -286,7 +286,7 @@ function SignupPageContent() {
                 {step === 1 ? 'Get Started Free' : step === 2 ? 'Tell us about yourself' : 'Choose your module'}
               </h1>
               <p className="text-sm sm:text-base text-slate-600">
-                {step === 1 ? 'Join thousands of students transforming their learning' : step === 2 ? 'Help us personalize your experience' : 'Start with 2 free credits'}
+                {step === 1 ? 'Join thousands of students transforming their learning' : step === 2 ? 'Help us personalize your experience' : 'Start with 4 free lectures'}
               </p>
             </div>
 

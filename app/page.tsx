@@ -52,7 +52,7 @@ export default function Home() {
             </div>
             <div className="hidden md:flex items-center space-x-4">
               <Link href="/login" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Login</Link>
-              <Link href="/signup" className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all">Sign Up</Link>
+              <Link href="/signup" className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all">Free Trial</Link>
             </div>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -77,7 +77,7 @@ export default function Home() {
             <a href="#about" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>About</a>
             <div className="pt-3 border-t border-slate-200 space-y-3">
               <Link href="/login" className="block text-slate-600 hover:text-indigo-600 font-medium transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-              <Link href="/signup" className="block px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all text-center" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
+              <Link href="/signup" className="block px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all text-center" onClick={() => setMobileMenuOpen(false)}>Free Trial</Link>
             </div>
           </div>
         )}
@@ -92,17 +92,17 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start free with 3 lectures, then upgrade for unlimited AI-powered study tools.
+                Start free with 4 lectures, then upgrade for unlimited AI-powered study tools.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="#pricing" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
-                  Get Started Free
+                  Free Trial
                 </Link>
                 <a href="#how-it-works" className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold text-lg hover:border-indigo-300 transition-all text-center">
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free : notes + exam questions + memo + cheat sheet for 5 lectures • Semester Pass: R299 for one module: unlimited lectures and AI study tools.</p>
+              <p className="mt-6 text-sm text-slate-500">Free : notes + exam questions + memo + cheat sheet for 4 lectures • Module Pass: R299 per module: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -234,7 +234,7 @@ export default function Home() {
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Get Instant study assests</h3>
-              <p className="text-slate-600">Record/Upload your lectures and get  AI-powered study materials created for you and sent via whatsapp.</p>
+              <p className="text-slate-600">Record/Upload your lectures and get  AI-powered study materials created for you.</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">3</div>
@@ -251,7 +251,7 @@ export default function Home() {
           <div className="text-center mb-10 md:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-              Start with 5 lectures and upgrade for unlimited AI study tools.
+              Start with 4 lectures and upgrade for unlimited AI study tools.
             </p>
           </div>
 
@@ -263,11 +263,11 @@ export default function Home() {
               </div>
               <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
               <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No credit card • Perfect for trying Universite</p>
-              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 5 lectures</span></p>
+              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 4 lectures</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload up to 5 lectures</strong> - upload up to 90 minutes per lecture </span>
+                  <span><strong>Record/Upload up to 4 lectures</strong> - upload up to 90 minutes per lecture </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -283,7 +283,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>AI Chat</strong></span>
+                  <span><strong>AI Chat</strong> - lecture context only, no chat history</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -299,7 +299,7 @@ export default function Home() {
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
-                Get Started Free
+                Free Trial
               </Link>
             </div>
 
@@ -315,7 +315,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Module Pass</h3>
               <p className="text-xs sm:text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R299<span className="text-sm sm:text-base font-medium text-white/80 ml-1">Covers one module</span></p>
+              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R299<span className="text-sm sm:text-base font-medium text-white/80 ml-1">Covers entire module</span></p>
               <p className="text-sm text-white/80 mb-6">Everything you need to pass your worst module</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
@@ -336,7 +336,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>AI Chat</strong> - Unlimited AI usage for each lecture</span>
+                  <span><strong>AI Chat</strong> - context increases with every lecture, chat history, Unlimited AI usage for each lecture</span>
                 </li>
                 
                 <li className="flex items-start">
@@ -361,7 +361,7 @@ export default function Home() {
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-white/30 text-sm sm:text-base font-medium rounded-lg text-white hover:bg-white/10 transition-all text-center font-semibold">
-                Semester Pass
+                Module Pass
               </Link>
             </div>
           </div>
@@ -456,7 +456,7 @@ export default function Home() {
               <h4 className="text-white font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-slate-400">
                 <li><Link href="/login" className="hover:text-white transition-colors">Login</Link></li>
-                <li><Link href="/signup" className="hover:text-white transition-colors">Sign Up</Link></li>
+                <li><Link href="/signup" className="hover:text-white transition-colors">Free Trial</Link></li>
                 <li><a href="mailto:support@universite.co.za" className="hover:text-white transition-colors">Contact Us</a></li>
               </ul>
             </div>
