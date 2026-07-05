@@ -15,6 +15,30 @@ export default function SettingsPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [theme, setTheme] = useState('light');
+
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+   setTheme(savedTheme);
+    applyTheme(savedTheme);
+  }, []);
+
+  // Apply theme to document
+  const applyTheme = (newTheme: string) => {
+    const html = document.documentElement;
+    if (newTheme === 'dark') {
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
+    }
+  };
+
+  // Handle theme change
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    applyTheme(newTheme);
+  };
   const [dailyGoal, setDailyGoal] = useState(3);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -378,7 +402,7 @@ export default function SettingsPage() {
                 {['light', 'dark', 'system'].map((t) => (
                   <div
                     key={t}
-                    onClick={() => setTheme(t)}
+                    onClick={() => handleThemeChange(t)}
                     className={`p-4 border rounded-xl cursor-pointer transition-colors ${
                       theme === t ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'
                     }`}
@@ -400,7 +424,7 @@ export default function SettingsPage() {
 
               <div className="mt-8 flex gap-3">
                 <button onClick={() => setShowAppearance(false)} className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700">
-                  Apply Theme
+                  Done
                 </button>
               </div>
             </div>
