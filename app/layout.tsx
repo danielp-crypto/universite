@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -16,17 +16,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Universite",
   description: "AI-powered lecture recording and study assistant",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   icons: {
     icon: "/assets/images/icon-removebg-preview.png-128x128.png",
     shortcut: "/assets/images/icon-removebg-preview.png-128x128.png",
     apple: "/assets/images/icon-removebg-preview.png-128x128.png",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

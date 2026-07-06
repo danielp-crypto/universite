@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Universite</string>
+    <string name="title_activity_main">Universite</string>
+    <string name="package_name">com.universite.app</string>
+    <string name="custom_url_scheme">com.universite.app</string>
+</resources>
