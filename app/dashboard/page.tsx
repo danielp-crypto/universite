@@ -467,10 +467,25 @@ function HomePageContent() {
       setCurrentStep(2);
       setProcessingText(steps[2]);
 
-      // Step 3: Create lecture in Supabase
-      // Generate lecture number based on existing lectures
-      const lectureNumber = lectures.length + 1;
+      // Generate title from transcript
+      let lectureTitle = `Lecture ${lectures.length + 1}`;
+      try {
+        const titleResponse = await fetch('/api/generate-title', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript })
+        });
+        if (titleResponse.ok) {
+          const titleData = await titleResponse.json();
+          if (titleData.title) {
+            lectureTitle = titleData.title;
+          }
+        }
+      } catch (error) {
+        console.error('Error generating title:', error);
+      }
 
+      // Step 3: Create lecture in Supabase
       const lectureResponse = await fetch('/api/lectures', {
         method: 'POST',
         headers: {
@@ -478,7 +493,7 @@ function HomePageContent() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: `Lecture ${lectureNumber}`,
+          title: lectureTitle,
           duration: elapsed,
           transcription: transcript,
           summary: summary,
@@ -693,6 +708,24 @@ function HomePageContent() {
       setCurrentStep(2);
       setProcessingText(steps[2]);
 
+      // Generate title from transcript
+      let lectureTitle = file.name.replace(/\.[^/.]+$/, '');
+      try {
+        const titleResponse = await fetch('/api/generate-title', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript })
+        });
+        if (titleResponse.ok) {
+          const titleData = await titleResponse.json();
+          if (titleData.title) {
+            lectureTitle = titleData.title;
+          }
+        }
+      } catch (error) {
+        console.error('Error generating title:', error);
+      }
+
       // Step 3: Create lecture in Supabase
       const lectureResponse = await fetch('/api/lectures', {
         method: 'POST',
@@ -701,7 +734,7 @@ function HomePageContent() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: file.name.replace(/\.[^/.]+$/, ''),
+          title: lectureTitle,
           duration: Math.floor(audioDuration),
           transcription: transcript,
           summary: summary,
