@@ -28,7 +28,6 @@ function SignupPageContent() {
     study_time: '',
     learning_style: ''
   });
-  const [moduleName, setModuleName] = useState('');
 
   // Alert state
   const [alertOpen, setAlertOpen] = useState(false);
@@ -153,15 +152,6 @@ function SignupPageContent() {
       showAlert('Error', 'Please fill in all required fields', 'error');
       return;
     }
-    setStep(3);
-  };
-
-  const handleModuleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!moduleName) {
-      showAlert('Error', 'Please enter a module name', 'error');
-      return;
-    }
 
     try {
       const session = await getSession();
@@ -184,49 +174,6 @@ function SignupPageContent() {
         learning_style: profileData.learning_style,
         updated_at: new Date().toISOString()
       });
-
-      // Create module
-      const { data: module, error: moduleError } = await supabase.from('modules').insert({
-        user_id: session.user.id,
-        name: moduleName
-      }).select().single();
-
-      if (moduleError) {
-        showAlert('Error', 'Failed to create module: ' + moduleError.message, 'error');
-        return;
-      }
-
-      // Create 4 free credits for the module
-      const { error: creditsError } = await supabase.from('credits').insert([
-        {
-          user_id: session.user.id,
-          module_id: module.id,
-          used_for: 'free_tier_credit',
-          used_at: new Date().toISOString()
-        },
-        {
-          user_id: session.user.id,
-          module_id: module.id,
-          used_for: 'free_tier_credit',
-          used_at: new Date().toISOString()
-        },
-        {
-          user_id: session.user.id,
-          module_id: module.id,
-          used_for: 'free_tier_credit',
-          used_at: new Date().toISOString()
-        },
-        {
-          user_id: session.user.id,
-          module_id: module.id,
-          used_for: 'free_tier_credit',
-          used_at: new Date().toISOString()
-        }
-      ]);
-
-      if (creditsError) {
-        console.error('Failed to create credits:', creditsError);
-      }
 
       router.push('/dashboard');
     } catch (error: any) {
@@ -283,10 +230,10 @@ function SignupPageContent() {
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 md:p-10 border border-slate-200 animate-fade-in">
             <div className="text-center mb-6 sm:mb-8">
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
-                {step === 1 ? 'Get Started Free' : step === 2 ? 'Tell us about yourself' : 'Choose your module'}
+                {step === 1 ? 'Get Started Free' : 'Tell us about yourself'}
               </h1>
               <p className="text-sm sm:text-base text-slate-600">
-                {step === 1 ? 'Join thousands of students transforming their learning' : step === 2 ? 'Help us personalize your experience' : 'Start with 4 free lectures'}
+                {step === 1 ? 'Join thousands of students transforming their learning' : 'Help us personalize your experience'}
               </p>
             </div>
 
@@ -296,8 +243,6 @@ function SignupPageContent() {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 1 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'}`}>1</div>
                 <div className={`w-12 h-1 ${step >= 2 ? 'bg-indigo-600' : 'bg-slate-200'}`}></div>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 2 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'}`}>2</div>
-                <div className={`w-12 h-1 ${step >= 3 ? 'bg-indigo-600' : 'bg-slate-200'}`}></div>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 3 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'}`}>3</div>
               </div>
             </div>
 
@@ -541,45 +486,6 @@ function SignupPageContent() {
                     className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-[0.99]"
                   >
                     Continue
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Step 3: Module Selection */}
-            {step === 3 && (
-              <form onSubmit={handleModuleSubmit} className="mb-6">
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="module_name" className="block text-sm font-medium text-slate-700 mb-1">Module Name *</label>
-                    <input
-                      id="module_name"
-                      type="text"
-                      value={moduleName}
-                      onChange={(e) => setModuleName(e.target.value)}
-                      required
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-slate-900 placeholder:text-slate-400"
-                      placeholder="e.g., Calculus 101, Physics, Chem1048 etc."
-                    />
-                  </div>
-                  <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-200">
-                    <div className="flex items-center mb-2">
-                      <svg className="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-sm font-semibold text-indigo-900">Each Plan Includes:</span>
-                    </div>
-                    <ul className="text-sm text-indigo-800 space-y-1 ml-7">
-                      <li>• Lecture recording/upload</li>
-                      <li>• Study Assets</li>
-                      <li>• AI Lecture chat</li>
-                    </ul>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-[0.99]"
-                  >
-                    Complete Setup
                   </button>
                 </div>
               </form>
