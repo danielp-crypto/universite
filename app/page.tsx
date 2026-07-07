@@ -303,7 +303,7 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Premium Plan */}
+            {/* Module Pass */}
             <div className="relative bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-6 sm:p-8 md:p-10 text-white">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <div className="inline-flex items-center px-3 sm:px-4 py-1 sm:py-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 text-emerald-900 text-xs sm:text-sm font-semibold shadow-lg">
@@ -315,7 +315,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Module Pass</h3>
               <p className="text-xs sm:text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R299<span className="text-sm sm:text-base font-medium text-white/80 ml-1">Covers entire module</span></p>
+              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R299 once-off<span className="text-sm sm:text-base font-medium text-white/80 ml-1">Access until the semester ends</span></p>
               <p className="text-sm text-white/80 mb-6">Everything you need to pass your worst module</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
