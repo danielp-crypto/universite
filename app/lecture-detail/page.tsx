@@ -925,11 +925,60 @@ function LectureDetailPageContent() {
                               <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
                                 {formatNoteText(section.content, `notes-${idx}`)}
                               </div>
-                            ) : section.style === 'rose' ? (
-                              <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                                {formatNoteText(section.content, `glossary-${idx}`)}
-                              </div>
-                            ) : (
+                            ) : section.style === 'rose' ? (() => {
+                              // Parse Formulas and Definitions subsections
+                              const formulasMatch = section.content.match(/### Formulas\s*([\s\S]*?)(?=###|$)/i);
+                              const definitionsMatch = section.content.match(/### Definitions\s*([\s\S]*)/i);
+
+                              const formulas = formulasMatch
+                                ? formulasMatch[1].split(/[\n•\-\*]/).filter(f => f.trim())
+                                : [];
+                              const definitions = definitionsMatch
+                                ? definitionsMatch[1].split(/[\n•\-\*]/).filter(d => d.trim())
+                                : [];
+
+                              return (
+                                <div className="space-y-4">
+                                  {formulas.length > 0 && (
+                                    <div>
+                                      <h5 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                        <span className="text-sm">📐</span>
+                                        <span>Formulas</span>
+                                      </h5>
+                                      <ul className="space-y-2">
+                                        {formulas.map((formula, i) => (
+                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                                            <span className="mt-0.5 flex-shrink-0">📐</span>
+                                            <span>{formatNoteText(formula, `formula-${i}`)}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {definitions.length > 0 && (
+                                    <div>
+                                      <h5 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                        <span className="text-sm">📖</span>
+                                        <span>Definitions</span>
+                                      </h5>
+                                      <ul className="space-y-2">
+                                        {definitions.map((definition, i) => (
+                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                                            <span className="mt-0.5 flex-shrink-0">📖</span>
+                                            <span>{formatNoteText(definition, `def-${i}`)}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {formulas.length === 0 && definitions.length === 0 && (
+                                    <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                      {formatNoteText(section.content, `glossary-${idx}`)}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })() : (
                               <ul className="space-y-2.5">
                                 {items.map((item, i) => (
                                   <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
