@@ -514,7 +514,7 @@ function HomePageContent() {
       // Show notification with view button
       showAlert(
         'Your study assets are ready',
-        lectureData.title,
+        lectureData.title.length > 30 ? lectureData.title.substring(0, 30) + '...' : lectureData.title,
         'success',
         `/lecture-detail?id=${lectureData.id}`
       );
@@ -735,7 +735,7 @@ function HomePageContent() {
       // Show notification with view button
       showAlert(
         'Your study assets are ready',
-        lectureData.title,
+        lectureData.title.length > 30 ? lectureData.title.substring(0, 30) + '...' : lectureData.title,
         'success',
         `/lecture-detail?id=${lectureData.id}`
       );
