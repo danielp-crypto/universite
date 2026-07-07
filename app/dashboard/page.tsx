@@ -41,6 +41,8 @@ function HomePageContent() {
   const [modules, setModules] = useState<any[]>([]);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [userModule, setUserModule] = useState<any>(null);
+  const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
+  const [newModuleName, setNewModuleName] = useState('');
 
   // Processing states
   const [processingSteps, setProcessingSteps] = useState<string[]>([]);
@@ -188,9 +190,15 @@ function HomePageContent() {
         const newModule = await response.json();
         setModules([...modules, newModule]);
         setSelectedModule(newModule.id);
+        setShowCreateModuleModal(false);
+        setNewModuleName('');
+        showAlert('Success', 'Module created successfully!', 'success');
+      } else {
+        showAlert('Error', 'Failed to create module', 'error');
       }
     } catch (error) {
       console.error('Error creating module:', error);
+      showAlert('Error', 'Failed to create module', 'error');
     }
   };
 
@@ -878,6 +886,12 @@ function HomePageContent() {
                   <option key={module.id} value={module.id}>{module.name}</option>
                 ))}
               </select>
+              <button
+                onClick={() => setShowCreateModuleModal(true)}
+                className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all active:scale-95"
+              >
+                + New
+              </button>
             </div>
           </div>
 
@@ -1407,6 +1421,44 @@ function HomePageContent() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Module Modal */}
+      {showCreateModuleModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold text-slate-900 mb-4">Create New Module</h3>
+            <input
+              type="text"
+              value={newModuleName}
+              onChange={(e) => setNewModuleName(e.target.value)}
+              placeholder="e.g., Calculus 101, Physics, Chem1048"
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-slate-900 placeholder:text-slate-400 mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCreateModuleModal(false);
+                  setNewModuleName('');
+                }}
+                className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (newModuleName.trim()) {
+                    createModule(newModuleName.trim());
+                  }
+                }}
+                disabled={!newModuleName.trim()}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create Module
+              </button>
             </div>
           </div>
         </div>
