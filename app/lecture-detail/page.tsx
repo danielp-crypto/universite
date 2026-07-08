@@ -646,6 +646,29 @@ function LectureDetailPageContent() {
                 )}
               </div>
 
+              {/* Self-test Section */}
+              <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 rounded-2xl p-4 md:p-5 shadow-sm mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <span className="text-xl leading-none">🎯</span>
+                    <span>Self-test</span>
+                  </h3>
+                  <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-semibold">Premium</span>
+                </div>
+                <p className="text-sm text-slate-600 mb-4">
+                  Test your knowledge with flashcards generated from this lecture. Track your progress and master the material.
+                </p>
+                <button
+                  onClick={() => {
+                    setUpgradeFeature('Self-test');
+                    setUpgradeModalOpen(true);
+                  }}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all text-sm active:scale-95"
+                >
+                  Take Test
+                </button>
+              </div>
+
               {/* Lecture Notes */}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
                 <div className="flex items-center justify-between mb-5">
