@@ -636,11 +636,16 @@ function LectureDetailPageContent() {
                   <div>
                     <h3 className="text-xs font-bold text-slate-700 mb-2">Key Concepts</h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {currentLecture.keyConcepts.map((concept: string, idx: number) => (
-                        <span key={idx} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
-                          {concept}
-                        </span>
-                      ))}
+                      {currentLecture.keyConcepts.map((concept: string, idx: number) => {
+                        // Bubbles show a single word each. If a concept comes through
+                        // as a longer phrase, only its first word is shown.
+                        const word = concept.trim().split(/\s+/)[0];
+                        return (
+                          <span key={idx} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+                            {word}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
