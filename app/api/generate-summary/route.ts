@@ -154,8 +154,8 @@ List all formulas mentioned in the lecture with when to use them:
 - Formula 1: When to use it
 - Formula 2: When to use it
 
-### Definitions
-List ALL definitions mentioned in the lecture (not just the key concepts):
+### Definitions [exactly 10 terms]
+List exactly 10 definitions from the lecture (not just the key concepts). Include the most important and frequently mentioned terms. If fewer than 10 definitions exist in the lecture, include all available ones and add relevant related concepts from the lecture content.
 - **Term**: Definition
 - **Term**: Definition
 
