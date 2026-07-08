@@ -28,19 +28,21 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    // Count used credits for each module (exclude free_tier_credit)
-    const modulesWithCredits = await Promise.all((modules || []).map(async (module) => {
-      const { data: creditsData } = await supabaseAdmin
-        .from('credits')
-        .select('id')
-        .eq('module_id', module.id)
-        .neq('used_for', 'free_tier_credit');
-      
-      return {
-        ...module,
-        credits_allocated: 4, // Free tier gets 4 credits
-        credits_used: creditsData?.length || 0
-      };
+    // Count global credits for the user (exclude free_tier_credit)
+    const { data: globalCreditsData } = await supabaseAdmin
+      .from('credits')
+      .select('id')
+      .eq('user_id', user.id)
+      .neq('used_for', 'free_tier_credit');
+
+    const globalCreditsUsed = globalCreditsData?.length || 0;
+    const globalCreditsAllocated = 4; // Free tier gets 4 credits globally
+
+    // Add global credit info to each module
+    const modulesWithCredits = (modules || []).map(module => ({
+      ...module,
+      credits_allocated: globalCreditsAllocated,
+      credits_used: globalCreditsUsed
     }));
 
     if (error) {

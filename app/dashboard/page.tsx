@@ -40,7 +40,7 @@ function HomePageContent() {
   // Modules state
   const [modules, setModules] = useState<any[]>([]);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [userModule, setUserModule] = useState<any>(null);
+  const [globalCredits, setGlobalCredits] = useState({ used: 0, allocated: 4 });
   const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
   const [newModuleName, setNewModuleName] = useState('');
 
@@ -162,9 +162,12 @@ function HomePageContent() {
       if (response.ok) {
         const modulesData = await response.json();
         setModules(modulesData || []);
-        // Set the first module as user's module
+        // Set global credits from first module (all modules now share the same global credits)
         if (modulesData && modulesData.length > 0) {
-          setUserModule(modulesData[0]);
+          setGlobalCredits({
+            used: modulesData[0].credits_used || 0,
+            allocated: modulesData[0].credits_allocated || 4
+          });
         }
       }
     } catch (error) {
@@ -328,7 +331,7 @@ function HomePageContent() {
     }
 
     // Check if user has credits available
-    if (!userModule || (userModule.credits_used || 0) >= (userModule.credits_allocated || 4)) {
+    if (globalCredits.used >= globalCredits.allocated) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       setUpgradeModalOpen(true);
       setUpgradeFeature('Record lectures');
@@ -507,7 +510,7 @@ function HomePageContent() {
           lecture_id: lectureData.id,
           used_for: 'recording'
         });
-        // Reload modules to update credit display
+        // Reload modules to update global credit display
         loadModules();
       }
 
@@ -613,7 +616,7 @@ function HomePageContent() {
     }
 
     // Check if user has credits available
-    if (!userModule || (userModule.credits_used || 0) >= (userModule.credits_allocated || 4)) {
+    if (globalCredits.used >= globalCredits.allocated) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       setUpgradeModalOpen(true);
       setUpgradeFeature('Upload lectures');
@@ -730,7 +733,7 @@ function HomePageContent() {
           lecture_id: lectureData.id,
           used_for: 'upload'
         });
-        // Reload modules to update credit display
+        // Reload modules to update global credit display
         loadModules();
       }
 
@@ -1101,30 +1104,28 @@ function HomePageContent() {
           </div>
 
           {/* Credits Display */}
-          {userModule && (
-            <div className="mb-6">
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-800 mb-1">{userModule.name}</h3>
-                    <p className="text-xs text-slate-600">Credits Used</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-indigo-600">
-                      {userModule.credits_used}/{userModule.credits_allocated}
-                    </div>
-                    <div className="text-xs text-slate-600">Credits</div>
-                  </div>
+          <div className="mb-6">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800 mb-1">Free Tier Credits</h3>
+                  <p className="text-xs text-slate-600">Credits Used (Global)</p>
                 </div>
-                <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
-                    style={{ width: `${(userModule.credits_used / userModule.credits_allocated) * 100}%` }}
-                  ></div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-indigo-600">
+                    {globalCredits.used}/{globalCredits.allocated}
+                  </div>
+                  <div className="text-xs text-slate-600">Credits</div>
                 </div>
               </div>
+              <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                  style={{ width: `${(globalCredits.used / globalCredits.allocated) * 100}%` }}
+                ></div>
+              </div>
             </div>
-          )}
+          </div>
 
           {/* Study Tools Quick Links */}
           <div>
