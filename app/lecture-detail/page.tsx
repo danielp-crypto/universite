@@ -907,19 +907,36 @@ function LectureDetailPageContent() {
                                 {items.map((item, i) => {
                                   const qMatch = item.match(/^Q\d+\s*\[([^\]]+)\]:\s*([\s\S]+)$/i);
                                   const level = qMatch ? qMatch[1] : null;
-                                  const body = qMatch ? qMatch[2].trim() : item;
+                                  const rawBody = qMatch ? qMatch[2].trim() : item;
+
+                                  // Split off the "A1: ..." model answer so it renders
+                                  // as a bold, visually distinct block under the question.
+                                  const answerMatch = rawBody.match(/^([\s\S]*?)\n?A\d+:\s*([\s\S]+)$/i);
+                                  const question = answerMatch ? answerMatch[1].trim() : rawBody;
+                                  const answer = answerMatch ? answerMatch[2].trim() : null;
+
                                   return (
                                     <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
                                       <span className="mt-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-violet-500 text-white text-[10px] font-bold flex-shrink-0">
                                         {i + 1}
                                       </span>
-                                      <span>
+                                      <span className="flex-1">
                                         {level && (
                                           <span className="mr-1.5 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-violet-100 text-violet-700">
                                             {level}
                                           </span>
                                         )}
-                                        {formatNoteText(body, `ty-${i}`)}
+                                        {formatNoteText(question, `ty-${i}`)}
+                                        {answer && (
+                                          <div className="mt-2 pl-3 border-l-2 border-violet-300">
+                                            <span className="block text-[10px] font-semibold uppercase tracking-wide text-violet-500 mb-0.5">
+                                              Answer
+                                            </span>
+                                            <span className="font-bold text-violet-900">
+                                              {formatNoteText(answer, `tya-${i}`)}
+                                            </span>
+                                          </div>
+                                        )}
                                       </span>
                                     </li>
                                   );
