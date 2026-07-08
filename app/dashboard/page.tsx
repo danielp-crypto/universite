@@ -1048,7 +1048,7 @@ function HomePageContent() {
                         </div>
                         {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mb-3">
-                            {lecture.keyConcepts.slice(0, 3).map((concept: string, idx: number) => (
+                            {lecture.keyConcepts.slice(0, 5).map((concept: string, idx: number) => (
                               <span key={idx} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{concept}</span>
                             ))}
                           </div>

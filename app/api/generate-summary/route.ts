@@ -56,12 +56,12 @@ OUTPUT RULES:
 2. FORMAT: Use this exact structure, no deviation:
 3. DO NOT include timestamps anywhere in the output.
 
-## Key Concepts [one-word terms]
+## Key Concepts [exactly 5 one-word terms]
 Pick which [DEF]/[FORMULA] items to keep using this priority order, in this order:
   1. Anything whose term also appears in a [FLAG] item — these are confirmed exam-relevant. Always include first.
   2. Terms that show up in [DEF]/[FORMULA] bullets from more than one chunk — repetition means the lecturer kept returning to it.
   3. Foundational terms the rest of the lecture depends on, over one-off mentions.
-Skip anything mentioned only once in passing with no other signal of importance. If fewer than 3 terms meet this bar, it's fine to return fewer — never pad with filler to hit the count.
+You MUST return exactly 5 terms. If fewer than 5 meet the importance criteria, pick the next most relevant terms from the lecture content.
 
 Term rules — get this right, it matters most:
 - Term = 1 word MAX. The actual name of the concept, as it would appear in a glossary or index. Never a sentence, question, or clause.
