@@ -72,6 +72,23 @@ GOOD: **Mitosis**: Cell splits into two identical daughter cells with the same c
 BAD: **The process of cell division**: This is when a cell goes through several phases in order to divide into new cells.
 (BAD is wrong on two counts: the term is a clause, not a glossary entry, and the definition is generic — it ignores what the lecturer actually said.)
 
+## Glossary
+This section is MANDATORY and must always appear with both subheadings below, even for informal, rambling, or discursive lectures where the lecturer never gave a single textbook-style definition. A glossary that teaches real vocabulary is expected regardless of lecture style — do not omit this section and do not skip a subheading just because the transcript was sparse.
+
+### Formulas
+List all formulas mentioned in the lecture with when to use them. If no formulas were mentioned anywhere in the lecture, keep this subheading and write exactly one line under it: "No formulas covered in this lecture".
+- Formula 1: When to use it
+- Formula 2: When to use it
+
+### Definitions [exactly 10 terms]
+ALWAYS output exactly 10 terms, using this priority order:
+  1. Terms the lecturer explicitly defined, in their own words — highest priority, use their specific phrasing/examples.
+  2. Subject-specific or technical terms the lecturer used, wrote on a slide, or referenced without stopping to define — write a concise, standard definition for these based on the subject area. This is expected, not optional: a real glossary defines the vocabulary of the lecture, not just the sentences where the lecturer paused to explain something.
+  3. If, even combining 1 and 2, the lecture doesn't yield 10 distinct terms (e.g. a very short or very informal lecture), add foundational terms from the lecture's general subject area that a student would need in order to understand what was taught — still clearly grounded in the actual topic, not arbitrary.
+Never leave this section short of 10 terms and never write "Not covered in this lecture" here — that fallback applies elsewhere, not to the glossary.
+- **Term**: Definition
+- **Term**: Definition
+
 ## Full Lecture Notes
 Provide comprehensive notes organized by topics. ALWAYS include slide numbers/references when mentioned — this helps students who may not have recorded the visuals. Use bullet points for key information. Include examples and explanations from the lecturer.
 
@@ -147,20 +164,8 @@ A9: [Detailed model answer based on transcript]
 Q10 [Evaluate]: ___
 A10: [Detailed model answer based on transcript]
 
-## Glossary
-
-### Formulas
-List all formulas mentioned in the lecture with when to use them:
-- Formula 1: When to use it
-- Formula 2: When to use it
-
-### Definitions [exactly 10 terms]
-List exactly 10 definitions from the lecture (not just the key concepts). Include the most important and frequently mentioned terms. If fewer than 10 definitions exist in the lecture, include all available ones and add relevant related concepts from the lecture content.
-- **Term**: Definition
-- **Term**: Definition
-
 4. TONE: Clear, direct English. Short sentences. No "furthermore". No "it is important to note". Suit South African university students.
-5. HALLUCINATION BAN: If info not in transcript, write "Not covered in this lecture". Never invent.
+5. HALLUCINATION BAN: Everywhere except the Glossary's Definitions section, if info isn't in the transcript, write "Not covered in this lecture" — never invent facts, numbers, or events that didn't happen. EXCEPTION: the Glossary's Definitions section is explicitly allowed (and required, per the rules above) to supply a standard definition for a term that the lecture actually used or referenced, even if the lecturer didn't pause to define it themselves. This is not invention — the term came from the transcript; only its definition is supplemented.
 6. SA CONTEXT: Keep ZAR, South African examples (Eskom, provinces, SA legislation, case studies). Include slide references. Don't convert currency to other units.
 
 CONTEXT: Student is at a South African university. May be at contact or distance education institution. Attends lectures with slides. Needs notes for tests, assignments, and exams. Make every word count. Include slide references since student may not have recorded the lecture visuals.
@@ -273,7 +278,7 @@ async function reduceSummary(extractedContent: string): Promise<string> {
           }],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 32768,
             thinkingConfig: {
               thinkingBudget: 0
             }
@@ -331,9 +336,18 @@ async function generateSummary(transcript: string): Promise<string> {
     console.log('Extracted content length:', extractedContent.length);
 
     if (extractedContent.length === 0) {
-      // If no content extracted, fall back to simple bullet points
-      console.warn('No content extracted from any chunk — falling back to simple bullet points');
-      return generateSimpleBulletPoints(transcript);
+      // Map step produced nothing usable from any chunk (rare — e.g. a very
+      // short/off-topic-heavy transcript). Rather than falling back to an
+      // unstructured bullet list with no Glossary/Key Concepts/etc., feed the
+      // raw transcript directly into the Reduce step as a best-effort so the
+      // student still gets a full structured summary, glossary included.
+      console.warn('No content extracted from any chunk — falling back to summarizing the raw transcript directly');
+      try {
+        return await reduceSummary(transcript);
+      } catch (fallbackError) {
+        console.error('Raw-transcript fallback also failed:', fallbackError);
+        return generateSimpleBulletPoints(transcript);
+      }
     }
 
     // Step 3: Reduce - Generate final summary from extracted content
