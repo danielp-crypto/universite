@@ -713,11 +713,13 @@ function LectureDetailPageContent() {
                       const sections: { title: string; content: string; icon: string; style: string }[] = [];
 
                       // Sections are matched against the actual "## Heading" markers the
-                      // REDUCE_PROMPT produces, and each capture stops at the NEXT "##"
-                      // heading (or end of string) so sections can never bleed into each
-                      // other regardless of order or spacing.
+                      // REDUCE_PROMPT produces, and each capture stops at the NEXT top-level
+                      // "## Heading" (or end of string). The lookahead requires exactly two
+                      // '#' — "(?!#)" rules out "###" subheadings (e.g. "### Formulas",
+                      // "### Topic 1") so a section's own subheadings don't prematurely end
+                      // its capture and leave it empty.
                       const sectionRegex = (heading: string) =>
-                        new RegExp(`##\\s*${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+                        new RegExp(`##\\s*${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##(?!#)|$)`, 'i');
 
                       // Parse Full Lecture Notes section
                       const fullNotesMatch = text.match(sectionRegex('Full Lecture Notes'));
