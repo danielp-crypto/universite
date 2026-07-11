@@ -65,7 +65,7 @@ export default function Alert({ isOpen, onClose, title, message, type = 'info', 
             onClick={handleAction}
             className="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
           >
-            {actionUrl ? 'View' : 'OK'}
+            {actionUrl ? 'Review' : 'OK'}
           </button>
         </div>
       </div>

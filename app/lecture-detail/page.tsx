@@ -618,7 +618,7 @@ function LectureDetailPageContent() {
                     href={`/assistant?lecture=${currentLecture.id}`}
                     className="flex-1 px-4 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-semibold text-center hover:shadow-lg transition-all text-sm active:scale-95"
                   >
-                    Ask Professor AI
+                    Ask AI Tutor
                   </Link>
                   <button
                     onClick={exportToPDF}
@@ -661,7 +661,7 @@ function LectureDetailPageContent() {
                     <span className="text-xl leading-none">🎯</span>
                     <span>Self-test</span>
                   </h3>
-                  <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-semibold">Premium</span>
+                  <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-semibold">Upgrade</span>
                 </div>
                 <p className="text-sm text-slate-600 mb-4">
                   Test your knowledge with flashcards generated from this lecture. Track your progress and master the material.

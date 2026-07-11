@@ -1002,10 +1002,10 @@ function HomePageContent() {
                         <AudioPlayer src={lecture.audioUrl} className="mb-3" />
                         <div className="flex gap-2">
                           <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
-                            View
+                            Review
                           </Link>
                           <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                            Ask Professor AI
+                            Ask AI Tutor
                           </Link>
                         </div>
                       </div>
@@ -1058,10 +1058,10 @@ function HomePageContent() {
                         )}
                         <div className="flex gap-2">
                           <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
-                            View
+                            Review
                           </Link>
                           <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                            Ask Professor AI
+                            Ask AI Tutor
                           </Link>
                         </div>
                       </div>
@@ -1150,7 +1150,7 @@ function HomePageContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <a href="/#pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Premium</a>
+                  <a href="/#pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Upgrade</a>
                   <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
@@ -1470,7 +1470,7 @@ function HomePageContent() {
         isOpen={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
-        onUpgrade={() => showAlert('Coming Soon', 'Premium upgrade coming soon!', 'info')}
+        onUpgrade={() => showAlert('Coming Soon', 'Upgrade upgrade coming soon!', 'info')}
       />
 
       {/* Alert Modal */}
