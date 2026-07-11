@@ -183,6 +183,29 @@ function splitIntoChunks(transcript: string, wordsPerChunk: number = 1400): stri
   return chunks;
 }
 
+// Runs async tasks with limited concurrency so we don't blow past the
+// Gemini API's requests-per-minute limit on longer transcripts (which can
+// produce 15-20+ chunks). Failed/rate-limited calls are handled by the
+// caller (mapChunk already catches and returns '' on failure).
+async function runWithConcurrencyLimit<T>(
+  tasks: (() => Promise<T>)[],
+  limit: number
+): Promise<T[]> {
+  const results: T[] = new Array(tasks.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < tasks.length) {
+      const current = nextIndex++;
+      results[current] = await tasks[current]();
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(limit, tasks.length) }, worker);
+  await Promise.all(workers);
+  return results;
+}
+
 // Map step: Extract key info from each chunk
 async function mapChunk(chunk: string, index: number): Promise<string> {
   try {
@@ -292,9 +315,12 @@ async function generateSummary(transcript: string): Promise<string> {
     console.log(`Transcript length: ${transcript.length} chars, ${transcript.split(/\s+/).length} words`);
     console.log(`Split transcript into ${chunks.length} chunks`);
 
-    // Step 2: Map - Extract key info from each chunk (with index for debugging)
-    const mapResults = await Promise.all(
-      chunks.map((chunk, index) => mapChunk(chunk, index))
+    // Step 2: Map - Extract key info from each chunk (with index for debugging).
+    // Limited to 5 concurrent requests to avoid tripping Gemini's rate limit
+    // on longer transcripts, which would otherwise silently drop chunks.
+    const mapResults = await runWithConcurrencyLimit(
+      chunks.map((chunk, index) => () => mapChunk(chunk, index)),
+      5
     );
 
     const successfulChunks = mapResults.filter(result => result.length > 0).length;
@@ -384,7 +410,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      summary: summary
+      summary: summary,
+      truncated: transcript.length > MAX_TRANSCRIPT_CHARS,
+      transcriptChars: transcript.length
     });
 
   } catch (error) {

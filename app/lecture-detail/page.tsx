@@ -443,8 +443,12 @@ function LectureDetailPageContent() {
   const generateSummary = async (transcript: string) => {
     try {
       const result = await apiPost('/api/generate-summary', {
-        transcript: transcript.substring(0, 2000)
+        transcript: transcript
       });
+      if (result.success && result.truncated) {
+        console.warn(`Summary generated from a truncated transcript (${result.transcriptChars} chars).`);
+        showAlert('Note', 'This lecture was very long, so notes are based on the first ~4 hours of content.', 'info');
+      }
       return result.success ? result.summary : null;
     } catch (e) {
       return null;
