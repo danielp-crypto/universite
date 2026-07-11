@@ -734,7 +734,10 @@ function LectureDetailPageContent() {
                       // Parse Assessment Hints section
                       const assessmentHintsMatch = text.match(sectionRegex('Assessment Hints'));
                       if (assessmentHintsMatch) {
-                        const hints = assessmentHintsMatch[1].split(/[\n•\-\*]/).filter(h => h.trim());
+                        const hints = assessmentHintsMatch[1]
+                          .split(/\n+/)
+                          .map(line => line.replace(/^\s*[•\-\*]\s*/, '').trim())
+                          .filter(Boolean);
                         sections.push({
                           title: 'Assessment Hints',
                           content: hints.join('|||'),
@@ -963,12 +966,19 @@ function LectureDetailPageContent() {
                               const formulasMatch = section.content.match(/### Formulas\s*([\s\S]*?)(?=###|$)/i);
                               const definitionsMatch = section.content.match(/### Definitions\s*([\s\S]*)/i);
 
-                              const formulas = formulasMatch
-                                ? formulasMatch[1].split(/[\n•\-\*]/).filter(f => f.trim())
-                                : [];
-                              const definitions = definitionsMatch
-                                ? definitionsMatch[1].split(/[\n•\-\*]/).filter(d => d.trim())
-                                : [];
+                              // Split on newlines only, then strip a single leading
+                              // bullet marker (•, -, or *) from each line. We must NOT
+                              // split on '*' or '-' mid-line — that shreds the
+                              // "**Term**: Definition" markdown before formatNoteText
+                              // ever gets a chance to render the term in bold.
+                              const splitLines = (text: string) =>
+                                text
+                                  .split(/\n+/)
+                                  .map(line => line.replace(/^\s*[•\-\*]\s*/, '').trim())
+                                  .filter(Boolean);
+
+                              const formulas = formulasMatch ? splitLines(formulasMatch[1]) : [];
+                              const definitions = definitionsMatch ? splitLines(definitionsMatch[1]) : [];
 
                               return (
                                 <div className="space-y-4">
