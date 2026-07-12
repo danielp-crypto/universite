@@ -95,7 +95,7 @@ function LectureDetailPageContent() {
 
     try {
       const pdf = new jsPDF();
-      
+
       // Add logo image
       const logoImg = new Image();
       logoImg.src = '/new-logo-black-removebg-preview.png';
@@ -103,61 +103,242 @@ function LectureDetailPageContent() {
         logoImg.onload = resolve;
         logoImg.onerror = resolve; // Continue even if image fails to load
       });
-      
+
       // Add logo to PDF (width 40, height proportional)
       pdf.addImage(logoImg, 'PNG', 20, 10, 40, 40);
-      
+
       // Add title
       pdf.setFontSize(20);
+      pdf.setTextColor(0, 0, 0);
       pdf.text(currentLecture.title || 'Untitled Lecture', 70, 30);
-      
+
       // Add metadata
-      pdf.setFontSize(12);
-      pdf.text(`Date: ${currentLecture.date || new Date().toLocaleDateString()}`, 70, 40);
+      pdf.setFontSize(11);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Date: ${new Date(currentLecture.created_at || currentLecture.createdAt).toLocaleDateString()}`, 70, 40);
       pdf.text(`Duration: ${currentLecture.duration || 'N/A'}`, 70, 48);
-      
+
       // Add module name if available
       if (currentLecture.module && currentLecture.module.name) {
         pdf.text(`Module: ${currentLecture.module.name}`, 70, 56);
       }
-      
-      // Add transcript section
-      pdf.setFontSize(16);
-      pdf.text('TRANSCRIPT', 20, 75);
-      pdf.setFontSize(12);
-      
-      const transcript = currentLecture.transcription || 'No transcript available';
-      const transcriptLines = pdf.splitTextToSize(transcript, 170);
-      let yPosition = 85;
-      
-      transcriptLines.forEach((line: string) => {
-        if (yPosition > 270) {
+
+      // Add key concepts if available
+      if (currentLecture.keyConcepts && currentLecture.keyConcepts.length > 0) {
+        let yPosition = 70;
+        pdf.setFontSize(14);
+        pdf.setTextColor(79, 70, 229); // Indigo color
+        pdf.text('Key Concepts', 20, yPosition);
+        yPosition += 10;
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(60, 60, 60);
+        const concepts = currentLecture.keyConcepts.join(', ');
+        const conceptLines = pdf.splitTextToSize(concepts, 170);
+        conceptLines.forEach((line: string) => {
+          if (yPosition > 270) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          pdf.text(line, 20, yPosition);
+          yPosition += 6;
+        });
+        yPosition += 10;
+      }
+
+      // Parse summary into sections
+      const summary = currentLecture.summary || '';
+      const sectionRegex = (heading: string) =>
+        new RegExp(`##\\s*${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+
+      let yPosition = currentLecture.keyConcepts?.length > 0 ? 100 : 75;
+
+      // Full Lecture Notes
+      const fullNotesMatch = summary.match(sectionRegex('Full Lecture Notes'));
+      if (fullNotesMatch) {
+        if (yPosition > 50) {
           pdf.addPage();
           yPosition = 20;
         }
-        pdf.text(line, 20, yPosition);
-        yPosition += 7;
-      });
-      
-      // Add summary section on new page
-      pdf.addPage();
-      pdf.setFontSize(16);
-      pdf.text('SUMMARY', 20, 20);
-      pdf.setFontSize(12);
-      
-      const summary = currentLecture.summary || 'No summary available';
-      const summaryLines = pdf.splitTextToSize(summary, 170);
-      yPosition = 30;
-      
-      summaryLines.forEach((line: string) => {
-        if (yPosition > 270) {
+        pdf.setFontSize(16);
+        pdf.setTextColor(59, 130, 246); // Blue color
+        pdf.text('📝 Full Lecture Notes', 20, yPosition);
+        yPosition += 10;
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(60, 60, 60);
+        const notes = fullNotesMatch[1].trim();
+        const notesLines = pdf.splitTextToSize(notes, 170);
+        notesLines.forEach((line: string) => {
+          if (yPosition > 270) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          pdf.text(line, 20, yPosition);
+          yPosition += 6;
+        });
+        yPosition += 10;
+      }
+
+      // Assessment Hints
+      const assessmentHintsMatch = summary.match(sectionRegex('Assessment Hints'));
+      if (assessmentHintsMatch) {
+        if (yPosition > 50) {
           pdf.addPage();
           yPosition = 20;
         }
-        pdf.text(line, 20, yPosition);
-        yPosition += 7;
-      });
-      
+        pdf.setFontSize(16);
+        pdf.setTextColor(245, 158, 11); // Amber color
+        pdf.text('⚠️ Assessment Hints', 20, yPosition);
+        yPosition += 10;
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(60, 60, 60);
+        const hints = assessmentHintsMatch[1]
+          .split(/\n+/)
+          .map(line => line.replace(/^\s*[•\-\*]\s*/, '').trim())
+          .filter(Boolean);
+        hints.forEach((hint: string) => {
+          if (yPosition > 270) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          pdf.text(`• ${hint}`, 25, yPosition);
+          yPosition += 6;
+        });
+        yPosition += 10;
+      }
+
+      // 10-Bullet Pass Guarantee
+      const summaryMatch = summary.match(sectionRegex('Summary'));
+      if (summaryMatch) {
+        if (yPosition > 50) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        pdf.setFontSize(16);
+        pdf.setTextColor(16, 185, 129); // Emerald color
+        pdf.text('🎯 10-Bullet Pass Guarantee', 20, yPosition);
+        yPosition += 10;
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(60, 60, 60);
+        const summaryText = summaryMatch[1].trim();
+        const summaryItems = summaryText.split(/\d+\.\s*/).filter(s => s.trim());
+        summaryItems.forEach((item: string, idx: number) => {
+          if (yPosition > 270) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          pdf.text(`${idx + 1}. ${item}`, 25, yPosition);
+          yPosition += 6;
+        });
+        yPosition += 10;
+      }
+
+      // Test Predictor
+      const testPredictorMatch = summary.match(sectionRegex('Test Predictor'));
+      if (testPredictorMatch) {
+        if (yPosition > 50) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        pdf.setFontSize(16);
+        pdf.setTextColor(139, 92, 246); // Violet color
+        pdf.text('🧠 Test Predictor', 20, yPosition);
+        yPosition += 10;
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(60, 60, 60);
+        const questions = testPredictorMatch[1]
+          .split(/\n(?=Q\d)/)
+          .map(q => q.trim())
+          .filter(Boolean);
+        questions.forEach((question: string) => {
+          if (yPosition > 270) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          const qLines = pdf.splitTextToSize(question, 170);
+          qLines.forEach((line: string) => {
+            pdf.text(line, 20, yPosition);
+            yPosition += 6;
+          });
+          yPosition += 4;
+        });
+        yPosition += 10;
+      }
+
+      // Glossary
+      const glossaryMatch = summary.match(sectionRegex('Glossary'));
+      if (glossaryMatch) {
+        if (yPosition > 50) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        pdf.setFontSize(16);
+        pdf.setTextColor(244, 63, 94); // Rose color
+        pdf.text('📚 Glossary', 20, yPosition);
+        yPosition += 10;
+
+        const glossary = glossaryMatch[1].trim();
+
+        // Parse Formulas
+        const formulasMatch = glossary.match(/### Formulas\s*([\s\S]*?)(?=###|$)/i);
+        if (formulasMatch) {
+          pdf.setFontSize(12);
+          pdf.setTextColor(0, 0, 0);
+          pdf.setFont(undefined, 'bold');
+          pdf.text('Formulas', 20, yPosition);
+          pdf.setFont(undefined, 'normal');
+          yPosition += 8;
+
+          pdf.setFontSize(10);
+          pdf.setTextColor(60, 60, 60);
+          const formulas = formulasMatch[1].split(/[\n•\-\*]/).filter(f => f.trim());
+          formulas.forEach((formula: string) => {
+            if (yPosition > 270) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            pdf.text(`• ${formula.trim()}`, 25, yPosition);
+            yPosition += 6;
+          });
+          yPosition += 10;
+        }
+
+        // Parse Definitions
+        const definitionsMatch = glossary.match(/### Definitions\s*([\s\S]*)/i);
+        if (definitionsMatch) {
+          if (yPosition > 50) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          pdf.setFontSize(12);
+          pdf.setTextColor(0, 0, 0);
+          pdf.setFont(undefined, 'bold');
+          pdf.text('Definitions', 20, yPosition);
+          pdf.setFont(undefined, 'normal');
+          yPosition += 8;
+
+          pdf.setFontSize(10);
+          pdf.setTextColor(60, 60, 60);
+          const definitions = definitionsMatch[1].split(/[\n•\-\*]/).filter(d => d.trim());
+          definitions.forEach((definition: string) => {
+            if (yPosition > 270) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            const defLines = pdf.splitTextToSize(definition.trim(), 165);
+            defLines.forEach((line: string) => {
+              pdf.text(line, 25, yPosition);
+              yPosition += 6;
+            });
+            yPosition += 4;
+          });
+        }
+      }
+
       // Save the PDF
       pdf.save(`${currentLecture.title || 'lecture'}-notes.pdf`);
     } catch (error) {
