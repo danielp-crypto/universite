@@ -196,7 +196,7 @@ function LectureDetailPageContent() {
         pdf.setTextColor(60, 60, 60);
         const hints = assessmentHintsMatch[1]
           .split(/\n+/)
-          .map(line => line.replace(/^\s*[•\-\*]\s*/, '').trim())
+          .map((line: string) => line.replace(/^\s*[•\-\*]\s*/, '').trim())
           .filter(Boolean);
         hints.forEach((hint: string) => {
           if (yPosition > 270) {
