@@ -295,7 +295,7 @@ function LectureDetailPageContent() {
 
           pdf.setFontSize(10);
           pdf.setTextColor(60, 60, 60);
-          const formulas = formulasMatch[1].split(/[\n•\-\*]/).filter(f => f.trim());
+          const formulas = formulasMatch[1].split(/[\n•\-\*]/).filter((f: string) => f.trim());
           formulas.forEach((formula: string) => {
             if (yPosition > 270) {
               pdf.addPage();
