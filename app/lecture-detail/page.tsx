@@ -224,7 +224,7 @@ function LectureDetailPageContent() {
         pdf.setFontSize(10);
         pdf.setTextColor(60, 60, 60);
         const summaryText = summaryMatch[1].trim();
-        const summaryItems = summaryText.split(/\d+\.\s*/).filter(s => s.trim());
+        const summaryItems = summaryText.split(/\d+\.\s*/).filter((s: string) => s.trim());
         summaryItems.forEach((item: string, idx: number) => {
           if (yPosition > 270) {
             pdf.addPage();
@@ -252,7 +252,7 @@ function LectureDetailPageContent() {
         pdf.setTextColor(60, 60, 60);
         const questions = testPredictorMatch[1]
           .split(/\n(?=Q\d)/)
-          .map(q => q.trim())
+          .map((q: string) => q.trim())
           .filter(Boolean);
         questions.forEach((question: string) => {
           if (yPosition > 270) {
@@ -722,7 +722,7 @@ function LectureDetailPageContent() {
 
     if (text.includes('**')) {
       const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
-      return parts.map((part, i) =>
+      return parts.map((part: string, i: number) =>
         part.startsWith('**') && part.endsWith('**') ? (
           <strong key={`${keyPrefix}-${i}`} className="font-semibold text-slate-900">
             {part.slice(2, -2)}
@@ -919,7 +919,7 @@ function LectureDetailPageContent() {
                       if (assessmentHintsMatch) {
                         const hints = assessmentHintsMatch[1]
                           .split(/\n+/)
-                          .map(line => line.replace(/^\s*[•\-\*]\s*/, '').trim())
+                          .map((line: string) => line.replace(/^\s*[•\-\*]\s*/, '').trim())
                           .filter(Boolean);
                         sections.push({
                           title: 'Assessment Hints',
@@ -934,7 +934,7 @@ function LectureDetailPageContent() {
                       if (summaryMatch) {
                         const summaryText = summaryMatch[1].trim();
                         // Split by numbered items (1., 2., 3., etc.) and clean up
-                        const summaryItems = summaryText.split(/\d+\.\s*/).filter(s => s.trim());
+                        const summaryItems = summaryText.split(/\d+\.\s*/).filter((s: string) => s.trim());
                         const summaryContent = summaryItems.join('|||');
                         sections.push({
                           title: '10-Bullet Pass Guarantee',
@@ -949,7 +949,7 @@ function LectureDetailPageContent() {
                       if (testPredictorMatch) {
                         const questions = testPredictorMatch[1]
                           .split(/\n(?=Q\d)/)
-                          .map(q => q.trim())
+                          .map((q: string) => q.trim())
                           .filter(Boolean);
                         sections.push({
                           title: 'Test Predictor',
@@ -1020,7 +1020,7 @@ function LectureDetailPageContent() {
                       };
 
                       return sections.map((section, idx) => {
-                        const items = section.content.split('|||').map(i => i.trim()).filter(Boolean);
+                        const items = section.content.split('|||').map((i: string) => i.trim()).filter(Boolean);
                         const colors = styleMap[section.style];
 
                         return (
@@ -1042,7 +1042,7 @@ function LectureDetailPageContent() {
                               // Bubbles show just the bolded term. Tapping a
                               // bubble (mobile has no hover) reveals its full
                               // definition in a panel below the row.
-                              const concepts = items.map((item) => {
+                              const concepts = items.map((item: string) => {
                                 const termMatch = item.match(/^\*\*\[?([^*\]]+)\]?\*\*\s*:?\s*([\s\S]*)$/);
                                 const term = termMatch ? termMatch[1].trim() : item.split(':')[0].replace(/\*\*/g, '').trim();
                                 const definition = termMatch ? termMatch[2].trim() : item.split(':').slice(1).join(':').trim();
@@ -1053,7 +1053,7 @@ function LectureDetailPageContent() {
                               return (
                                 <div>
                                   <div className="flex flex-wrap gap-2">
-                                    {concepts.map((c, i) => {
+                                    {concepts.map((c: any, i: number) => {
                                       const isExpanded = expandedConcepts.has(i);
                                       return (
                                         <button
@@ -1076,7 +1076,7 @@ function LectureDetailPageContent() {
 
                                   {hasExpanded && (
                                     <div className="mt-3 space-y-2">
-                                      {concepts.map((c, i) =>
+                                      {concepts.map((c: any, i: number) =>
                                         expandedConcepts.has(i) && c.definition ? (
                                           <div
                                             key={i}
@@ -1093,7 +1093,7 @@ function LectureDetailPageContent() {
                               );
                             })() : section.style === 'amber' ? (
                               <ul className="space-y-2.5">
-                                {items.map((item, i) => (
+                                {items.map((item: string, i: number) => (
                                   <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
                                     <span className="mt-0.5 flex-shrink-0">💡</span>
                                     <span>{formatNoteText(item, `eh-${i}`)}</span>
@@ -1102,7 +1102,7 @@ function LectureDetailPageContent() {
                               </ul>
                             ) : section.style === 'violet' ? (
                               <ol className="space-y-3">
-                                {items.map((item, i) => {
+                                {items.map((item: string, i: number) => {
                                   const qMatch = item.match(/^Q\d+\s*\[([^\]]+)\]:\s*([\s\S]+)$/i);
                                   const level = qMatch ? qMatch[1] : null;
                                   const rawBody = qMatch ? qMatch[2].trim() : item;
@@ -1157,7 +1157,7 @@ function LectureDetailPageContent() {
                               const splitLines = (text: string) =>
                                 text
                                   .split(/\n+/)
-                                  .map(line => line.replace(/^\s*[•\-\*]\s*/, '').trim())
+                                  .map((line: string) => line.replace(/^\s*[•\-\*]\s*/, '').trim())
                                   .filter(Boolean);
 
                               const formulas = formulasMatch ? splitLines(formulasMatch[1]) : [];
@@ -1172,7 +1172,7 @@ function LectureDetailPageContent() {
                                         <span>Formulas</span>
                                       </h5>
                                       <ul className="space-y-2">
-                                        {formulas.map((formula, i) => (
+                                        {formulas.map((formula: string, i: number) => (
                                           <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
                                             <span className="mt-0.5 flex-shrink-0">📐</span>
                                             <span>{formatNoteText(formula, `formula-${i}`)}</span>
@@ -1188,7 +1188,7 @@ function LectureDetailPageContent() {
                                         <span>Definitions</span>
                                       </h5>
                                       <ul className="space-y-2">
-                                        {definitions.map((definition, i) => (
+                                        {definitions.map((definition: string, i: number) => (
                                           <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
                                             <span className="mt-0.5 flex-shrink-0">📖</span>
                                             <span>{formatNoteText(definition, `def-${i}`)}</span>
@@ -1206,7 +1206,7 @@ function LectureDetailPageContent() {
                               );
                             })() : (
                               <ul className="space-y-2.5">
-                                {items.map((item, i) => (
+                                {items.map((item: string, i: number) => (
                                   <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
                                     <span className="mt-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex-shrink-0">
                                       ✓
