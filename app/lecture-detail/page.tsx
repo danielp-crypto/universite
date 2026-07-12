@@ -288,9 +288,9 @@ function LectureDetailPageContent() {
         if (formulasMatch) {
           pdf.setFontSize(12);
           pdf.setTextColor(0, 0, 0);
-          pdf.setFont(undefined, 'bold');
+          pdf.setFont('helvetica', 'bold');
           pdf.text('Formulas', 20, yPosition);
-          pdf.setFont(undefined, 'normal');
+          pdf.setFont('helvetica', 'normal');
           yPosition += 8;
 
           pdf.setFontSize(10);
@@ -316,9 +316,9 @@ function LectureDetailPageContent() {
           }
           pdf.setFontSize(12);
           pdf.setTextColor(0, 0, 0);
-          pdf.setFont(undefined, 'bold');
+          pdf.setFont('helvetica', 'bold');
           pdf.text('Definitions', 20, yPosition);
-          pdf.setFont(undefined, 'normal');
+          pdf.setFont('helvetica', 'normal');
           yPosition += 8;
 
           pdf.setFontSize(10);
