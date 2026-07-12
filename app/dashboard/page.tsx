@@ -14,7 +14,7 @@ import Alert from '../components/Alert';
 function HomePageContent() {
   const router = useRouter();
   const [lectures, setLectures] = useState<any[]>([]);
-  const [stats, setStats] = useState({ lectures: 0, minutes: 0, flashcards: 0 });
+  const [stats, setStats] = useState({ lectures: 0, selfTests: 0, aiChats: 0 });
   const [streak, setStreak] = useState(0);
   const [profileWidgetVisible, setProfileWidgetVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
@@ -235,7 +235,7 @@ function HomePageContent() {
     }
   };
 
-  const updateWeeklyStats = (allLectures: any[]) => {
+  const updateWeeklyStats = async (allLectures: any[]) => {
     const now = new Date();
     const dayOfWeek = now.getDay();
     const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
@@ -249,35 +249,42 @@ function HomePageContent() {
 
     const lectureCount = weeklyLectures.length;
 
-    let totalMinutes = 0;
-    weeklyLectures.forEach(lecture => {
-      const duration = lecture.duration || '0:00';
-      const parts = duration.split(':');
-      if (parts.length === 2) {
-        totalMinutes += parseInt(parts[0]) * 60 + parseInt(parts[1]);
-      }
-    });
-    const totalHours = (totalMinutes / 60).toFixed(1);
-
-    let flashcardCount = 0;
+    // Count self-tests completed (from localStorage)
+    let selfTestCount = 0;
     try {
-      const flashcards = localStorage.getItem('universite_flashcards');
-      if (flashcards) {
-        const flashcardData = JSON.parse(flashcards);
-        const weeklyFlashcards = flashcardData.filter((card: any) => {
-          const cardDate = new Date(card.created_at || card.createdAt);
-          return cardDate >= weekStart;
+      const selfTests = localStorage.getItem('universite_self_tests');
+      if (selfTests) {
+        const testData = JSON.parse(selfTests);
+        const weeklyTests = testData.filter((test: any) => {
+          const testDate = new Date(test.completed_at || test.createdAt);
+          return testDate >= weekStart;
         });
-        flashcardCount = weeklyFlashcards.length;
+        selfTestCount = weeklyTests.length;
       }
     } catch (error) {
-      console.error('Error getting flashcards:', error);
+      console.error('Error getting self-tests:', error);
+    }
+
+    // Count AI chats (from localStorage or could be from database)
+    let aiChatCount = 0;
+    try {
+      const chats = localStorage.getItem('universite_ai_chats');
+      if (chats) {
+        const chatData = JSON.parse(chats);
+        const weeklyChats = chatData.filter((chat: any) => {
+          const chatDate = new Date(chat.created_at || chat.createdAt);
+          return chatDate >= weekStart;
+        });
+        aiChatCount = weeklyChats.length;
+      }
+    } catch (error) {
+      console.error('Error getting AI chats:', error);
     }
 
     setStats({
       lectures: lectureCount,
-      minutes: totalMinutes,
-      flashcards: flashcardCount
+      selfTests: selfTestCount,
+      aiChats: aiChatCount
     });
   };
 
@@ -1085,14 +1092,18 @@ function HomePageContent() {
           {/* Study Stats */}
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-slate-800 mb-3">This Week</h2>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.lectures}</div>
                 <div className="text-xs text-slate-600">Lectures</div>
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-indigo-600 mb-1">{(stats.minutes / 60).toFixed(1)}</div>
-                <div className="text-xs text-slate-600">Hours Saved</div>
+                <div className="text-2xl font-bold text-violet-600 mb-1">{stats.selfTests}</div>
+                <div className="text-xs text-slate-600">Self-Tests</div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-purple-600 mb-1">{stats.aiChats}</div>
+                <div className="text-xs text-slate-600">AI Chats</div>
               </div>
               <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-orange-600 mb-1 flex items-center justify-center gap-1">
