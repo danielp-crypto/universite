@@ -323,7 +323,7 @@ function LectureDetailPageContent() {
 
           pdf.setFontSize(10);
           pdf.setTextColor(60, 60, 60);
-          const definitions = definitionsMatch[1].split(/[\n•\-\*]/).filter(d => d.trim());
+          const definitions = definitionsMatch[1].split(/[\n•\-\*]/).filter((d: string) => d.trim());
           definitions.forEach((definition: string) => {
             if (yPosition > 270) {
               pdf.addPage();
@@ -695,7 +695,7 @@ function LectureDetailPageContent() {
 
   const createSegmentsFromTranscription = (transcription: string) => {
     if (!transcription) return [];
-    const sentences = transcription.split('. ').filter(s => s.trim().length > 0);
+    const sentences = transcription.split('. ').filter((s: string) => s.trim().length > 0);
     const segments = [];
     const segmentLength = 3;
     
@@ -1019,7 +1019,7 @@ function LectureDetailPageContent() {
                         }
                       };
 
-                      return sections.map((section, idx) => {
+                      return sections.map((section, idx: number) => {
                         const items = section.content.split('|||').map((i: string) => i.trim()).filter(Boolean);
                         const colors = styleMap[section.style];
 
@@ -1048,7 +1048,7 @@ function LectureDetailPageContent() {
                                 const definition = termMatch ? termMatch[2].trim() : item.split(':').slice(1).join(':').trim();
                                 return { term, definition };
                               });
-                              const hasExpanded = concepts.some((_, i) => expandedConcepts.has(i));
+                              const hasExpanded = concepts.some((_: { term: string; definition: string }, i: number) => expandedConcepts.has(i));
 
                               return (
                                 <div>
