@@ -95,55 +95,219 @@ function LectureDetailPageContent() {
 
     try {
       const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 16;
+      const contentWidth = pageWidth - margin * 2;
+      let yPosition = margin;
 
-      // Add logo image
-      const logoImg = new Image();
-      logoImg.src = '/new-logo-black-removebg-preview.png';
-      await new Promise((resolve) => {
-        logoImg.onload = resolve;
-        logoImg.onerror = resolve; // Continue even if image fails to load
-      });
+      // Brand colors, matching the palette used on the lecture-detail page
+      const colors = {
+        indigo: [79, 70, 229],
+        blue: [59, 130, 246],
+        amber: [245, 158, 11],
+        emerald: [16, 185, 129],
+        violet: [139, 92, 246],
+        rose: [244, 63, 94],
+        ink: [30, 41, 59],
+        subtext: [100, 116, 139],
+        border: [226, 232, 240],
+        cardBg: [250, 250, 252],
+      };
 
-      // Add logo to PDF (width 40, height proportional)
-      pdf.addImage(logoImg, 'PNG', 20, 10, 40, 40);
+      // Adds a new page and resets yPosition if the given height won't fit
+      const checkPageBreak = (neededHeight: number) => {
+        if (yPosition + neededHeight > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = margin;
+          return true;
+        }
+        return false;
+      };
 
-      // Add title
-      pdf.setFontSize(20);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(currentLecture.title || 'Untitled Lecture', 70, 30);
+      // Draws a small colored circular badge with a bold letter inside it.
+      // Emoji glyphs aren't supported by jsPDF's built-in fonts (they render
+      // as garbled characters), so badges use plain ASCII letters instead.
+      const drawBadge = (x: number, y: number, diameter: number, color: number[], letter: string) => {
+        pdf.setFillColor(color[0], color[1], color[2]);
+        pdf.circle(x + diameter / 2, y + diameter / 2, diameter / 2, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(diameter * 1.5);
+        pdf.setTextColor(255, 255, 255);
+        const tw = pdf.getTextWidth(letter);
+        pdf.text(letter, x + diameter / 2 - tw / 2, y + diameter / 2 + diameter * 0.28);
+        pdf.setFont('helvetica', 'normal');
+      };
 
-      // Add metadata
-      pdf.setFontSize(11);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(`Date: ${new Date(currentLecture.created_at || currentLecture.createdAt).toLocaleDateString()}`, 70, 40);
-      pdf.text(`Duration: ${currentLecture.duration || 'N/A'}`, 70, 48);
+      // Renders a badge + heading, then a thin colored underline
+      const sectionHeader = (title: string, color: number[], letter: string) => {
+        checkPageBreak(18);
+        yPosition += 4;
+        const badgeSize = 7;
+        drawBadge(margin, yPosition, badgeSize, color, letter);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(13);
+        pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+        pdf.text(title, margin + badgeSize + 4, yPosition + badgeSize / 2 + 2.3);
+        pdf.setFont('helvetica', 'normal');
+        yPosition += badgeSize + 3;
+        pdf.setDrawColor(color[0], color[1], color[2]);
+        pdf.setLineWidth(0.6);
+        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+        pdf.setLineWidth(0.2);
+        yPosition += 7;
+      };
 
-      // Add module name if available
-      if (currentLecture.module && currentLecture.module.name) {
-        pdf.text(`Module: ${currentLecture.module.name}`, 70, 56);
+      // Wraps text to maxLines, truncating the final line with an ellipsis
+      // if there's more content than fits — used to keep long lecture
+      // titles from overflowing off the page.
+      const fitTextToLines = (text: string, maxWidth: number, maxLines: number, fontSize: number) => {
+        pdf.setFontSize(fontSize);
+        let lines: string[] = pdf.splitTextToSize(text, maxWidth);
+        if (lines.length <= maxLines) return lines;
+        lines = lines.slice(0, maxLines);
+        let lastLine = lines[maxLines - 1];
+        while (pdf.getTextWidth(lastLine + '…') > maxWidth && lastLine.length > 1) {
+          lastLine = lastLine.slice(0, -1).trim();
+        }
+        lines[maxLines - 1] = lastLine + '…';
+        return lines;
+      };
+
+      // Renders a list of items, each in its own bordered card with a
+      // colored left accent bar. Cards are measured before drawing, so
+      // page breaks always land between cards rather than through them.
+      const renderCardList = (items: string[], color: number[], opts: { numbered?: boolean } = {}) => {
+        pdf.setFontSize(9.5);
+        items.forEach((item: string, idx: number) => {
+          const prefix = opts.numbered ? `${idx + 1}.  ` : '•  ';
+          const lines = pdf.splitTextToSize(prefix + item.trim(), contentWidth - 10);
+          const cardHeight = lines.length * 5 + 6;
+          checkPageBreak(cardHeight + 3);
+          pdf.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+          pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+          pdf.setLineWidth(0.2);
+          pdf.roundedRect(margin, yPosition, contentWidth, cardHeight, 2, 2, 'FD');
+          pdf.setFillColor(color[0], color[1], color[2]);
+          pdf.rect(margin, yPosition, 1.4, cardHeight, 'F');
+          pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+          let ty = yPosition + 5;
+          lines.forEach((line: string) => {
+            pdf.text(line, margin + 6, ty);
+            ty += 5;
+          });
+          yPosition += cardHeight + 3;
+        });
+        yPosition += 5;
+      };
+
+      // Renders free-flowing paragraph text (used for the full lecture
+      // notes, which can be long). Wrapped in a bordered card only when the
+      // whole block fits on the current page; otherwise falls back to a
+      // plain flowing paragraph so the border doesn't break across pages.
+      const renderNotesBlock = (text: string, color: number[]) => {
+        pdf.setFontSize(9.5);
+        const lines = pdf.splitTextToSize(text, contentWidth - 10);
+        const lineHeight = 5;
+        const totalHeight = lines.length * lineHeight + 8;
+        const remaining = pageHeight - 20 - yPosition;
+
+        pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+
+        if (totalHeight <= remaining) {
+          pdf.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+          pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+          pdf.roundedRect(margin, yPosition, contentWidth, totalHeight, 2, 2, 'FD');
+          pdf.setFillColor(color[0], color[1], color[2]);
+          pdf.rect(margin, yPosition, 1.4, totalHeight, 'F');
+          let ty = yPosition + 6;
+          lines.forEach((line: string) => {
+            pdf.text(line, margin + 6, ty);
+            ty += lineHeight;
+          });
+          yPosition += totalHeight + 8;
+        } else {
+          lines.forEach((line: string) => {
+            if (yPosition + lineHeight > pageHeight - 20) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(line, margin + 2, yPosition);
+            yPosition += lineHeight;
+          });
+          yPosition += 8;
+        }
+      };
+
+      // ---------- Header banner ----------
+      const bannerHeight = 40;
+      pdf.setFillColor(colors.indigo[0], colors.indigo[1], colors.indigo[2]);
+      pdf.rect(0, 0, pageWidth, bannerHeight, 'F');
+
+      try {
+        const logoImg = new Image();
+        logoImg.src = '/new-logo-black-removebg-preview.png';
+        await new Promise((resolve) => {
+          logoImg.onload = resolve;
+          logoImg.onerror = resolve; // Continue even if the logo fails to load
+        });
+        pdf.addImage(logoImg, 'PNG', margin, 8, 24, 24);
+      } catch (e) {
+        // Continue without the logo
       }
 
-      // Add key concepts if available
-      if (currentLecture.keyConcepts && currentLecture.keyConcepts.length > 0) {
-        let yPosition = 70;
-        pdf.setFontSize(14);
-        pdf.setTextColor(79, 70, 229); // Indigo color
-        pdf.text('Key Concepts', 20, yPosition);
-        yPosition += 10;
+      const titleX = margin + 30;
+      const titleMaxWidth = pageWidth - titleX - margin;
+      const titleLines = fitTextToLines(currentLecture.title || 'Untitled Lecture', titleMaxWidth, 2, 17);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      let titleY = titleLines.length > 1 ? 15 : 19;
+      titleLines.forEach((line: string) => {
+        pdf.text(line, titleX, titleY);
+        titleY += 7.5;
+      });
+      pdf.setFont('helvetica', 'normal');
 
-        pdf.setFontSize(10);
-        pdf.setTextColor(60, 60, 60);
-        const concepts = currentLecture.keyConcepts.join(', ');
-        const conceptLines = pdf.splitTextToSize(concepts, 170);
-        conceptLines.forEach((line: string) => {
-          if (yPosition > 270) {
-            pdf.addPage();
-            yPosition = 20;
+      pdf.setFontSize(9.5);
+      pdf.setTextColor(224, 224, 250);
+      const metaParts: string[] = [];
+      const lectureDate = currentLecture.created_at || currentLecture.createdAt;
+      if (lectureDate) metaParts.push(`Date: ${new Date(lectureDate).toLocaleDateString()}`);
+      metaParts.push(`Duration: ${currentLecture.duration || 'N/A'}`);
+      if (currentLecture.module && currentLecture.module.name) {
+        metaParts.push(`Module: ${currentLecture.module.name}`);
+      }
+      pdf.text(metaParts.join('   ·   '), titleX, 34);
+
+      yPosition = bannerHeight + 10;
+
+      // ---------- Key Concepts (chip style) ----------
+      if (currentLecture.keyConcepts && currentLecture.keyConcepts.length > 0) {
+        sectionHeader('Key Concepts', colors.indigo, 'K');
+        pdf.setFontSize(9.5);
+        const chipHeight = 7;
+        let chipX = margin;
+        currentLecture.keyConcepts.forEach((concept: string) => {
+          const textWidth = pdf.getTextWidth(concept);
+          const chipWidth = textWidth + 6;
+          if (chipX + chipWidth > pageWidth - margin) {
+            chipX = margin;
+            yPosition += chipHeight + 3;
           }
-          pdf.text(line, 20, yPosition);
-          yPosition += 6;
+          if (yPosition + chipHeight > pageHeight - 20) {
+            pdf.addPage();
+            yPosition = margin;
+            chipX = margin;
+          }
+          pdf.setFillColor(238, 238, 253);
+          pdf.setDrawColor(colors.indigo[0], colors.indigo[1], colors.indigo[2]);
+          pdf.setLineWidth(0.2);
+          pdf.roundedRect(chipX, yPosition, chipWidth, chipHeight, 3, 3, 'FD');
+          pdf.setTextColor(colors.indigo[0], colors.indigo[1], colors.indigo[2]);
+          pdf.text(concept, chipX + 3, yPosition + 4.8);
+          chipX += chipWidth + 3;
         });
-        yPosition += 10;
+        yPosition += chipHeight + 10;
       }
 
       // Parse summary into sections
@@ -151,196 +315,97 @@ function LectureDetailPageContent() {
       const sectionRegex = (heading: string) =>
         new RegExp(`##\\s*${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
 
-      let yPosition = currentLecture.keyConcepts?.length > 0 ? 100 : 75;
-
-      // Full Lecture Notes
+      // ---------- Full Lecture Notes ----------
       const fullNotesMatch = summary.match(sectionRegex('Full Lecture Notes'));
       if (fullNotesMatch) {
-        if (yPosition > 50) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        pdf.setFontSize(16);
-        pdf.setTextColor(59, 130, 246); // Blue color
-        pdf.text('📝 Full Lecture Notes', 20, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(10);
-        pdf.setTextColor(60, 60, 60);
-        const notes = fullNotesMatch[1].trim();
-        const notesLines = pdf.splitTextToSize(notes, 170);
-        notesLines.forEach((line: string) => {
-          if (yPosition > 270) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          pdf.text(line, 20, yPosition);
-          yPosition += 6;
-        });
-        yPosition += 10;
+        sectionHeader('Full Lecture Notes', colors.blue, 'N');
+        renderNotesBlock(fullNotesMatch[1].trim(), colors.blue);
       }
 
-      // Assessment Hints
+      // ---------- Assessment Hints ----------
       const assessmentHintsMatch = summary.match(sectionRegex('Assessment Hints'));
       if (assessmentHintsMatch) {
-        if (yPosition > 50) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        pdf.setFontSize(16);
-        pdf.setTextColor(245, 158, 11); // Amber color
-        pdf.text('⚠️ Assessment Hints', 20, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(10);
-        pdf.setTextColor(60, 60, 60);
+        sectionHeader('Assessment Hints', colors.amber, '!');
         const hints = assessmentHintsMatch[1]
           .split(/\n+/)
           .map((line: string) => line.replace(/^\s*[•\-\*]\s*/, '').trim())
           .filter(Boolean);
-        hints.forEach((hint: string) => {
-          if (yPosition > 270) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          pdf.text(`• ${hint}`, 25, yPosition);
-          yPosition += 6;
-        });
-        yPosition += 10;
+        renderCardList(hints, colors.amber);
       }
 
-      // 10-Bullet Pass Guarantee
+      // ---------- 10-Bullet Pass Guarantee ----------
       const summaryMatch = summary.match(sectionRegex('Summary'));
       if (summaryMatch) {
-        if (yPosition > 50) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        pdf.setFontSize(16);
-        pdf.setTextColor(16, 185, 129); // Emerald color
-        pdf.text('🎯 10-Bullet Pass Guarantee', 20, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(10);
-        pdf.setTextColor(60, 60, 60);
+        sectionHeader('10-Bullet Pass Guarantee', colors.emerald, 'P');
         const summaryText = summaryMatch[1].trim();
         const summaryItems = summaryText.split(/\d+\.\s*/).filter((s: string) => s.trim());
-        summaryItems.forEach((item: string, idx: number) => {
-          if (yPosition > 270) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          pdf.text(`${idx + 1}. ${item}`, 25, yPosition);
-          yPosition += 6;
-        });
-        yPosition += 10;
+        renderCardList(summaryItems, colors.emerald, { numbered: true });
       }
 
-      // Test Predictor
+      // ---------- Test Predictor ----------
       const testPredictorMatch = summary.match(sectionRegex('Test Predictor'));
       if (testPredictorMatch) {
-        if (yPosition > 50) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        pdf.setFontSize(16);
-        pdf.setTextColor(139, 92, 246); // Violet color
-        pdf.text('🧠 Test Predictor', 20, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(10);
-        pdf.setTextColor(60, 60, 60);
+        sectionHeader('Test Predictor', colors.violet, 'Q');
         const questions = testPredictorMatch[1]
           .split(/\n(?=Q\d)/)
           .map((q: string) => q.trim())
           .filter(Boolean);
-        questions.forEach((question: string) => {
-          if (yPosition > 270) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          const qLines = pdf.splitTextToSize(question, 170);
-          qLines.forEach((line: string) => {
-            pdf.text(line, 20, yPosition);
-            yPosition += 6;
-          });
-          yPosition += 4;
-        });
-        yPosition += 10;
+        renderCardList(questions, colors.violet);
       }
 
-      // Glossary
+      // ---------- Glossary ----------
       const glossaryMatch = summary.match(sectionRegex('Glossary'));
       if (glossaryMatch) {
-        if (yPosition > 50) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        pdf.setFontSize(16);
-        pdf.setTextColor(244, 63, 94); // Rose color
-        pdf.text('📚 Glossary', 20, yPosition);
-        yPosition += 10;
-
+        sectionHeader('Glossary', colors.rose, 'G');
         const glossary = glossaryMatch[1].trim();
 
-        // Parse Formulas
         const formulasMatch = glossary.match(/### Formulas\s*([\s\S]*?)(?=###|$)/i);
         if (formulasMatch) {
-          pdf.setFontSize(12);
-          pdf.setTextColor(0, 0, 0);
+          checkPageBreak(12);
           pdf.setFont('helvetica', 'bold');
-          pdf.text('Formulas', 20, yPosition);
+          pdf.setFontSize(11);
+          pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+          pdf.text('Formulas', margin, yPosition);
           pdf.setFont('helvetica', 'normal');
-          yPosition += 8;
-
-          pdf.setFontSize(10);
-          pdf.setTextColor(60, 60, 60);
+          yPosition += 6;
           const formulas = formulasMatch[1].split(/[\n•\-\*]/).filter((f: string) => f.trim());
-          formulas.forEach((formula: string) => {
-            if (yPosition > 270) {
-              pdf.addPage();
-              yPosition = 20;
-            }
-            pdf.text(`• ${formula.trim()}`, 25, yPosition);
-            yPosition += 6;
-          });
-          yPosition += 10;
+          renderCardList(formulas, colors.rose);
         }
 
-        // Parse Definitions
         const definitionsMatch = glossary.match(/### Definitions\s*([\s\S]*)/i);
         if (definitionsMatch) {
-          if (yPosition > 50) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          pdf.setFontSize(12);
-          pdf.setTextColor(0, 0, 0);
+          checkPageBreak(12);
           pdf.setFont('helvetica', 'bold');
-          pdf.text('Definitions', 20, yPosition);
+          pdf.setFontSize(11);
+          pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+          pdf.text('Definitions', margin, yPosition);
           pdf.setFont('helvetica', 'normal');
-          yPosition += 8;
-
-          pdf.setFontSize(10);
-          pdf.setTextColor(60, 60, 60);
+          yPosition += 6;
           const definitions = definitionsMatch[1].split(/[\n•\-\*]/).filter((d: string) => d.trim());
-          definitions.forEach((definition: string) => {
-            if (yPosition > 270) {
-              pdf.addPage();
-              yPosition = 20;
-            }
-            const defLines = pdf.splitTextToSize(definition.trim(), 165);
-            defLines.forEach((line: string) => {
-              pdf.text(line, 25, yPosition);
-              yPosition += 6;
-            });
-            yPosition += 4;
-          });
+          renderCardList(definitions, colors.rose);
         }
       }
 
-      // Save the PDF
-      pdf.save(`${currentLecture.title || 'lecture'}-notes.pdf`);
+      // ---------- Footer (page numbers + brand line, every page) ----------
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+        pdf.setLineWidth(0.2);
+        pdf.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+        pdf.setFontSize(8);
+        pdf.setTextColor(colors.subtext[0], colors.subtext[1], colors.subtext[2]);
+        pdf.text('Universite · AI Lecture Notes', margin, pageHeight - 9);
+        const pageLabel = `Page ${i} of ${totalPages}`;
+        pdf.text(pageLabel, pageWidth - margin - pdf.getTextWidth(pageLabel), pageHeight - 9);
+      }
+
+      // Save the PDF, with a filesystem-safe, length-capped filename
+      const safeTitle = (currentLecture.title || 'lecture')
+        .replace(/[\/\\?%*:|"<>]/g, '-')
+        .trim()
+        .slice(0, 60);
+      pdf.save(`${safeTitle}-notes.pdf`);
     } catch (error) {
       console.error('Error exporting notes:', error);
       showAlert('Error', 'Error exporting notes', 'error');
