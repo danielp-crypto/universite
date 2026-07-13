@@ -310,10 +310,14 @@ function LectureDetailPageContent() {
         yPosition += chipHeight + 10;
       }
 
-      // Parse summary into sections
+      // Parse summary into sections. Each capture stops at the NEXT top-level
+      // "## Heading" (or end of string). The lookahead requires exactly two
+      // '#' — "(?!#)" rules out "###" subheadings (e.g. "### Formulas",
+      // "### Definitions") so a section's own subheadings don't prematurely
+      // end its capture and leave it empty.
       const summary = currentLecture.summary || '';
       const sectionRegex = (heading: string) =>
-        new RegExp(`##\\s*${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+        new RegExp(`##\\s*${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##(?!#)|$)`, 'i');
 
       // ---------- Full Lecture Notes ----------
       const fullNotesMatch = summary.match(sectionRegex('Full Lecture Notes'));
