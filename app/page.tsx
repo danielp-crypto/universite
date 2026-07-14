@@ -52,7 +52,7 @@ export default function Home() {
             </div>
             <div className="hidden md:flex items-center space-x-4">
               <Link href="/login" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Login</Link>
-              <Link href="/signup" className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all">Free Trial</Link>
+              <Link href="/signup" className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all">Free Beta</Link>
             </div>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -77,7 +77,7 @@ export default function Home() {
             <a href="#about" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>About</a>
             <div className="pt-3 border-t border-slate-200 space-y-3">
               <Link href="/login" className="block text-slate-600 hover:text-indigo-600 font-medium transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-              <Link href="/signup" className="block px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all text-center" onClick={() => setMobileMenuOpen(false)}>Free Trial</Link>
+              <Link href="/signup" className="block px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all text-center" onClick={() => setMobileMenuOpen(false)}>Free Beta</Link>
             </div>
           </div>
         )}
@@ -102,7 +102,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free : notes + exam questions + memo + cheat sheet for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
+              <p className="mt-6 text-sm text-slate-500">Free Beta : notes + exam questions + memo + AI chat for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -259,9 +259,9 @@ export default function Home() {
             {/* Free trial */}
             <div className="relative bg-slate-50 rounded-3xl border border-slate-200 p-6 sm:p-8 md:p-10">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4">
-              Most students start here
+              Limited Beta Access
               </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
+              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Beta</h3>
               <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
               <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 4 lectures</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
@@ -299,7 +299,7 @@ export default function Home() {
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
-                Free Trial
+                Beta
               </Link>
             </div>
 
@@ -320,7 +320,7 @@ export default function Home() {
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>Everything in Free</strong>, plus...</span>
+                  <span><strong>Everything in Beta</strong>, plus...</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
