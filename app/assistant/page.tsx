@@ -121,22 +121,15 @@ function AssistantPageContent(): React.ReactNode {
     <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
       <div id="app" className="flex-1 flex flex-col mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-6 md:py-8 sticky top-0 z-10">
+        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                 <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
               </div>
-              <div>
-                <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  Universite
-                </h1>
-                {currentLecture && (
-                  <p className="text-xs md:text-sm text-slate-500 truncate max-w-[200px] md:max-w-[300px]">
-                    {currentLecture.title || currentLecture.name || 'Current Lecture'}
-                  </p>
-                )}
-              </div>
+              <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Universite
+              </h1>
             </div>
           </div>
         </div>
@@ -149,7 +142,7 @@ function AssistantPageContent(): React.ReactNode {
                 <img src="/assets/images/icon-white-removebg.png" alt="Universite logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">
-                {currentLecture ? currentLecture.title || currentLecture.name || 'Current Lecture' : 'No lecture selected'}
+                {currentLecture ? 'Ask your AI Tutor' : 'No lecture selected'}
               </h2>
               {currentLecture && currentLecture.keyConcepts && currentLecture.keyConcepts.length > 0 && (
                 <div className="flex flex-wrap gap-2 justify-center mb-4">
@@ -159,6 +152,11 @@ function AssistantPageContent(): React.ReactNode {
                     </span>
                   ))}
                 </div>
+              )}
+              {currentLecture && (
+                <p className="text-sm md:text-base text-slate-600 max-w-md mb-2">
+                  I can help you understand these concepts, work through tricky ideas, or quiz you — ask away.
+                </p>
               )}
               {!currentLecture && (
                 <>
