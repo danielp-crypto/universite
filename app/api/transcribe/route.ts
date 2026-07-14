@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Deepgram + retries can take a while on a slow connection; make sure
+// Vercel doesn't cut the function off before it's done.
+export const maxDuration = 60;
+
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const DEEPGRAM_API_URL = 'https://api.deepgram.com/v1/listen';
 

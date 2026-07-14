@@ -10,6 +10,7 @@ import AudioPlayer from '../components/AudioPlayer';
 import UpgradeModal from '../components/UpgradeModal';
 import Alert from '../components/Alert';
 import jsPDF from 'jspdf';
+import { transcribeAudioChunked } from '@/lib/audio/chunkedTranscribe';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
@@ -38,6 +39,20 @@ function LectureDetailPageContent() {
 
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
+
+  // Warn before the tab is closed/refreshed while transcribing/summarizing —
+  // there's no queue yet, so navigating away mid-processing loses the work.
+  useEffect(() => {
+    if (!isProcessing) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isProcessing]);
 
   // Alert state
   const [alertOpen, setAlertOpen] = useState(false);
@@ -542,12 +557,11 @@ function LectureDetailPageContent() {
         return;
       }
 
-      let audioFile: File;
+      let audioBlob: Blob;
 
       if (currentLecture.isLocal && currentLecture.audioUrl) {
         const response = await fetch(currentLecture.audioUrl);
-        const blob = await response.blob();
-        audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
+        audioBlob = await response.blob();
       } else if (currentLecture.file_path) {
         const token = session.access_token;
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hiruufvoyigrcdohqjkm.supabase.co';
@@ -556,24 +570,18 @@ function LectureDetailPageContent() {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to download audio file');
-        const blob = await response.blob();
-        audioFile = new File([blob], 'lecture.webm', { type: 'audio/webm' });
+        audioBlob = await response.blob();
       } else {
         throw new Error('No audio source available');
       }
 
-      setProcessingMessage('Transcribing audio...');
-      
-      const formData = new FormData();
-      formData.append('audio', audioFile);
-      
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-        body: formData
-      });
-      
-      const transcriptionResult = await response.json().catch(() => ({}));
+      // Transcribe audio (decoded + chunked client-side so long/large
+      // recordings don't exceed Vercel's 4.5MB function body limit)
+      const transcriptionResult = await transcribeAudioChunked(
+        audioBlob,
+        session.access_token,
+        (msg) => setProcessingMessage(msg)
+      );
       
       if (transcriptionResult.success) {
         currentLecture.transcription = transcriptionResult.transcript;
@@ -649,9 +657,10 @@ function LectureDetailPageContent() {
         }
 
         setProcessingMessage('Generating summary...');
-        const summary = await generateSummary(transcriptionResult.transcript);
+        const finalTranscript = transcriptionResult.transcript || '';
+        const summary = await generateSummary(finalTranscript);
 
-        const segments = createSegmentsFromTranscription(transcriptionResult.transcript);
+        const segments = createSegmentsFromTranscription(finalTranscript);
         
         setProcessingResults({
           segmentsCount: segments.length,
@@ -1353,6 +1362,27 @@ function LectureDetailPageContent() {
           </div>
         </nav>
       </div>
+
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/55 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">Processing Lecture</h3>
+            <p className="text-indigo-600 text-xs font-medium mb-3">{processingMessage || 'Working on it...'}</p>
+            <p className="text-slate-500 text-xs mb-3">
+              Longer lectures can take a few minutes — hang tight.
+            </p>
+            <p className="text-amber-600 text-xs font-semibold bg-amber-50 rounded-lg px-3 py-2">
+              ⚠️ Don't close this tab or navigate away — it'll cancel processing and you'll lose this recording.
+            </p>
+          </div>
+        </div>
+      )}
 
       <UpgradeModal
         isOpen={upgradeModalOpen}

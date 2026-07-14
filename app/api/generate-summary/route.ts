@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Map-reduce over many chunks (long lectures) plus the Gemini reduce call
+// can take a while; make sure Vercel doesn't cut the function off early.
+export const maxDuration = 120;
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 // Safety cap to avoid runaway cost/quota usage on pathological inputs.

@@ -10,6 +10,7 @@ import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
 import UpgradeModal from '../components/UpgradeModal';
 import Alert from '../components/Alert';
+import { transcribeAudioChunked } from '@/lib/audio/chunkedTranscribe';
 
 function HomePageContent() {
   const router = useRouter();
@@ -62,6 +63,7 @@ function HomePageContent() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number | null>(null);
   const recordingTimerIntervalRef = useRef<any>(null);
+  const wakeLockRef = useRef<any>(null);
 
   // Profile form refs
   const formRef = useRef<HTMLFormElement>(null);
@@ -329,6 +331,74 @@ function HomePageContent() {
     };
   }, []);
 
+  // Warn before the tab is closed/refreshed while a recording is in progress
+  // or being transcribed/summarized — there's no queue yet, so navigating
+  // away mid-recording or mid-processing loses the recording entirely.
+  useEffect(() => {
+    if (recordingState !== 'processing' && recordingState !== 'recording') return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [recordingState]);
+
+  // Keep the screen from auto-locking while recording or processing. This
+  // is the main defense against phones/laptops sleeping mid-lecture: the
+  // Wake Lock API stops the OS's normal screen-timeout from kicking in.
+  // It can't stop someone manually pressing the power button or switching
+  // apps, so it's paired with the beforeunload/visibility warnings above
+  // and below rather than relied on alone. Not supported everywhere (older
+  // Safari, some Firefox versions) — fails silently there, same behavior
+  // as today.
+  useEffect(() => {
+    if (recordingState !== 'recording' && recordingState !== 'processing') return;
+    if (!('wakeLock' in navigator)) return;
+
+    let cancelled = false;
+
+    const requestWakeLock = async () => {
+      try {
+        const lock = await (navigator as any).wakeLock.request('screen');
+        if (cancelled) {
+          // State changed while the request was in flight; release immediately.
+          lock.release().catch(() => {});
+          return;
+        }
+        wakeLockRef.current = lock;
+      } catch (err) {
+        // Common causes: tab not visible yet, battery saver mode, or the
+        // browser just doesn't support it. Recording/processing still
+        // works — the user just won't get the auto-sleep protection.
+        console.warn('Wake Lock request failed:', err);
+      }
+    };
+
+    requestWakeLock();
+
+    // The lock is released automatically whenever the tab is hidden (screen
+    // locked, app switched away from), and browsers don't re-grant it on
+    // their own — we have to ask again once the tab is visible again.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !wakeLockRef.current) {
+        requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
+        wakeLockRef.current = null;
+      }
+    };
+  }, [recordingState]);
+
   // Recording Handlers
   const startRecording = async () => {
     // Check if module is selected
@@ -439,23 +509,18 @@ function HomePageContent() {
         return;
       }
 
-      // Step 1: Upload audio to Supabase
-      const formData = new FormData();
-      formData.append('audio', blob, 'recording.webm');
-      
+      // Step 1: Transcribe audio (decoded + chunked client-side so long
+      // recordings don't exceed Vercel's 4.5MB function body limit)
       setProcessingText(steps[0]);
-      const transcribeResponse = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-        body: formData
-      });
+      const transcribeData = await transcribeAudioChunked(blob, session.access_token, (msg) =>
+        setProcessingText(msg)
+      );
 
-      if (!transcribeResponse.ok) {
-        setProcessingError('Failed to transcribe audio. Please try again.');
+      if (!transcribeData.success) {
+        setProcessingError(transcribeData.error || 'Failed to transcribe audio. Please try again.');
         return;
       }
 
-      const transcribeData = await transcribeResponse.json();
       const transcript = transcribeData.transcript;
 
       setCurrentStep(1);
@@ -665,23 +730,18 @@ function HomePageContent() {
         audio.src = URL.createObjectURL(file);
       });
 
-      // Step 1: Transcribe audio
-      const formData = new FormData();
-      formData.append('audio', file, file.name);
-      
+      // Step 1: Transcribe audio (decoded + chunked client-side so large
+      // uploaded files don't exceed Vercel's 4.5MB function body limit)
       setProcessingText(steps[0]);
-      const transcribeResponse = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-        body: formData
-      });
+      const transcribeData = await transcribeAudioChunked(file, session.access_token, (msg) =>
+        setProcessingText(msg)
+      );
 
-      if (!transcribeResponse.ok) {
-        setProcessingError('Failed to transcribe audio. Please try again.');
+      if (!transcribeData.success) {
+        setProcessingError(transcribeData.error || 'Failed to transcribe audio. Please try again.');
         return;
       }
 
-      const transcribeData = await transcribeResponse.json();
       const transcript = transcribeData.transcript;
 
       setCurrentStep(1);
@@ -1224,6 +1284,9 @@ function HomePageContent() {
               </div>
               <h3 className="text-xl font-semibold text-slate-800 mb-2">Recording</h3>
               <div className="text-2xl font-mono text-slate-900 mb-4">{recordingTimer}</div>
+              <p className="text-slate-400 text-xs mb-4">
+                Keep this tab open and your screen on while recording.
+              </p>
               <div className="flex gap-3">
                 <button
                   onClick={stopRecording}
@@ -1307,8 +1370,18 @@ function HomePageContent() {
                     </div>
                   ))}
                 </div>
-                
-                <p className="text-slate-500 text-xs">Please wait while we process your lecture...</p>
+
+                {/* Live sub-status (e.g. "Transcribed 2 of 4 parts...") */}
+                {processingText && (
+                  <p className="text-indigo-500 text-xs font-medium mb-3">{processingText}</p>
+                )}
+
+                <p className="text-slate-500 text-xs mb-3">
+                  Longer lectures can take a few minutes — hang tight.
+                </p>
+                <p className="text-amber-600 text-xs font-semibold bg-amber-50 rounded-lg px-3 py-2">
+                  ⚠️ Don't close this tab or navigate away — it'll cancel processing and you'll lose this recording.
+                </p>
               </div>
             )}
           </div>
