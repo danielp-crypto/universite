@@ -1012,7 +1012,7 @@ function HomePageContent() {
                             Review
                           </Link>
                           <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                            Ask AI Tutor
+                            Ask Lecture
                           </Link>
                         </div>
                       </div>
@@ -1068,7 +1068,7 @@ function HomePageContent() {
                             Review
                           </Link>
                           <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                            Ask AI Tutor
+                            Ask Lecture
                           </Link>
                         </div>
                       </div>
@@ -1103,7 +1103,7 @@ function HomePageContent() {
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-purple-600 mb-1">{stats.aiChats}</div>
-                <div className="text-xs text-slate-600">AI Chats</div>
+                <div className="text-xs text-slate-600">Lecture Chats</div>
               </div>
               <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-orange-600 mb-1 flex items-center justify-center gap-1">

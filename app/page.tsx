@@ -102,7 +102,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free : notes + exam questions + memo + cheat sheet for 4 lectures • Module Pass: R299 per module: unlimited lectures and AI study tools.</p>
+              <p className="mt-6 text-sm text-slate-500">Free : notes + exam questions + memo + cheat sheet for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -262,7 +262,7 @@ export default function Home() {
               Most students start here
               </div>
               <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Trial</h3>
-              <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No credit card • Perfect for trying Universite</p>
+              <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
               <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 4 lectures</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
@@ -313,10 +313,10 @@ export default function Home() {
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold mb-4">
                 Unlimited AI Power
               </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Module Pass</h3>
+              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-1">Premium</h3>
               <p className="text-xs sm:text-sm uppercase tracking-wide text-white/80 mb-4">Perfect for serious students</p>
-              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R299<span className="text-sm sm:text-base font-medium text-white/80 ml-1">Covers entire module</span></p>
-              <p className="text-sm text-white/80 mb-6">Everything you need to pass your worst module</p>
+              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">R149<span className="text-sm sm:text-base font-medium text-white/80 ml-1">Monthly</span></p>
+              <p className="text-sm text-white/80 mb-6">Everything you need to pass your modules</p>
               <ul className="space-y-3 text-white/90 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
@@ -361,7 +361,7 @@ export default function Home() {
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-white/30 text-sm sm:text-base font-medium rounded-lg text-white hover:bg-white/10 transition-all text-center font-semibold">
-                Module Pass
+                Premium
               </Link>
             </div>
           </div>
