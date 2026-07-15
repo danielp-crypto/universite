@@ -10,7 +10,7 @@ import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
 import UpgradeModal from '../components/UpgradeModal';
 import Alert from '../components/Alert';
-import { transcribeAudioChunked } from '@/lib/audio/chunkedTranscribe';
+import { transcribeAudioChunked, describePartialFailure } from '@/lib/audio/chunkedTranscribe';
 
 function HomePageContent() {
   const router = useRouter();
@@ -522,6 +522,7 @@ function HomePageContent() {
       }
 
       const transcript = transcribeData.transcript;
+      const partialTranscriptionWarning = describePartialFailure(transcribeData);
 
       setCurrentStep(1);
       setProcessingText(steps[1]);
@@ -594,11 +595,20 @@ function HomePageContent() {
       setRecordingState('idle');
       loadData();
 
-      // Show notification with view button
+      // Show notification with view button. When some audio segments
+      // failed to transcribe, fold that into the same alert (as a warning)
+      // rather than firing a second alert that would just get overwritten
+      // once this one shows — the two-alert queue only holds one at a time.
+      const lectureTitleForAlert = lectureData.title.length > 30
+        ? lectureData.title.substring(0, 30) + '...'
+        : lectureData.title;
+
       showAlert(
         'Your study assets are ready',
-        lectureData.title.length > 30 ? lectureData.title.substring(0, 30) + '...' : lectureData.title,
-        'success',
+        partialTranscriptionWarning
+          ? `${lectureTitleForAlert} ${partialTranscriptionWarning}`
+          : lectureTitleForAlert,
+        partialTranscriptionWarning ? 'warning' : 'success',
         `/lecture-detail?id=${lectureData.id}`
       );
 
@@ -743,6 +753,7 @@ function HomePageContent() {
       }
 
       const transcript = transcribeData.transcript;
+      const partialTranscriptionWarning = describePartialFailure(transcribeData);
 
       setCurrentStep(1);
       setProcessingText(steps[1]);
@@ -810,11 +821,18 @@ function HomePageContent() {
       setRecordingState('idle');
       loadData();
 
-      // Show notification with view button
+      // Show notification with view button. Fold any partial-transcription
+      // warning into this same alert rather than firing a second one.
+      const lectureTitleForAlert = lectureData.title.length > 30
+        ? lectureData.title.substring(0, 30) + '...'
+        : lectureData.title;
+
       showAlert(
         'Your study assets are ready',
-        lectureData.title.length > 30 ? lectureData.title.substring(0, 30) + '...' : lectureData.title,
-        'success',
+        partialTranscriptionWarning
+          ? `${lectureTitleForAlert} ${partialTranscriptionWarning}`
+          : lectureTitleForAlert,
+        partialTranscriptionWarning ? 'warning' : 'success',
         `/lecture-detail?id=${lectureData.id}`
       );
 

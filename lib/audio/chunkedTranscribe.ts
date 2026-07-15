@@ -24,6 +24,25 @@ export interface ChunkedTranscribeResult {
   failedChunks?: number;
 }
 
+/**
+ * Builds a student-facing message when some (but not all) chunks failed to
+ * transcribe. Returns null when there's nothing to warn about. Deliberately
+ * does not suggest re-recording — for an attended, in-person lecture that
+ * moment is gone, so the message just sets honest expectations about the
+ * notes instead of proposing something the student can't actually do.
+ */
+export function describePartialFailure(result: ChunkedTranscribeResult): string | null {
+  if (!result.failedChunks || !result.chunkCount || result.failedChunks <= 0) return null;
+
+  const missingSeconds = result.failedChunks * CHUNK_SECONDS;
+  const missingMinutes = Math.round(missingSeconds / 60);
+  const missingLabel = missingMinutes <= 0
+    ? 'under a minute'
+    : `about ${missingMinutes} minute${missingMinutes === 1 ? '' : 's'}`;
+
+  return `Heads up: ${result.failedChunks} of ${result.chunkCount} audio segments couldn't be transcribed, likely due to a connection issue. Your notes may be missing ${missingLabel} of this lecture.`;
+}
+
 async function decodeToMonoPCM(blob: Blob): Promise<{ samples: Float32Array; sampleRate: number }> {
   const arrayBuffer = await blob.arrayBuffer();
   const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
@@ -164,7 +183,15 @@ export async function transcribeAudioChunked(
   onProgress?: (message: string) => void
 ): Promise<ChunkedTranscribeResult> {
   try {
-    onProgress?.('Preparing audio...');
+    // Decoding + resampling the whole file happens before any chunk-level
+    // progress exists, so for a long recording this step can otherwise look
+    // like the app has frozen. Give a size-aware heads-up instead.
+    const sizeMB = audioSource.size / (1024 * 1024);
+    onProgress?.(
+      sizeMB > 8
+        ? 'Preparing audio — this can take a moment for longer recordings...'
+        : 'Preparing audio...'
+    );
     const { samples, sampleRate } = await decodeToMonoPCM(audioSource);
     const sampleChunks = chunkSamples(samples, sampleRate, CHUNK_SECONDS);
 
