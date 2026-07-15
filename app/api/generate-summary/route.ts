@@ -176,6 +176,68 @@ CONTEXT: Student is at a South African university. May be at contact or distance
 
 Extracted content:\n\n`;
 
+// Shared Gemini call with retry + exponential backoff. A single transient
+// failure (rate limit, 5xx, or an empty/safety-blocked response) used to
+// propagate straight up and blow away an otherwise-successful map step,
+// collapsing the whole summary down to the crude fallback. Retrying here
+// first means most transient failures never reach that point.
+async function callGemini(
+  body: Record<string, unknown>,
+  context: string,
+  maxRetries: number
+): Promise<{ text: string; finishReason?: string }> {
+  let retryDelay = 1000;
+  let lastError = '';
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': GEMINI_API_KEY,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        const candidate = result.candidates?.[0];
+        const text = candidate?.content?.parts?.[0]?.text || '';
+        const finishReason = candidate?.finishReason;
+
+        if (text) {
+          if (finishReason === 'MAX_TOKENS') {
+            console.warn(`${context}: response was cut off by maxOutputTokens.`);
+          }
+          return { text, finishReason };
+        }
+
+        // Empty text usually means a safety/recitation block, or the model
+        // returning nothing for the given input — worth retrying rather
+        // than treating an empty string as a valid summary.
+        lastError = `empty response (finishReason: ${finishReason || 'unknown'})`;
+      } else {
+        lastError = `HTTP ${response.status}: ${await response.text()}`;
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+
+    console.warn(`${context} attempt ${attempt + 1}/${maxRetries} failed: ${lastError}`);
+
+    if (attempt < maxRetries - 1) {
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      retryDelay *= 2;
+    }
+  }
+
+  throw new Error(`${context} failed after ${maxRetries} attempts: ${lastError}`);
+}
+
 // Split transcript into chunks by WORD COUNT (~10 minutes of speech each).
 // Average spoken English is roughly 130-150 words/minute, so ~1300-1500
 // words covers a 10-minute chunk. Bumped default from 2000 to a more
@@ -218,43 +280,18 @@ async function runWithConcurrencyLimit<T>(
 // Map step: Extract key info from each chunk
 async function mapChunk(chunk: string, index: number): Promise<string> {
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+    const { text } = await callGemini(
       {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: MAP_PROMPT + chunk
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 600,
-            thinkingConfig: {
-              thinkingBudget: 0
-            }
-          }
-        }),
-      }
+        contents: [{ parts: [{ text: MAP_PROMPT + chunk }] }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 600,
+          thinkingConfig: { thinkingBudget: 0 }
+        }
+      },
+      `Map chunk ${index}`,
+      2 // A slow/failing chunk shouldn't hold up the whole lecture too long
     );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Map chunk ${index} failed (status ${response.status}): ${errorText}`);
-    }
-
-    const result = await response.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    if (!text) {
-      console.warn(`Map chunk ${index} produced no output. Finish reason:`, result.candidates?.[0]?.finishReason);
-    }
-
     return text;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -265,57 +302,25 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
 
 // Reduce step: Generate final summary from extracted content
 async function reduceSummary(extractedContent: string): Promise<string> {
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: REDUCE_PROMPT + extractedContent
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 32768,
-            thinkingConfig: {
-              thinkingBudget: 0
-            }
-          }
-        }),
+  const { text } = await callGemini(
+    {
+      contents: [{ parts: [{ text: REDUCE_PROMPT + extractedContent }] }],
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 32768,
+        thinkingConfig: { thinkingBudget: 0 }
       }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Reduce summary error:', errorText);
-      throw new Error('Reduce summary error');
-    }
-
-    const result = await response.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const finishReason = result.candidates?.[0]?.finishReason;
-
-    if (finishReason === 'MAX_TOKENS') {
-      console.warn('Reduce summary was cut off by maxOutputTokens — consider raising the limit further.');
-    }
-
-    return text;
-  } catch (error) {
-    console.error('Reduce summary error:', error);
-    throw error;
-  }
+    },
+    'Reduce summary',
+    3
+  );
+  return text;
 }
 
-async function generateSummary(transcript: string): Promise<string> {
+async function generateSummary(transcript: string): Promise<{ summary: string; degraded: boolean }> {
   if (!GEMINI_API_KEY) {
-    console.warn('GEMINI_API_KEY is not set — using simple bullet point fallback');
-    return generateSimpleBulletPoints(transcript);
+    console.warn('GEMINI_API_KEY is not set — using minimally-structured fallback');
+    return { summary: generateFallbackSummary(transcript), degraded: true };
   }
 
   try {
@@ -339,32 +344,46 @@ async function generateSummary(transcript: string): Promise<string> {
 
     console.log('Extracted content length:', extractedContent.length);
 
-    if (extractedContent.length === 0) {
-      // Map step produced nothing usable from any chunk (rare — e.g. a very
-      // short/off-topic-heavy transcript). Rather than falling back to an
-      // unstructured bullet list with no Glossary/Key Concepts/etc., feed the
-      // raw transcript directly into the Reduce step as a best-effort so the
-      // student still gets a full structured summary, glossary included.
-      console.warn('No content extracted from any chunk — falling back to summarizing the raw transcript directly');
+    // Attempt 1: Reduce the extracted, tagged content — the normal path.
+    if (extractedContent.length > 0) {
       try {
-        return await reduceSummary(transcript);
-      } catch (fallbackError) {
-        console.error('Raw-transcript fallback also failed:', fallbackError);
-        return generateSimpleBulletPoints(transcript);
+        const summary = await reduceSummary(extractedContent);
+        console.log('Generated summary length:', summary.length);
+        console.log('Summary preview:', summary.substring(0, 200));
+        return { summary, degraded: false };
+      } catch (reduceError) {
+        // A single failed reduce call (rate limit, transient 5xx, safety
+        // block) used to wipe out an otherwise-successful map step and drop
+        // straight to the crude bullet-point fallback. Try the raw
+        // transcript below instead of giving up immediately.
+        console.error('Reduce step failed on extracted content, retrying against raw transcript:', reduceError);
       }
+    } else {
+      // Map step produced nothing usable from any chunk (rare — e.g. a very
+      // short/off-topic-heavy transcript).
+      console.warn('No content extracted from any chunk — falling back to summarizing the raw transcript directly');
     }
 
-    // Step 3: Reduce - Generate final summary from extracted content
-    const summary = await reduceSummary(extractedContent);
+    // Attempt 2: Skip the tagged extraction and summarize the raw transcript
+    // directly. Recovers from a transient failure in attempt 1, or from a
+    // map step that produced nothing.
+    try {
+      const summary = await reduceSummary(transcript);
+      console.log('Generated summary from raw transcript, length:', summary.length);
+      return { summary, degraded: false };
+    } catch (fallbackError) {
+      console.error('Raw-transcript fallback also failed:', fallbackError);
+    }
 
-    console.log('Generated summary length:', summary.length);
-    console.log('Summary preview:', summary.substring(0, 200));
-
-    return summary;
+    // Last resort: both structured attempts failed (e.g. a persistent
+    // Gemini outage). Return a minimally-structured, clearly-flagged
+    // summary so the page still has Key Concepts / Full Lecture Notes
+    // sections to render instead of a blank or malformed page.
+    return { summary: generateFallbackSummary(transcript), degraded: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error('Summary generation failed, using simple bullet point fallback:', message);
-    return generateSimpleBulletPoints(transcript);
+    console.error('Summary generation failed entirely, using last-resort fallback:', message);
+    return { summary: generateFallbackSummary(transcript), degraded: true };
   }
 }
 
@@ -384,6 +403,72 @@ function generateSimpleBulletPoints(transcript: string): string {
   return keyPoints
     .map(point => `• ${point}`)
     .join('\n');
+}
+
+const NAIVE_KEYWORD_STOPWORDS = new Set([
+  'about', 'after', 'again', 'their', 'there', 'these', 'thing', 'things',
+  'think', 'thought', 'which', 'would', 'could', 'should', 'basically',
+  'actually', 'really', 'gonna', 'going', 'because', 'right', 'okay',
+  'alright', 'lecture', 'student', 'students', 'class', 'today', 'other',
+  'where', 'through', 'something', 'someone', 'people', 'first', 'second',
+]);
+
+// Very rough keyword picker used only by the last-resort fallback below, so
+// the Key Concepts bubbles aren't empty even when Gemini is unreachable.
+// This is NOT a substitute for the real AI-generated Key Concepts section.
+function extractNaiveKeywords(transcript: string, count = 5): string[] {
+  const words = transcript
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 4 && !NAIVE_KEYWORD_STOPWORDS.has(w));
+
+  const freq = new Map<string, number>();
+  for (const w of words) freq.set(w, (freq.get(w) || 0) + 1);
+
+  return Array.from(freq.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, count)
+    .map(([word]) => word.charAt(0).toUpperCase() + word.slice(1));
+}
+
+// Last-resort summary used only when both real Gemini attempts fail (e.g. a
+// persistent outage). Kept in the same "## Heading" / "### Subheading"
+// structure the app's section-parsing regex expects, so the page renders
+// Key Concepts bubbles and a Full Lecture Notes card instead of blank
+// sections — but every part of it clearly says notes should be regenerated.
+function generateFallbackSummary(transcript: string): string {
+  const bullets = generateSimpleBulletPoints(transcript);
+  const keywords = extractNaiveKeywords(transcript);
+  const keyConceptsSection = keywords.length > 0
+    ? keywords.map(k => `**${k}**: Mentioned in this lecture — AI notes generation failed, please use Regenerate.`).join('\n')
+    : '**General**: AI notes generation failed — please use Regenerate.';
+
+  return `## Key Concepts
+${keyConceptsSection}
+
+## Glossary
+
+### Formulas
+Not covered in this lecture
+
+### Definitions
+AI notes generation failed for this lecture — please use the "Regenerate" button to try again.
+
+## Full Lecture Notes
+${bullets}
+
+_These are simplified, auto-extracted notes. Full AI-generated notes could not be produced this time — please use "Regenerate" to try again._
+
+## Assessment Hints Detected
+Not covered in this lecture.
+
+## Summary: 10-Bullet Pass Guarantee
+${bullets}
+
+## Test Predictor: 10 Exam-Style Questions + Memo
+Not covered in this lecture.
+`;
 }
 
 function formatAsBulletPoints(text: string): string {
@@ -424,11 +509,12 @@ export async function POST(request: NextRequest) {
       console.warn(`Transcript truncated from ${transcript.length} to ${MAX_TRANSCRIPT_CHARS} chars`);
     }
 
-    const summary = await generateSummary(truncatedTranscript);
+    const { summary, degraded } = await generateSummary(truncatedTranscript);
 
     return NextResponse.json({
       success: true,
       summary: summary,
+      degraded, // true if this is the last-resort fallback, not real AI-generated notes
       truncated: transcript.length > MAX_TRANSCRIPT_CHARS,
       transcriptChars: transcript.length
     });
