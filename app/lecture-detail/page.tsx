@@ -261,7 +261,7 @@ function LectureDetailPageContent() {
 
       try {
         const logoImg = new Image();
-        logoImg.src = '/new-logo-black-removebg-preview.png';
+        logoImg.src = '/new-logo-white-removebg-preview.png-1-192x192.png';
         await new Promise((resolve) => {
           logoImg.onload = resolve;
           logoImg.onerror = resolve; // Continue even if the logo fails to load
