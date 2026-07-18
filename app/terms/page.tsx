@@ -154,14 +154,18 @@ export default function TermsPage() {
               You retain ownership of any content you upload, record, or create using the Service (&quot;User Content&quot;), including lecture recordings, notes, and study materials.
             </p>
 
-            <h3 className="text-xl font-semibold text-slate-800 mb-3 mt-6">6.2 License to Universite</h3>
+            <h3 className="text-xl font-semibold text-slate-800 mb-3 mt-6">6.2 Data Storage Policy</h3>
             <p className="text-slate-700 mb-4 leading-relaxed">
-              By uploading or creating User Content, you grant Universite a worldwide, non-exclusive, royalty-free license to:
+              Universite does not store your audio recordings after transcription. Once your lecture audio is processed and transcribed, the original audio file is deleted from our servers. We only retain the generated transcripts, summaries, and study materials to provide the Service.
+            </p>
+            <p className="text-slate-700 mb-4 leading-relaxed">
+              By using the Service, you acknowledge and agree that:
             </p>
             <ul className="list-disc list-inside text-slate-700 mb-4 space-y-2 ml-4">
-              <li>Store, process, and transmit your User Content to provide the Service</li>
-              <li>Use your User Content to improve our AI models and services (with appropriate anonymization)</li>
-              <li>Display and distribute your User Content as necessary to provide the Service</li>
+              <li>Audio recordings are not stored after transcription is complete</li>
+              <li>Transcripts, summaries, and study materials are stored in your account</li>
+              <li>You can delete your account and all associated data at any time</li>
+              <li>We retain data only as long as necessary to provide the Service</li>
             </ul>
 
             <h3 className="text-xl font-semibold text-slate-800 mb-3 mt-6">6.3 Content Responsibility</h3>

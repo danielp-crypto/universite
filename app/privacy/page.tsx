@@ -76,7 +76,7 @@ export default function PrivacyPage() {
             </ul>
             <h3 className="text-xl font-semibold text-slate-800 mb-3 mt-6">Educational Content</h3>
             <ul className="list-disc list-inside text-slate-700 mb-4 space-y-2 ml-4">
-              <li><strong>Audio Recordings:</strong> Lecture recordings and audio files you upload</li>
+              <li><strong>Audio Recordings:</strong> Lecture recordings and audio files you upload (deleted after transcription)</li>
               <li><strong>Transcripts:</strong> Automatically generated transcripts from your recordings</li>
               <li><strong>Study Materials:</strong> Notes, flashcards, and other content you create</li>
               <li><strong>Chat History:</strong> Conversations with our AI assistant</li>
@@ -92,6 +92,18 @@ export default function PrivacyPage() {
               <li><strong>AI Processing:</strong> To process your educational content and provide AI-powered tutoring</li>
               <li><strong>Security:</strong> To detect, prevent, and address technical issues and security threats</li>
             </ul>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-slate-900 mb-4">Data Retention</h2>
+            <p className="text-slate-700 mb-4 leading-relaxed">We have implemented the following data retention policies:</p>
+            <ul className="list-disc list-inside text-slate-700 mb-4 space-y-2 ml-4">
+              <li><strong>Audio Recordings:</strong> Deleted immediately after transcription is complete</li>
+              <li><strong>Transcripts and Study Materials:</strong> Retained in your account until you delete them or close your account</li>
+              <li><strong>Account Information:</strong> Retained as long as your account is active</li>
+              <li><strong>Chat History:</strong> Retained in your account until you delete it or close your account</li>
+            </ul>
+            <p className="text-slate-700 mb-4 leading-relaxed">Upon account deletion, all associated data including transcripts, study materials, and chat history will be permanently deleted within 30 days.</p>
           </section>
 
           <section className="mb-8">
