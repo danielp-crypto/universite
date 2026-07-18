@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
     // Smooth scrolling for anchor links
@@ -48,6 +49,7 @@ export default function Home() {
               <a href="#features" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">Features</a>
               <a href="#how-it-works" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">How It Works</a>
               <a href="#pricing" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">Pricing</a>
+              <a href="#faq" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">FAQ</a>
               <a href="#about" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">About</a>
             </div>
             <div className="hidden md:flex items-center space-x-4">
@@ -74,6 +76,7 @@ export default function Home() {
             <a href="#features" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>Features</a>
             <a href="#how-it-works" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
             <a href="#pricing" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+            <a href="#faq" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <a href="#about" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>About</a>
             <div className="pt-3 border-t border-slate-200 space-y-3">
               <Link href="/login" className="block text-slate-600 hover:text-indigo-600 font-medium transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Login</Link>
@@ -406,6 +409,83 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-16 md:py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">Everything you need to know about Universite</p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                question: "What is Universite?",
+                answer: "Universite is an AI-powered learning assistant for university students. It helps you record lectures, automatically generates transcripts, notes, exam questions, and provides 24/7 AI tutoring to help you understand difficult concepts."
+              },
+              {
+                question: "How does the free beta work?",
+                answer: "The free beta gives you 4 lecture credits to try the platform. You can record or upload up to 4 lectures (max 90 minutes each) and get AI-generated notes, exam questions, and basic AI chat. No credit card required."
+              },
+              {
+                question: "What's included in Premium?",
+                answer: "Premium (R149/month) gives you unlimited lectures, self-test mode, advanced AI chat with full context and history, study planning, PDF export, and priority processing. It's designed for serious students who want to maximize their learning."
+              },
+              {
+                question: "Are my lecture recordings stored?",
+                answer: "No. For your privacy, audio recordings are deleted immediately after transcription is complete. We only retain the generated transcripts, notes, and study materials in your account until you delete them."
+              },
+              {
+                question: "How long does transcription take?",
+                answer: "Transcription typically takes 2-5 minutes for a 60-minute lecture. Premium users get priority processing for faster results."
+              },
+              {
+                question: "Can I use Universite offline?",
+                answer: "Premium users can export their lectures, notes, and study materials as PDFs for offline studying. The AI chat and recording features require an internet connection."
+              },
+              {
+                question: "What audio formats are supported?",
+                answer: "You can record directly in the app or upload audio files. Supported formats include MP3, WAV, M4A, and other common audio formats. Maximum file size is 90 minutes of audio per lecture."
+              },
+              {
+                question: "How accurate is the transcription?",
+                answer: "Our AI transcription achieves 99% accuracy for clear audio recordings. Accuracy may vary with background noise, multiple speakers, or technical terminology."
+              },
+              {
+                question: "Can I cancel my subscription anytime?",
+                answer: "Yes, you can cancel your Premium subscription at any time. You'll continue to have access to Premium features until the end of your current billing period."
+              },
+              {
+                question: "Is my data secure?",
+                answer: "Absolutely. We use industry-standard encryption (TLS/SSL in transit, AES-256 at rest) and follow strict data protection practices. Your educational content is private and never shared with third parties."
+              }
+            ].map((faq, index) => (
+              <div key={index} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-slate-50 transition-colors"
+                >
+                  <span className="font-semibold text-slate-900 pr-4">{faq.question}</span>
+                  <svg
+                    className={`w-5 h-5 text-slate-500 flex-shrink-0 transition-transform ${openFaq === index ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {openFaq === index && (
+                  <div className="px-6 pb-4 text-slate-600 leading-relaxed">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
