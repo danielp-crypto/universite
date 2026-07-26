@@ -21,10 +21,30 @@ export default function Notifications({ onNotificationCountChange }: Notificatio
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const maybeGenerateQuizReminder = async (accessToken: string) => {
+    try {
+      // Server-side checks the user's preferences, whether they actually have
+      // an unquizzed lecture, and a 24h cooldown — safe to call on every
+      // mount without spamming duplicate reminders.
+      await fetch('/api/notifications/generate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ type: 'quiz_reminder' })
+      });
+    } catch (error) {
+      console.error('Error checking quiz reminder:', error);
+    }
+  };
+
   const fetchNotifications = async () => {
     try {
       const session = await getSession();
       if (!session) return;
+
+      await maybeGenerateQuizReminder(session.access_token);
 
       const response = await fetch('/api/notifications', {
         headers: {

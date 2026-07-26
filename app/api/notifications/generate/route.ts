@@ -42,6 +42,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Could not fetch preferences' }, { status: 500 });
     }
 
+    // Guard against duplicate spam: this route gets called opportunistically
+    // on every dashboard load (client-side trigger, no cron), so without a
+    // cooldown a student who opens the app 10 times in a day would get 10
+    // quiz reminders. Skip generation entirely if one of this type already
+    // fired in the last 24h.
+    const { data: recentOfType, error: recentError } = await supabaseAdmin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('type', type)
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(1);
+
+    if (recentError) {
+      return NextResponse.json({ error: recentError.message }, { status: 500 });
+    }
+
+    if (recentOfType && recentOfType.length > 0) {
+      return NextResponse.json({ success: true, message: 'Already notified within the last 24h' });
+    }
+
     let title = '';
     let message = '';
     let shouldSend = false;
