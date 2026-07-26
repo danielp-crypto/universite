@@ -26,7 +26,7 @@ function LectureDetailPageContent() {
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
   
@@ -800,38 +800,39 @@ function LectureDetailPageContent() {
       return;
     }
 
-    // Parse questions into flashcard format: { question: string, answer: string }
+    // Parse questions into multiple-choice format: { question: string, options: string[], correctAnswer: string }
     const parsedQuestions = questions.map((q: string) => {
       const lines = q.split('\n').filter((line: string) => line.trim());
       const questionText = lines[0].replace(/^Q\d+[:.]?\s*/, '').trim();
-      const answerText = lines.slice(1).join('\n').trim();
+      const options = lines.slice(1).map((line: string) => line.replace(/^[A-D][.)]\s*/, '').trim());
+      // For now, we'll mark the first option as correct (this should be improved with actual answer parsing)
       return {
         question: questionText,
-        answer: answerText
+        options: options,
+        correctAnswer: options[0] // This is a placeholder - actual answer parsing needed
       };
     });
 
     setQuizQuestions(parsedQuestions);
     setCurrentQuestionIndex(0);
-    setShowAnswer(false);
+    setSelectedAnswer(null);
     setQuizSubmitted(false);
     setQuizScore(0);
     setQuizOpen(true);
   };
 
-  const handleMarkKnown = () => {
-    setQuizScore(prev => prev + 1);
-    nextQuestion();
+  const handleAnswerSelect = (answer: string) => {
+    setSelectedAnswer(answer);
   };
 
-  const handleMarkUnknown = () => {
-    nextQuestion();
-  };
-
-  const nextQuestion = () => {
+  const handleNext = () => {
+    if (selectedAnswer === quizQuestions[currentQuestionIndex].correctAnswer) {
+      setQuizScore(prev => prev + 1);
+    }
+    
     if (currentQuestionIndex < quizQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
-      setShowAnswer(false);
+      setSelectedAnswer(null);
     } else {
       setQuizSubmitted(true);
       // Save quiz result to localStorage
@@ -842,7 +843,7 @@ function LectureDetailPageContent() {
           id: Date.now(),
           lectureId: currentLecture.id,
           lectureTitle: currentLecture.title,
-          score: quizScore,
+          score: quizScore + (selectedAnswer === quizQuestions[currentQuestionIndex].correctAnswer ? 1 : 0),
           total: quizQuestions.length,
           completed_at: new Date().toISOString()
         });
@@ -856,7 +857,7 @@ function LectureDetailPageContent() {
   const closeQuiz = () => {
     setQuizOpen(false);
     setCurrentQuestionIndex(0);
-    setShowAnswer(false);
+    setSelectedAnswer(null);
     setQuizSubmitted(false);
     setQuizScore(0);
   };
@@ -1491,7 +1492,7 @@ function LectureDetailPageContent() {
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-slate-900">Self-Test Flashcards</h2>
+                <h2 className="text-2xl font-bold text-slate-900">Self-Test Quiz</h2>
                 <button
                   onClick={closeQuiz}
                   className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -1506,55 +1507,66 @@ function LectureDetailPageContent() {
                 <>
                   <div className="mb-4">
                     <div className="flex items-center justify-between text-sm text-slate-600 mb-2">
-                      <span>Card {currentQuestionIndex + 1} of {quizQuestions.length}</span>
-                      <span className="font-semibold">{quizScore} known</span>
+                      <span>Question {currentQuestionIndex + 1} of {quizQuestions.length}</span>
+                      <span className="font-semibold">{Math.round((currentQuestionIndex / quizQuestions.length) * 100)}%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-2">
                       <div
                         className="bg-gradient-to-r from-violet-600 to-purple-600 h-2 rounded-full transition-all"
-                        style={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+                        style={{ width: `${(currentQuestionIndex / quizQuestions.length) * 100}%` }}
                       ></div>
                     </div>
                   </div>
 
                   {quizQuestions[currentQuestionIndex] && (
                     <div className="mb-6">
-                      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-6 mb-4">
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                          {quizQuestions[currentQuestionIndex].question}
-                        </h3>
-                        {!showAnswer ? (
+                      <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                        {quizQuestions[currentQuestionIndex].question}
+                      </h3>
+                      <div className="space-y-3">
+                        {quizQuestions[currentQuestionIndex].options.map((option: string, idx: number) => (
                           <button
-                            onClick={() => setShowAnswer(true)}
-                            className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                            key={idx}
+                            onClick={() => handleAnswerSelect(option)}
+                            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                              selectedAnswer === option
+                                ? 'border-violet-600 bg-violet-50'
+                                : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50'
+                            }`}
                           >
-                            Show Answer
+                            <span className="font-medium text-slate-700">{option}</span>
                           </button>
-                        ) : (
-                          <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-                            {quizQuestions[currentQuestionIndex].answer}
-                          </div>
-                        )}
+                        ))}
                       </div>
-
-                      {showAnswer && (
-                        <div className="flex gap-3">
-                          <button
-                            onClick={handleMarkUnknown}
-                            className="flex-1 px-4 py-3 bg-rose-100 text-rose-700 rounded-xl font-semibold hover:bg-rose-200 transition-all"
-                          >
-                            Still Learning
-                          </button>
-                          <button
-                            onClick={handleMarkKnown}
-                            className="flex-1 px-4 py-3 bg-emerald-100 text-emerald-700 rounded-xl font-semibold hover:bg-emerald-200 transition-all"
-                          >
-                            Got It!
-                          </button>
-                        </div>
-                      )}
                     </div>
                   )}
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                      disabled={currentQuestionIndex === 0}
+                      className="px-4 py-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    {currentQuestionIndex === quizQuestions.length - 1 ? (
+                      <button
+                        onClick={handleNext}
+                        disabled={!selectedAnswer}
+                        className="px-6 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Submit Quiz
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleNext}
+                        disabled={!selectedAnswer}
+                        className="px-6 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    )}
+                  </div>
                 </>
               ) : (
                 <div className="text-center">
@@ -1563,9 +1575,9 @@ function LectureDetailPageContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Flashcards Complete!</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Quiz Complete!</h3>
                   <p className="text-lg text-slate-600 mb-4">
-                    You knew <span className="font-bold text-violet-600">{quizScore}</span> out of <span className="font-bold text-violet-600">{quizQuestions.length}</span> concepts
+                    You scored <span className="font-bold text-violet-600">{quizScore}</span> out of <span className="font-bold text-violet-600">{quizQuestions.length}</span>
                   </p>
                   <p className="text-slate-500 mb-6">
                     {quizScore === quizQuestions.length
