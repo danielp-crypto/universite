@@ -22,6 +22,14 @@ function LectureDetailPageContent() {
   // Tabs
   const [activeTab, setActiveTab] = useState<'summary'>('summary');
   
+  // Quiz state
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
+  
   // AI Processing states
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState('');
@@ -749,6 +757,122 @@ function LectureDetailPageContent() {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ summary }),
+          });
+        } catch (error) {
+          console.error('Error saving summary:', error);
+        }
+
+        showAlert('Success', 'Summary regenerated successfully!', 'success');
+      } else {
+        showAlert('Error', 'Failed to regenerate summary', 'error');
+      }
+    } catch (error: any) {
+      console.error(error);
+      showAlert('Error', `Failed to regenerate summary: ${error.message}`, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const parseTestPredictorQuestions = (summaryText: string) => {
+    const testPredictorMatch = summaryText.match(/##\s*Test Predictor[^\n]*\n([\s\S]*?)(?=\n##(?!#)|$)/i);
+    if (testPredictorMatch) {
+      const questions = testPredictorMatch[1]
+        .split(/\n(?=Q\d)/)
+        .map((q: string) => q.trim())
+        .filter(Boolean);
+      return questions;
+    }
+    return [];
+  };
+
+  const startQuiz = () => {
+    if (!processingResults?.summaryText) {
+      showAlert('Error', 'No lecture summary available. Please generate notes first.', 'error');
+      return;
+    }
+    
+    const questions = parseTestPredictorQuestions(processingResults.summaryText);
+    if (questions.length === 0) {
+      showAlert('Error', 'No test questions available in this lecture.', 'error');
+      return;
+    }
+
+    // Parse questions into format: { question: string, options: string[], correctAnswer: string }
+    const parsedQuestions = questions.map((q: string) => {
+      const lines = q.split('\n').filter((line: string) => line.trim());
+      const questionText = lines[0].replace(/^Q\d+[:.]?\s*/, '').trim();
+      const options = lines.slice(1).map((line: string) => line.replace(/^[A-D][.)]\s*/, '').trim());
+      // For now, we'll mark the first option as correct (this should be improved with actual answer parsing)
+      return {
+        question: questionText,
+        options: options,
+        correctAnswer: options[0] // This is a placeholder - actual answer parsing needed
+      };
+    });
+
+    setQuizQuestions(parsedQuestions);
+    setCurrentQuestionIndex(0);
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(0);
+    setQuizOpen(true);
+  };
+
+  const handleAnswerSelect = (questionIndex: number, answer: string) => {
+    setQuizAnswers(prev => ({
+      ...prev,
+      [questionIndex]: answer
+    }));
+  };
+
+  const submitQuiz = () => {
+    let correctCount = 0;
+    quizQuestions.forEach((q: any, idx: number) => {
+      if (quizAnswers[idx] === q.correctAnswer) {
+        correctCount++;
+      }
+    });
+    setQuizScore(correctCount);
+    setQuizSubmitted(true);
+
+    // Save quiz result to localStorage
+    try {
+      const selfTests = localStorage.getItem('universite_self_tests');
+      const testData = selfTests ? JSON.parse(selfTests) : [];
+      testData.push({
+        id: Date.now(),
+        lectureId: currentLecture.id,
+        lectureTitle: currentLecture.title,
+        score: correctCount,
+        total: quizQuestions.length,
+        completed_at: new Date().toISOString()
+      });
+      localStorage.setItem('universite_self_tests', JSON.stringify(testData));
+    } catch (error) {
+      console.error('Error saving quiz result:', error);
+    }
+  };
+
+  const closeQuiz = () => {
+    setQuizOpen(false);
+    setCurrentQuestionIndex(0);
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(0);
+  };
+          summaryAvailable: true,
+          summaryText: summary
+        }));
+
+        // Save new summary to Supabase
+        try {
+          await fetch(`/api/lectures/${currentLecture.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.access_token}`
             },
             body: JSON.stringify({
@@ -924,17 +1048,14 @@ function LectureDetailPageContent() {
                     <span className="text-xl leading-none">🎯</span>
                     <span>Self-test</span>
                   </h3>
-                  <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-semibold">Upgrade</span>
                 </div>
                 <p className="text-sm text-slate-600 mb-4">
                   Test your knowledge with flashcards generated from this lecture. Track your progress and master the material.
                 </p>
                 <button
-                  onClick={() => {
-                    setUpgradeFeature('Self-test');
-                    setUpgradeModalOpen(true);
-                  }}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all text-sm active:scale-95"
+                  onClick={startQuiz}
+                  disabled={!processingResults?.summaryText}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all text-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Take Test
                 </button>
@@ -1397,6 +1518,118 @@ function LectureDetailPageContent() {
         message={alertMessage}
         type={alertType}
       />
+
+      {/* Quiz Modal */}
+      {quizOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">Self-Test Quiz</h2>
+                <button
+                  onClick={closeQuiz}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {!quizSubmitted ? (
+                <>
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-sm text-slate-600 mb-2">
+                      <span>Question {currentQuestionIndex + 1} of {quizQuestions.length}</span>
+                      <span className="font-semibold">{Math.round((currentQuestionIndex / quizQuestions.length) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div
+                        className="bg-gradient-to-r from-violet-600 to-purple-600 h-2 rounded-full transition-all"
+                        style={{ width: `${(currentQuestionIndex / quizQuestions.length) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {quizQuestions[currentQuestionIndex] && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                        {quizQuestions[currentQuestionIndex].question}
+                      </h3>
+                      <div className="space-y-3">
+                        {quizQuestions[currentQuestionIndex].options.map((option: string, idx: number) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleAnswerSelect(currentQuestionIndex, option)}
+                            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                              quizAnswers[currentQuestionIndex] === option
+                                ? 'border-violet-600 bg-violet-50'
+                                : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="font-medium text-slate-700">{option}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                      disabled={currentQuestionIndex === 0}
+                      className="px-4 py-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    {currentQuestionIndex === quizQuestions.length - 1 ? (
+                      <button
+                        onClick={submitQuiz}
+                        disabled={Object.keys(quizAnswers).length < quizQuestions.length}
+                        className="px-6 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Submit Quiz
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+                        className="px-6 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                      >
+                        Next
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Quiz Complete!</h3>
+                  <p className="text-lg text-slate-600 mb-4">
+                    You scored <span className="font-bold text-violet-600">{quizScore}</span> out of <span className="font-bold text-violet-600">{quizQuestions.length}</span>
+                  </p>
+                  <p className="text-slate-500 mb-6">
+                    {quizScore === quizQuestions.length
+                      ? 'Perfect! You mastered this lecture!'
+                      : quizScore >= quizQuestions.length * 0.7
+                      ? 'Great job! Keep up the good work!'
+                      : 'Keep practicing to improve your understanding.'}
+                  </p>
+                  <button
+                    onClick={closeQuiz}
+                    className="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -95,7 +95,7 @@ export default function Home() {
                 Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start free with 4 lectures, then upgrade for unlimited AI-powered study tools.
+                Start free with 3 lectures, then upgrade for unlimited AI-powered study tools.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="#pricing" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
@@ -105,7 +105,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free Beta : notes + exam questions + memo + AI chat for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
+              <p className="mt-6 text-sm text-slate-500">Free Beta : notes + exam questions + memo + AI chat for 3 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -254,7 +254,7 @@ export default function Home() {
           <div className="text-center mb-10 md:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-              Start with 4 lectures and upgrade for unlimited AI study tools.
+              Start with 3 lectures and upgrade for unlimited AI study tools.
             </p>
           </div>
 
@@ -266,11 +266,11 @@ export default function Home() {
               </div>
               <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Beta</h3>
               <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
-              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 4 lectures</span></p>
+              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 3 lectures</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload up to 4 lectures</strong> - upload up to 90 minutes per lecture </span>
+                  <span><strong>Record/Upload up to 3 lectures</strong> - upload up to 90 minutes per lecture </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
