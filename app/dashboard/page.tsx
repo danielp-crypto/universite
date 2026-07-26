@@ -1234,7 +1234,7 @@ function HomePageContent() {
                     </svg>
                   </div>
                   <div>
-                    <div className="font-medium text-slate-800 text-sm">Self-Test Mode</div>
+                    <div className="font-medium text-slate-800 text-sm">Exam Mode</div>
                     <div className="text-xs text-slate-500">Review key concepts</div>
                   </div>
                 </div>

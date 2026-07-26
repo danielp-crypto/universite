@@ -203,7 +203,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Self-Test Mode</h3>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Self-Test Quiz</h3>
               <p className="text-slate-600">Test your understanding.</p>
             </div>
 
@@ -214,8 +214,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Weak Spot Drill</h3>
-              <p className="text-slate-600">Monitor your study progress with detailed analytics. See your learning patterns and improve your study habits.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Exam Mode</h3>
+              <p className="text-slate-600">Take a mock exam to prepare for the big day.</p>
             </div>
           </div>
         </div>
@@ -327,7 +327,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>Self-Test Mode</strong> - Quiz yourself</span>
+                  <span><strong>Self-Test Quiz</strong> - Quiz yourself</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
