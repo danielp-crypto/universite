@@ -252,36 +252,19 @@ function HomePageContent() {
 
     const lectureCount = weeklyLectures.length;
 
-    // Count self-tests completed (from localStorage)
+    // Self-tests and AI chats are logged server-side (Supabase study_events)
+    // as they happen, so they're durable across devices — pull this week's
+    // counts from there instead of localStorage.
     let selfTestCount = 0;
-    try {
-      const selfTests = localStorage.getItem('universite_self_tests');
-      if (selfTests) {
-        const testData = JSON.parse(selfTests);
-        const weeklyTests = testData.filter((test: any) => {
-          const testDate = new Date(test.completed_at || test.createdAt);
-          return testDate >= weekStart;
-        });
-        selfTestCount = weeklyTests.length;
-      }
-    } catch (error) {
-      console.error('Error getting self-tests:', error);
-    }
-
-    // Count AI chats (from localStorage or could be from database)
     let aiChatCount = 0;
     try {
-      const chats = localStorage.getItem('universite_ai_chats');
-      if (chats) {
-        const chatData = JSON.parse(chats);
-        const weeklyChats = chatData.filter((chat: any) => {
-          const chatDate = new Date(chat.created_at || chat.createdAt);
-          return chatDate >= weekStart;
-        });
-        aiChatCount = weeklyChats.length;
+      const response = await apiGet(`/api/analytics/event?since=${encodeURIComponent(weekStart.toISOString())}`);
+      if (response?.success && response.counts) {
+        selfTestCount = response.counts.self_test || 0;
+        aiChatCount = response.counts.ai_chat || 0;
       }
     } catch (error) {
-      console.error('Error getting AI chats:', error);
+      console.error('Error getting study events:', error);
     }
 
     setStats({

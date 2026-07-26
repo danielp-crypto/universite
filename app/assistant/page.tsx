@@ -84,6 +84,15 @@ function AssistantPageContent(): React.ReactNode {
       const aiResponse = await getContextAwareResponse(query, newMessages);
       const botMsg = { sender: 'bot', content: aiResponse, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
       setMessages((prev) => [...prev, botMsg]);
+
+      // Fire-and-forget: log this exchange for the dashboard's weekly stats.
+      // Never let analytics logging block or break the chat experience.
+      apiPost('/api/analytics/event', {
+        event_type: 'ai_chat',
+        metadata: currentLecture ? { lecture_id: currentLecture.id } : {},
+      }).catch((error) => {
+        console.error('Error logging AI chat event:', error);
+      });
     } catch (error) {
       console.error(error);
       setMessages((prev) => [
