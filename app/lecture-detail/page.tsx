@@ -852,7 +852,7 @@ function LectureDetailPageContent() {
   // array against each question's correct index — not incremented as the
   // student moves forward. That avoids double-counting if they use
   // Previous/Next to revisit and change an earlier answer.
-  const submitQuiz = () => {
+  const submitQuiz = async () => {
     const finalScore = quizQuestions.reduce(
       (score, q, i) => (quizAnswers[i] === q.correctIndex ? score + 1 : score),
       0
@@ -860,18 +860,24 @@ function LectureDetailPageContent() {
     setQuizScore(finalScore);
     setQuizSubmitted(true);
 
+    // Save quiz result to database
     try {
-      const selfTests = localStorage.getItem('universite_self_tests');
-      const testData = selfTests ? JSON.parse(selfTests) : [];
-      testData.push({
-        id: Date.now(),
-        lectureId: currentLecture?.id,
-        lectureTitle: currentLecture?.title,
-        score: finalScore,
-        total: quizQuestions.length,
-        completed_at: new Date().toISOString()
-      });
-      localStorage.setItem('universite_self_tests', JSON.stringify(testData));
+      const session = await getSession();
+      if (session) {
+        await fetch('/api/quiz-results', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            lectureId: currentLecture?.id,
+            lectureTitle: currentLecture?.title,
+            score: finalScore,
+            total: quizQuestions.length
+          })
+        });
+      }
     } catch (error) {
       console.error('Error saving quiz result:', error);
     }

@@ -10,6 +10,7 @@ import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
 import UpgradeModal from '../components/UpgradeModal';
 import Alert from '../components/Alert';
+import Notifications from '../components/Notifications';
 import { transcribeAudioChunked, describePartialFailure } from '@/lib/audio/chunkedTranscribe';
 
 function HomePageContent() {
@@ -947,13 +948,16 @@ function HomePageContent() {
         {/* Header */}
         <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+                </div>
+                <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  Universite
+                </h1>
               </div>
-              <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Universite
-              </h1>
+              <Notifications />
             </div>
           </div>
         </div>

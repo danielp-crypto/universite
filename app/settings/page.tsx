@@ -15,6 +15,16 @@ export default function SettingsPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [theme, setTheme] = useState('light');
+  
+  // Notification preferences state
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    daily_motivation: true,
+    quiz_reminders: true,
+    weekly_summary: false,
+    streak_reminders: true,
+    reminder_time: '09:00'
+  });
+  const [loadingPrefs, setLoadingPrefs] = useState(false);
 
   // Load theme from localStorage on mount
   useEffect(() => {
@@ -59,7 +69,68 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadUserData();
+    loadNotificationPreferences();
   }, []);
+
+  const loadNotificationPreferences = async () => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      setLoadingPrefs(true);
+      const response = await fetch('/api/notifications/preferences', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.preferences) {
+          setNotificationPrefs({
+            daily_motivation: data.preferences.daily_motivation,
+            quiz_reminders: data.preferences.quiz_reminders,
+            weekly_summary: data.preferences.weekly_summary,
+            streak_reminders: data.preferences.streak_reminders,
+            reminder_time: data.preferences.reminder_time?.substring(0, 5) || '09:00'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading notification preferences:', error);
+    } finally {
+      setLoadingPrefs(false);
+    }
+  };
+
+  const saveNotificationPreferences = async () => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      setLoadingPrefs(true);
+      const response = await fetch('/api/notifications/preferences', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(notificationPrefs)
+      });
+
+      if (response.ok) {
+        showAlert('Success', 'Notification preferences saved', 'success');
+        setShowNotifications(false);
+      } else {
+        showAlert('Error', 'Failed to save notification preferences', 'error');
+      }
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      showAlert('Error', 'Failed to save notification preferences', 'error');
+    } finally {
+      setLoadingPrefs(false);
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -342,44 +413,102 @@ export default function SettingsPage() {
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-slate-800">Email Notifications</div>
-                    <div className="text-sm text-slate-500">Receive updates via email</div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" defaultChecked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                  </label>
+              {loadingPrefs ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
                 </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-slate-800">Daily Motivation 💪</div>
+                      <div className="text-sm text-slate-500">Get daily motivational messages</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={notificationPrefs.daily_motivation}
+                        onChange={(e) => setNotificationPrefs(prev => ({ ...prev, daily_motivation: e.target.checked }))}
+                        className="sr-only peer" 
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-slate-800">Push Notifications</div>
-                    <div className="text-sm text-slate-500">Get notified in your browser</div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-slate-800">Quiz Reminders 🎯</div>
+                      <div className="text-sm text-slate-500">Remind to take quizzes on lectures</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={notificationPrefs.quiz_reminders}
+                        onChange={(e) => setNotificationPrefs(prev => ({ ...prev, quiz_reminders: e.target.checked }))}
+                        className="sr-only peer" 
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                  </label>
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-slate-800">Study Reminders</div>
-                    <div className="text-sm text-slate-500">Daily study goal reminders</div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-slate-800">Weekly Summary 📊</div>
+                      <div className="text-sm text-slate-500">Get weekly progress summaries</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={notificationPrefs.weekly_summary}
+                        onChange={(e) => setNotificationPrefs(prev => ({ ...prev, weekly_summary: e.target.checked }))}
+                        className="sr-only peer" 
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" defaultChecked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                  </label>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-slate-800">Streak Reminders 🔥</div>
+                      <div className="text-sm text-slate-500">Remind to maintain learning streak</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={notificationPrefs.streak_reminders}
+                        onChange={(e) => setNotificationPrefs(prev => ({ ...prev, streak_reminders: e.target.checked }))}
+                        className="sr-only peer" 
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-slate-800 mb-2">Reminder Time</label>
+                    <input
+                      type="time"
+                      value={notificationPrefs.reminder_time}
+                      onChange={(e) => setNotificationPrefs(prev => ({ ...prev, reminder_time: e.target.value }))}
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="mt-8 flex gap-3">
-                <button onClick={() => setShowNotifications(false)} className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700">
-                  Save Settings
+                <button 
+                  onClick={() => setShowNotifications(false)} 
+                  className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200"
+                  disabled={loadingPrefs}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={saveNotificationPreferences} 
+                  className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-50"
+                  disabled={loadingPrefs}
+                >
+                  {loadingPrefs ? 'Saving...' : 'Save Settings'}
                 </button>
               </div>
             </div>
