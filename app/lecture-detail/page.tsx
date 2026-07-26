@@ -863,37 +863,6 @@ function LectureDetailPageContent() {
     setQuizSubmitted(false);
     setQuizScore(0);
   };
-          summaryAvailable: true,
-          summaryText: summary
-        }));
-
-        // Save new summary to Supabase
-        try {
-          await fetch(`/api/lectures/${currentLecture.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({
-              summary: summary
-            })
-          });
-          showAlert('Success', 'Summary regenerated successfully', 'success');
-        } catch (error) {
-          console.error('Failed to save summary to Supabase:', error);
-          showAlert('Error', 'Failed to save summary', 'error');
-        }
-      } else {
-        showAlert('Error', 'Failed to regenerate summary', 'error');
-      }
-    } catch (error) {
-      console.error('Error regenerating summary:', error);
-      showAlert('Error', 'Failed to regenerate summary', 'error');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const createSegmentsFromTranscription = (transcription: string) => {
     if (!transcription) return [];
