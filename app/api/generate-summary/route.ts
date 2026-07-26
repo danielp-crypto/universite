@@ -170,6 +170,80 @@ A9: [Detailed model answer based on transcript]
 Q10 [Evaluate]: ___
 A10: [Detailed model answer based on transcript]
 
+## Quiz Bank: 10 Multiple Choice Questions
+Create 10 multiple-choice questions testing the same concepts as the Test Predictor questions above, so students can self-test with clickable options instead of only reading model answers. Base ONLY on transcript facts. Each question needs exactly 4 options (A-D) and exactly one correct answer. Wrong options must be plausible and topic-relevant — things a student who half-understood the lecture might pick — never silly, joke, or obviously-wrong answers.
+
+Format exactly like this for all 10 questions, with no extra commentary before, between, or after them:
+MCQ1: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ2: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ3: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ4: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ5: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ6: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ7: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ8: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ9: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
+MCQ10: [question text]
+A) [option text]
+B) [option text]
+C) [option text]
+D) [option text]
+CORRECT: [A, B, C, or D]
+
 4. TONE: Clear, direct English. Short sentences. No "furthermore". No "it is important to note". Suit South African university students.
 5. HALLUCINATION BAN: Everywhere except the Glossary's Definitions section, if info isn't in the transcript, write "Not covered in this lecture" — never invent facts, numbers, or events that didn't happen. EXCEPTION: the Glossary's Definitions section is explicitly allowed (and required, per the rules above) to supply a standard definition for a term that the lecture actually used or referenced, even if the lecturer didn't pause to define it themselves. This is not invention — the term came from the transcript; only its definition is supplemented.
 6. SA CONTEXT: Keep ZAR, South African examples (Eskom, provinces, SA legislation, case studies). Include slide references. Don't convert currency to other units.
@@ -469,6 +543,9 @@ Not covered in this lecture.
 ${bullets}
 
 ## Test Predictor: 10 Exam-Style Questions + Memo
+Not covered in this lecture.
+
+## Quiz Bank: 10 Multiple Choice Questions
 Not covered in this lecture.
 `;
 }

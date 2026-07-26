@@ -22,14 +22,13 @@ function LectureDetailPageContent() {
   // Tabs
   const [activeTab, setActiveTab] = useState<'summary'>('summary');
   
-  // Self-test (flashcard-style recall quiz) state
+  // Self-test (multiple-choice quiz) state
   const [quizOpen, setQuizOpen] = useState(false);
-  const [quizQuestions, setQuizQuestions] = useState<{ question: string; answer: string; bloomLevel: string | null }[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<{ question: string; options: string[]; correctIndex: number }[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<(number | null)[]>([]);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
-  const [ratedCurrent, setRatedCurrent] = useState(false);
   
   // AI Processing states
   const [isProcessing, setIsProcessing] = useState(false);
@@ -777,34 +776,36 @@ function LectureDetailPageContent() {
     }
   };
 
-  // The "Test Predictor" section is generated as open recall Q&A pairs with a
-  // model answer (Q1 [Bloom level]: ...  /  A1: ...) — it is NOT multiple choice.
-  // Parse each block into a clean { question, answer, bloomLevel } shape rather
-  // than misreading the model answer text as a fake answer option.
-  const parseTestPredictorQuestions = (summaryText: string) => {
-    const testPredictorMatch = summaryText.match(/##\s*Test Predictor[^\n]*\n([\s\S]*?)(?=\n##(?!#)|$)/i);
-    if (!testPredictorMatch) return [];
+  // The "Quiz Bank" section is generated as real multiple-choice questions
+  // (MCQn: question / A) / B) / C) / D) / CORRECT: <letter>) specifically so
+  // students can click an option rather than just reading a model answer.
+  const parseQuizBankQuestions = (summaryText: string) => {
+    const quizBankMatch = summaryText.match(/##\s*Quiz Bank[^\n]*\n([\s\S]*?)(?=\n##(?!#)|$)/i);
+    if (!quizBankMatch) return [];
 
-    const blocks = testPredictorMatch[1]
-      .split(/\n(?=Q\d+\s*[\[:])/)
+    const blocks = quizBankMatch[1]
+      .split(/\n(?=MCQ\d+\s*:)/i)
       .map((block: string) => block.trim())
       .filter(Boolean);
 
+    const letterToIndex: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+
     const parsed = blocks
       .map((block: string) => {
-        const match = block.match(/^Q(\d+)\s*(?:\[([^\]]+)\])?\s*:?\s*([\s\S]*?)\n+A\1\s*:?\s*([\s\S]*)$/i);
+        const match = block.match(
+          /^MCQ\d+\s*:\s*([\s\S]*?)\n+A\)\s*([\s\S]*?)\n+B\)\s*([\s\S]*?)\n+C\)\s*([\s\S]*?)\n+D\)\s*([\s\S]*?)\n+CORRECT\s*:\s*([A-D])/i
+        );
         if (!match) return null;
-        const [, , bloomLevel, question, answer] = match;
-        const cleanQuestion = question.trim();
-        const cleanAnswer = answer.trim();
-        if (!cleanQuestion || !cleanAnswer) return null;
+        const [, question, optA, optB, optC, optD, correctLetter] = match;
+        const options = [optA, optB, optC, optD].map(o => o.trim()).filter(Boolean);
+        if (options.length !== 4) return null;
         return {
-          question: cleanQuestion,
-          answer: cleanAnswer,
-          bloomLevel: bloomLevel ? bloomLevel.trim() : null,
+          question: question.trim(),
+          options,
+          correctIndex: letterToIndex[correctLetter.toUpperCase()],
         };
       })
-      .filter((q): q is { question: string; answer: string; bloomLevel: string | null } => q !== null);
+      .filter((q): q is { question: string; options: string[]; correctIndex: number } => q !== null);
 
     return parsed;
   };
@@ -815,7 +816,7 @@ function LectureDetailPageContent() {
       return;
     }
 
-    const parsedQuestions = parseTestPredictorQuestions(processingResults.summaryText);
+    const parsedQuestions = parseQuizBankQuestions(processingResults.summaryText);
     if (parsedQuestions.length === 0) {
       showAlert('Error', 'No test questions available in this lecture.', 'error');
       return;
@@ -823,60 +824,65 @@ function LectureDetailPageContent() {
 
     setQuizQuestions(parsedQuestions);
     setCurrentQuestionIndex(0);
-    setShowAnswer(false);
+    setQuizAnswers(new Array(parsedQuestions.length).fill(null));
     setQuizSubmitted(false);
     setQuizScore(0);
-    setRatedCurrent(false);
     setQuizOpen(true);
   };
 
-  const revealAnswer = () => {
-    setShowAnswer(true);
+  const selectQuizAnswer = (optionIndex: number) => {
+    setQuizAnswers(prev => {
+      const next = [...prev];
+      next[currentQuestionIndex] = optionIndex;
+      return next;
+    });
   };
 
-  // Self-test is a recall exercise: the student attempts the answer, reveals the
-  // model answer, then honestly rates whether they got it right. This drives
-  // both the score and progress — there's no "correct option" to auto-detect.
-  const handleSelfRate = (gotItRight: boolean) => {
-    if (ratedCurrent) return; // prevent double-counting on rapid clicks
-    setRatedCurrent(true);
-    const finalScore = gotItRight ? quizScore + 1 : quizScore;
-    setQuizScore(finalScore);
-
+  const goToNextQuestion = () => {
     if (currentQuestionIndex < quizQuestions.length - 1) {
-      setTimeout(() => {
-        setCurrentQuestionIndex(prev => prev + 1);
-        setShowAnswer(false);
-        setRatedCurrent(false);
-      }, 150);
-    } else {
-      setQuizSubmitted(true);
-      // Save self-test result to localStorage
-      try {
-        const selfTests = localStorage.getItem('universite_self_tests');
-        const testData = selfTests ? JSON.parse(selfTests) : [];
-        testData.push({
-          id: Date.now(),
-          lectureId: currentLecture?.id,
-          lectureTitle: currentLecture?.title,
-          score: finalScore,
-          total: quizQuestions.length,
-          completed_at: new Date().toISOString()
-        });
-        localStorage.setItem('universite_self_tests', JSON.stringify(testData));
-      } catch (error) {
-        console.error('Error saving self-test result:', error);
-      }
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const goToPreviousQuestion = () => {
+    setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
+  };
+
+  // Score is computed once at submit time by comparing the full answers
+  // array against each question's correct index — not incremented as the
+  // student moves forward. That avoids double-counting if they use
+  // Previous/Next to revisit and change an earlier answer.
+  const submitQuiz = () => {
+    const finalScore = quizQuestions.reduce(
+      (score, q, i) => (quizAnswers[i] === q.correctIndex ? score + 1 : score),
+      0
+    );
+    setQuizScore(finalScore);
+    setQuizSubmitted(true);
+
+    try {
+      const selfTests = localStorage.getItem('universite_self_tests');
+      const testData = selfTests ? JSON.parse(selfTests) : [];
+      testData.push({
+        id: Date.now(),
+        lectureId: currentLecture?.id,
+        lectureTitle: currentLecture?.title,
+        score: finalScore,
+        total: quizQuestions.length,
+        completed_at: new Date().toISOString()
+      });
+      localStorage.setItem('universite_self_tests', JSON.stringify(testData));
+    } catch (error) {
+      console.error('Error saving quiz result:', error);
     }
   };
 
   const closeQuiz = () => {
     setQuizOpen(false);
     setCurrentQuestionIndex(0);
-    setShowAnswer(false);
+    setQuizAnswers([]);
     setQuizSubmitted(false);
     setQuizScore(0);
-    setRatedCurrent(false);
   };
 
   const createSegmentsFromTranscription = (transcription: string) => {
@@ -1537,54 +1543,60 @@ function LectureDetailPageContent() {
 
                   {quizQuestions[currentQuestionIndex] && (
                     <div className="mb-6">
-                      {quizQuestions[currentQuestionIndex].bloomLevel && (
-                        <span className="inline-block mb-3 px-2.5 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-semibold uppercase tracking-wide">
-                          {quizQuestions[currentQuestionIndex].bloomLevel}
-                        </span>
-                      )}
                       <h3 className="text-lg font-semibold text-slate-900 mb-4">
                         {quizQuestions[currentQuestionIndex].question}
                       </h3>
-                      <p className="text-sm text-slate-500 mb-4">
-                        Try to answer it yourself first, then reveal the model answer and rate how you did.
-                      </p>
-
-                      {!showAnswer ? (
-                        <button
-                          onClick={revealAnswer}
-                          className="w-full px-4 py-3 bg-white border-2 border-violet-300 text-violet-700 rounded-xl font-semibold hover:bg-violet-50 transition-all"
-                        >
-                          Reveal Answer
-                        </button>
-                      ) : (
-                        <>
-                          <div className="p-4 rounded-xl border-2 border-violet-200 bg-violet-50 mb-4">
-                            <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide mb-1">Model Answer</p>
-                            <p className="text-slate-700 whitespace-pre-wrap">
-                              {quizQuestions[currentQuestionIndex].answer}
-                            </p>
-                          </div>
-                          <p className="text-sm font-medium text-slate-600 mb-3">Did you get it right?</p>
-                          <div className="grid grid-cols-2 gap-3">
-                            <button
-                              onClick={() => handleSelfRate(false)}
-                              disabled={ratedCurrent}
-                              className="px-4 py-3 rounded-xl border-2 border-rose-300 text-rose-700 font-semibold hover:bg-rose-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Needs Review
-                            </button>
-                            <button
-                              onClick={() => handleSelfRate(true)}
-                              disabled={ratedCurrent}
-                              className="px-4 py-3 rounded-xl border-2 border-emerald-400 bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Got It Right
-                            </button>
-                          </div>
-                        </>
-                      )}
+                      <div className="space-y-3">
+                        {quizQuestions[currentQuestionIndex].options.map((option: string, idx: number) => (
+                          <button
+                            key={idx}
+                            onClick={() => selectQuizAnswer(idx)}
+                            className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-3 ${
+                              quizAnswers[currentQuestionIndex] === idx
+                                ? 'border-violet-600 bg-violet-50'
+                                : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className={`flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                              quizAnswers[currentQuestionIndex] === idx
+                                ? 'bg-violet-600 text-white'
+                                : 'bg-slate-100 text-slate-500'
+                            }`}>
+                              {String.fromCharCode(65 + idx)}
+                            </span>
+                            <span className="font-medium text-slate-700">{option}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={goToPreviousQuestion}
+                      disabled={currentQuestionIndex === 0}
+                      className="px-4 py-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    {currentQuestionIndex === quizQuestions.length - 1 ? (
+                      <button
+                        onClick={submitQuiz}
+                        disabled={quizAnswers[currentQuestionIndex] === null}
+                        className="px-6 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Submit Quiz
+                      </button>
+                    ) : (
+                      <button
+                        onClick={goToNextQuestion}
+                        disabled={quizAnswers[currentQuestionIndex] === null}
+                        className="px-6 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    )}
+                  </div>
                 </>
               ) : (
                 <div className="text-center">
