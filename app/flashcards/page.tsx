@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSession } from '@/lib/supabase/auth';
-import { apiPost } from '@/lib/api/client';
 
 function FlashcardsPageContent() {
   const router = useRouter();
@@ -13,32 +12,9 @@ function FlashcardsPageContent() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Tracks which cards have been viewed this session so we can log a
-  // "self_test" study-analytics event the first time the user completes a
-  // full pass through the deck (fires once per session, not per card).
-  const viewedIndices = useRef<Set<number>>(new Set());
-  const hasLoggedCompletion = useRef(false);
-
   useEffect(() => {
     loadFlashcards();
   }, []);
-
-  useEffect(() => {
-    if (flashcards.length === 0 || hasLoggedCompletion.current) return;
-
-    viewedIndices.current.add(currentIndex);
-
-    if (viewedIndices.current.size >= flashcards.length) {
-      hasLoggedCompletion.current = true;
-      apiPost('/api/analytics/event', {
-        event_type: 'self_test',
-        metadata: { card_count: flashcards.length },
-      }).catch((error) => {
-        // Don't let analytics logging interrupt studying
-        console.error('Error logging self-test completion:', error);
-      });
-    }
-  }, [currentIndex, flashcards.length]);
 
   const loadFlashcards = async () => {
     try {

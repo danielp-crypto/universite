@@ -252,15 +252,25 @@ function HomePageContent() {
 
     const lectureCount = weeklyLectures.length;
 
-    // Self-tests and AI chats are logged server-side (Supabase study_events)
-    // as they happen, so they're durable across devices — pull this week's
-    // counts from there instead of localStorage.
+    // Self-tests and AI chats are logged server-side, so they're durable
+    // across devices — pull this week's counts from Supabase instead of
+    // localStorage.
     let selfTestCount = 0;
+    try {
+      // A "self-test" is a completed quiz (app/lecture-detail's Quiz Bank
+      // flow), one row per submission in quiz_results — not flashcard usage.
+      const quizResponse = await apiGet(`/api/quiz-results?since=${encodeURIComponent(weekStart.toISOString())}`);
+      if (quizResponse?.quizResults) {
+        selfTestCount = quizResponse.quizResults.length;
+      }
+    } catch (error) {
+      console.error('Error getting quiz results:', error);
+    }
+
     let aiChatCount = 0;
     try {
       const response = await apiGet(`/api/analytics/event?since=${encodeURIComponent(weekStart.toISOString())}`);
       if (response?.success && response.counts) {
-        selfTestCount = response.counts.self_test || 0;
         aiChatCount = response.counts.ai_chat || 0;
       }
     } catch (error) {

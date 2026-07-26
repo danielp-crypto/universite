@@ -77,13 +77,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Get user's quiz results
-    const { data: quizResults, error } = await supabaseAdmin
+    // Optional ?since=<ISO8601> to scope results to a time window (e.g. the
+    // dashboard's "This Week" self-test count). Without it, behavior is
+    // unchanged: most recent 50 results, no date filter.
+    const sinceParam = request.nextUrl.searchParams.get('since');
+    let query = supabaseAdmin
       .from('quiz_results')
       .select('*')
       .eq('user_id', user.id)
-      .order('completed_at', { ascending: false })
-      .limit(50);
+      .order('completed_at', { ascending: false });
+
+    if (sinceParam) {
+      const since = new Date(sinceParam);
+      if (isNaN(since.getTime())) {
+        return NextResponse.json({ error: 'Invalid since parameter' }, { status: 400 });
+      }
+      // No cap when filtering by date — a week's worth of quizzes could
+      // exceed 50 for a heavy user, and we need the true count, not a sample.
+      query = query.gte('completed_at', since.toISOString());
+    } else {
+      query = query.limit(50);
+    }
+
+    const { data: quizResults, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

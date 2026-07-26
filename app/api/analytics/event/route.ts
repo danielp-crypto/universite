@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
-const VALID_EVENT_TYPES = ['self_test', 'ai_chat'] as const;
+// Self-tests are tracked via the existing quiz_results table (one row per
+// completed quiz, written by /api/quiz-results) rather than here — this
+// table only needs to cover ai_chat now.
+const VALID_EVENT_TYPES = ['ai_chat'] as const;
 type EventType = (typeof VALID_EVENT_TYPES)[number];
 
 async function getAuthedUser(request: NextRequest) {
@@ -20,8 +23,8 @@ async function getAuthedUser(request: NextRequest) {
 }
 
 // GET /api/analytics/event?since=<ISO8601>
-// Returns counts of self_test / ai_chat events since the given timestamp
-// (defaults to 7 days ago) for the authenticated user.
+// Returns counts of ai_chat events since the given timestamp (defaults to 7
+// days ago) for the authenticated user.
 export async function GET(request: NextRequest) {
   try {
     const { user, error: authError } = await getAuthedUser(request);
@@ -49,10 +52,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'fetch_failed' }, { status: 500 });
     }
 
-    const counts = { self_test: 0, ai_chat: 0 };
+    const counts = { ai_chat: 0 };
     for (const row of data || []) {
-      if (row.event_type === 'self_test') counts.self_test += 1;
-      else if (row.event_type === 'ai_chat') counts.ai_chat += 1;
+      if (row.event_type === 'ai_chat') counts.ai_chat += 1;
     }
 
     return NextResponse.json({ success: true, counts });
@@ -63,7 +65,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/analytics/event
-// Body: { event_type: 'self_test' | 'ai_chat', metadata?: object }
+// Body: { event_type: 'ai_chat', metadata?: object }
 export async function POST(request: NextRequest) {
   try {
     const { user, error: authError } = await getAuthedUser(request);
