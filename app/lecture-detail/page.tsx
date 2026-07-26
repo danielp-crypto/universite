@@ -1616,6 +1616,36 @@ function LectureDetailPageContent() {
                       ? 'Great job! Keep up the good work!'
                       : 'Keep practicing to improve your understanding.'}
                   </p>
+
+                  {quizScore < quizQuestions.length && (
+                    <div className="text-left mb-6">
+                      <p className="text-sm font-semibold text-slate-700 mb-3">
+                        Review what you missed
+                      </p>
+                      <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                        {quizQuestions.map((q, i) => {
+                          const selected = quizAnswers[i];
+                          if (selected === q.correctIndex) return null;
+                          return (
+                            <div key={i} className="p-3.5 rounded-xl border border-rose-200 bg-rose-50">
+                              <p className="text-sm font-medium text-slate-800 mb-2">
+                                {i + 1}. {q.question}
+                              </p>
+                              <p className="text-sm text-rose-700 mb-1">
+                                <span className="font-semibold">Your answer: </span>
+                                {selected !== null ? q.options[selected] : 'No answer selected'}
+                              </p>
+                              <p className="text-sm text-emerald-700">
+                                <span className="font-semibold">Correct answer: </span>
+                                {q.options[q.correctIndex]}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     onClick={closeQuiz}
                     className="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
