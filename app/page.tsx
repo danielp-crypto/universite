@@ -254,7 +254,7 @@ export default function Home() {
           <div className="text-center mb-10 md:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">Plans for Every Study Journey</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-              Start with 3 lectures and upgrade for unlimited AI study tools.
+              Start with 4 lectures and upgrade for unlimited AI study tools.
             </p>
           </div>
 
