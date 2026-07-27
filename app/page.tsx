@@ -105,7 +105,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free Beta : notes + exam questions + memo + AI chat for 3 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
+              <p className="mt-6 text-sm text-slate-500">Free Beta : notes + exam questions + memo + AI chat for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -266,11 +266,11 @@ export default function Home() {
               </div>
               <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Beta</h3>
               <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
-              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 3 lectures</span></p>
+              <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 4 lectures</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload up to 3 lectures</strong> - upload up to 90 minutes per lecture </span>
+                  <span><strong>Record/Upload up to 4 lectures (lifetime) </strong> - upload up to 90 minutes per lecture </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -286,7 +286,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>AI Chat</strong> - lecture context only, no chat history</span>
+                  <span><strong>AI Chat</strong> - 20 messages per lecture, no chat history</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -339,7 +339,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>AI Chat</strong> - context increases with every lecture, chat history, Unlimited AI usage for each lecture</span>
+                  <span><strong>AI Chat</strong> - context increases with every lecture, chat history, Unlimited AI usage for each lecture (fair use) </span>
                 </li>
                 
                 <li className="flex items-start">
