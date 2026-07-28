@@ -11,7 +11,7 @@ interface Plan {
   monthly_flashcard_generations: number;
   monthly_lecture_uploads: number;
   monthly_transcription_minutes: number;
-  price_zar: number;
+  price_zar: number | string; // Supabase returns `numeric` columns as strings
   interval: string;
 }
 
@@ -177,7 +177,7 @@ export default function PricingPage() {
                 <h3 className="text-xl font-bold text-slate-900 mb-2">{plan.name}</h3>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-slate-900">
-                    R{plan.price_zar.toFixed(0)}
+                    R{Number(plan.price_zar).toFixed(0)}
                   </span>
                   <span className="text-slate-600">/{plan.interval}</span>
                 </div>

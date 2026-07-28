@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       name_last: user.user_metadata?.last_name || '',
       email_address: user.email,
       m_payment_id: paymentId,
-      amount: plan.price_zar,
+      amount: Number(plan.price_zar).toFixed(2),
       item_name: `${plan.name} Subscription`,
       item_description: `Universite ${plan.name} subscription`,
       custom_int1: user.id,
