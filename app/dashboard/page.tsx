@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
-import UpgradeModal from '../components/UpgradeModal';
 import Alert from '../components/Alert';
 import Notifications from '../components/Notifications';
 import { transcribeAudioChunked, describePartialFailure } from '@/lib/audio/chunkedTranscribe';
@@ -21,8 +20,6 @@ function HomePageContent() {
   const [profileWidgetVisible, setProfileWidgetVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeFeature, setUpgradeFeature] = useState('');
 
   // Alert state
   const [alertOpen, setAlertOpen] = useState(false);
@@ -404,8 +401,7 @@ function HomePageContent() {
     // Check if user has credits available
     if (globalCredits.used >= globalCredits.allocated) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
-      setUpgradeModalOpen(true);
-      setUpgradeFeature('Record lectures');
+      router.push('/pricing');
       return;
     }
 
@@ -694,8 +690,7 @@ function HomePageContent() {
     // Check if user has credits available
     if (globalCredits.used >= globalCredits.allocated) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
-      setUpgradeModalOpen(true);
-      setUpgradeFeature('Upload lectures');
+      router.push('/pricing');
       return;
     }
 
@@ -950,7 +945,12 @@ function HomePageContent() {
                   Universite
                 </h1>
               </div>
-              <Notifications />
+              <div className="flex items-center gap-3">
+                <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                  Upgrade
+                </Link>
+                <Notifications />
+              </div>
             </div>
           </div>
         </div>
@@ -1236,7 +1236,7 @@ function HomePageContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <a href="/#pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Upgrade</a>
+                  <Link href="/pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Upgrade</Link>
                   <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
@@ -1557,14 +1557,6 @@ function HomePageContent() {
           </div>
         </div>
       )}
-
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={upgradeModalOpen}
-        onClose={() => setUpgradeModalOpen(false)}
-        feature={upgradeFeature}
-        onUpgrade={() => showAlert('Coming Soon', 'Upgrade upgrade coming soon!', 'info')}
-      />
 
       {/* Alert Modal */}
       <Alert
