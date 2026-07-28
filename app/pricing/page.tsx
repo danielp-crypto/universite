@@ -120,6 +120,13 @@ export default function PricingPage() {
     return planSlug === 'free';
   };
 
+  // Any quota set at 900+ is treated as a "no real limit" sentinel value
+  // (e.g. 999, 999999) rather than a number worth showing to users.
+  const formatQuota = (value: number) => {
+    if (value >= 900) return 'Unlimited';
+    return value.toLocaleString();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -187,25 +194,25 @@ export default function PricingPage() {
                     <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    {plan.monthly_chat_messages.toLocaleString()} chat messages/month
+                    {formatQuota(plan.monthly_chat_messages)} chat messages/month
                   </li>
                   <li className="flex items-center gap-2 text-slate-700">
                     <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    {plan.monthly_flashcard_generations} flashcard generations
+                    {formatQuota(plan.monthly_flashcard_generations)} flashcard generations
                   </li>
                   <li className="flex items-center gap-2 text-slate-700">
                     <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    {plan.monthly_lecture_uploads} lecture uploads
+                    {formatQuota(plan.monthly_lecture_uploads)} lecture uploads
                   </li>
                   <li className="flex items-center gap-2 text-slate-700">
                     <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    {plan.monthly_transcription_minutes} transcription minutes
+                    {formatQuota(plan.monthly_transcription_minutes)} transcription minutes
                   </li>
                 </ul>
 
