@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession } from '@/lib/supabase/client';
+import { getSession } from '@/lib/supabase/auth';
 
 export default function PaymentSuccessPage() {
   const router = useRouter();

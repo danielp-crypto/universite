@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession } from '@/lib/supabase/client';
+import { getSession } from '@/lib/supabase/auth';
 
 interface Plan {
   plan_slug: string;
