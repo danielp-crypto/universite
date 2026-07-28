@@ -31,13 +31,13 @@ export async function POST(request: NextRequest) {
 
     if (receivedSignature !== calculatedSignature) {
       console.error('PayFast signature mismatch');
-      return NextResponse.text('Invalid signature', { status: 400 });
+      return new Response('Invalid signature', { status: 400 });
     }
 
     // Verify merchant ID
     if (data.merchant_id !== PAYFAST_MERCHANT_ID) {
       console.error('PayFast merchant ID mismatch');
-      return NextResponse.text('Invalid merchant', { status: 400 });
+      return new Response('Invalid merchant', { status: 400 });
     }
 
     const paymentStatus = data.payment_status;
@@ -86,11 +86,11 @@ export async function POST(request: NextRequest) {
       console.log('Subscription cancelled for user:', userId);
     }
 
-    return NextResponse.text('OK');
+    return new Response('OK');
 
   } catch (error: any) {
     console.error('PayFast webhook error:', error);
-    return NextResponse.text('Error processing webhook', { status: 500 });
+    return new Response('Error processing webhook', { status: 500 });
   }
 }
 
