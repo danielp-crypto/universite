@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase config');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
@@ -19,9 +20,11 @@ export async function GET(request: NextRequest) {
       .order('price_zar', { ascending: true });
 
     if (error) {
+      console.error('Supabase error fetching plans:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    console.log('Plans fetched successfully:', plans);
     return NextResponse.json(plans || []);
   } catch (error: any) {
     console.error('Error fetching plans:', error);

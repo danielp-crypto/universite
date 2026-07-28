@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase config in subscription route');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
 
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
+      console.error('Missing authorization header');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -21,6 +23,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
+      console.error('Invalid token:', userError);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
@@ -32,6 +35,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error('Supabase error fetching subscription:', error);
       // If no subscription found, return default free plan
       if (error.code === 'PGRST116') {
         const { data: freePlan } = await supabaseAdmin
