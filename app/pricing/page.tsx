@@ -44,7 +44,10 @@ export default function PricingPage() {
       const plansResponse = await fetch('/api/plans');
       if (plansResponse.ok) {
         const plansData = await plansResponse.json();
+        console.log('Plans loaded:', plansData);
         setPlans(plansData);
+      } else {
+        console.error('Failed to load plans:', plansResponse.status);
       }
 
       // Load current subscription
