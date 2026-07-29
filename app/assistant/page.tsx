@@ -158,12 +158,26 @@ function AssistantPageContent(): React.ReactNode {
       }).catch((error) => {
         console.error('Error logging AI chat event:', error);
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setMessages((prev) => [
-        ...prev,
-        { sender: 'bot', content: 'Sorry, I encountered an error. Please try again.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-      ]);
+
+      if (error?.message === 'message_limit_reached') {
+        // Don't add a bot bubble for this — it isn't a real tutoring reply,
+        // and it isn't persisted, so it'd vanish on refresh anyway. Surface it
+        // as an alert with a clear upgrade path instead.
+        setMessages((prev) => prev.slice(0, -1)); // remove the optimistic user message we just added
+        setInputValue(query);
+        showAlert(
+          "You've reached this lecture's message limit",
+          "Free beta accounts get 10 tutor messages per lecture. Upgrade to Premium for unlimited tutoring across all your lectures.",
+          'warning'
+        );
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { sender: 'bot', content: 'Sorry, I encountered an error. Please try again.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
+      }
     } finally {
       setIsBotTyping(false);
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -171,25 +185,17 @@ function AssistantPageContent(): React.ReactNode {
   };
 
   const getContextAwareResponse = async (query: string, currentHistory: any[]) => {
-    try {
-      const response = await apiPost('/api/chat', {
-        message: query,
-        currentLecture: currentLecture,
-        additionalLectures: additionalLectures,
-        messages: currentHistory.map((m) => ({ sender: m.sender, content: m.content }))
-      });
+    const response = await apiPost('/api/chat', {
+      message: query,
+      currentLecture: currentLecture,
+      additionalLectures: additionalLectures,
+      messages: currentHistory.map((m) => ({ sender: m.sender, content: m.content }))
+    });
 
-      if (response.success && response.response) {
-        return response.response;
-      }
-      return 'No response content.';
-    } catch (e: any) {
-      console.error(e);
-      if (currentLecture) {
-        return `Sorry, I encountered an error processing your request. Please ensure the backend is running. Error: ${e.message}`;
-      }
-      return "I don't have any lecture context yet. Please select a lecture from the dashboard to chat about it.";
+    if (response.success && response.response) {
+      return response.response;
     }
+    return 'No response content.';
   };
 
   return (
