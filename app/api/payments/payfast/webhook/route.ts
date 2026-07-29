@@ -98,6 +98,21 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// JavaScript's encodeURIComponent and PHP's urlencode (what PayFast's backend
+// uses) do not escape the same characters — encodeURIComponent leaves
+// !, ', (, ), *, and ~ un-encoded, but PHP's urlencode escapes all of them.
+// This replicates urlencode exactly so signatures match PayFast's recalculation.
+function phpUrlEncode(str: string): string {
+  return encodeURIComponent(str)
+    .replace(/!/g, '%21')
+    .replace(/'/g, '%27')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
+    .replace(/\*/g, '%2A')
+    .replace(/~/g, '%7E')
+    .replace(/%20/g, '+');
+}
+
 function generateSignature(data: any): string {
   // Create a copy and remove signature
   const dataCopy = { ...data };
@@ -113,11 +128,7 @@ function generateSignature(data: any): string {
   // the order fields were inserted into `data` in the handler above, which
   // matches formData.entries() order (i.e. the order PayFast actually sent them).
   const paramString = Object.keys(dataCopy)
-    .map(key => {
-      const value = dataCopy[key];
-      // Replace spaces with +, URL encode
-      return `${key}=${encodeURIComponent(value).replace(/%20/g, '+')}`;
-    })
+    .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 
   // Generate MD5 signature
