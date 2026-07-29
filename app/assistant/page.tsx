@@ -21,6 +21,13 @@ function AssistantPageContent(): React.ReactNode {
   const [inputValue, setInputValue] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
 
+  // Multi-lecture context: modules the student has added on top of the
+  // currently-open lecture, plus a flattened list of the lectures inside them.
+  const [contextModules, setContextModules] = useState<any[]>([]);
+  const [availableModules, setAvailableModules] = useState<any[]>([]);
+  const [modulePickerOpen, setModulePickerOpen] = useState(false);
+  const [isAddingModule, setIsAddingModule] = useState(false);
+
   // Alert state
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertTitle, setAlertTitle] = useState('');
@@ -46,6 +53,18 @@ function AssistantPageContent(): React.ReactNode {
           if (lecture.chatHistory) {
             setMessages(lecture.chatHistory);
           }
+
+          // Default to including the rest of this lecture's module as context,
+          // so the tutor already has the surrounding course material without
+          // the student needing to add it manually. They can still remove it.
+          if (lecture.module?.id) {
+            try {
+              const result = await apiGet(`/api/modules/${lecture.module.id}/lectures`);
+              setContextModules([result]);
+            } catch (error) {
+              console.error('Error auto-loading module context:', error);
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading lecture:', error);
@@ -64,6 +83,46 @@ function AssistantPageContent(): React.ReactNode {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isBotTyping]);
+
+  const openModulePicker = async () => {
+    setModulePickerOpen(true);
+    try {
+      const modules = await apiGet('/api/modules');
+      setAvailableModules(Array.isArray(modules) ? modules : []);
+    } catch (error) {
+      console.error('Error loading modules:', error);
+      setAvailableModules([]);
+    }
+  };
+
+  const addModuleContext = async (moduleId: string) => {
+    if (contextModules.some((m) => m.module.id === moduleId)) {
+      setModulePickerOpen(false);
+      return;
+    }
+
+    setIsAddingModule(true);
+    try {
+      const result = await apiGet(`/api/modules/${moduleId}/lectures`);
+      setContextModules((prev) => [...prev, result]);
+      setModulePickerOpen(false);
+    } catch (error) {
+      console.error('Error loading module lectures:', error);
+      showAlert('Couldn\'t add module', 'Something went wrong loading that module\'s lectures. Please try again.', 'error');
+    } finally {
+      setIsAddingModule(false);
+    }
+  };
+
+  const removeModuleContext = (moduleId: string) => {
+    setContextModules((prev) => prev.filter((m) => m.module.id !== moduleId));
+  };
+
+  // Flattened list of lectures pulled in from added modules, excluding the
+  // currently-open lecture itself so it isn't duplicated in the prompt.
+  const additionalLectures = contextModules
+    .flatMap((m) => m.lectures)
+    .filter((lecture: any) => lecture.id !== currentLecture?.id);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -110,6 +169,7 @@ function AssistantPageContent(): React.ReactNode {
       const response = await apiPost('/api/chat', {
         message: query,
         currentLecture: currentLecture,
+        additionalLectures: additionalLectures,
         messages: currentHistory.map((m) => ({ sender: m.sender, content: m.content }))
       });
 
@@ -142,6 +202,85 @@ function AssistantPageContent(): React.ReactNode {
             </div>
           </div>
         </div>
+
+        {/* Context Bar */}
+        {currentLecture && (
+          <div className="bg-white border-b border-slate-200 px-4 py-2.5 relative">
+            <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium border border-indigo-100">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  {currentLecture.title || 'Current lecture'}
+                </span>
+
+                {contextModules.map((m) => (
+                  <span
+                    key={m.module.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-100"
+                  >
+                    {m.module.name} ({m.lectures.length})
+                    <button
+                      onClick={() => removeModuleContext(m.module.id)}
+                      className="hover:text-purple-900"
+                      aria-label={`Remove ${m.module.name} from context`}
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+
+                <button
+                  onClick={openModulePicker}
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium hover:bg-slate-200 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add module
+                </button>
+              </div>
+            </div>
+
+            {modulePickerOpen && (
+              <div className="absolute top-full left-4 right-4 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-64 overflow-y-auto">
+                <div className="p-2">
+                  <div className="flex items-center justify-between px-2 py-1.5">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Add a module for context</span>
+                    <button onClick={() => setModulePickerOpen(false)} className="text-slate-400 hover:text-slate-600">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  {availableModules.length === 0 ? (
+                    <p className="text-sm text-slate-400 px-2 py-3">No modules found yet.</p>
+                  ) : (
+                    availableModules
+                      .filter((m: any) => !contextModules.some((cm) => cm.module.id === m.id))
+                      .map((m: any) => (
+                        <button
+                          key={m.id}
+                          onClick={() => addModuleContext(m.id)}
+                          disabled={isAddingModule}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2 disabled:opacity-50"
+                        >
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: m.color || '#6366f1' }}
+                          ></span>
+                          <span className="text-sm text-slate-700">{m.name}</span>
+                        </button>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Message Area */}
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 pb-28 scrollbar-none">

@@ -2,9 +2,41 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
+// Cap how many extra lectures can be folded in as context alongside the
+// primary one. Gemini 2.5 Flash's context window can handle far more than
+// this, but a sane ceiling keeps prompt size, latency, and free-tier token
+// usage predictable as students add whole modules at once.
+const MAX_ADDITIONAL_LECTURES = 12;
+
+function formatLectureBlock(lecture: any, { fullTranscript }: { fullTranscript: boolean }): string {
+  const parts = [
+    `Title: ${lecture.title || 'Untitled'}`,
+    `Date: ${lecture.date || 'Unknown'}`,
+  ];
+
+  if (lecture.duration) {
+    parts.push(`Duration: ${lecture.duration}`);
+  }
+
+  if (lecture.keyConcepts?.length) {
+    parts.push(`Key Concepts: ${lecture.keyConcepts.join(', ')}`);
+  }
+
+  parts.push(`Summary:\n${lecture.summary || 'No summary available'}`);
+
+  // Only the primary (currently open) lecture gets its full transcript included —
+  // additional lectures pulled in from a module contribute their summary and key
+  // concepts only, so adding a whole module doesn't blow out the prompt size.
+  if (fullTranscript) {
+    parts.push(`Transcript:\n${lecture.transcription || 'No transcript available'}`);
+  }
+
+  return parts.join('\n');
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { message, currentLecture, messages } = await request.json();
+    const { message, currentLecture, additionalLectures, messages } = await request.json();
 
     if (!message) {
       return NextResponse.json(
@@ -20,6 +52,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const extraLectures: any[] = Array.isArray(additionalLectures)
+      ? additionalLectures
+          .filter((l: any) => l && l.id !== currentLecture?.id)
+          .slice(0, MAX_ADDITIONAL_LECTURES)
+      : [];
+
     // Build context from lecture if available
     const tutorRules = `You are an AI TUTOR. Your only role is to help the student understand their own lecture material — you are not a general assistant and you are not a homework-completion service.
 
@@ -29,26 +67,28 @@ Follow these rules at all times:
 - If the student asks you to write or complete an assignment, essay, quiz, homework problem set, or exam for them — or asks for answers with no interest in understanding them — do not produce the finished work. Instead, offer to explain the underlying concept, walk through a similar example, or help them build the answer themselves.
 - If a request looks like an attempt to get answers for an assignment or test that is meant to be done independently, say so plainly and redirect to teaching the concept instead of completing it.
 - If the answer isn't in the lecture content, say so clearly rather than guessing.
+- When multiple lectures are provided, draw on whichever ones are relevant and mention the lecture title you're referencing if it helps the student place the information — don't assume every answer relates to the primary lecture just because it's listed first.
 - Be encouraging, clear, and educational.`;
 
     let context = '';
     if (currentLecture) {
+      const lectureBlocks = [formatLectureBlock(currentLecture, { fullTranscript: true })];
+
+      if (extraLectures.length > 0) {
+        lectureBlocks.push(
+          ...extraLectures.map((lecture) => formatLectureBlock(lecture, { fullTranscript: false }))
+        );
+      }
+
+      const lectureCountNote = extraLectures.length > 0
+        ? `The student is currently viewing "${currentLecture.title || 'Untitled'}" and has also brought in ${extraLectures.length} additional lecture(s) for context.`
+        : `The student is currently viewing "${currentLecture.title || 'Untitled'}".`;
+
       context = `${tutorRules}
 
-Here is the lecture context:
+${lectureCountNote}
 
-Title: ${currentLecture.title || 'Untitled'}
-Date: ${currentLecture.date || 'Unknown'}
-Duration: ${currentLecture.duration || 'Unknown'}
-
-Transcript:
-${currentLecture.transcription || 'No transcript available'}
-
-Summary:
-${currentLecture.summary || 'No summary available'}
-
-Key Concepts:
-${currentLecture.keyConcepts?.join(', ') || 'None'}
+${lectureBlocks.map((block, i) => `--- Lecture ${i + 1} ---\n${block}`).join('\n\n')}
 
 Answer the student's questions based on this lecture content, following the tutoring rules above.`;
     } else {
