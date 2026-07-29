@@ -79,6 +79,8 @@ export async function POST(request: NextRequest) {
       item_description: `Universite ${plan.name} subscription`,
       custom_str1: user.id,
       custom_str2: plan_slug,
+      email_confirmation: 1,
+      confirmation_address: user.email
     };
 
     // Add passphrase if set
