@@ -90,6 +90,9 @@ export async function POST(request: NextRequest) {
     const signature = generateSignature(payfastData);
     payfastData.signature = signature;
 
+    console.log('PayFast signature generated:', signature);
+    console.log('PayFast data:', payfastData);
+
     // Remove passphrase from data sent to PayFast (it's only used for signature)
     delete payfastData.passphrase;
 
@@ -140,12 +143,15 @@ function phpUrlEncode(str: string): string {
 }
 
 function generateSignature(data: any): string {
-  // IMPORTANT: PayFast requires fields to be hashed in the same order they are
-  // submitted in the form — NOT sorted alphabetically. Object.keys() preserves
-  // insertion order for string keys, which matches the order the hidden form
-  // fields are rendered in on the frontend (see Object.entries(paymentData)).
-  const paramString = Object.keys(data)
-    .map(key => `${key}=${phpUrlEncode(String(data[key]).trim())}`)
+  // PayFast requires fields to be sorted alphabetically for signature generation
+  const dataCopy = { ...data };
+  delete dataCopy.signature;
+
+  // Sort keys alphabetically
+  const sortedKeys = Object.keys(dataCopy).sort();
+
+  const paramString = sortedKeys
+    .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 
   // Generate MD5 signature
