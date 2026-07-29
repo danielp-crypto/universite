@@ -68,6 +68,7 @@ export default function PricingPage() {
   };
 
   const handleSubscribe = async (planSlug: string) => {
+    // Handle paid plans via PayFast
     try {
       setProcessing(planSlug);
       const session = await getSession();
@@ -221,13 +222,11 @@ export default function PricingPage() {
 
                 <button
                   onClick={() => handleSubscribe(plan.plan_slug)}
-                  disabled={isCurrentPlan(plan.plan_slug) || processing === plan.plan_slug}
+                  disabled={isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug) || processing === plan.plan_slug}
                   className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${
-                    isCurrentPlan(plan.plan_slug)
+                    isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug)
                       ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
-                      : !isFreePlan(plan.plan_slug)
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg'
-                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                      : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg'
                   }`}
                 >
                   {processing === plan.plan_slug ? (
@@ -235,7 +234,7 @@ export default function PricingPage() {
                   ) : isCurrentPlan(plan.plan_slug) ? (
                     'Current Plan'
                   ) : isFreePlan(plan.plan_slug) ? (
-                    'Downgrade'
+                    'Free Plan'
                   ) : (
                     'Subscribe'
                   )}
