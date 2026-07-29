@@ -50,8 +50,14 @@ function AssistantPageContent(): React.ReactNode {
         const lecture = await apiGet(`/api/lectures/${initialLectureId}`);
         if (lecture) {
           setCurrentLecture(lecture);
-          if (lecture.chatHistory) {
-            setMessages(lecture.chatHistory);
+
+          try {
+            const chatHistoryResult = await apiGet(`/api/lectures/${initialLectureId}/chat`);
+            if (chatHistoryResult?.success && chatHistoryResult.messages?.length) {
+              setMessages(chatHistoryResult.messages);
+            }
+          } catch (error) {
+            console.error('Error loading chat history:', error);
           }
 
           // Default to including the rest of this lecture's module as context,

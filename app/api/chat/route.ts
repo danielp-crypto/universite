@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -36,6 +37,23 @@ function formatLectureBlock(lecture: any, { fullTranscript }: { fullTranscript: 
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { message, currentLecture, additionalLectures, messages } = await request.json();
 
     if (!message) {
@@ -50,6 +68,24 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'missing_api_key' },
         { status: 500 }
       );
+    }
+
+    // Persist the student's message right away, before calling Gemini, so it's
+    // saved even if generation fails downstream. Only possible when chatting
+    // in the context of a specific lecture — there's nothing to key it to otherwise.
+    if (currentLecture?.id) {
+      const { error: insertUserMsgError } = await supabaseAdmin
+        .from('chat_messages')
+        .insert({
+          user_id: user.id,
+          lecture_id: currentLecture.id,
+          sender: 'user',
+          content: message,
+        });
+
+      if (insertUserMsgError) {
+        console.error('Error saving user chat message:', insertUserMsgError);
+      }
     }
 
     const extraLectures: any[] = Array.isArray(additionalLectures)
@@ -135,6 +171,21 @@ No lecture context is available right now. Ask the student to select a lecture f
 
     const result = await response.json();
     const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
+
+    if (currentLecture?.id) {
+      const { error: insertBotMsgError } = await supabaseAdmin
+        .from('chat_messages')
+        .insert({
+          user_id: user.id,
+          lecture_id: currentLecture.id,
+          sender: 'bot',
+          content: aiResponse,
+        });
+
+      if (insertBotMsgError) {
+        console.error('Error saving bot chat message:', insertBotMsgError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
