@@ -88,11 +88,16 @@ export async function POST(request: NextRequest) {
       payfastData.passphrase = PAYFAST_PASSPHRASE;
     }
 
-    // Generate signature
-    const signature = generateSignature(payfastData);
-    payfastData.signature = signature;
+    // Generate signature only if passphrase is set
+    let signature = '';
+    if (PAYFAST_PASSPHRASE) {
+      signature = generateSignature(payfastData);
+      payfastData.signature = signature;
+      console.log('PayFast signature generated:', signature);
+    } else {
+      console.log('No passphrase set, skipping signature generation');
+    }
 
-    console.log('PayFast signature generated:', signature);
     console.log('PayFast data:', payfastData);
 
     // Remove passphrase from data sent to PayFast (it's only used for signature)
