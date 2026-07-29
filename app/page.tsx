@@ -286,7 +286,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>AI Chat</strong> - 20 messages per lecture, no chat history</span>
+                  <span><strong>AI Chat</strong> - 10 messages per lecture</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
@@ -339,7 +339,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>AI Chat</strong> - context increases with every lecture, chat history, Unlimited AI usage for each lecture (fair use) </span>
+                  <span><strong>AI Chat</strong> - Unlimited AI usage for each lecture (fair use) </span>
                 </li>
                 
                 <li className="flex items-start">
