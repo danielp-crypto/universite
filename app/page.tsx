@@ -270,7 +270,7 @@ export default function Home() {
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>Record/Upload up to 4 lectures (lifetime) </strong> - upload up to 90 minutes per lecture </span>
+                  <span><strong>Record/Upload up to 4 lectures (lifetime) </strong> - upload up to 60 minutes per lecture </span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
