@@ -2,18 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-// PayFast's public sandbox credentials (documented by PayFast, safe to hardcode —
-// not a secret; sandbox mode ignores the passphrase entirely).
-const PAYFAST_SANDBOX_MERCHANT_ID = '10000100';
-const PAYFAST_SANDBOX_MERCHANT_KEY = '46f0cd694581a';
 const PAYFAST_SANDBOX_URL = 'https://sandbox.payfast.co.za/eng/process';
 const PAYFAST_LIVE_URL = 'https://www.payfast.co.za/eng/process';
 
 const PAYFAST_SANDBOX = process.env.PAYFAST_SANDBOX === 'true';
-const PAYFAST_MERCHANT_ID = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_MERCHANT_ID : process.env.PAYFAST_MERCHANT_ID!;
-const PAYFAST_MERCHANT_KEY = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_MERCHANT_KEY : process.env.PAYFAST_MERCHANT_KEY!;
-const PAYFAST_PASSPHRASE = PAYFAST_SANDBOX ? 'jt7NOE43FZPn' : (process.env.PAYFAST_PASSPHRASE || '');
-const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_SITE_URL!;
+const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID!;
+const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY!;
+const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
+const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
 
 export async function POST(request: NextRequest) {
   try {
