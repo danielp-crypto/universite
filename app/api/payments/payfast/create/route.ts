@@ -129,11 +129,11 @@ export async function POST(request: NextRequest) {
 }
 
 function generateSignature(data: any): string {
-  // Sort parameters alphabetically
-  const sortedKeys = Object.keys(data).sort();
-  
-  // Build parameter string
-  const paramString = sortedKeys
+  // IMPORTANT: PayFast requires fields to be hashed in the same order they are
+  // submitted in the form — NOT sorted alphabetically. Object.keys() preserves
+  // insertion order for string keys, which matches the order the hidden form
+  // fields are rendered in on the frontend (see Object.entries(paymentData)).
+  const paramString = Object.keys(data)
     .map(key => {
       const value = data[key];
       // Replace spaces with +, URL encode

@@ -108,11 +108,11 @@ function generateSignature(data: any): string {
     dataCopy.passphrase = PAYFAST_PASSPHRASE;
   }
 
-  // Sort parameters alphabetically
-  const sortedKeys = Object.keys(dataCopy).sort();
-  
-  // Build parameter string
-  const paramString = sortedKeys
+  // IMPORTANT: PayFast requires fields hashed in the order they were received
+  // in the POST body — NOT sorted alphabetically. Object.keys() here preserves
+  // the order fields were inserted into `data` in the handler above, which
+  // matches formData.entries() order (i.e. the order PayFast actually sent them).
+  const paramString = Object.keys(dataCopy)
     .map(key => {
       const value = dataCopy[key];
       // Replace spaces with +, URL encode
