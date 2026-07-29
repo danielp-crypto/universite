@@ -85,6 +85,9 @@ export default function PricingPage() {
       if (response.ok) {
         const data = await response.json();
         
+        console.log('PayFast API Response:', data);
+        console.log('Debug info:', data.debug);
+        
         // Create form and submit to PayFast
         const form = document.createElement('form');
         form.method = 'POST';

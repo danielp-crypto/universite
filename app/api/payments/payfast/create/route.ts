@@ -118,7 +118,12 @@ export async function POST(request: NextRequest) {
       success: true,
       payfastUrl,
       paymentData: payfastData,
-      paymentId
+      paymentId,
+      debug: {
+        signature,
+        passphrase: PAYFAST_PASSPHRASE || 'none',
+        sandbox: PAYFAST_SANDBOX
+      }
     });
 
   } catch (error: any) {
