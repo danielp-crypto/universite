@@ -71,11 +71,14 @@ export async function POST(request: NextRequest) {
 
       console.log('Subscription activated for user:', userId);
     } else if (paymentStatus === 'FAILED' || paymentStatus === 'CANCELLED') {
-      // Update subscription to cancelled
+      // Downgrade to free plan and mark as cancelled
       const { error: updateError } = await supabaseAdmin
         .from('user_subscriptions')
         .update({
-          status: 'cancelled'
+          status: 'cancelled',
+          plan_slug: 'free',
+          payfast_payment_id: null,
+          expires_at: null
         })
         .eq('user_id', userId)
         .eq('payfast_payment_id', paymentId);
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
         console.error('Error updating subscription:', updateError);
       }
 
-      console.log('Subscription cancelled for user:', userId);
+      console.log('Subscription cancelled and downgraded to free for user:', userId);
     }
 
     return new Response('OK');
