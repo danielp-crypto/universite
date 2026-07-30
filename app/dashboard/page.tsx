@@ -327,9 +327,17 @@ function HomePageContent() {
         const data = await response.json();
         setSubscription(data);
         
-        // Bypass credit limits for premium users
-        if (data.plan_slug && data.plan_slug !== 'free') {
+        // Check if subscription is expired
+        const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
+        const isActive = data.status === 'active' && !isExpired;
+        
+        // Bypass credit limits for active premium users
+        if (isActive && data.plan_slug && data.plan_slug !== 'free') {
           setGlobalCredits({ used: 0, allocated: 999999 });
+        } else if (isExpired && data.plan_slug !== 'free') {
+          // Subscription expired but not downgraded yet - downgrade to free
+          setGlobalCredits({ used: 0, allocated: 4 });
+          // Optionally trigger automatic downgrade via API
         }
       }
     } catch (error) {

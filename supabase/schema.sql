@@ -63,13 +63,22 @@ create table if not exists public.plans (
   plan_slug text primary key,
   name text not null,
   monthly_chat_messages int not null,
-  monthly_flashcard_generations int not null
+  monthly_flashcard_generations int not null,
+  monthly_lecture_uploads int default 4,
+  monthly_transcription_minutes int default 360,
+  price_zar numeric default 0,
+  interval text default 'month'
 );
 
 create table if not exists public.user_subscriptions (
   user_id uuid primary key references auth.users(id) on delete cascade,
   plan_slug text not null references public.plans(plan_slug),
-  started_at timestamptz not null default now()
+  status text not null default 'active',
+  payfast_payment_id text,
+  subscription_token text,
+  started_at timestamptz not null default now(),
+  expires_at timestamptz,
+  updated_at timestamptz default now()
 );
 
 alter table public.user_subscriptions enable row level security;
@@ -79,13 +88,19 @@ create policy "subs_select_own"
 on public.user_subscriptions for select
 using (auth.uid() = user_id);
 
--- Seed a default free plan (adjust to taste)
-insert into public.plans(plan_slug, name, monthly_chat_messages, monthly_flashcard_generations)
-values ('free', 'Free', 200, 30)
+-- Seed default plans
+insert into public.plans(plan_slug, name, monthly_chat_messages, monthly_flashcard_generations, monthly_lecture_uploads, monthly_transcription_minutes, price_zar, interval)
+values 
+  ('free', 'Free Beta', 200, 30, 4, 360, 0, 'month'),
+  ('premium_monthly', 'Premium', 999999, 999999, 999999, 999999, 149, 'month')
 on conflict (plan_slug) do update
 set name = excluded.name,
     monthly_chat_messages = excluded.monthly_chat_messages,
-    monthly_flashcard_generations = excluded.monthly_flashcard_generations;
+    monthly_flashcard_generations = excluded.monthly_flashcard_generations,
+    monthly_lecture_uploads = excluded.monthly_lecture_uploads,
+    monthly_transcription_minutes = excluded.monthly_transcription_minutes,
+    price_zar = excluded.price_zar,
+    interval = excluded.interval;
 
 -- Ensure every user has a subscription row (defaults to free)
 create or replace function public.ensure_subscription()
