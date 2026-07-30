@@ -981,9 +981,11 @@ function HomePageContent() {
                 </h1>
               </div>
               <div className="flex items-center gap-3">
-                <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                  Upgrade
-                </Link>
+                {subscription?.plan_slug === 'free' && (
+                  <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                    Upgrade
+                  </Link>
+                )}
                 <Notifications />
               </div>
             </div>
@@ -1275,7 +1277,9 @@ function HomePageContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Link href="/pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Upgrade</Link>
+                  {subscription?.plan_slug === 'free' && (
+                    <Link href="/pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Upgrade</Link>
+                  )}
                   <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
