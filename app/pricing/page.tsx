@@ -35,12 +35,8 @@ export default function PricingPage() {
   const loadPlansAndSubscription = async () => {
     try {
       const session = await getSession();
-      if (!session) {
-        router.push('/login');
-        return;
-      }
 
-      // Load plans
+      // Load plans (no auth required)
       const plansResponse = await fetch('/api/plans');
       if (plansResponse.ok) {
         const plansData = await plansResponse.json();
@@ -50,15 +46,17 @@ export default function PricingPage() {
         console.error('Failed to load plans:', plansResponse.status);
       }
 
-      // Load current subscription
-      const subResponse = await fetch('/api/subscription', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
+      // Load current subscription only if logged in
+      if (session) {
+        const subResponse = await fetch('/api/subscription', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        if (subResponse.ok) {
+          const subData = await subResponse.json();
+          setCurrentSubscription(subData);
         }
-      });
-      if (subResponse.ok) {
-        const subData = await subResponse.json();
-        setCurrentSubscription(subData);
       }
     } catch (error) {
       console.error('Error loading plans:', error);
@@ -68,11 +66,17 @@ export default function PricingPage() {
   };
 
   const handleSubscribe = async (planSlug: string) => {
+    // Check if user is logged in
+    const session = await getSession();
+    if (!session) {
+      // Redirect to login with return URL
+      router.push(`/login?redirect=/pricing`);
+      return;
+    }
+
     // Handle paid plans via PayFast
     try {
       setProcessing(planSlug);
-      const session = await getSession();
-      if (!session) return;
 
       const response = await fetch('/api/payments/payfast/create', {
         method: 'POST',
