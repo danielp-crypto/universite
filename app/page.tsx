@@ -276,10 +276,7 @@ export default function Home() {
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
                   <span><strong> Mobile & web access</strong> - Any device </span>
                 </li>
-                <li className="flex items-start">
-                  <span className="mt-1 mr-2 text-emerald-600">✓</span>
-                  <span><strong>No "Add personal note"</strong> - Upgrade to add your personal touch</span>
-                </li>
+                
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-600">✓</span>
                   <span><strong>AI notes + 10 exam questions per lecture</strong> - Get lecture insights</span>
@@ -344,7 +341,7 @@ export default function Home() {
                 
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
-                  <span><strong>Study Plan</strong> - "Exam is 18 Oct, plan my FAC1502"</span>
+                  <span><strong>Early Access</strong> - Access to future premium features</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mt-1 mr-2 text-emerald-400">✓</span>
