@@ -42,6 +42,7 @@ function HomePageContent() {
   const [globalCredits, setGlobalCredits] = useState({ used: 0, allocated: 4 });
   const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
   const [newModuleName, setNewModuleName] = useState('');
+  const [subscription, setSubscription] = useState<any>(null);
 
   // Processing states
   const [processingSteps, setProcessingSteps] = useState<string[]>([]);
@@ -311,11 +312,37 @@ function HomePageContent() {
     }
   };
 
+  const loadSubscription = async () => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/subscription', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSubscription(data);
+        
+        // Bypass credit limits for premium users
+        if (data.plan_slug && data.plan_slug !== 'free') {
+          setGlobalCredits({ used: 0, allocated: 999999 });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading subscription:', error);
+    }
+  };
+
   useEffect(() => {
     loadData();
     loadModules();
     checkProfileCompletion();
     loadStreak();
+    loadSubscription();
 
     return () => {
       if (recordingTimerIntervalRef.current) clearInterval(recordingTimerIntervalRef.current);
@@ -398,8 +425,8 @@ function HomePageContent() {
       return;
     }
 
-    // Check if user has credits available
-    if (globalCredits.used >= globalCredits.allocated) {
+    // Check if user has credits available (bypass for premium users)
+    if (subscription?.plan_slug === 'free' && globalCredits.used >= globalCredits.allocated) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       router.push('/pricing');
       return;
@@ -687,8 +714,8 @@ function HomePageContent() {
       return;
     }
 
-    // Check if user has credits available
-    if (globalCredits.used >= globalCredits.allocated) {
+    // Check if user has credits available (bypass for premium users)
+    if (subscription?.plan_slug === 'free' && globalCredits.used >= globalCredits.allocated) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       router.push('/pricing');
       return;
@@ -1194,22 +1221,32 @@ function HomePageContent() {
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-800 mb-1">Free Tier</h3>
-                  <p className="text-xs text-slate-600">Lectures Used (Global)</p>
+                  <h3 className="text-sm font-semibold text-slate-800 mb-1">
+                    {subscription?.plan_slug && subscription.plan_slug !== 'free' ? 'Premium' : 'Free Tier'}
+                  </h3>
+                  <p className="text-xs text-slate-600">
+                    {subscription?.plan_slug && subscription.plan_slug !== 'free' 
+                      ? 'Unlimited Lectures' 
+                      : 'Lectures Used (Global)'}
+                  </p>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-indigo-600">
-                    {globalCredits.used}/{globalCredits.allocated}
+                    {subscription?.plan_slug && subscription.plan_slug !== 'free' 
+                      ? '∞' 
+                      : `${globalCredits.used}/${globalCredits.allocated}`}
                   </div>
                   <div className="text-xs text-slate-600">Lectures</div>
                 </div>
               </div>
-              <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
-                  style={{ width: `${(globalCredits.used / globalCredits.allocated) * 100}%` }}
-                ></div>
-              </div>
+              {subscription?.plan_slug === 'free' && (
+                <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                    style={{ width: `${(globalCredits.used / globalCredits.allocated) * 100}%` }}
+                  ></div>
+                </div>
+              )}
             </div>
           </div>
 
