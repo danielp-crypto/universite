@@ -360,7 +360,7 @@ export default function Home() {
                   <span><strong>Priority processing</strong> - Get help when you need it</span>
                 </li>
               </ul>
-              <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-white/30 text-sm sm:text-base font-medium rounded-lg text-white hover:bg-white/10 transition-all text-center font-semibold">
+              <Link href="/pricing" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-white/30 text-sm sm:text-base font-medium rounded-lg text-white hover:bg-white/10 transition-all text-center font-semibold">
                 Premium
               </Link>
             </div>
