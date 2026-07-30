@@ -92,7 +92,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-in">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-                Transform Your Learning with <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Universite</span>
+                Capture Every Lecture. Master Every  <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Module</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
                 Start free with 4 lectures, then upgrade for unlimited AI-powered study tools.
