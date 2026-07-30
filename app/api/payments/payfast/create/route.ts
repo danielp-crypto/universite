@@ -80,7 +80,11 @@ export async function POST(request: NextRequest) {
       custom_str1: user.id,
       custom_str2: plan_slug,
       email_confirmation: 1,
-      confirmation_address: user.email
+      confirmation_address: user.email,
+      // Recurring billing parameters
+      subscription_type: 1, // 1 = recurring subscription
+      frequency: plan.interval === 'month' ? 3 : 6, // 3 = monthly, 6 = yearly
+      cycles: 0 // 0 = unlimited cycles
     };
 
     // Add passphrase if set

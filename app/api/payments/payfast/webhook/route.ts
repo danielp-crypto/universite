@@ -45,31 +45,77 @@ export async function POST(request: NextRequest) {
     const paymentId = data.m_payment_id;
     const userId = data.custom_str1;
     const planSlug = data.custom_str2;
+    const token = data.token; // PayFast subscription token for recurring payments
 
     console.log('PayFast webhook received:', {
       paymentId,
       paymentStatus,
       userId,
-      planSlug
+      planSlug,
+      token
     });
 
     if (paymentStatus === 'COMPLETE') {
-      // Update subscription to active
-      const { error: updateError } = await supabaseAdmin
+      // Get current subscription to check if this is initial or recurring payment
+      const { data: currentSub } = await supabaseAdmin
         .from('user_subscriptions')
-        .update({
-          status: 'active',
-          payfast_payment_id: paymentId,
-          started_at: new Date().toISOString()
-        })
+        .select('*')
         .eq('user_id', userId)
-        .eq('plan_slug', planSlug);
+        .single();
 
-      if (updateError) {
-        console.error('Error updating subscription:', updateError);
+      if (currentSub && currentSub.status === 'active') {
+        // This is a recurring payment - extend subscription
+        const currentExpiry = new Date(currentSub.expires_at || new Date());
+        const newExpiry = new Date(currentExpiry);
+        
+        if (planSlug.includes('month')) {
+          newExpiry.setMonth(newExpiry.getMonth() + 1);
+        } else if (planSlug.includes('year')) {
+          newExpiry.setFullYear(newExpiry.getFullYear() + 1);
+        }
+
+        const { error: updateError } = await supabaseAdmin
+          .from('user_subscriptions')
+          .update({
+            expires_at: newExpiry.toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+
+        if (updateError) {
+          console.error('Error extending subscription:', updateError);
+        }
+
+        console.log('Subscription extended for user:', userId, 'New expiry:', newExpiry);
+      } else {
+        // Initial payment - activate subscription
+        const startedAt = new Date();
+        const expiresAt = new Date();
+        
+        if (planSlug.includes('month')) {
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+        } else if (planSlug.includes('year')) {
+          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        }
+
+        const { error: updateError } = await supabaseAdmin
+          .from('user_subscriptions')
+          .update({
+            status: 'active',
+            payfast_payment_id: paymentId,
+            subscription_token: token,
+            started_at: startedAt.toISOString(),
+            expires_at: expiresAt.toISOString()
+          })
+          .eq('user_id', userId)
+          .eq('plan_slug', planSlug);
+
+        if (updateError) {
+          console.error('Error activating subscription:', updateError);
+        }
+
+        console.log('Subscription activated for user:', userId, 'Expires:', expiresAt);
       }
-
-      console.log('Subscription activated for user:', userId);
     } else if (paymentStatus === 'FAILED' || paymentStatus === 'CANCELLED') {
       // Downgrade to free plan and mark as cancelled
       const { error: updateError } = await supabaseAdmin
@@ -78,13 +124,13 @@ export async function POST(request: NextRequest) {
           status: 'cancelled',
           plan_slug: 'free',
           payfast_payment_id: null,
+          subscription_token: null,
           expires_at: null
         })
-        .eq('user_id', userId)
-        .eq('payfast_payment_id', paymentId);
+        .eq('user_id', userId);
 
       if (updateError) {
-        console.error('Error updating subscription:', updateError);
+        console.error('Error cancelling subscription:', updateError);
       }
 
       console.log('Subscription cancelled and downgraded to free for user:', userId);
