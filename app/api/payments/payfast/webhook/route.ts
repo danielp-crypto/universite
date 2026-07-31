@@ -180,7 +180,11 @@ function generateSignature(data: any): string {
   // in the POST body — NOT sorted alphabetically. Object.keys() here preserves
   // the order fields were inserted into `data` in the handler above, which
   // matches formData.entries() order (i.e. the order PayFast actually sent them).
+  //
+  // PayFast's own reference implementation also SKIPS any field with a blank
+  // value entirely (not just trims it) when computing the signature.
   const paramString = Object.keys(dataCopy)
+    .filter((key) => String(dataCopy[key]).trim() !== '')
     .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 

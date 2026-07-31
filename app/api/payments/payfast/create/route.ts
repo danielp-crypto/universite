@@ -159,7 +159,12 @@ function generateSignature(data: any): string {
   // submitted in the form — NOT sorted alphabetically. Object.keys() preserves
   // insertion order for string keys, which matches the order the hidden form
   // fields are rendered in on the frontend (see Object.entries(paymentData)).
+  //
+  // PayFast's own reference implementation also SKIPS any field with a blank
+  // value entirely (not just trims it) — e.g. name_last='' for a user with no
+  // last name on file must not appear in the hashed string at all.
   const paramString = Object.keys(data)
+    .filter((key) => String(data[key]).trim() !== '')
     .map(key => `${key}=${phpUrlEncode(String(data[key]).trim())}`)
     .join('&');
 
