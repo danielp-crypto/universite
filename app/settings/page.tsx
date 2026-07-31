@@ -14,7 +14,10 @@ export default function SettingsPage() {
   const [showDailyGoal, setShowDailyGoal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [theme, setTheme] = useState('light');
+  const [subscription, setSubscription] = useState<any>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
   
   // Notification preferences state
   const [notificationPrefs, setNotificationPrefs] = useState({
@@ -70,6 +73,7 @@ export default function SettingsPage() {
   useEffect(() => {
     loadUserData();
     loadNotificationPreferences();
+    loadSubscription();
   }, []);
 
   const loadNotificationPreferences = async () => {
@@ -153,6 +157,60 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+    }
+  };
+
+  const loadSubscription = async () => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      setLoadingSubscription(true);
+      const response = await fetch('/api/subscription', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSubscription(data);
+      }
+    } catch (error) {
+      console.error('Error loading subscription:', error);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      setLoadingSubscription(true);
+      const response = await fetch('/api/subscription', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'cancel' })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSubscription(data);
+        showAlert('Success', 'Your subscription has been cancelled and you have been downgraded to the free plan.', 'success');
+        setShowSubscriptionModal(false);
+      } else {
+        showAlert('Error', 'Failed to cancel subscription', 'error');
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      showAlert('Error', 'Failed to cancel subscription', 'error');
+    } finally {
+      setLoadingSubscription(false);
     }
   };
 
@@ -340,6 +398,30 @@ export default function SettingsPage() {
 
           </div>
         </div>
+
+        {/* Subscription Settings */}
+        {subscription && subscription.plan_slug !== 'free' && (
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 px-2">Subscription</h2>
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-200">
+              <button
+                onClick={() => setShowSubscriptionModal(true)}
+                className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    💎
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-slate-800">Manage Subscription</div>
+                    <div className="text-xs text-slate-500">Current plan: {subscription.plans?.name || subscription.plan_slug}</div>
+                  </div>
+                </div>
+                <span className="text-slate-400">→</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* About */}
         <div className="mb-4">
@@ -754,6 +836,84 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSubscriptionModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-slate-800">Manage Subscription</h2>
+                <button onClick={() => setShowSubscriptionModal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                      💎
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-800">{subscription?.plans?.name || 'Premium'}</div>
+                      <div className="text-sm text-slate-600">Current plan</div>
+                    </div>
+                  </div>
+                  {subscription?.expires_at && (
+                    <div className="text-sm text-slate-600">
+                      Expires: {new Date(subscription.expires_at).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                      🆓
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-800">Free Beta</div>
+                      <div className="text-sm text-slate-600">After cancellation</div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-slate-600 mt-2">
+                    • 200 chat messages per month<br />
+                    • 30 flashcard generations per month<br />
+                    • 4 lecture uploads per month<br />
+                    • 360 transcription minutes per month
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div className="flex items-start gap-2">
+                    <span className="text-amber-600">⚠️</span>
+                    <div className="text-sm text-amber-800">
+                      <strong>Important:</strong> Cancelling will immediately downgrade your account to the free plan. You will lose access to premium features and your quotas will be reduced.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button
+                  onClick={() => setShowSubscriptionModal(false)}
+                  className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200"
+                  disabled={loadingSubscription}
+                >
+                  Keep Premium
+                </button>
+                <button
+                  onClick={handleCancelSubscription}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 disabled:opacity-50"
+                  disabled={loadingSubscription}
+                >
+                  {loadingSubscription ? 'Cancelling...' : 'Cancel Subscription'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
