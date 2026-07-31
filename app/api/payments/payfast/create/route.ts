@@ -2,14 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+// PayFast's public sandbox credentials (documented by PayFast, safe to hardcode —
+// not a secret). Their default demo account has a fixed passphrase, contrary to
+// the common assumption that sandbox mode has none.
+const PAYFAST_SANDBOX_MERCHANT_ID = '10000100';
+const PAYFAST_SANDBOX_MERCHANT_KEY = '46f0cd694581a';
+const PAYFAST_SANDBOX_PASSPHRASE = 'jt7NOE43FZPn';
 const PAYFAST_SANDBOX_URL = 'https://sandbox.payfast.co.za/eng/process';
 const PAYFAST_LIVE_URL = 'https://www.payfast.co.za/eng/process';
 
 const PAYFAST_SANDBOX = process.env.PAYFAST_SANDBOX === 'true';
-const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID!;
-const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY!;
-const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
-const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
+const PAYFAST_MERCHANT_ID = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_MERCHANT_ID : process.env.PAYFAST_MERCHANT_ID!;
+const PAYFAST_MERCHANT_KEY = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_MERCHANT_KEY : process.env.PAYFAST_MERCHANT_KEY!;
+const PAYFAST_PASSPHRASE = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_PASSPHRASE : (process.env.PAYFAST_PASSPHRASE || '');
+const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,25 +93,20 @@ export async function POST(request: NextRequest) {
       cycles: 0 // 0 = unlimited cycles
     };
 
-    // Add passphrase if set
+    // Add passphrase for signature generation only — PayFast requires a signature
+    // on every submission regardless of whether a passphrase is configured (if
+    // none is set, the passphrase term is simply omitted from the hashed string,
+    // but the signature field itself must still be present).
     if (PAYFAST_PASSPHRASE) {
       payfastData.passphrase = PAYFAST_PASSPHRASE;
     }
 
-    // Generate signature only if passphrase is set
-    let signature = '';
-    if (PAYFAST_PASSPHRASE) {
-      signature = generateSignature(payfastData);
-      payfastData.signature = signature;
-      console.log('PayFast signature generated:', signature);
-    } else {
-      console.log('No passphrase set, skipping signature generation');
-    }
-
-    console.log('PayFast data:', payfastData);
+    const signature = generateSignature(payfastData);
 
     // Remove passphrase from data sent to PayFast (it's only used for signature)
     delete payfastData.passphrase;
+
+    payfastData.signature = signature;
 
     // Store pending payment in database
     const { error: insertError } = await supabaseAdmin
@@ -124,17 +125,12 @@ export async function POST(request: NextRequest) {
 
     // Return PayFast URL and data
     const payfastUrl = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_URL : PAYFAST_LIVE_URL;
-    
+
     return NextResponse.json({
       success: true,
       payfastUrl,
       paymentData: payfastData,
-      paymentId,
-      debug: {
-        signature,
-        passphrase: PAYFAST_PASSPHRASE || 'none',
-        sandbox: PAYFAST_SANDBOX
-      }
+      paymentId
     });
 
   } catch (error: any) {
@@ -159,15 +155,12 @@ function phpUrlEncode(str: string): string {
 }
 
 function generateSignature(data: any): string {
-  // PayFast requires fields to be sorted alphabetically for signature generation
-  const dataCopy = { ...data };
-  delete dataCopy.signature;
-
-  // Sort keys alphabetically
-  const sortedKeys = Object.keys(dataCopy).sort();
-
-  const paramString = sortedKeys
-    .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
+  // IMPORTANT: PayFast requires fields to be hashed in the same order they are
+  // submitted in the form — NOT sorted alphabetically. Object.keys() preserves
+  // insertion order for string keys, which matches the order the hidden form
+  // fields are rendered in on the frontend (see Object.entries(paymentData)).
+  const paramString = Object.keys(data)
+    .map(key => `${key}=${phpUrlEncode(String(data[key]).trim())}`)
     .join('&');
 
   // Generate MD5 signature

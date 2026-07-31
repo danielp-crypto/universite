@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { cancelPayfastSubscription } from '@/lib/payfast/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
           .select('*')
           .eq('plan_slug', 'free')
           .single();
-        
+
         return NextResponse.json({
           plan_slug: 'free',
           status: 'active',
@@ -94,7 +95,39 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    // Update subscription to free plan
+    // Look up the current subscription first — we need the PayFast token to
+    // actually stop billing, not just the plan_slug.
+    const { data: currentSub, error: fetchError } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('subscription_token, plan_slug')
+      .eq('user_id', user.id)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error fetching subscription before cancel:', fetchError);
+      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    }
+
+    // Only call PayFast if there's actually a recurring token to cancel — a
+    // free-plan user has nothing billing them, so there's nothing to stop.
+    if (currentSub?.subscription_token) {
+      const result = await cancelPayfastSubscription(currentSub.subscription_token);
+
+      if (!result.ok) {
+        console.error('Error cancelling subscription at PayFast:', result.error);
+        // Do NOT downgrade the database if PayFast itself didn't confirm the
+        // cancellation — otherwise the user thinks they're cancelled while
+        // still being billed, with no token left on file to retry with.
+        return NextResponse.json(
+          {
+            error: 'We could not confirm the cancellation with PayFast. Please try again, or contact support if this keeps happening.',
+          },
+          { status: 502 }
+        );
+      }
+    }
+
+    // Update subscription to free plan now that PayFast billing is actually stopped
     const { data: subscription, error } = await supabaseAdmin
       .from('user_subscriptions')
       .update({

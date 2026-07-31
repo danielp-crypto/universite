@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+// PayFast's public sandbox credentials (documented by PayFast, safe to hardcode —
+// not a secret). Their default demo account has a fixed passphrase, contrary to
+// the common assumption that sandbox mode has none.
+const PAYFAST_SANDBOX_MERCHANT_ID = '10000100';
+const PAYFAST_SANDBOX_PASSPHRASE = 'jt7NOE43FZPn';
+
 const PAYFAST_SANDBOX = process.env.PAYFAST_SANDBOX === 'true';
-const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID!;
+const PAYFAST_MERCHANT_ID = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_MERCHANT_ID : process.env.PAYFAST_MERCHANT_ID!;
 const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY!;
-const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
+const PAYFAST_PASSPHRASE = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_PASSPHRASE : (process.env.PAYFAST_PASSPHRASE || '');
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Get PayFast notification data
     const formData = await request.formData();
     const data: Record<string, string> = {};
-    
+
     for (const [key, value] of formData.entries()) {
       data[key] = value.toString();
     }
@@ -52,22 +58,21 @@ export async function POST(request: NextRequest) {
       paymentStatus,
       userId,
       planSlug,
-      token
     });
 
     if (paymentStatus === 'COMPLETE') {
-      // Get current subscription to check if this is initial or recurring payment
+      // Get current subscription to check if this is an initial or a recurring payment
       const { data: currentSub } = await supabaseAdmin
         .from('user_subscriptions')
         .select('*')
         .eq('user_id', userId)
         .single();
 
-      if (currentSub && currentSub.status === 'active') {
-        // This is a recurring payment - extend subscription
+      if (currentSub && currentSub.status === 'active' && currentSub.plan_slug === planSlug) {
+        // Recurring payment on the same plan the user is already active on — extend it
         const currentExpiry = new Date(currentSub.expires_at || new Date());
         const newExpiry = new Date(currentExpiry);
-        
+
         if (planSlug.includes('month')) {
           newExpiry.setMonth(newExpiry.getMonth() + 1);
         } else if (planSlug.includes('year')) {
@@ -88,10 +93,10 @@ export async function POST(request: NextRequest) {
 
         console.log('Subscription extended for user:', userId, 'New expiry:', newExpiry);
       } else {
-        // Initial payment - activate subscription
+        // Initial payment (or switching plans) - activate subscription
         const startedAt = new Date();
         const expiresAt = new Date();
-        
+
         if (planSlug.includes('month')) {
           expiresAt.setMonth(expiresAt.getMonth() + 1);
         } else if (planSlug.includes('year')) {
@@ -100,15 +105,15 @@ export async function POST(request: NextRequest) {
 
         const { error: updateError } = await supabaseAdmin
           .from('user_subscriptions')
-          .update({
+          .upsert({
+            user_id: userId,
+            plan_slug: planSlug,
             status: 'active',
             payfast_payment_id: paymentId,
             subscription_token: token,
             started_at: startedAt.toISOString(),
             expires_at: expiresAt.toISOString()
-          })
-          .eq('user_id', userId)
-          .eq('plan_slug', planSlug);
+          });
 
         if (updateError) {
           console.error('Error activating subscription:', updateError);
@@ -117,7 +122,8 @@ export async function POST(request: NextRequest) {
         console.log('Subscription activated for user:', userId, 'Expires:', expiresAt);
       }
     } else if (paymentStatus === 'FAILED' || paymentStatus === 'CANCELLED') {
-      // Downgrade to free plan and mark as cancelled
+      // Only cancel if this notification matches the subscription's own payment ID —
+      // guards against a stale/unrelated notification downgrading an active plan.
       const { error: updateError } = await supabaseAdmin
         .from('user_subscriptions')
         .update({
@@ -127,7 +133,8 @@ export async function POST(request: NextRequest) {
           subscription_token: null,
           expires_at: null
         })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('payfast_payment_id', paymentId);
 
       if (updateError) {
         console.error('Error cancelling subscription:', updateError);
@@ -169,10 +176,11 @@ function generateSignature(data: any): string {
     dataCopy.passphrase = PAYFAST_PASSPHRASE;
   }
 
-  // PayFast requires fields to be sorted alphabetically for signature generation
-  const sortedKeys = Object.keys(dataCopy).sort();
-
-  const paramString = sortedKeys
+  // IMPORTANT: PayFast requires fields hashed in the order they were received
+  // in the POST body — NOT sorted alphabetically. Object.keys() here preserves
+  // the order fields were inserted into `data` in the handler above, which
+  // matches formData.entries() order (i.e. the order PayFast actually sent them).
+  const paramString = Object.keys(dataCopy)
     .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 
