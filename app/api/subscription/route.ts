@@ -55,6 +55,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // A row that isn't status: 'active' (pending, cancelled, or a failed
+    // payment that never completed) must never be reported as a real
+    // subscription — otherwise a click on "Subscribe" that never actually
+    // completes payment leaves the user looking premium indefinitely, since
+    // this table only ever holds one row per user_id.
+    if (subscription.status !== 'active') {
+      const { data: freePlan } = await supabaseAdmin
+        .from('plans')
+        .select('*')
+        .eq('plan_slug', 'free')
+        .single();
+
+      return NextResponse.json({
+        plan_slug: 'free',
+        status: 'active',
+        expires_at: null,
+        plans: freePlan,
+        pending_plan_slug: subscription.plan_slug, // surfaced in case the UI wants to show "payment pending"
+      });
+    }
+
     return NextResponse.json(subscription);
   } catch (error: any) {
     console.error('Error fetching subscription:', error);
