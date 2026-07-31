@@ -215,7 +215,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Exam Mode</h3>
-              <p className="text-slate-600">Take a mock exam to prepare for the big day.</p>
+              <p className="text-slate-600">Get your own personal exam coach that will help you ace your examinations.</p>
             </div>
           </div>
         </div>
