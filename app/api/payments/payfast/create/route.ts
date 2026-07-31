@@ -2,19 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-// PayFast's public sandbox merchant ID/key (documented by PayFast, safe to
-// hardcode — not secrets, shared by anyone testing against the sandbox).
-// The passphrase is NOT hardcoded here — it's account-specific and whatever
-// you configured in your own PayFast sandbox dashboard settings, so it always
-// comes from PAYFAST_PASSPHRASE regardless of sandbox mode.
-const PAYFAST_SANDBOX_MERCHANT_ID = '10000100';
-const PAYFAST_SANDBOX_MERCHANT_KEY = '46f0cd694581a';
+// PAYFAST_SANDBOX only controls which PayFast URL we hit — your merchant ID,
+// key, and passphrase are always your own real credentials from env vars,
+// whether you're pointed at the sandbox or live endpoint. There is no shared
+// "generic" sandbox account to fall back to; every merchant (including test
+// accounts) has their own actual credentials issued by PayFast.
 const PAYFAST_SANDBOX_URL = 'https://sandbox.payfast.co.za/eng/process';
 const PAYFAST_LIVE_URL = 'https://www.payfast.co.za/eng/process';
 
 const PAYFAST_SANDBOX = process.env.PAYFAST_SANDBOX === 'true';
-const PAYFAST_MERCHANT_ID = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_MERCHANT_ID : process.env.PAYFAST_MERCHANT_ID!;
-const PAYFAST_MERCHANT_KEY = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_MERCHANT_KEY : process.env.PAYFAST_MERCHANT_KEY!;
+const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID!;
+const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY!;
 const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
 const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 

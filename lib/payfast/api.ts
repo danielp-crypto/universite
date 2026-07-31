@@ -5,14 +5,11 @@ import crypto from 'crypto';
 // sorted alphabetically before hashing (per PayFast's own reference examples
 // for this API, unlike the checkout signature which must NOT be sorted).
 //
-// The sandbox merchant ID is PayFast's shared public demo value (safe to
-// hardcode). The passphrase is NOT hardcoded — it's whatever you configured
-// in your own PayFast sandbox dashboard settings, so it always comes from
-// PAYFAST_PASSPHRASE regardless of sandbox mode.
+// PAYFAST_SANDBOX only controls the `testing=true` query param — your
+// merchant ID and passphrase are always your own real credentials from env
+// vars. There is no shared "generic" sandbox account to fall back to.
 const PAYFAST_SANDBOX = process.env.PAYFAST_SANDBOX === 'true';
-const PAYFAST_SANDBOX_MERCHANT_ID = '10000100';
-
-const PAYFAST_MERCHANT_ID = PAYFAST_SANDBOX ? PAYFAST_SANDBOX_MERCHANT_ID : process.env.PAYFAST_MERCHANT_ID!;
+const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID!;
 const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
 
 function generateApiSignature(headers: Record<string, string>): string {
