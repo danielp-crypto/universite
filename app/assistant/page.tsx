@@ -9,6 +9,8 @@ import { apiPost, apiGet } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
 import Alert from '../components/Alert';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 function AssistantPageContent(): React.ReactNode {
   const router = useRouter();
@@ -354,9 +356,59 @@ function AssistantPageContent(): React.ReactNode {
                       <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
                         isUser 
                           ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-tr-sm' 
-                          : 'bg-slate-100 text-slate-700 rounded-tl-sm'
+                          : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm'
                       }`}>
-                        <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                        {isUser ? (
+                          <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                        ) : (
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              strong: ({ children }) => (
+                                <strong className="font-bold text-indigo-700">{children}</strong>
+                              ),
+                              em: ({ children }) => (
+                                <em className="italic">{children}</em>
+                              ),
+                              code: ({ inline, children }) => (
+                                inline ? (
+                                  <code className="bg-slate-100 text-indigo-600 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
+                                ) : (
+                                  <code className="block bg-slate-800 text-green-400 p-3 rounded-lg text-xs font-mono overflow-x-auto">{children}</code>
+                                )
+                              ),
+                              p: ({ children }) => (
+                                <p className="mb-2 last:mb-0">{children}</p>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>
+                              ),
+                              li: ({ children }) => (
+                                <li className="text-slate-600">{children}</li>
+                              ),
+                              h1: ({ children }) => (
+                                <h1 className="text-lg font-bold text-slate-800 mb-2">{children}</h1>
+                              ),
+                              h2: ({ children }) => (
+                                <h2 className="text-base font-bold text-slate-800 mb-2">{children}</h2>
+                              ),
+                              h3: ({ children }) => (
+                                <h3 className="text-sm font-bold text-slate-800 mb-2">{children}</h3>
+                              ),
+                              blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-indigo-300 pl-3 italic text-slate-600 my-2">{children}</blockquote>
+                              ),
+                              a: ({ href, children }) => (
+                                <a href={href} className="text-indigo-600 hover:text-indigo-800 underline" target="_blank" rel="noopener noreferrer">{children}</a>
+                              ),
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        )}
                       </div>
                       {msg.timestamp && (
                         <span className={`text-[10px] text-slate-400 mt-1 px-1 block ${isUser ? 'text-right' : ''}`}>{msg.timestamp}</span>
