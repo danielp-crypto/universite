@@ -370,13 +370,20 @@ function AssistantPageContent(): React.ReactNode {
                               em: ({ children }) => (
                                 <em className="italic">{children}</em>
                               ),
-                              code: ({ inline, children }) => (
-                                inline ? (
-                                  <code className="bg-slate-100 text-indigo-600 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
-                                ) : (
-                                  <code className="block bg-slate-800 text-green-400 p-3 rounded-lg text-xs font-mono overflow-x-auto">{children}</code>
-                                )
-                              ),
+                              code: ({ node, inline, className, children, ...props }) => {
+                                if (inline) {
+                                  return (
+                                    <code className="bg-slate-100 text-indigo-600 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                }
+                                return (
+                                  <code className="block bg-slate-800 text-green-400 p-3 rounded-lg text-xs font-mono overflow-x-auto" {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              },
                               p: ({ children }) => (
                                 <p className="mb-2 last:mb-0">{children}</p>
                               ),
