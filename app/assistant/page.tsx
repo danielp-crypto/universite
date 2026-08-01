@@ -370,16 +370,14 @@ function AssistantPageContent(): React.ReactNode {
                               em: ({ children }) => (
                                 <em className="italic">{children}</em>
                               ),
-                              code: ({ node, inline, className, children, ...props }) => {
-                                if (inline) {
-                                  return (
-                                    <code className="bg-slate-100 text-indigo-600 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>
-                                      {children}
-                                    </code>
-                                  );
-                                }
-                                return (
+                              code: ({ className, children, ...props }) => {
+                                const match = /language-(\w+)/.exec(className || '');
+                                return match ? (
                                   <code className="block bg-slate-800 text-green-400 p-3 rounded-lg text-xs font-mono overflow-x-auto" {...props}>
+                                    {children}
+                                  </code>
+                                ) : (
+                                  <code className="bg-slate-100 text-indigo-600 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>
                                     {children}
                                   </code>
                                 );
