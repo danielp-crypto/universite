@@ -2,19 +2,54 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession } from '@/lib/supabase/auth';
+import { apiGet } from '@/lib/api/client';
+
+// PayFast's server-to-server webhook (ITN) that actually activates the
+// subscription in our database fires independently of this page loading —
+// there's no guarantee it has completed by the time the browser lands here.
+// Rather than guessing at a fixed delay, poll /api/subscription until it
+// actually confirms an active paid plan, or give up after a reasonable time.
+const POLL_INTERVAL_MS = 1500;
+const MAX_POLL_ATTEMPTS = 10; // ~15 seconds total
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<'confirming' | 'confirmed' | 'timed_out'>('confirming');
 
   useEffect(() => {
-    // Redirect to dashboard after a short delay
-    const timer = setTimeout(() => {
-      router.push('/dashboard');
-    }, 3000);
+    let attempts = 0;
+    let cancelled = false;
 
-    return () => clearTimeout(timer);
+    const poll = async () => {
+      try {
+        const subscription = await apiGet('/api/subscription');
+        if (cancelled) return;
+
+        if (subscription?.status === 'active' && subscription?.plan_slug !== 'free') {
+          setStatus('confirmed');
+          setTimeout(() => router.push('/dashboard'), 1200);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+      }
+
+      attempts += 1;
+      if (attempts >= MAX_POLL_ATTEMPTS) {
+        if (!cancelled) setStatus('timed_out');
+        return;
+      }
+
+      if (!cancelled) {
+        setTimeout(poll, POLL_INTERVAL_MS);
+      }
+    };
+
+    poll();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   return (
@@ -25,16 +60,30 @@ export default function PaymentSuccessPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        
+
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Payment Successful!</h1>
         <p className="text-slate-600 mb-6">
-          Thank you for your subscription. Your account has been upgraded.
+          Thank you for your subscription.
         </p>
-        
+
         <div className="bg-slate-50 rounded-xl p-4 mb-6">
-          <p className="text-sm text-slate-600">
-            Redirecting to dashboard...
-          </p>
+          {status === 'confirming' && (
+            <p className="text-sm text-slate-600 flex items-center justify-center gap-2">
+              <span className="inline-block w-4 h-4 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin"></span>
+              Confirming your upgrade...
+            </p>
+          )}
+          {status === 'confirmed' && (
+            <p className="text-sm text-emerald-600 font-medium">
+              Your account has been upgraded! Redirecting to dashboard...
+            </p>
+          )}
+          {status === 'timed_out' && (
+            <p className="text-sm text-amber-600">
+              This is taking longer than expected. Your payment was received — if your account
+              doesn't show as upgraded within a minute or two, please contact support.
+            </p>
+          )}
         </div>
 
         <button
