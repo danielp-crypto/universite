@@ -22,6 +22,9 @@ function AssistantPageContent(): React.ReactNode {
   const [currentLecture, setCurrentLecture] = useState<any>(null);
   const [inputValue, setInputValue] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
+  const [userMessageCount, setUserMessageCount] = useState(0);
+  const [messageLimit] = useState(10);
+  const [subscription, setSubscription] = useState<any>(null);
 
   // Multi-lecture context: modules the student has added on top of the
   // currently-open lecture, plus a flattened list of the lectures inside them.
@@ -47,6 +50,24 @@ function AssistantPageContent(): React.ReactNode {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const loadInitialState = async () => {
+    // Load subscription to determine if user is on free tier
+    try {
+      const session = await getSession();
+      if (session) {
+        const response = await fetch('/api/subscription', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSubscription(data);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading subscription:', error);
+    }
+
     if (initialLectureId) {
       try {
         const lecture = await apiGet(`/api/lectures/${initialLectureId}`);
@@ -57,6 +78,7 @@ function AssistantPageContent(): React.ReactNode {
             const chatHistoryResult = await apiGet(`/api/lectures/${initialLectureId}/chat`);
             if (chatHistoryResult?.success && chatHistoryResult.messages?.length) {
               setMessages(chatHistoryResult.messages);
+              setUserMessageCount(chatHistoryResult.userMessageCount || 0);
             }
           } catch (error) {
             console.error('Error loading chat history:', error);
@@ -141,11 +163,27 @@ function AssistantPageContent(): React.ReactNode {
     const query = inputValue.trim();
     if (!query || isBotTyping) return;
 
+    // Check if free tier user has reached limit
+    const isFreeTier = subscription?.plan_slug === 'free';
+    if (isFreeTier && userMessageCount >= messageLimit) {
+      showAlert(
+        "You've reached this lecture's message limit",
+        "Free beta accounts get 10 tutor messages per lecture. Upgrade to Premium for unlimited tutoring across all your lectures.",
+        'warning'
+      );
+      return;
+    }
+
     const userMsg = { sender: 'user', content: query, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInputValue('');
     setIsBotTyping(true);
+
+    // Increment message count for free tier users
+    if (isFreeTier) {
+      setUserMessageCount(prev => prev + 1);
+    }
 
     try {
       const aiResponse = await getContextAwareResponse(query, newMessages);
@@ -169,6 +207,10 @@ function AssistantPageContent(): React.ReactNode {
         // as an alert with a clear upgrade path instead.
         setMessages((prev) => prev.slice(0, -1)); // remove the optimistic user message we just added
         setInputValue(query);
+        // Revert message count
+        if (isFreeTier) {
+          setUserMessageCount(prev => prev - 1);
+        }
         showAlert(
           "You've reached this lecture's message limit",
           "Free beta accounts get 10 tutor messages per lecture. Upgrade to Premium for unlimited tutoring across all your lectures.",
@@ -256,6 +298,16 @@ function AssistantPageContent(): React.ReactNode {
                   </svg>
                   Add module
                 </button>
+
+                {/* Chat count for free tier users */}
+                {subscription?.plan_slug === 'free' && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium border border-amber-100 ml-auto">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {messageLimit - userMessageCount} chats left
+                  </span>
+                )}
               </div>
             </div>
 

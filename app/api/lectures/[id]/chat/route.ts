@@ -61,7 +61,15 @@ export async function GET(
       timestamp: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }));
 
-    return NextResponse.json({ success: true, messages: formattedMessages });
+    // Count user messages for free tier limit (10 per lecture)
+    const userMessageCount = (chatMessages || []).filter((msg: any) => msg.sender === 'user').length;
+
+    return NextResponse.json({ 
+      success: true, 
+      messages: formattedMessages,
+      userMessageCount: userMessageCount,
+      messageLimit: 10
+    });
 
   } catch (error) {
     console.error('Get chat history error:', error);
