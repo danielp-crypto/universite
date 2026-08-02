@@ -53,7 +53,13 @@ Example output:
 
 Transcript chunk:\n\n`;
 
-const REDUCE_PROMPT = `You are "Exam Buddy", a South African university tutor with 10 years experience. Your only job: turn 90min rambly lectures (with slides) into notes that help students pass their assessments — whether that's in-class tests, assignments, exams, or presentations.
+// Shared preamble/footer used by all three reduce prompts below. Splitting the
+// original single REDUCE_PROMPT into independent sections lets them run as
+// parallel Gemini calls (Promise.all) instead of one giant sequential call —
+// generation time becomes "the slowest section" instead of "the sum of all
+// sections", which is the single biggest latency win available in this
+// pipeline given Gemini's output token count directly drives call duration.
+const REDUCE_PREAMBLE = `You are "Exam Buddy", a South African university tutor with 10 years experience. Your only job: turn 90min rambly lectures (with slides) into notes that help students pass their assessments — whether that's in-class tests, assignments, exams, or presentations.
 
 INPUT: Extracted key content from a South African university lecture, already tagged by type ([DEF], [FORMULA], [SLIDE], [LIST], [CAUSE], [COMPARE], [FLAG], [EXAMPLE]) and cleaned of fluff.
 
@@ -61,6 +67,21 @@ OUTPUT RULES:
 1. IGNORE: admin talk, jokes, "can you hear me", registration, assignment dates unless marks are mentioned.
 2. FORMAT: Use this exact structure, no deviation:
 3. DO NOT include timestamps anywhere in the output.
+4. Only produce the section(s) requested below — nothing else, no preamble, no extra commentary before or after.
+
+`;
+
+const REDUCE_FOOTER = `
+
+TONE: Clear, direct English. Short sentences. No "furthermore". No "it is important to note". Suit South African university students.
+HALLUCINATION BAN: Everywhere except the Glossary's Definitions section, if info isn't in the transcript, write "Not covered in this lecture" — never invent facts, numbers, or events that didn't happen. EXCEPTION: the Glossary's Definitions section is explicitly allowed (and required, per its own rules) to supply a standard definition for a term that the lecture actually used or referenced, even if the lecturer didn't pause to define it themselves. This is not invention — the term came from the transcript; only its definition is supplemented.
+SA CONTEXT: Keep ZAR, South African examples (Eskom, provinces, SA legislation, case studies). Include slide references. Don't convert currency to other units.
+
+CONTEXT: Student is at a South African university. May be at contact or distance education institution. Attends lectures with slides. Needs notes for tests, assignments, and exams. Make every word count. Include slide references since student may not have recorded the lecture visuals.
+
+Extracted content:\n\n`;
+
+const REDUCE_PROMPT_CONCEPTS_GLOSSARY = REDUCE_PREAMBLE + `Produce exactly these two sections, in this order:
 
 ## Key Concepts [exactly 5 one-word terms]
 Pick which [DEF]/[FORMULA] items to keep using this priority order, in this order:
@@ -94,6 +115,9 @@ ALWAYS output exactly 10 terms, using this priority order:
 Never leave this section short of 10 terms and never write "Not covered in this lecture" here — that fallback applies elsewhere, not to the glossary.
 - **Term**: Definition
 - **Term**: Definition
+` + REDUCE_FOOTER;
+
+const REDUCE_PROMPT_NOTES_SUMMARY = REDUCE_PREAMBLE + `Produce exactly these three sections, in this order:
 
 ## Full Lecture Notes
 Provide comprehensive notes organized by topics. ALWAYS include slide numbers/references when mentioned — this helps students who may not have recorded the visuals. Use bullet points for key information. Include examples and explanations from the lecturer.
@@ -135,6 +159,9 @@ If you only study 10 things, study these. Each = 1 sentence. No fluff.
 8. [Eighth key point]
 9. [Ninth key point]
 10. [Tenth key point]
+` + REDUCE_FOOTER;
+
+const REDUCE_PROMPT_TESTS_QUIZ = REDUCE_PREAMBLE + `Produce exactly these two sections, in this order:
 
 ## Test Predictor: 10 Exam-Style Questions + Memo
 Create 10 exam-style questions using Bloom's taxonomy. Base ONLY on transcript facts. Include a memo/model answer for each question. These are "Test Predictor" questions designed to predict what will appear on actual exams.
@@ -243,14 +270,7 @@ B) [option text]
 C) [option text]
 D) [option text]
 CORRECT: [A, B, C, or D]
-
-4. TONE: Clear, direct English. Short sentences. No "furthermore". No "it is important to note". Suit South African university students.
-5. HALLUCINATION BAN: Everywhere except the Glossary's Definitions section, if info isn't in the transcript, write "Not covered in this lecture" — never invent facts, numbers, or events that didn't happen. EXCEPTION: the Glossary's Definitions section is explicitly allowed (and required, per the rules above) to supply a standard definition for a term that the lecture actually used or referenced, even if the lecturer didn't pause to define it themselves. This is not invention — the term came from the transcript; only its definition is supplemented.
-6. SA CONTEXT: Keep ZAR, South African examples (Eskom, provinces, SA legislation, case studies). Include slide references. Don't convert currency to other units.
-
-CONTEXT: Student is at a South African university. May be at contact or distance education institution. Attends lectures with slides. Needs notes for tests, assignments, and exams. Make every word count. Include slide references since student may not have recorded the lecture visuals.
-
-Extracted content:\n\n`;
+` + REDUCE_FOOTER;
 
 // Shared Gemini call with retry + exponential backoff. A single transient
 // failure (rate limit, 5xx, or an empty/safety-blocked response) used to
@@ -376,21 +396,38 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
   }
 }
 
-// Reduce step: Generate final summary from extracted content
+// Reduce step: Generate the final summary as THREE independent parallel Gemini
+// calls instead of one giant sequential one. Each covers a disjoint set of
+// sections and gets its own (smaller) maxOutputTokens budget — total wall-clock
+// time becomes roughly the slowest of the three, not the sum of all of them.
 async function reduceSummary(extractedContent: string): Promise<string> {
-  const { text } = await callGemini(
-    {
-      contents: [{ parts: [{ text: REDUCE_PROMPT + extractedContent }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 32768,
-        thinkingConfig: { thinkingBudget: 0 }
-      }
-    },
-    'Reduce summary',
-    3
+  const calls: { prompt: string; context: string; maxOutputTokens: number }[] = [
+    { prompt: REDUCE_PROMPT_CONCEPTS_GLOSSARY, context: 'Reduce: Key Concepts + Glossary', maxOutputTokens: 4096 },
+    { prompt: REDUCE_PROMPT_NOTES_SUMMARY, context: 'Reduce: Full Notes + Assessment Hints + 10-Bullet Summary', maxOutputTokens: 16384 },
+    { prompt: REDUCE_PROMPT_TESTS_QUIZ, context: 'Reduce: Test Predictor + Quiz Bank', maxOutputTokens: 16384 },
+  ];
+
+  const results = await Promise.all(
+    calls.map(({ prompt, context, maxOutputTokens }) =>
+      callGemini(
+        {
+          contents: [{ parts: [{ text: prompt + extractedContent }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens,
+            thinkingConfig: { thinkingBudget: 0 }
+          }
+        },
+        context,
+        3
+      )
+    )
   );
-  return text;
+
+  // Joined in the same order the original single-call REDUCE_PROMPT produced
+  // them, so downstream section-parsing (##(?!#) splits, parseKeyConcepts,
+  // etc.) sees an identically structured document.
+  return results.map((r) => r.text.trim()).join('\n\n');
 }
 
 async function generateSummary(transcript: string): Promise<{ summary: string; degraded: boolean }> {

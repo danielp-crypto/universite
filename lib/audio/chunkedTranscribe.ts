@@ -13,7 +13,7 @@
 
 const TARGET_SAMPLE_RATE = 16000;
 const CHUNK_SECONDS = 90; // ~2.9MB per WAV chunk at 16kHz mono 16-bit
-const UPLOAD_CONCURRENCY = 3; // keep Deepgram calls modest for multi-chunk lectures
+const UPLOAD_CONCURRENCY = 5; // bumped from 3 — Deepgram comfortably handles this, and it only helps on longer lectures with more chunks
 const MAX_ATTEMPTS_PER_CHUNK = 2;
 
 export interface ChunkedTranscribeResult {
