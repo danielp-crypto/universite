@@ -1211,7 +1211,7 @@ function HomePageContent() {
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-violet-600 mb-1">{stats.selfTests}</div>
-                <div className="text-xs text-slate-600">Self-Tests</div>
+                <div className="text-xs text-slate-600">Quiz taken</div>
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-purple-600 mb-1">{stats.aiChats}</div>

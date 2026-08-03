@@ -105,7 +105,7 @@ export default function Home() {
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free Beta : notes + exam questions + memo + AI chat for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
+              <p className="mt-6 text-sm text-slate-500">Free Beta : notes + exam questions + memo + Quiz + AI chat for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -203,7 +203,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Self-Test Quiz</h3>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Quick Quiz</h3>
               <p className="text-slate-600">Test your understanding.</p>
             </div>
 

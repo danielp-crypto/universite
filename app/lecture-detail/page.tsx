@@ -1042,7 +1042,7 @@ function LectureDetailPageContent() {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                     <span className="text-xl leading-none">🎯</span>
-                    <span>Self-test Quiz</span>
+                    <span>Quick Quiz</span>
                   </h3>
                 </div>
                 <p className="text-sm text-slate-600 mb-4">
@@ -1515,7 +1515,7 @@ function LectureDetailPageContent() {
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-slate-900">Self-Test Quiz</h2>
+                <h2 className="text-2xl font-bold text-slate-900">Quick Quiz</h2>
                 <button
                   onClick={closeQuiz}
                   className="text-slate-400 hover:text-slate-600 transition-colors"
