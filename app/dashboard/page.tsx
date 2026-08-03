@@ -722,11 +722,28 @@ function HomePageContent() {
       return;
     }
 
-    // Check if user has credits available (bypass for premium users)
-    if (subscription?.plan_slug === 'free' && globalCredits.used >= globalCredits.allocated) {
+    // Check if user has credits available
+    if (globalCredits.used >= globalCredits.allocated) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       router.push('/pricing');
       return;
+    }
+
+    const isVideo = file.type.startsWith('video/');
+
+    // Client-side decoding (Web Audio API's decodeAudioData) loads the entire
+    // file plus its fully-decoded PCM audio into memory at once. Video files
+    // are much larger than audio-only recordings of the same length, so very
+    // large uploads risk exhausting browser memory, especially on mobile.
+    // This is a heads-up, not a hard block — we don't know the student's
+    // actual available memory, so we let them proceed either way.
+    const LARGE_FILE_WARNING_BYTES = 300 * 1024 * 1024; // 300MB
+    if (file.size > LARGE_FILE_WARNING_BYTES) {
+      showAlert(
+        'Large file detected',
+        `This ${isVideo ? 'video' : 'audio'} file is ${(file.size / (1024 * 1024)).toFixed(0)}MB. Processing may take a while and use significant memory in your browser — if it fails, try closing other tabs or uploading on a laptop/desktop instead of mobile.`,
+        'warning'
+      );
     }
 
     try {
@@ -735,7 +752,7 @@ function HomePageContent() {
 
       // Initialize processing steps
       const steps = [
-        'Processing audio for transcription...',
+        isVideo ? 'Extracting audio from video...' : 'Processing audio for transcription...',
         'Transcribing audio with AI...',
         'Generating your study assets...',
         'Finalizing lecture...'
@@ -752,27 +769,37 @@ function HomePageContent() {
         return;
       }
 
-      // Get audio duration from file
-      const audioDuration = await new Promise<number>((resolve) => {
-        const audio = new Audio();
-        audio.onloadedmetadata = () => {
-          resolve(audio.duration);
+      // Get duration from file. A <video> element reliably reads metadata for
+      // both audio-only and video files (unlike <audio>, which can fail on
+      // some video containers), so it's used universally here.
+      const mediaDuration = await new Promise<number>((resolve) => {
+        const mediaEl = document.createElement('video');
+        mediaEl.preload = 'metadata';
+        mediaEl.onloadedmetadata = () => {
+          resolve(mediaEl.duration);
         };
-        audio.onerror = () => {
+        mediaEl.onerror = () => {
           resolve(0);
         };
-        audio.src = URL.createObjectURL(file);
+        mediaEl.src = URL.createObjectURL(file);
       });
 
       // Step 1: Transcribe audio (decoded + chunked client-side so large
-      // uploaded files don't exceed Vercel's 4.5MB function body limit)
+      // uploaded files don't exceed Vercel's 4.5MB function body limit).
+      // For video files, decodeAudioData demuxes and decodes the audio track
+      // directly from the container — no separate extraction step needed.
       setProcessingText(steps[0]);
       const transcribeData = await transcribeAudioChunked(file, session.access_token, (msg) =>
         setProcessingText(msg)
       );
 
       if (!transcribeData.success) {
-        setProcessingError(transcribeData.error || 'Failed to transcribe audio. Please try again.');
+        setProcessingError(
+          transcribeData.error ||
+          (isVideo
+            ? 'Failed to extract audio from this video. Try a different format (MP4 or WebM work best), or extract the audio yourself first.'
+            : 'Failed to transcribe audio. Please try again.')
+        );
         return;
       }
 
@@ -807,12 +834,13 @@ function HomePageContent() {
         },
         body: JSON.stringify({
           title: file.name.replace(/\.[^/.]+$/, ''),
-          duration: Math.floor(audioDuration),
+          duration: Math.floor(mediaDuration),
           transcription: transcript,
           summary: summary,
           module_id: selectedModule,
           stored_locally: true,
-          local_audio_size: file.size
+          local_audio_size: file.size,
+          mime_type: file.type
         })
       });
 
@@ -869,7 +897,7 @@ function HomePageContent() {
   const handleFileUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'audio/*';
+    input.accept = 'audio/*,video/*';
     input.onchange = async (e: any) => {
       const file = e.target.files[0];
       if (file) {
@@ -896,14 +924,13 @@ function HomePageContent() {
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      if (file.type.startsWith('audio/')) {
+      if (file.type.startsWith('audio/') || file.type.startsWith('video/')) {
         await uploadRecording(file);
       } else {
-        setProcessingError('Please upload an audio file');
+        setProcessingError('Please upload an audio or video file');
       }
     }
   };
-
   // Profile management
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1044,7 +1071,7 @@ function HomePageContent() {
                   <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  <span className="font-semibold text-sm">{isDragging ? 'Drop audio file here' : 'Upload Audio'}</span>
+                  <span className="font-semibold text-sm">{isDragging ? 'Drop file here' : 'Upload Audio or Video'}</span>
                 </div>
               </div>
             </div>

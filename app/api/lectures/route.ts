@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json();
-    const { title, duration, audioUrl, transcription, summary, stored_locally, local_audio_size, module_id } = data;
+    const { title, duration, audioUrl, transcription, summary, stored_locally, local_audio_size, module_id, mime_type } = data;
 
     console.log('Creating lecture with data:', { title, duration, stored_locally, local_audio_size, hasTranscription: !!transcription });
 
@@ -134,7 +134,8 @@ export async function POST(request: NextRequest) {
         transcription_status: transcription ? 'completed' : 'pending',
         has_transcription: !!transcription,
         transcription_completed_at: transcription ? new Date().toISOString() : null,
-        module_id: module_id || null
+        module_id: module_id || null,
+        mime_type: mime_type || null
       })
       .select()
       .single();
