@@ -42,7 +42,6 @@ function HomePageContent() {
   const [globalCredits, setGlobalCredits] = useState({ used: 0, allocated: 4 });
   const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
   const [newModuleName, setNewModuleName] = useState('');
-  const [subscription, setSubscription] = useState<any>(null);
 
   // Processing states
   const [processingSteps, setProcessingSteps] = useState<string[]>([]);
@@ -312,45 +311,11 @@ function HomePageContent() {
     }
   };
 
-  const loadSubscription = async () => {
-    try {
-      const session = await getSession();
-      if (!session) return;
-
-      const response = await fetch('/api/subscription', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSubscription(data);
-        
-        // Check if subscription is expired
-        const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
-        const isActive = data.status === 'active' && !isExpired;
-        
-        // Bypass credit limits for active premium users
-        if (isActive && data.plan_slug && data.plan_slug !== 'free') {
-          setGlobalCredits({ used: 0, allocated: 999999 });
-        } else if (isExpired && data.plan_slug !== 'free') {
-          // Subscription expired but not downgraded yet - downgrade to free
-          setGlobalCredits({ used: 0, allocated: 4 });
-          // Optionally trigger automatic downgrade via API
-        }
-      }
-    } catch (error) {
-      console.error('Error loading subscription:', error);
-    }
-  };
-
   useEffect(() => {
     loadData();
     loadModules();
     checkProfileCompletion();
     loadStreak();
-    loadSubscription();
 
     return () => {
       if (recordingTimerIntervalRef.current) clearInterval(recordingTimerIntervalRef.current);
@@ -433,8 +398,8 @@ function HomePageContent() {
       return;
     }
 
-    // Check if user has credits available (bypass for premium users)
-    if (subscription?.plan_slug === 'free' && globalCredits.used >= globalCredits.allocated) {
+    // Check if user has credits available
+    if (globalCredits.used >= globalCredits.allocated) {
       showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
       router.push('/pricing');
       return;
@@ -729,37 +694,13 @@ function HomePageContent() {
       return;
     }
 
-    const isVideo = file.type.startsWith('video/');
-
-    // Client-side decoding (Web Audio API's decodeAudioData) loads the entire
-    // file plus its fully-decoded PCM audio into memory at once. Video files
-    // are much larger than audio-only recordings of the same length, so very
-    // large uploads risk exhausting browser memory, especially on mobile.
-    // This is a heads-up, not a hard block — we don't know the student's
-    // actual available memory, so we let them proceed either way.
-    const LARGE_FILE_WARNING_BYTES = 300 * 1024 * 1024; // 300MB
-    if (file.size > LARGE_FILE_WARNING_BYTES) {
-      showAlert(
-        'Large file detected',
-        `This ${isVideo ? 'video' : 'audio'} file is ${(file.size / (1024 * 1024)).toFixed(0)}MB. Processing may take a while and use significant memory in your browser — if it fails, try closing other tabs or uploading on a laptop/desktop instead of mobile.`,
-        'warning'
-      );
-    }
-
     try {
       // Update streak immediately when file is uploaded
       updateStreak();
 
-      // Initialize processing steps
-      const steps = [
-        isVideo ? 'Extracting audio from video...' : 'Processing audio for transcription...',
-        'Transcribing audio with AI...',
-        'Generating your study assets...',
-        'Finalizing lecture...'
-      ];
-      setProcessingSteps(steps);
+      setProcessingSteps(['Uploading file...']);
       setCurrentStep(0);
-      setProcessingText(steps[0]);
+      setProcessingText('Uploading file...');
       setRecordingState('processing');
       setProcessingError(null);
 
@@ -770,63 +711,40 @@ function HomePageContent() {
       }
 
       // Get duration from file. A <video> element reliably reads metadata for
-      // both audio-only and video files (unlike <audio>, which can fail on
-      // some video containers), so it's used universally here.
+      // both audio-only and video files.
       const mediaDuration = await new Promise<number>((resolve) => {
         const mediaEl = document.createElement('video');
         mediaEl.preload = 'metadata';
-        mediaEl.onloadedmetadata = () => {
-          resolve(mediaEl.duration);
-        };
-        mediaEl.onerror = () => {
-          resolve(0);
-        };
+        mediaEl.onloadedmetadata = () => resolve(mediaEl.duration);
+        mediaEl.onerror = () => resolve(0);
         mediaEl.src = URL.createObjectURL(file);
       });
 
-      // Step 1: Transcribe audio (decoded + chunked client-side so large
-      // uploaded files don't exceed Vercel's 4.5MB function body limit).
-      // For video files, decodeAudioData demuxes and decodes the audio track
-      // directly from the container — no separate extraction step needed.
-      setProcessingText(steps[0]);
-      const transcribeData = await transcribeAudioChunked(file, session.access_token, (msg) =>
-        setProcessingText(msg)
-      );
+      // Upload the raw file straight to Supabase Storage — Deepgram will
+      // fetch it directly from there. Nothing is decoded or chunked in the
+      // browser anymore: no memory pressure on the student's device, no
+      // Vercel body-size limit to work around, and it works the same way
+      // regardless of file length.
+      const fileExt = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
+      const storagePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
 
-      if (!transcribeData.success) {
-        setProcessingError(
-          transcribeData.error ||
-          (isVideo
-            ? 'Failed to extract audio from this video. Try a different format (MP4 or WebM work best), or extract the audio yourself first.'
-            : 'Failed to transcribe audio. Please try again.')
-        );
+      const { error: uploadError } = await supabase.storage
+        .from('lecture-media')
+        .upload(storagePath, file, { contentType: file.type });
+
+      if (uploadError) {
+        console.error('Error uploading to storage:', uploadError);
+        setProcessingError('Failed to upload file. Please try again.');
+        setRecordingState('idle');
         return;
       }
 
-      const transcript = transcribeData.transcript;
-      const partialTranscriptionWarning = describePartialFailure(transcribeData);
+      setProcessingText('Starting transcription...');
 
-      setCurrentStep(1);
-      setProcessingText(steps[1]);
-
-      // Step 2: Generate summary
-      const summaryResponse = await fetch('/api/generate-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript })
-      });
-
-      let summary = '';
-      if (summaryResponse.ok) {
-        const summaryData = await summaryResponse.json();
-        summary = summaryData.summary;
-      }
-
-      setCurrentStep(2);
-      setProcessingText(steps[2]);
-
-      // Step 3: Create lecture in Supabase
-      const lectureResponse = await fetch('/api/lectures', {
+      // Create the lecture immediately (as "processing") and hand off to
+      // Deepgram asynchronously — this call returns fast regardless of how
+      // long the lecture is, since we don't wait for transcription here.
+      const startResponse = await fetch('/api/lectures/start-processing', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -835,62 +753,37 @@ function HomePageContent() {
         body: JSON.stringify({
           title: file.name.replace(/\.[^/.]+$/, ''),
           duration: Math.floor(mediaDuration),
-          transcription: transcript,
-          summary: summary,
           module_id: selectedModule,
-          stored_locally: true,
-          local_audio_size: file.size,
-          mime_type: file.type
+          mime_type: file.type,
+          file_path: storagePath,
+          file_size: file.size
         })
       });
 
-      if (!lectureResponse.ok) {
-        setProcessingError('Failed to save lecture to Supabase. Please try again.');
+      if (!startResponse.ok) {
+        setProcessingError('Failed to start processing. Please try again.');
+        setRecordingState('idle');
         return;
       }
 
-      const lectureResponseData = await lectureResponse.json();
-      const lectureData = lectureResponseData.lecture;
+      // Reload modules to update global credit display (credit was recorded
+      // server-side in start-processing)
+      loadModules();
 
-      setCurrentStep(3);
-      setProcessingText(steps[3]);
-
-      // Record credit usage
-      if (selectedModule) {
-        await supabase.from('credits').insert({
-          user_id: session.user.id,
-          module_id: selectedModule,
-          lecture_id: lectureData.id,
-          used_for: 'upload'
-        });
-        // Reload modules to update global credit display
-        loadModules();
-      }
-
-      // Update streak regardless of Supabase upload success
       updateStreak();
-
       setRecordingState('idle');
       loadData();
 
-      // Show notification with view button. Fold any partial-transcription
-      // warning into this same alert rather than firing a second one.
-      const lectureTitleForAlert = lectureData.title.length > 30
-        ? lectureData.title.substring(0, 30) + '...'
-        : lectureData.title;
-
       showAlert(
-        'Your study assets are ready',
-        partialTranscriptionWarning
-          ? `${lectureTitleForAlert} ${partialTranscriptionWarning}`
-          : lectureTitleForAlert,
-        partialTranscriptionWarning ? 'warning' : 'success',
-        `/lecture-detail?id=${lectureData.id}`
+        'Lecture uploaded — processing started',
+        "We're transcribing and summarizing your lecture now. You'll get a notification when it's ready — feel free to keep using the app in the meantime.",
+        'success'
       );
 
     } catch (error) {
       console.error('Error uploading recording:', error);
       setProcessingError('An unexpected error occurred. Please try again.');
+      setRecordingState('idle');
     }
   };
 
@@ -931,6 +824,7 @@ function HomePageContent() {
       }
     }
   };
+
   // Profile management
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1008,11 +902,9 @@ function HomePageContent() {
                 </h1>
               </div>
               <div className="flex items-center gap-3">
-                {subscription?.plan_slug === 'free' && (
-                  <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                    Upgrade
-                  </Link>
-                )}
+                <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                  Upgrade
+                </Link>
                 <Notifications />
               </div>
             </div>
@@ -1169,6 +1061,17 @@ function HomePageContent() {
                           >
                             <h3 className="text-base font-semibold text-slate-800 hover:text-indigo-600 transition-colors truncate">{lecture.title}</h3>
                           </Link>
+                          {lecture.status === 'processing' && (
+                            <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
+                              <span className="inline-block w-2 h-2 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></span>
+                              Processing
+                            </span>
+                          )}
+                          {lecture.status === 'failed' && (
+                            <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 rounded-full text-xs font-medium">
+                              Failed
+                            </span>
+                          )}
                           <button
                             onClick={(e) => deleteSupabaseLecture(lecture.id, e)}
                             className="ml-2 p-1 text-slate-400 hover:text-red-600 transition-colors flex-shrink-0"
@@ -1238,7 +1141,7 @@ function HomePageContent() {
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-violet-600 mb-1">{stats.selfTests}</div>
-                <div className="text-xs text-slate-600">Quiz taken</div>
+                <div className="text-xs text-slate-600">Self-Tests</div>
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-purple-600 mb-1">{stats.aiChats}</div>
@@ -1258,32 +1161,22 @@ function HomePageContent() {
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-800 mb-1">
-                    {subscription?.plan_slug && subscription.plan_slug !== 'free' ? 'Premium' : 'Free Tier'}
-                  </h3>
-                  <p className="text-xs text-slate-600">
-                    {subscription?.plan_slug && subscription.plan_slug !== 'free' 
-                      ? 'Unlimited Lectures' 
-                      : 'Lectures Used (Global)'}
-                  </p>
+                  <h3 className="text-sm font-semibold text-slate-800 mb-1">Free Tier Credits</h3>
+                  <p className="text-xs text-slate-600">Credits Used (Global)</p>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-indigo-600">
-                    {subscription?.plan_slug && subscription.plan_slug !== 'free' 
-                      ? '∞' 
-                      : `${globalCredits.used}/${globalCredits.allocated}`}
+                    {globalCredits.used}/{globalCredits.allocated}
                   </div>
-                  <div className="text-xs text-slate-600">Lectures</div>
+                  <div className="text-xs text-slate-600">Credits</div>
                 </div>
               </div>
-              {subscription?.plan_slug === 'free' && (
-                <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
-                    style={{ width: `${(globalCredits.used / globalCredits.allocated) * 100}%` }}
-                  ></div>
-                </div>
-              )}
+              <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                  style={{ width: `${(globalCredits.used / globalCredits.allocated) * 100}%` }}
+                ></div>
+              </div>
             </div>
           </div>
 
@@ -1304,9 +1197,7 @@ function HomePageContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {subscription?.plan_slug === 'free' && (
-                    <Link href="/pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Upgrade</Link>
-                  )}
+                  <Link href="/pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Upgrade</Link>
                   <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
