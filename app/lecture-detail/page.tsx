@@ -1075,7 +1075,7 @@ function LectureDetailPageContent() {
                           disabled={isProcessing}
                           className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider disabled:opacity-50"
                         >
-                          🔄 Regenerate
+                          � Add slides
                         </button>
                       </>
                     )}
