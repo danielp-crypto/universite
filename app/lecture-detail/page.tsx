@@ -1070,13 +1070,9 @@ function LectureDetailPageContent() {
                         <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                           AI Generated
                         </span>
-                        <button
-                          onClick={handleRegenerateSummary}
-                          disabled={isProcessing}
-                          className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider disabled:opacity-50"
-                        >
-                          � Add slides
-                        </button>
+                        <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
+                          📊 Add slides
+                        </span>
                       </>
                     )}
                   </div>
