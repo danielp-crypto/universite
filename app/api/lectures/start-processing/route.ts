@@ -80,19 +80,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'lecture_create_failed' }, { status: 500 });
     }
 
-    // Record credit usage now — the upload itself is what consumes the
-    // credit, independent of whether transcription ultimately succeeds.
-    if (module_id) {
-      const { error: creditError } = await supabaseAdmin.from('credits').insert({
-        user_id: user.id,
-        module_id,
-        lecture_id: lecture.id,
-        used_for: 'upload',
-      });
-      if (creditError) {
-        console.error('Error recording credit usage:', creditError);
-      }
-    }
+    // NOTE: credit usage is intentionally NOT recorded here. It's recorded
+    // in the Deepgram webhook, only once transcription actually succeeds —
+    // a lecture that fails processing shouldn't consume the student's credit.
 
     // Generate a signed URL so Deepgram can fetch the file directly from
     // Supabase Storage — no chunking, no client-side decoding, no Vercel

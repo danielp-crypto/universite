@@ -1,92 +1,127 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
-const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
-const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 const DEEPGRAM_WEBHOOK_SECRET = process.env.DEEPGRAM_WEBHOOK_SECRET || '';
+const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-// How long the signed URL we hand to Deepgram stays valid. Deepgram fetches
-// the file itself once processing starts, but we don't control exactly when
-// that happens relative to when we generate the URL, so this is generous.
-const SIGNED_URL_EXPIRY_SECONDS = 6 * 60 * 60; // 6 hours
+// Writes a row to deepgram_webhook_logs so this webhook's behavior can be
+// inspected directly in Supabase's Table Editor, without needing access to
+// Vercel's function logs. Never let a logging failure break the webhook itself.
+async function logWebhookEvent(entry: {
+  lectureId: string | null;
+  outcome: string;
+  transcriptLength?: number | null;
+  error?: string | null;
+  rawPayload?: any;
+}) {
+  try {
+    await supabaseAdmin.from('deepgram_webhook_logs').insert({
+      lecture_id: entry.lectureId,
+      outcome: entry.outcome,
+      transcript_length: entry.transcriptLength ?? null,
+      error: entry.error ?? null,
+      raw_payload: entry.rawPayload ?? null,
+    });
+  } catch (logError) {
+    console.error('Failed to write deepgram webhook log:', logError);
+  }
+}
 
 export async function POST(request: NextRequest) {
+  const lectureId = request.nextUrl.searchParams.get('lecture_id');
+  const secret = request.nextUrl.searchParams.get('secret');
+
+  // Deepgram doesn't sign callback requests itself, so this shared secret
+  // (embedded in the callback URL we gave Deepgram) is what stops a random
+  // internet request from spoofing a lecture completion.
+  if (!DEEPGRAM_WEBHOOK_SECRET || secret !== DEEPGRAM_WEBHOOK_SECRET) {
+    await logWebhookEvent({ lectureId, outcome: 'unauthorized', error: 'Invalid or missing secret' });
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
+  if (!lectureId) {
+    await logWebhookEvent({ lectureId: null, outcome: 'missing_lecture_id' });
+    return NextResponse.json({ error: 'missing_lecture_id' }, { status: 400 });
+  }
+
+  let payload: any = null;
+
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
+    payload = await request.json();
+
+    // Deepgram sends a different shape when it couldn't process the file at
+    // all (e.g. couldn't fetch the URL, unsupported codec) — surface that
+    // specific reason rather than a generic "no transcript" if present.
+    const deepgramError = payload?.err_msg || payload?.error || payload?.err_code;
+    const transcript = payload?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
+
+    if (!transcript) {
+      const reason = deepgramError
+        ? `Deepgram error: ${deepgramError}`
+        : 'Deepgram returned no transcript';
+
+      await markLectureFailed(lectureId, reason);
+      await logWebhookEvent({ lectureId, outcome: 'no_transcript', error: reason, rawPayload: payload });
+      await notifyStudent(lectureId, 'failed');
+      await cleanupStorageFile(lectureId);
+      return NextResponse.json({ success: true }); // ack regardless — nothing to retry
     }
 
-    const token = authHeader.substring(7);
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) {
-      return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
-    }
+    // Generate the summary the same way the old synchronous flow did —
+    // same endpoint, just called server-to-server now instead of from the
+    // browser, since this webhook has no direct relationship to the
+    // student's original request.
+    let summary = '';
+    let summaryError: string | null = null;
+    try {
+      const summaryResponse = await fetch(`${NEXT_PUBLIC_SITE_URL}/api/generate-summary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript }),
+      });
 
-    if (!DEEPGRAM_API_KEY || !NEXT_PUBLIC_SITE_URL || !DEEPGRAM_WEBHOOK_SECRET) {
-      console.error('Missing DEEPGRAM_API_KEY, NEXT_PUBLIC_SITE_URL, or DEEPGRAM_WEBHOOK_SECRET');
-      return NextResponse.json({ success: false, error: 'server_configuration_error' }, { status: 500 });
-    }
-
-    const body = await request.json();
-    const { title, duration, module_id, mime_type, file_path, file_size } = body;
-
-    if (!title || !file_path) {
-      return NextResponse.json({ success: false, error: 'missing_fields' }, { status: 400 });
-    }
-
-    // Verify credits before creating anything — mirrors the check the
-    // frontend already does, but re-checked server-side since this is the
-    // point where a credit actually gets consumed.
-    if (module_id) {
-      const { data: moduleRow } = await supabaseAdmin
-        .from('modules')
-        .select('id')
-        .eq('id', module_id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (!moduleRow) {
-        return NextResponse.json({ success: false, error: 'module_not_found' }, { status: 404 });
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        summary = summaryData.summary || '';
+      } else {
+        summaryError = `generate-summary responded ${summaryResponse.status}`;
       }
+    } catch (err: any) {
+      summaryError = `generate-summary threw: ${err.message}`;
     }
 
-    // Create the lecture immediately, in a processing state. The student
-    // sees this in their lecture list right away and can navigate away —
-    // transcription and summary generation happen asynchronously from here.
-    const { data: lecture, error: insertError } = await supabaseAdmin
+    const { data: updatedLecture, error: updateError } = await supabaseAdmin
       .from('lectures')
-      .insert({
-        user_id: user.id,
-        title,
-        description: '',
-        duration_seconds: duration || 0,
-        status: 'processing',
-        tags: [],
-        stored_locally: false,
-        local_audio_size: file_size || 0,
-        file_path,
-        mime_type: mime_type || null,
-        transcription_status: 'processing',
-        has_transcription: false,
-        transcription_started_at: new Date().toISOString(),
-        module_id: module_id || null,
+      .update({
+        transcription: transcript,
+        summary: summary || null,
+        status: 'completed',
+        transcription_status: 'completed',
+        has_transcription: true,
+        transcription_completed_at: new Date().toISOString(),
       })
-      .select()
+      .eq('id', lectureId)
+      .select('user_id, module_id')
       .single();
 
-    if (insertError || !lecture) {
-      console.error('Error creating lecture:', insertError);
-      return NextResponse.json({ success: false, error: 'lecture_create_failed' }, { status: 500 });
+    if (updateError || !updatedLecture) {
+      await logWebhookEvent({
+        lectureId,
+        outcome: 'lecture_update_failed',
+        transcriptLength: transcript.length,
+        error: updateError?.message,
+        rawPayload: payload,
+      });
+      return NextResponse.json({ error: 'update_failed' }, { status: 500 });
     }
 
-    // Record credit usage now — the upload itself is what consumes the
-    // credit, independent of whether transcription ultimately succeeds.
-    if (module_id) {
+    // Credit usage is recorded here, on success, not at upload time — a
+    // lecture that fails processing shouldn't consume the student's credit.
+    if (updatedLecture.module_id) {
       const { error: creditError } = await supabaseAdmin.from('credits').insert({
-        user_id: user.id,
-        module_id,
-        lecture_id: lecture.id,
+        user_id: updatedLecture.user_id,
+        module_id: updatedLecture.module_id,
+        lecture_id: lectureId,
         used_for: 'upload',
       });
       if (creditError) {
@@ -94,71 +129,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate a signed URL so Deepgram can fetch the file directly from
-    // Supabase Storage — no chunking, no client-side decoding, no Vercel
-    // body-size limit, since the raw bytes never pass through our functions.
-    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin
-      .storage
-      .from('lecture-media')
-      .createSignedUrl(file_path, SIGNED_URL_EXPIRY_SECONDS);
-
-    if (signedUrlError || !signedUrlData?.signedUrl) {
-      console.error('Error creating signed URL:', signedUrlError);
-      await markLectureFailed(lecture.id, 'Could not generate signed URL for uploaded file');
-      return NextResponse.json({ success: true, lecture }); // lecture exists, but flagged failed above
-    }
-
-    // callback_method=POST + our own secret query param (Deepgram doesn't
-    // sign callbacks itself) + lecture_id so the webhook knows which lecture
-    // this result belongs to without needing a separate lookup table.
-    const callbackUrl = `${NEXT_PUBLIC_SITE_URL}/api/webhooks/deepgram?lecture_id=${lecture.id}&secret=${encodeURIComponent(DEEPGRAM_WEBHOOK_SECRET)}`;
-
-    const deepgramParams = new URLSearchParams({
-      model: 'nova-2',
-      smart_format: 'true',
-      callback: callbackUrl,
-      callback_method: 'POST',
+    await logWebhookEvent({
+      lectureId,
+      outcome: summaryError ? 'completed_without_summary' : 'completed',
+      transcriptLength: transcript.length,
+      error: summaryError,
+      rawPayload: null, // no need to store the full payload on success — it's large and rarely needed
     });
 
-    try {
-      const deepgramResponse = await fetch(`https://api.deepgram.com/v1/listen?${deepgramParams.toString()}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Token ${DEEPGRAM_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: signedUrlData.signedUrl }),
-      });
+    await notifyStudent(lectureId, 'completed');
+    await cleanupStorageFile(lectureId);
 
-      if (!deepgramResponse.ok) {
-        const errorText = await deepgramResponse.text().catch(() => '');
-        console.error('Deepgram submission failed:', deepgramResponse.status, errorText);
-        await markLectureFailed(lecture.id, `Deepgram submission failed: ${errorText}`);
-      }
-      // On success, Deepgram returns a request_id immediately and processes
-      // in the background — we don't wait for it. The webhook handles the
-      // rest whenever Deepgram actually finishes.
-    } catch (deepgramError: any) {
-      console.error('Error submitting to Deepgram:', deepgramError);
-      await markLectureFailed(lecture.id, deepgramError.message);
-    }
-
-    return NextResponse.json({ success: true, lecture });
+    return NextResponse.json({ success: true });
 
   } catch (error: any) {
-    console.error('Start processing error:', error);
-    return NextResponse.json({ success: false, error: 'server_error' }, { status: 500 });
+    console.error('Deepgram webhook error:', error);
+    await markLectureFailed(lectureId, error.message);
+    await logWebhookEvent({ lectureId, outcome: 'exception', error: error.message, rawPayload: payload });
+    await notifyStudent(lectureId, 'failed');
+    return NextResponse.json({ error: 'server_error' }, { status: 500 });
   }
 }
 
 async function markLectureFailed(lectureId: string, reason: string) {
   try {
-    const { data: lecture } = await supabaseAdmin
-      .from('lectures')
-      .select('file_path')
-      .eq('id', lectureId)
-      .single();
-
     await supabaseAdmin
       .from('lectures')
       .update({
@@ -168,16 +162,56 @@ async function markLectureFailed(lectureId: string, reason: string) {
         transcription_failed_at: new Date().toISOString(),
       })
       .eq('id', lectureId);
-
-    // Deepgram never picked this file up, so the webhook (which normally
-    // handles cleanup) will never fire — clean it up here instead.
-    if (lecture?.file_path) {
-      const { error } = await supabaseAdmin.storage.from('lecture-media').remove([lecture.file_path]);
-      if (error) {
-        console.error('Failed to clean up storage file after failed submission:', error);
-      }
-    }
   } catch (err) {
     console.error('Failed to mark lecture as failed:', err);
+  }
+}
+
+async function notifyStudent(lectureId: string, outcome: 'completed' | 'failed') {
+  try {
+    const { data: lecture } = await supabaseAdmin
+      .from('lectures')
+      .select('user_id, title')
+      .eq('id', lectureId)
+      .single();
+
+    if (!lecture) return;
+
+    const title = outcome === 'completed' ? 'Your lecture notes are ready 🎉' : 'Lecture processing failed';
+    const message = outcome === 'completed'
+      ? `"${lecture.title}" has been transcribed and summarized — open it to start studying.`
+      : `We couldn't process "${lecture.title}". This didn't use up a credit — please try uploading it again.`;
+
+    await supabaseAdmin.from('notifications').insert({
+      user_id: lecture.user_id,
+      type: 'lecture_ready',
+      title,
+      message,
+      metadata: { lecture_id: lectureId, outcome },
+    });
+  } catch (err) {
+    console.error('Failed to send lecture-ready notification:', err);
+  }
+}
+
+// The raw uploaded file is only needed for Deepgram to fetch it — once
+// processing finishes (successfully or not), it can be deleted to keep
+// Supabase Storage usage bounded rather than growing with every upload.
+async function cleanupStorageFile(lectureId: string) {
+  try {
+    const { data: lecture } = await supabaseAdmin
+      .from('lectures')
+      .select('file_path')
+      .eq('id', lectureId)
+      .single();
+
+    if (!lecture?.file_path) return;
+
+    const { error } = await supabaseAdmin.storage.from('lecture-media').remove([lecture.file_path]);
+    if (error) {
+      console.error('Failed to clean up storage file:', error);
+    }
+  } catch (err) {
+    console.error('Failed to clean up storage file:', err);
   }
 }
