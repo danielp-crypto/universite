@@ -101,7 +101,11 @@ export async function POST(request: NextRequest) {
     // callback_method=POST + our own secret query param (Deepgram doesn't
     // sign callbacks itself) + lecture_id so the webhook knows which lecture
     // this result belongs to without needing a separate lookup table.
-    const callbackUrl = `${NEXT_PUBLIC_SITE_URL}/api/webhooks/deepgram?lecture_id=${lecture.id}&secret=${encodeURIComponent(DEEPGRAM_WEBHOOK_SECRET)}`;
+    // Path-based callback (no nested query string) — lecture_id and our
+    // shared secret are URL path segments instead of query params, avoiding
+    // a callback URL that itself contains "?...&..." as a parameter value,
+    // which Deepgram rejected with "Invalid query string" when tried.
+    const callbackUrl = `${NEXT_PUBLIC_SITE_URL}/api/webhooks/deepgram/${lecture.id}/${encodeURIComponent(DEEPGRAM_WEBHOOK_SECRET)}`;
 
     const deepgramParams = new URLSearchParams({
       model: 'nova-2',
@@ -158,6 +162,15 @@ async function markLectureFailed(lectureId: string, reason: string) {
         transcription_failed_at: new Date().toISOString(),
       })
       .eq('id', lectureId);
+
+    // Same log table the Deepgram webhook writes to — this lets you see the
+    // full picture (both "failed before Deepgram ever got it" and "Deepgram
+    // itself rejected it") in one place via Supabase Table Editor.
+    await supabaseAdmin.from('deepgram_webhook_logs').insert({
+      lecture_id: lectureId,
+      outcome: 'failed_before_submission',
+      error: reason,
+    });
 
     // Deepgram never picked this file up, so the webhook (which normally
     // handles cleanup) will never fire — clean it up here instead.

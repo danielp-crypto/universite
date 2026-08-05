@@ -27,13 +27,15 @@ async function logWebhookEvent(entry: {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const lectureId = request.nextUrl.searchParams.get('lecture_id');
-  const secret = request.nextUrl.searchParams.get('secret');
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ lectureId: string; secret: string }> }
+) {
+  const { lectureId, secret } = await params;
 
   // Deepgram doesn't sign callback requests itself, so this shared secret
-  // (embedded in the callback URL we gave Deepgram) is what stops a random
-  // internet request from spoofing a lecture completion.
+  // (embedded in the callback URL path we gave Deepgram) is what stops a
+  // random internet request from spoofing a lecture completion.
   if (!DEEPGRAM_WEBHOOK_SECRET || secret !== DEEPGRAM_WEBHOOK_SECRET) {
     await logWebhookEvent({ lectureId, outcome: 'unauthorized', error: 'Invalid or missing secret' });
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
