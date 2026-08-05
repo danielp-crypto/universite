@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
+import crypto from 'crypto';
 
 const DEEPGRAM_WEBHOOK_SECRET = process.env.DEEPGRAM_WEBHOOK_SECRET || '';
 const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
@@ -36,7 +37,10 @@ export async function POST(
   // Deepgram doesn't sign callback requests itself, so this shared secret
   // (embedded in the callback URL path we gave Deepgram) is what stops a
   // random internet request from spoofing a lecture completion.
-  if (!DEEPGRAM_WEBHOOK_SECRET || secret !== DEEPGRAM_WEBHOOK_SECRET) {
+  // We now use a hash of the secret instead of the full secret to avoid
+  // URL encoding issues with special characters.
+  const secretHash = crypto.createHash('sha256').update(DEEPGRAM_WEBHOOK_SECRET).digest('hex').substring(0, 16);
+  if (!DEEPGRAM_WEBHOOK_SECRET || secret !== secretHash) {
     await logWebhookEvent({ lectureId, outcome: 'unauthorized', error: 'Invalid or missing secret' });
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
