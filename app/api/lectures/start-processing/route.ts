@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
-import crypto from 'crypto';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
@@ -106,22 +105,13 @@ export async function POST(request: NextRequest) {
     // shared secret are URL path segments instead of query params, avoiding
     // a callback URL that itself contains "?...&..." as a parameter value,
     // which Deepgram rejected with "Invalid query string" when tried.
-    // Use a simple hash of the secret instead of the full secret to avoid
-    // special characters that might cause URL encoding issues.
-    const secretHash = crypto.createHash('sha256').update(DEEPGRAM_WEBHOOK_SECRET).digest('hex').substring(0, 16);
-    const callbackUrl = `${NEXT_PUBLIC_SITE_URL}/api/webhooks/deepgram/${lecture.id}/${secretHash}`;
+    const callbackUrl = `${NEXT_PUBLIC_SITE_URL}/api/webhooks/deepgram/${lecture.id}/${encodeURIComponent(DEEPGRAM_WEBHOOK_SECRET)}`;
 
     const deepgramParams = new URLSearchParams({
       model: 'nova-2',
       smart_format: 'true',
       callback: callbackUrl,
       callback_method: 'POST',
-    });
-
-    console.log('Deepgram submission details:', {
-      url: `https://api.deepgram.com/v1/listen?${deepgramParams.toString()}`,
-      callbackUrl,
-      params: deepgramParams.toString()
     });
 
     try {
@@ -137,12 +127,6 @@ export async function POST(request: NextRequest) {
       if (!deepgramResponse.ok) {
         const errorText = await deepgramResponse.text().catch(() => '');
         console.error('Deepgram submission failed:', deepgramResponse.status, errorText);
-        console.error('Full error details:', {
-          status: deepgramResponse.status,
-          errorText,
-          callbackUrl,
-          params: deepgramParams.toString()
-        });
         await markLectureFailed(lecture.id, `Deepgram submission failed: ${errorText}`);
       }
       // On success, Deepgram returns a request_id immediately and processes
