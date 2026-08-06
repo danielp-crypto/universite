@@ -72,12 +72,23 @@ export default function Notifications({ onNotificationCountChange }: Notificatio
       const session = await getSession();
       if (!session) return;
 
-      await fetch(`/api/notifications/${notificationId}/read`, {
+      const response = await fetch(`/api/notifications/${notificationId}/read`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       });
+
+      if (!response.ok) {
+        console.error('Failed to mark notification as read:', response.status);
+        return;
+      }
+
+      const result = await response.json();
+      if (!result.marked) {
+        console.error('Notification read update matched no rows:', notificationId);
+        return;
+      }
 
       setNotifications(prev =>
         prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
@@ -99,20 +110,26 @@ export default function Notifications({ onNotificationCountChange }: Notificatio
 
       const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
       
-      await Promise.all(
+      const results = await Promise.all(
         unreadIds.map(id =>
           fetch(`/api/notifications/${id}/read`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${session.access_token}`
             }
-          })
+          }).then(res => ({ id, ok: res.ok }))
         )
       );
 
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      const succeededIds = new Set(results.filter(r => r.ok).map(r => r.id));
+      if (succeededIds.size < unreadIds.length) {
+        console.error('Some notifications failed to mark as read:', unreadIds.filter(id => !succeededIds.has(id)));
+      }
+
+      setNotifications(prev => prev.map(n => succeededIds.has(n.id) ? { ...n, read: true } : n));
+      const remainingUnread = notifications.filter(n => !succeededIds.has(n.id) && !n.read).length;
       if (onNotificationCountChange) {
-        onNotificationCountChange(0);
+        onNotificationCountChange(remainingUnread);
       }
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -135,6 +152,8 @@ export default function Notifications({ onNotificationCountChange }: Notificatio
         return '📊';
       case 'streak_reminder':
         return '🔥';
+      case 'lecture_ready':
+        return '📝';
       default:
         return '🔔';
     }
@@ -150,6 +169,8 @@ export default function Notifications({ onNotificationCountChange }: Notificatio
         return 'from-blue-50 to-indigo-50 border-blue-200';
       case 'streak_reminder':
         return 'from-amber-50 to-orange-50 border-amber-200';
+      case 'lecture_ready':
+        return 'from-indigo-50 to-blue-50 border-indigo-200';
       default:
         return 'from-slate-50 to-gray-50 border-slate-200';
     }

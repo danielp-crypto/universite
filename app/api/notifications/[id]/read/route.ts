@@ -29,16 +29,23 @@ export async function POST(
 
     const { id: notificationId } = await params;
 
-    // Mark notification as read using the database function
-    const { data, error } = await supabaseAdmin.rpc('mark_notification_read', {
-      p_notification_id: notificationId
-    });
+    // Direct update instead of the mark_notification_read RPC function —
+    // that function matched on `user_id = auth.uid()`, but auth.uid() is
+    // always NULL when called via the service role client (no user JWT
+    // context), so the update silently matched zero rows every time.
+    const { data, error } = await supabaseAdmin
+      .from('notifications')
+      .update({ read: true, read_at: new Date().toISOString() })
+      .eq('id', notificationId)
+      .eq('user_id', user.id)
+      .select('id')
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, marked: data });
+    return NextResponse.json({ success: true, marked: !!data });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
