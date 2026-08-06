@@ -108,14 +108,12 @@ export async function POST(request: NextRequest) {
     const callbackUrl = `${NEXT_PUBLIC_SITE_URL}/api/webhooks/deepgram/${lecture.id}/${encodeURIComponent(DEEPGRAM_WEBHOOK_SECRET)}`;
 
     const deepgramParams = new URLSearchParams({
-      model: 'nova-2',
-      smart_format: 'true',
       callback: callbackUrl,
-      callback_method: 'POST',
     });
 
     try {
-      const deepgramResponse = await fetch(`https://api.deepgram.com/v1/listen?${deepgramParams.toString()}`, {
+      const deepgramUrl = `https://api.deepgram.com/v1/listen?${deepgramParams.toString()}`;
+      const deepgramResponse = await fetch(deepgramUrl, {
         method: 'POST',
         headers: {
           Authorization: `Token ${DEEPGRAM_API_KEY}`,
@@ -127,7 +125,7 @@ export async function POST(request: NextRequest) {
       if (!deepgramResponse.ok) {
         const errorText = await deepgramResponse.text().catch(() => '');
         console.error('Deepgram submission failed:', deepgramResponse.status, errorText);
-        await markLectureFailed(lecture.id, `Deepgram submission failed: ${errorText}`);
+        await markLectureFailed(lecture.id, `Deepgram submission failed (URL sent: ${deepgramUrl}): ${errorText}`);
       }
       // On success, Deepgram returns a request_id immediately and processes
       // in the background — we don't wait for it. The webhook handles the
