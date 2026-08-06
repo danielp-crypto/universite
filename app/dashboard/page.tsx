@@ -1205,10 +1205,10 @@ function HomePageContent() {
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-105 flex items-center justify-center animate-pulse-recording">
                 <div className="w-12 h-12 rounded-full bg-red-500"></div>
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">Recording</h3>
+              <h3 className="text-xl font-semibold text-slate-800 mb-2">Recording Your Lecture</h3>
               <div className="text-2xl font-mono text-slate-900 mb-4">{recordingTimer}</div>
               <p className="text-slate-400 text-xs mb-4">
-                Keep this tab open and your screen on while recording.
+                This tab and your screen are kept on while recording.
               </p>
               <div className="flex gap-3">
                 <button
@@ -1260,7 +1260,7 @@ function HomePageContent() {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-800 mb-4">Processing Recording</h3>
+                <h3 className="text-xl font-semibold text-slate-800 mb-4">Processing Lecture</h3>
                 
                 {/* Progress Steps */}
                 <div className="space-y-3 mb-4">
