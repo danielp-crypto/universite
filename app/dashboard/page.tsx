@@ -10,7 +10,6 @@ import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
 import Alert from '../components/Alert';
 import Notifications from '../components/Notifications';
-import { transcribeAudioChunked, describePartialFailure } from '@/lib/audio/chunkedTranscribe';
 
 function HomePageContent() {
   const router = useRouter();
@@ -470,6 +469,21 @@ function HomePageContent() {
   };
 
   const saveRecording = async (blob: Blob) => {
+    // Check if module is selected
+    if (!selectedModule) {
+      showAlert('Module Required', 'Please select a module before recording a lecture.', 'warning');
+      setRecordingState('idle');
+      return;
+    }
+
+    // Check if user has credits available
+    if (globalCredits.used >= globalCredits.allocated) {
+      showAlert('No Credits', 'You have used all your credits. Please upgrade to continue.', 'warning');
+      setRecordingState('idle');
+      router.push('/pricing');
+      return;
+    }
+
     try {
       // Update streak immediately when recording is saved
       updateStreak();
@@ -478,66 +492,37 @@ function HomePageContent() {
         ? Math.floor((Date.now() - recordingStartTimeRef.current) / 1000)
         : 0;
 
-      const mins = Math.floor(elapsed / 60);
-      const secs = elapsed % 60;
-      const durationStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
-      // Initialize processing steps
-      const steps = [
-        'Processing audio for transcription...',
-        'Transcribing audio with AI...',
-        'Generating your study assets...',
-        'Finalizing lecture...'
-      ];
-      setProcessingSteps(steps);
-      setCurrentStep(0);
-      setProcessingText(steps[0]);
+      setProcessingText('Uploading recording...');
 
       const session = await getSession();
       if (!session) {
         setProcessingError('Please log in to save recordings');
+        setRecordingState('idle');
         return;
       }
 
-      // Step 1: Transcribe audio (decoded + chunked client-side so long
-      // recordings don't exceed Vercel's 4.5MB function body limit)
-      setProcessingText(steps[0]);
-      const transcribeData = await transcribeAudioChunked(blob, session.access_token, (msg) =>
-        setProcessingText(msg)
-      );
+      // Same async pipeline as file uploads: upload straight to Supabase
+      // Storage, hand off to Deepgram, and return immediately — the student
+      // doesn't need to stay in the lecture hall waiting for transcription
+      // and summary generation to finish.
+      const storagePath = `${session.user.id}/${crypto.randomUUID()}.webm`;
 
-      if (!transcribeData.success) {
-        setProcessingError(transcribeData.error || 'Failed to transcribe audio. Please try again.');
+      const { error: uploadError } = await supabase.storage
+        .from('lecture-media')
+        .upload(storagePath, blob, { contentType: 'audio/webm' });
+
+      if (uploadError) {
+        console.error('Error uploading recording to storage:', uploadError);
+        setProcessingError('Failed to upload recording. Please try again.');
+        setRecordingState('idle');
         return;
       }
 
-      const transcript = transcribeData.transcript;
-      const partialTranscriptionWarning = describePartialFailure(transcribeData);
+      setProcessingText('Starting transcription...');
 
-      setCurrentStep(1);
-      setProcessingText(steps[1]);
-
-      // Step 2: Generate summary
-      const summaryResponse = await fetch('/api/generate-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript })
-      });
-
-      let summary = '';
-      if (summaryResponse.ok) {
-        const summaryData = await summaryResponse.json();
-        summary = summaryData.summary;
-      }
-
-      setCurrentStep(2);
-      setProcessingText(steps[2]);
-
-      // Step 3: Create lecture in Supabase
-      // Generate lecture number based on existing lectures
       const lectureNumber = lectures.length + 1;
 
-      const lectureResponse = await fetch('/api/lectures', {
+      const startResponse = await fetch('/api/lectures/start-processing', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -546,65 +531,33 @@ function HomePageContent() {
         body: JSON.stringify({
           title: `Lecture ${lectureNumber}`,
           duration: elapsed,
-          transcription: transcript,
-          summary: summary,
           module_id: selectedModule,
-          stored_locally: true,
-          local_audio_size: blob.size
+          mime_type: 'audio/webm',
+          file_path: storagePath,
+          file_size: blob.size
         })
       });
 
-      if (!lectureResponse.ok) {
-        setProcessingError('Failed to save lecture to Supabase. Please try again.');
+      if (!startResponse.ok) {
+        setProcessingError('Failed to start processing. Please try again.');
+        setRecordingState('idle');
         return;
       }
 
-      const lectureResponseData = await lectureResponse.json();
-      const lectureData = lectureResponseData.lecture;
-
-      setCurrentStep(3);
-      setProcessingText(steps[3]);
-
-      // Record credit usage
-      if (selectedModule) {
-        await supabase.from('credits').insert({
-          user_id: session.user.id,
-          module_id: selectedModule,
-          lecture_id: lectureData.id,
-          used_for: 'recording'
-        });
-        // Reload modules to update global credit display
-        loadModules();
-      }
-
-      // Discard audio blob - don't save to localStorage to save space
-      // The lecture is now stored in Supabase with transcript and summary
-
       updateStreak();
-
       setRecordingState('idle');
       loadData();
 
-      // Show notification with view button. When some audio segments
-      // failed to transcribe, fold that into the same alert (as a warning)
-      // rather than firing a second alert that would just get overwritten
-      // once this one shows — the two-alert queue only holds one at a time.
-      const lectureTitleForAlert = lectureData.title.length > 30
-        ? lectureData.title.substring(0, 30) + '...'
-        : lectureData.title;
-
       showAlert(
-        'Your study assets are ready',
-        partialTranscriptionWarning
-          ? `${lectureTitleForAlert} ${partialTranscriptionWarning}`
-          : lectureTitleForAlert,
-        partialTranscriptionWarning ? 'warning' : 'success',
-        `/lecture-detail?id=${lectureData.id}`
+        'Recording saved — processing started',
+        "We're transcribing and summarizing your lecture now. You'll get a notification when it's ready — no need to wait around.",
+        'success'
       );
 
     } catch (error) {
       console.error('Error saving recording:', error);
       setProcessingError('An unexpected error occurred. Please try again.');
+      setRecordingState('idle');
     }
   };
 
