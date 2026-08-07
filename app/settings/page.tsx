@@ -389,7 +389,7 @@ export default function SettingsPage() {
                   ⏰
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-slate-900">Daily Study Goal</div>
+                  <div className="font-medium text-black">Daily Study Goal</div>
                   <div className="text-xs text-slate-500">{dailyGoal} hours per day</div>
                 </div>
               </div>
@@ -535,7 +535,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-slate-800">Weekly Summary 📊</div>
+                      <div className="font-medium text-black">Weekly Summary 📊</div>
                       <div className="text-sm text-slate-500">Get weekly progress summaries</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -551,7 +551,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-slate-800">Streak Reminders 🔥</div>
+                      <div className="font-medium text-black">Streak Reminders 🔥</div>
                       <div className="text-sm text-slate-500">Remind to maintain learning streak</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -566,7 +566,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block font-medium text-slate-900 mb-2">Reminder Time</label>
+                    <label className="block font-medium text-black mb-2">Reminder Time</label>
                     <input
                       type="time"
                       value={notificationPrefs.reminder_time}
@@ -648,7 +648,7 @@ export default function SettingsPage() {
           <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-900">Daily Study Goal</h2>
+                <h2 className="text-xl font-semibold text-black">Daily Study Goal</h2>
                 <button onClick={() => setShowDailyGoal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
                   ✕
                 </button>
