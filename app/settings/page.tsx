@@ -662,7 +662,7 @@ export default function SettingsPage() {
                       <button
                         key={hours}
                         onClick={() => setDailyGoal(hours)}
-                        className={`px-3 py-2 border rounded-lg text-sm transition-colors ${
+                        className={`px-3 py-2 border rounded-lg text-sm text-black transition-colors ${
                           dailyGoal === hours ? 'border-indigo-300 bg-indigo-50 font-medium' : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50'
                         }`}
                       >
