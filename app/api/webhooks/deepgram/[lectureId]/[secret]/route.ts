@@ -179,10 +179,17 @@ async function notifyStudent(lectureId: string, outcome: 'completed' | 'failed')
 
     if (!lecture) return;
 
+    // Truncate lecture title if it's too long for notification display
+    const truncateTitle = (title: string, maxLength: number = 30) => {
+      return title.length > maxLength ? title.substring(0, maxLength) + '...' : title;
+    };
+
+    const truncatedTitle = truncateTitle(lecture.title);
+
     const title = outcome === 'completed' ? 'Your lecture notes are ready 🎉' : 'Lecture processing failed';
     const message = outcome === 'completed'
-      ? `"${lecture.title}" has been transcribed and summarized — open it to start studying.`
-      : `We couldn't process "${lecture.title}". This didn't use up a credit — please try uploading it again.`;
+      ? `"${truncatedTitle}" has been transcribed and summarized — open it to start studying.`
+      : `We couldn't process "${truncatedTitle}". This didn't use up a credit — please try uploading it again.`;
 
     await supabaseAdmin.from('notifications').insert({
       user_id: lecture.user_id,
