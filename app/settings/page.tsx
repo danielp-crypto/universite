@@ -571,7 +571,7 @@ export default function SettingsPage() {
                       type="time"
                       value={notificationPrefs.reminder_time}
                       onChange={(e) => setNotificationPrefs(prev => ({ ...prev, reminder_time: e.target.value }))}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
                     />
                   </div>
                 </div>
