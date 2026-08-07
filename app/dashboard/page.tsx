@@ -320,7 +320,22 @@ function HomePageContent() {
       if (recordingTimerIntervalRef.current) clearInterval(recordingTimerIntervalRef.current);
     };
   }, []);
+// The upload/recording pipeline processes lectures asynchronously in the
+  // background (Deepgram + summary generation) — loadData() only fetches
+  // once on mount, so without this, a lecture that finishes while the
+  // student is still on the dashboard would show "Processing" forever until
+  // they navigate away and back (which forces a fresh fetch). Poll while
+  // anything is still processing, and stop automatically once nothing is.
+  useEffect(() => {
+    const hasProcessing = lectures.some((l: any) => l.status === 'processing');
+    if (!hasProcessing) return;
 
+    const interval = setInterval(() => {
+      loadData();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [lectures]);
   // Warn before the tab is closed/refreshed while a recording is in progress
   // or being transcribed/summarized — there's no queue yet, so navigating
   // away mid-recording or mid-processing loses the recording entirely.
