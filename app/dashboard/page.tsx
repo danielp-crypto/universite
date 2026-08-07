@@ -10,6 +10,7 @@ import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
 import Alert from '../components/Alert';
 import Notifications from '../components/Notifications';
+import { uploadWithProgress } from '@/lib/supabase/uploadWithProgress';
 
 function HomePageContent() {
   const router = useRouter();
@@ -55,6 +56,7 @@ function HomePageContent() {
   const [recordingTimer, setRecordingTimer] = useState('00:00');
   const [processingText, setProcessingText] = useState('Saving audio...');
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const mediaRecorderRef = useRef<any>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -67,6 +69,7 @@ function HomePageContent() {
 
   const RECORDINGS_STORAGE_KEY = 'universite_recordings';
   const STREAK_STORAGE_KEY = 'universite_streak';
+  const MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 
   // Helper to load recordings
   const getRecordings = () => {
@@ -499,6 +502,16 @@ function HomePageContent() {
       return;
     }
 
+    if (blob.size > MAX_UPLOAD_SIZE_BYTES) {
+      showAlert(
+        'Recording too large',
+        `This recording is ${(blob.size / (1024 * 1024)).toFixed(1)}MB, over the 50MB limit. This is unusual for audio — please try a shorter recording.`,
+        'warning'
+      );
+      setRecordingState('idle');
+      return;
+    }
+
     try {
       // Update streak immediately when recording is saved
       updateStreak();
@@ -508,11 +521,13 @@ function HomePageContent() {
         : 0;
 
       setProcessingText('Uploading recording...');
+      setUploadProgress(0);
 
       const session = await getSession();
       if (!session) {
         setProcessingError('Please log in to save recordings');
         setRecordingState('idle');
+        setUploadProgress(null);
         return;
       }
 
@@ -520,19 +535,30 @@ function HomePageContent() {
       // Storage, hand off to Deepgram, and return immediately — the student
       // doesn't need to stay in the lecture hall waiting for transcription
       // and summary generation to finish.
-      const storagePath = `${session.user.id}/${crypto.randomUUID()}.webm`;
+      const randomId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const storagePath = `${session.user.id}/${randomId}.webm`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('lecture-media')
-        .upload(storagePath, blob, { contentType: 'audio/webm' });
-
-      if (uploadError) {
+      try {
+        await uploadWithProgress(
+          'lecture-media',
+          storagePath,
+          blob,
+          session.access_token,
+          'audio/webm',
+          (percent) => {
+            setUploadProgress(percent);
+            setProcessingText(`Uploading recording... ${percent}%`);
+          }
+        );
+      } catch (uploadError) {
         console.error('Error uploading recording to storage:', uploadError);
         setProcessingError('Failed to upload recording. Please try again.');
         setRecordingState('idle');
+        setUploadProgress(null);
         return;
       }
 
+      setUploadProgress(null);
       setProcessingText('Starting transcription...');
 
       const lectureNumber = lectures.length + 1;
@@ -573,6 +599,7 @@ function HomePageContent() {
       console.error('Error saving recording:', error);
       setProcessingError('An unexpected error occurred. Please try again.');
       setRecordingState('idle');
+      setUploadProgress(null);
     }
   };
 
@@ -662,6 +689,15 @@ function HomePageContent() {
       return;
     }
 
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      showAlert(
+        'File too large',
+        `This file is ${(file.size / (1024 * 1024)).toFixed(1)}MB. The maximum allowed size is 50MB — try a shorter recording or a more compressed format.`,
+        'warning'
+      );
+      return;
+    }
+
     try {
       // Update streak immediately when file is uploaded
       updateStreak();
@@ -669,12 +705,14 @@ function HomePageContent() {
       setProcessingSteps(['Uploading file...']);
       setCurrentStep(0);
       setProcessingText('Uploading file...');
+      setUploadProgress(0);
       setRecordingState('processing');
       setProcessingError(null);
 
       const session = await getSession();
       if (!session) {
         setProcessingError('Please log in to upload recordings');
+        setUploadProgress(null);
         return;
       }
 
@@ -694,19 +732,30 @@ function HomePageContent() {
       // Vercel body-size limit to work around, and it works the same way
       // regardless of file length.
       const fileExt = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
-      const storagePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
+      const randomId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const storagePath = `${session.user.id}/${randomId}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('lecture-media')
-        .upload(storagePath, file, { contentType: file.type });
-
-      if (uploadError) {
+      try {
+        await uploadWithProgress(
+          'lecture-media',
+          storagePath,
+          file,
+          session.access_token,
+          file.type,
+          (percent) => {
+            setUploadProgress(percent);
+            setProcessingText(`Uploading file... ${percent}%`);
+          }
+        );
+      } catch (uploadError) {
         console.error('Error uploading to storage:', uploadError);
         setProcessingError('Failed to upload file. Please try again.');
         setRecordingState('idle');
+        setUploadProgress(null);
         return;
       }
 
+      setUploadProgress(null);
       setProcessingText('Starting transcription...');
 
       // Create the lecture immediately (as "processing") and hand off to
@@ -752,6 +801,7 @@ function HomePageContent() {
       console.error('Error uploading recording:', error);
       setProcessingError('An unexpected error occurred. Please try again.');
       setRecordingState('idle');
+      setUploadProgress(null);
     }
   };
 
