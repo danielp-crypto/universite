@@ -83,12 +83,12 @@ Extracted content:\n\n`;
 
 const REDUCE_PROMPT_CONCEPTS_GLOSSARY = REDUCE_PREAMBLE + `Produce exactly these two sections, in this order:
 
-## Key Concepts [exactly 5 one-word terms]
+## Key Concepts [5-8 one-word terms]
 Pick which [DEF]/[FORMULA] items to keep using this priority order, in this order:
   1. Anything whose term also appears in a [FLAG] item — these are confirmed exam-relevant. Always include first.
   2. Terms that show up in [DEF]/[FORMULA] bullets from more than one chunk — repetition means the lecturer kept returning to it.
   3. Foundational terms the rest of the lecture depends on, over one-off mentions.
-You MUST return exactly 5 terms. If fewer than 5 meet the importance criteria, pick the next most relevant terms from the lecture content.
+Return between 5 and 8 terms — as many as are genuinely important, not padded to hit a target. A short or narrow lecture might only have 5 real concepts worth flagging; that's fine. Under-filling is always better than manufacturing extra terms just to reach a number.
 
 Term rules — get this right, it matters most:
 - Term = 1 word MAX. The actual name of the concept, as it would appear in a glossary or index. Never a sentence, question, or clause.
@@ -107,12 +107,11 @@ List all formulas mentioned in the lecture with when to use them. If no formulas
 - Formula 1: When to use it
 - Formula 2: When to use it
 
-### Definitions [exactly 10 terms]
-ALWAYS output exactly 10 terms, using this priority order:
+### Definitions [as many as genuinely warranted]
+List every term the lecture actually used or relied on that a student would need defined to follow the material, using this priority order:
   1. Terms the lecturer explicitly defined, in their own words — highest priority, use their specific phrasing/examples.
   2. Subject-specific or technical terms the lecturer used, wrote on a slide, or referenced without stopping to define — write a concise, standard definition for these based on the subject area. This is expected, not optional: a real glossary defines the vocabulary of the lecture, not just the sentences where the lecturer paused to explain something.
-  3. If, even combining 1 and 2, the lecture doesn't yield 10 distinct terms (e.g. a very short or very informal lecture), add foundational terms from the lecture's general subject area that a student would need in order to understand what was taught — still clearly grounded in the actual topic, not arbitrary.
-Never leave this section short of 10 terms and never write "Not covered in this lecture" here — that fallback applies elsewhere, not to the glossary.
+There is no target count — a technical, jargon-heavy lecture might warrant 15+ terms, while a short or conversational one might genuinely only have 4 or 5. Do NOT add generic subject-area terms just to pad toward a round number — every term here must trace back to something the lecture actually said or used. Under-filling is always better than inventing filler entries.
 - **Term**: Definition
 - **Term**: Definition
 ` + REDUCE_FOOTER;
@@ -147,24 +146,18 @@ Format:
 - "You'll see this in your assessment" — Concept
 - "Repeated X times" — Concept appears strongly emphasized
 
-## Summary: 10-Bullet Pass Guarantee
-If you only study 10 things, study these. Each = 1 sentence. No fluff.
+## Summary: Pass Guarantee
+If you only study these, you'll cover what matters. Each point = 1 sentence, no fluff. Use 5-10 points — as many as the lecture genuinely supports, not padded to reach 10. A dense lecture might need all 10; a narrower one might only have 6 real points. Don't repeat the same point twice just to lengthen the list.
 1. [First key point]
 2. [Second key point]
 3. [Third key point]
-4. [Fourth key point]
-5. [Fifth key point]
-6. [Sixth key point]
-7. [Seventh key point]
-8. [Eighth key point]
-9. [Ninth key point]
-10. [Tenth key point]
+...continue for as many points as are genuinely warranted, up to 10.
 ` + REDUCE_FOOTER;
 
 const REDUCE_PROMPT_TESTS_QUIZ = REDUCE_PREAMBLE + `Produce exactly these two sections, in this order:
 
-## Test Predictor: 10 Exam-Style Questions + Memo
-Create 10 exam-style questions using Bloom's taxonomy. Base ONLY on transcript facts. Include a memo/model answer for each question. These are "Test Predictor" questions designed to predict what will appear on actual exams.
+## Test Predictor: Exam-Style Questions + Memo
+Create 5-10 exam-style questions using Bloom's taxonomy — as many as the lecture's content genuinely supports, not padded to reach 10. Base ONLY on transcript facts. Include a memo/model answer for each question. These are "Test Predictor" questions designed to predict what will appear on actual exams. If the lecture only has enough distinct testable content for 5 or 6 solid questions, stop there — never invent a scenario or fact not grounded in the transcript just to reach a higher count.
 
 Format:
 Q1 [Recall]: What is ___?
@@ -182,23 +175,10 @@ A4: [Detailed model answer based on transcript]
 Q5 [Evaluate]: Which is better for ___ and why?
 A5: [Detailed model answer based on transcript]
 
-Q6 [Recall]: ___
-A6: [Detailed model answer based on transcript]
-
-Q7 [Understand]: ___
-A7: [Detailed model answer based on transcript]
-
-Q8 [Apply]: ___
-A8: [Detailed model answer based on transcript]
-
-Q9 [Analyze]: ___
-A9: [Detailed model answer based on transcript]
-
-Q10 [Evaluate]: ___
-A10: [Detailed model answer based on transcript]
+...continue in this pattern, cycling through Recall/Understand/Apply/Analyze/Evaluate question types, for as many questions as the lecture's content genuinely supports — up to 10, but stop earlier if the material runs out rather than padding.
 
 ## Quiz Bank: 10 Multiple Choice Questions
-Create 10 multiple-choice questions testing the same concepts as the Test Predictor questions above, so students can self-test with clickable options instead of only reading model answers. Base ONLY on transcript facts. Each question needs exactly 4 options (A-D) and exactly one correct answer. Wrong options must be plausible and topic-relevant — things a student who half-understood the lecture might pick — never silly, joke, or obviously-wrong answers.
+Create exactly 10 multiple-choice questions testing concepts from the lecture, so students can self-test with clickable options instead of only reading model answers. Unlike the Test Predictor above, this section keeps a fixed count of 10 regardless of lecture length, since it powers a scored self-test in the app — pull from the full scope of what was covered (including material beyond the Test Predictor questions if needed) to reach 10 distinct, non-repetitive questions. Base ONLY on transcript facts — never invent facts to fill a slot; if the lecture is genuinely thin, it's fine for some questions to test the same concept from a different angle rather than inventing new facts. Each question needs exactly 4 options (A-D) and exactly one correct answer. Wrong options must be plausible and topic-relevant — things a student who half-understood the lecture might pick — never silly, joke, or obviously-wrong answers.
 
 Format exactly like this for all 10 questions, with no extra commentary before, between, or after them:
 MCQ1: [question text]
@@ -576,10 +556,10 @@ _These are simplified, auto-extracted notes. Full AI-generated notes could not b
 ## Assessment Hints Detected
 Not covered in this lecture.
 
-## Summary: 10-Bullet Pass Guarantee
+## Summary: Pass Guarantee
 ${bullets}
 
-## Test Predictor: 10 Exam-Style Questions + Memo
+## Test Predictor: Exam-Style Questions + Memo
 Not covered in this lecture.
 
 ## Quiz Bank: 10 Multiple Choice Questions
