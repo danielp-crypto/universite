@@ -1128,7 +1128,7 @@ function LectureDetailPageContent() {
                         const summaryItems = summaryText.split(/\d+\.\s*/).filter((s: string) => s.trim());
                         const summaryContent = summaryItems.join('|||');
                         sections.push({
-                          title: '10-Bullet Pass Guarantee',
+                          title: 'Bullet Pass Guarantee',
                           content: summaryContent,
                           icon: '🎯',
                           style: 'emerald'
