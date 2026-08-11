@@ -1090,11 +1090,9 @@ function LectureDetailPageContent() {
                           className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Regenerate notes"
                         >
-                          🔄 Regenerate
+                          🔄 Regenerate Notes
                         </button>
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                          AI Generated
-                        </span>
+                        
                         <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
                           📊 Add slides for context
                         </span>
