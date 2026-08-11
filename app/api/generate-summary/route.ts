@@ -252,20 +252,23 @@ D) [option text]
 CORRECT: [A, B, C, or D]
 ` + REDUCE_FOOTER;
 
-// Shared Gemini call with retry + exponential backoff. A single transient
-// failure (rate limit, 5xx, or an empty/safety-blocked response) used to
-// propagate straight up and blow away an otherwise-successful map step,
-// collapsing the whole summary down to the crude fallback. Retrying here
-// first means most transient failures never reach that point.
+// Shared Gemini call with retry + backoff. Rate limiting (HTTP 429) needs a
+// fundamentally different backoff strategy than other transient failures:
+// Gemini's free tier quota resets on a per-minute window, so a 1-4 second
+// exponential backoff is pointless against it — by the time you retry,
+// you're still in the same rate-limited window. This waits long enough to
+// actually clear it, honoring a Retry-After header if Gemini provides one.
 async function callGemini(
   body: Record<string, unknown>,
   context: string,
   maxRetries: number
 ): Promise<{ text: string; finishReason?: string }> {
-  let retryDelay = 1000;
+  let retryDelay = 2000;
   let lastError = '';
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
+    let wasRateLimited = false;
+
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
@@ -296,6 +299,14 @@ async function callGemini(
         // returning nothing for the given input — worth retrying rather
         // than treating an empty string as a valid summary.
         lastError = `empty response (finishReason: ${finishReason || 'unknown'})`;
+      } else if (response.status === 429) {
+        wasRateLimited = true;
+        const retryAfterHeader = response.headers.get('retry-after');
+        const retryAfterMs = retryAfterHeader ? parseInt(retryAfterHeader, 10) * 1000 : NaN;
+        // Honor Retry-After if Gemini sent one; otherwise wait long enough
+        // to clear a typical per-minute quota window rather than guessing low.
+        retryDelay = !isNaN(retryAfterMs) ? retryAfterMs : Math.max(retryDelay, 20000);
+        lastError = `HTTP 429 (rate limited): ${await response.text()}`;
       } else {
         lastError = `HTTP ${response.status}: ${await response.text()}`;
       }
@@ -307,7 +318,12 @@ async function callGemini(
 
     if (attempt < maxRetries - 1) {
       await new Promise(resolve => setTimeout(resolve, retryDelay));
-      retryDelay *= 2;
+      // Only escalate exponentially for non-rate-limit errors — a 429's
+      // wait time was already set explicitly above and shouldn't also
+      // double on top of that.
+      if (!wasRateLimited) {
+        retryDelay *= 2;
+      }
     }
   }
 
@@ -366,7 +382,7 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
         }
       },
       `Map chunk ${index}`,
-      2 // A slow/failing chunk shouldn't hold up the whole lecture too long
+      3 // bumped from 2 — now that backoff actually waits out a rate limit, more attempts is worth it
     );
     return text;
   } catch (error) {
@@ -399,7 +415,7 @@ async function reduceSummary(extractedContent: string): Promise<string> {
           }
         },
         context,
-        3
+        5 // bumped from 3 — now that backoff actually waits out a rate limit, more attempts is worth it
       )
     )
   );
@@ -423,11 +439,13 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
     console.log(`Split transcript into ${chunks.length} chunks`);
 
     // Step 2: Map - Extract key info from each chunk (with index for debugging).
-    // Limited to 5 concurrent requests to avoid tripping Gemini's rate limit
-    // on longer transcripts, which would otherwise silently drop chunks.
+    // Limited to 3 concurrent requests — kept modest specifically because the
+    // reduce step right after this fires 3 more parallel Gemini calls of its
+    // own, and both draw from the same per-minute free-tier quota. A larger
+    // map burst was leaving no headroom for the reduce step that follows it.
     const mapResults = await runWithConcurrencyLimit(
       chunks.map((chunk, index) => () => mapChunk(chunk, index)),
-      5
+      3
     );
 
     const successfulChunks = mapResults.filter(result => result.length > 0).length;
@@ -437,7 +455,14 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
 
     console.log('Extracted content length:', extractedContent.length);
 
-    // Attempt 1: Reduce the extracted, tagged content — the normal path.
+    // Reduce the extracted, tagged content. callGemini now retries with
+    // rate-limit-aware backoff (up to 5 attempts per call, waiting out an
+    // actual per-minute quota window instead of a token 1-4s delay), so a
+    // transient failure here is handled by that retry logic directly rather
+    // than by falling through to a second attempt. A second full attempt
+    // used to fire 3 more parallel Gemini calls immediately after the first
+    // 3 had already failed — almost always into the same still-rate-limited
+    // window, which made failures worse, not better.
     if (extractedContent.length > 0) {
       try {
         const summary = await reduceSummary(extractedContent);
@@ -445,33 +470,27 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
         console.log('Summary preview:', summary.substring(0, 200));
         return { summary, degraded: false };
       } catch (reduceError) {
-        // A single failed reduce call (rate limit, transient 5xx, safety
-        // block) used to wipe out an otherwise-successful map step and drop
-        // straight to the crude bullet-point fallback. Try the raw
-        // transcript below instead of giving up immediately.
-        console.error('Reduce step failed on extracted content, retrying against raw transcript:', reduceError);
+        console.error('Reduce step failed on extracted content after all retries:', reduceError);
       }
     } else {
       // Map step produced nothing usable from any chunk (rare — e.g. a very
-      // short/off-topic-heavy transcript).
-      console.warn('No content extracted from any chunk — falling back to summarizing the raw transcript directly');
+      // short/off-topic-heavy transcript). Try once against the raw
+      // transcript directly, since there's no extracted content to retry.
+      console.warn('No content extracted from any chunk — attempting the raw transcript directly');
+      try {
+        const summary = await reduceSummary(transcript);
+        console.log('Generated summary from raw transcript, length:', summary.length);
+        return { summary, degraded: false };
+      } catch (rawError) {
+        console.error('Raw-transcript attempt also failed:', rawError);
+      }
     }
 
-    // Attempt 2: Skip the tagged extraction and summarize the raw transcript
-    // directly. Recovers from a transient failure in attempt 1, or from a
-    // map step that produced nothing.
-    try {
-      const summary = await reduceSummary(transcript);
-      console.log('Generated summary from raw transcript, length:', summary.length);
-      return { summary, degraded: false };
-    } catch (fallbackError) {
-      console.error('Raw-transcript fallback also failed:', fallbackError);
-    }
-
-    // Last resort: both structured attempts failed (e.g. a persistent
-    // Gemini outage). Return a minimally-structured, clearly-flagged
-    // summary so the page still has Key Concepts / Full Lecture Notes
-    // sections to render instead of a blank or malformed page.
+    // Last resort: the structured attempt failed even after retries (e.g. a
+    // persistent Gemini outage, not just a transient rate limit). Return a
+    // minimally-structured, clearly-flagged summary so the page still has
+    // Key Concepts / Full Lecture Notes sections to render instead of a
+    // blank or malformed page.
     return { summary: generateFallbackSummary(transcript), degraded: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

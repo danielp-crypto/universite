@@ -69,6 +69,18 @@ export async function POST(
       return NextResponse.json({ success: true }); // ack regardless — nothing to retry
     }
 
+    // Only generate an AI title for lectures still on the generic
+    // "Lecture N" placeholder from a live recording — uploaded files keep
+    // whatever title came from their filename, since that's often already
+    // meaningful and shouldn't be silently overridden.
+    const { data: currentLecture } = await supabaseAdmin
+      .from('lectures')
+      .select('title')
+      .eq('id', lectureId)
+      .single();
+
+    const isGenericTitle = !!currentLecture?.title && /^Lecture \d+$/.test(currentLecture.title);
+
     // Generate the summary the same way the old synchronous flow did —
     // same endpoint, just called server-to-server now instead of from the
     // browser, since this webhook has no direct relationship to the
@@ -92,16 +104,31 @@ export async function POST(
       summaryError = `generate-summary threw: ${err.message}`;
     }
 
+    // Title generation runs AFTER the summary call finishes, not in
+    // parallel with it — generate-summary already fires up to 6 concurrent
+    // Gemini calls of its own (map + reduce steps) against a per-minute
+    // free-tier quota; adding a 7th on top of that during the same window
+    // was contributing to rate-limit failures on longer lectures. This is
+    // background processing the student never watches, so a few extra
+    // seconds here costs nothing in practice.
+    const generatedTitle = isGenericTitle ? await generateLectureTitle(transcript) : null;
+
+    const updatePayload: Record<string, any> = {
+      transcription: transcript,
+      summary: summary || null,
+      status: 'completed',
+      transcription_status: 'completed',
+      has_transcription: true,
+      transcription_completed_at: new Date().toISOString(),
+    };
+
+    if (generatedTitle) {
+      updatePayload.title = generatedTitle;
+    }
+
     const { data: updatedLecture, error: updateError } = await supabaseAdmin
       .from('lectures')
-      .update({
-        transcription: transcript,
-        summary: summary || null,
-        status: 'completed',
-        transcription_status: 'completed',
-        has_transcription: true,
-        transcription_completed_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', lectureId)
       .select('user_id, module_id')
       .single();
@@ -153,6 +180,49 @@ export async function POST(
   }
 }
 
+// Generates a short descriptive title from the transcript, used only to
+// replace the generic "Lecture N" placeholder from a live recording. Uses
+// just the first ~4000 chars — lecturers almost always establish the topic
+// early, and this keeps the call small and fast rather than sending the
+// full (potentially very long) transcript for a 5-8 word output.
+async function generateLectureTitle(transcript: string): Promise<string | null> {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+  if (!GEMINI_API_KEY) return null;
+
+  const excerpt = transcript.slice(0, 4000);
+  const prompt = `Based on this excerpt from a university lecture transcript, write a short, descriptive title (5-8 words) capturing the main topic covered. Return ONLY the title text — no quotes, no markdown, no trailing punctuation, no preamble or explanation.\n\nTranscript excerpt:\n${excerpt}`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 30, thinkingConfig: { thinkingBudget: 0 } },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Title generation failed:', response.status, await response.text().catch(() => ''));
+      return null;
+    }
+
+    const result = await response.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!text) return null;
+
+    // Strip any stray quotes/markdown the model might add despite instructions,
+    // and hard-cap length as a safety net.
+    return text.replace(/^["'*]+|["'*]+$/g, '').slice(0, 100);
+  } catch (err) {
+    console.error('Title generation threw:', err);
+    return null;
+  }
+}
+
 async function markLectureFailed(lectureId: string, reason: string) {
   try {
     await supabaseAdmin
@@ -179,17 +249,10 @@ async function notifyStudent(lectureId: string, outcome: 'completed' | 'failed')
 
     if (!lecture) return;
 
-    // Truncate lecture title if it's too long for notification display
-    const truncateTitle = (title: string, maxLength: number = 30) => {
-      return title.length > maxLength ? title.substring(0, maxLength) + '...' : title;
-    };
-
-    const truncatedTitle = truncateTitle(lecture.title);
-
     const title = outcome === 'completed' ? 'Your lecture notes are ready 🎉' : 'Lecture processing failed';
     const message = outcome === 'completed'
-      ? `"${truncatedTitle}" has been transcribed and summarized — open it to start studying.`
-      : `We couldn't process "${truncatedTitle}". This didn't use up a credit — please try uploading it again.`;
+      ? `"${lecture.title}" has been transcribed and summarized — open it to start studying.`
+      : `We couldn't process "${lecture.title}". This didn't use up a credit — please try uploading it again.`;
 
     await supabaseAdmin.from('notifications').insert({
       user_id: lecture.user_id,
