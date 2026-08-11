@@ -86,7 +86,6 @@ export async function POST(
     // browser, since this webhook has no direct relationship to the
     // student's original request.
     let summary = '';
-    let summaryDegraded = false;
     let summaryError: string | null = null;
     try {
       const summaryResponse = await fetch(`${NEXT_PUBLIC_SITE_URL}/api/generate-summary`, {
@@ -98,7 +97,6 @@ export async function POST(
       if (summaryResponse.ok) {
         const summaryData = await summaryResponse.json();
         summary = summaryData.summary || '';
-        summaryDegraded = !!summaryData.degraded;
       } else {
         summaryError = `generate-summary responded ${summaryResponse.status}`;
       }
@@ -118,7 +116,6 @@ export async function POST(
     const updatePayload: Record<string, any> = {
       transcription: transcript,
       summary: summary || null,
-      degraded: summaryDegraded,
       status: 'completed',
       transcription_status: 'completed',
       has_transcription: true,
