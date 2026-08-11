@@ -1067,6 +1067,14 @@ function LectureDetailPageContent() {
                   <div className="flex items-center gap-2">
                     {processingResults?.summaryText && (
                       <>
+                        <button
+                          onClick={handleRegenerateSummary}
+                          disabled={isProcessing}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Regenerate notes"
+                        >
+                          🔄 Regenerate
+                        </button>
                         <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                           AI Generated
                         </span>
