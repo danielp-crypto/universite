@@ -1079,7 +1079,7 @@ function LectureDetailPageContent() {
                           AI Generated
                         </span>
                         <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
-                          📊 Add slides for context
+                          📊 Add slides
                         </span>
                       </>
                     )}
