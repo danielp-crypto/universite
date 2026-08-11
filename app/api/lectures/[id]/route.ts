@@ -144,6 +144,7 @@ export async function PUT(
       updateData.transcription_completed_at = new Date().toISOString();
     }
     if (data.summary !== undefined) updateData.summary = data.summary;
+    if (data.degraded !== undefined) updateData.degraded = data.degraded;
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.favorite !== undefined) updateData.favorite = data.favorite;

@@ -741,7 +741,7 @@ function LectureDetailPageContent() {
       }
 
       // Generate new summary
-      const summary = await generateSummary(transcript);
+      const { summary, degraded } = await generateSummary(transcript);
       
       if (summary) {
         // Update processing results
@@ -750,21 +750,27 @@ function LectureDetailPageContent() {
           summaryAvailable: true,
           summaryText: summary
         }));
+        setCurrentLecture((prev: any) => prev ? { ...prev, degraded } : prev);
 
         // Save new summary to Supabase
         try {
           await fetch(`/api/lectures/${currentLecture.id}`, {
             method: 'PUT',
             headers: {
+              'Authorization': `Bearer ${session.access_token}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ summary }),
+            body: JSON.stringify({ summary, degraded }),
           });
         } catch (error) {
           console.error('Error saving summary:', error);
         }
 
-        showAlert('Success', 'Summary regenerated successfully!', 'success');
+        if (degraded) {
+          showAlert('Regenerated — still incomplete', 'The AI notes generator is still having trouble right now. These notes are simplified fallback notes, not full AI-generated ones. Try again in a few minutes.', 'warning');
+        } else {
+          showAlert('Success', 'Summary regenerated successfully!', 'success');
+        }
       } else {
         showAlert('Error', 'Failed to regenerate summary', 'error');
       }
@@ -1059,6 +1065,17 @@ function LectureDetailPageContent() {
 
               {/* Lecture Notes */}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in">
+                {currentLecture?.degraded && (
+                  <div className="mb-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                    <span className="text-amber-500 text-base leading-none mt-0.5">⚠️</span>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-amber-800">These notes are incomplete</p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        AI note generation didn't fully complete for this lecture. Tap Regenerate below to try again — your transcript is safely saved either way.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                     <span className="text-xl leading-none">📝</span>
