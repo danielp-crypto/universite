@@ -666,10 +666,10 @@ function LectureDetailPageContent() {
 
         setProcessingMessage('Generating summary...');
         const finalTranscript = transcriptionResult.transcript || '';
-        const summary = await generateSummary(finalTranscript);
+        const { summary, degraded } = await generateSummary(finalTranscript);
 
         const segments = createSegmentsFromTranscription(finalTranscript);
-        
+
         setProcessingResults({
           segmentsCount: segments.length,
           summaryAvailable: !!summary,
@@ -707,7 +707,7 @@ function LectureDetailPageContent() {
     }
   };
 
-  const generateSummary = async (transcript: string) => {
+  const generateSummary = async (transcript: string): Promise<{ summary: string | null; degraded: boolean }> => {
     try {
       const result = await apiPost('/api/generate-summary', {
         transcript: transcript
@@ -716,9 +716,12 @@ function LectureDetailPageContent() {
         console.warn(`Summary generated from a truncated transcript (${result.transcriptChars} chars).`);
         showAlert('Note', 'This lecture was very long, so notes are based on the first ~4 hours of content.', 'info');
       }
-      return result.success ? result.summary : null;
+      return {
+        summary: result.success ? result.summary : null,
+        degraded: !!result.degraded,
+      };
     } catch (e) {
-      return null;
+      return { summary: null, degraded: false };
     }
   };
 
