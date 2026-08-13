@@ -1124,12 +1124,30 @@ function HomePageContent() {
                           </div>
                         )}
                         <div className="flex gap-2">
-                          <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
-                            Review
-                          </Link>
-                          <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                            Ask Lecture
-                          </Link>
+                          {lecture.status === 'processing' ? (
+                            <span
+                              className="flex-1 px-3 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
+                              title="Available once transcription and notes are ready"
+                            >
+                              Review
+                            </span>
+                          ) : (
+                            <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
+                              Review
+                            </Link>
+                          )}
+                          {lecture.status === 'processing' ? (
+                            <span
+                              className="flex-1 px-3 py-2 bg-indigo-200 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
+                              title="Available once transcription and notes are ready"
+                            >
+                              Ask Lecture
+                            </span>
+                          ) : (
+                            <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
+                              Ask Lecture
+                            </Link>
+                          )}
                         </div>
                       </div>
                     );
@@ -1359,17 +1377,36 @@ function HomePageContent() {
                   ))}
                 </div>
 
+                {/* Upload progress bar - only shown during the actual upload,
+                    since that's the only phase still tied to this tab
+                    staying open. Once handed off to start-processing, the
+                    rest happens server-side regardless of navigation. */}
+                {uploadProgress !== null && (
+                  <div className="mb-4">
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-150"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-slate-500 text-xs mt-1.5">{uploadProgress}% uploaded</p>
+                  </div>
+                )}
+
                 {/* Live sub-status (e.g. "Transcribed 2 of 4 parts...") */}
                 {processingText && (
                   <p className="text-indigo-500 text-xs font-medium mb-3">{processingText}</p>
                 )}
 
-                <p className="text-slate-500 text-xs mb-3">
-                  Longer lectures can take a few minutes — hang tight.
-                </p>
-                <p className="text-amber-600 text-xs font-semibold bg-amber-50 rounded-lg px-3 py-2">
-                  ⚠️ Don't close this tab or navigate away — it'll cancel processing and you'll lose this recording.
-                </p>
+                {uploadProgress !== null ? (
+                  <p className="text-amber-600 text-xs font-semibold bg-amber-50 rounded-lg px-3 py-2">
+                    ⚠️ Don't close this tab while uploading — you can navigate away freely once the upload finishes.
+                  </p>
+                ) : (
+                  <p className="text-slate-500 text-xs">
+                    Transcription and summarization now continue in the background — feel free to navigate away, you'll get a notification when it's ready.
+                  </p>
+                )}
               </div>
             )}
           </div>
