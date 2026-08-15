@@ -61,13 +61,10 @@ export async function POST(request: NextRequest) {
 
     // Create Yoco checkout session
     const checkoutResult = await createYocoCheckout({
-      amountInCents,
+      amount: amountInCents,
       currency: 'ZAR',
-      itemName: `${plan.name} Subscription`,
-      description: `Universite ${plan.name} subscription`,
       successUrl: `${NEXT_PUBLIC_APP_URL}/payment/success`,
       cancelUrl: `${NEXT_PUBLIC_APP_URL}/payment/cancelled`,
-      failureUrl: `${NEXT_PUBLIC_APP_URL}/payment/failed`,
       metadata: {
         userId: user.id,
         planSlug: plan_slug,

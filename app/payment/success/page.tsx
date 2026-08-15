@@ -1,56 +1,82 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiGet } from '@/lib/api/client';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { apiGet, apiPost } from '@/lib/api/client';
 
-// PayFast's server-to-server webhook (ITN) that actually activates the
-// subscription in our database fires independently of this page loading —
-// there's no guarantee it has completed by the time the browser lands here.
-// Rather than guessing at a fixed delay, poll /api/subscription until it
-// actually confirms an active paid plan, or give up after a reasonable time.
+// Yoco appends checkout id as query parameter to success URL
+// We need to verify the payment server-side before activating subscription
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 10; // ~15 seconds total
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<'confirming' | 'confirmed' | 'timed_out'>('confirming');
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<'verifying' | 'confirming' | 'confirmed' | 'timed_out'>('verifying');
 
   useEffect(() => {
+    const checkoutId = searchParams.get('checkoutId');
+    console.log('Payment success page loaded with checkoutId:', checkoutId);
+
     let attempts = 0;
     let cancelled = false;
 
-    const poll = async () => {
+    const verifyAndPoll = async () => {
       try {
-        const subscription = await apiGet('/api/subscription');
-        if (cancelled) return;
+        // First, verify the payment with Yoco if we have a checkout ID
+        if (checkoutId) {
+          console.log('Verifying Yoco payment...');
+          const verifyResult = await apiPost('/api/payments/yoco/verify', { checkoutId });
+          console.log('Verification result:', verifyResult);
 
-        if (subscription?.status === 'active' && subscription?.plan_slug !== 'free') {
-          setStatus('confirmed');
-          setTimeout(() => router.push('/dashboard'), 1200);
-          return;
+          if (verifyResult.success) {
+            console.log('Payment verified successfully');
+          } else {
+            console.warn('Payment verification returned:', verifyResult);
+          }
         }
+
+        setStatus('confirming');
+
+        // Then poll for subscription activation
+        const poll = async () => {
+          try {
+            const subscription = await apiGet('/api/subscription');
+            if (cancelled) return;
+
+            if (subscription?.status === 'active' && subscription?.plan_slug !== 'free') {
+              setStatus('confirmed');
+              setTimeout(() => router.push('/dashboard'), 1200);
+              return;
+            }
+          } catch (error) {
+            console.error('Error checking subscription status:', error);
+          }
+
+          attempts += 1;
+          if (attempts >= MAX_POLL_ATTEMPTS) {
+            if (!cancelled) setStatus('timed_out');
+            return;
+          }
+
+          if (!cancelled) {
+            setTimeout(poll, POLL_INTERVAL_MS);
+          }
+        };
+
+        poll();
       } catch (error) {
-        console.error('Error checking subscription status:', error);
-      }
-
-      attempts += 1;
-      if (attempts >= MAX_POLL_ATTEMPTS) {
-        if (!cancelled) setStatus('timed_out');
-        return;
-      }
-
-      if (!cancelled) {
-        setTimeout(poll, POLL_INTERVAL_MS);
+        console.error('Error during payment verification:', error);
+        setStatus('timed_out');
       }
     };
 
-    poll();
+    verifyAndPoll();
 
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [searchParams, router]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -67,6 +93,12 @@ export default function PaymentSuccessPage() {
         </p>
 
         <div className="bg-slate-50 rounded-xl p-4 mb-6">
+          {status === 'verifying' && (
+            <p className="text-sm text-slate-600 flex items-center justify-center gap-2">
+              <span className="inline-block w-4 h-4 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin"></span>
+              Verifying payment with Yoco...
+            </p>
+          )}
           {status === 'confirming' && (
             <p className="text-sm text-slate-600 flex items-center justify-center gap-2">
               <span className="inline-block w-4 h-4 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin"></span>

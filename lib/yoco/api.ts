@@ -3,7 +3,7 @@
 
 const YOCO_SECRET_KEY = process.env.YOCO_SECRET_KEY!;
 const YOCO_PUBLIC_KEY = process.env.YOCO_PUBLIC_KEY!;
-const YOCO_API_URL = 'https://online.yoco.com';
+const YOCO_API_URL = 'https://yoco.com';
 
 export interface YocoPaymentRequest {
   amountInCents: number;
@@ -27,18 +27,15 @@ export interface YocoPaymentResponse {
 }
 
 export interface YocoCheckoutRequest {
-  amountInCents: number;
+  amount: number; // Amount in cents
   currency: string;
-  itemName: string;
-  description: string;
   successUrl: string;
   cancelUrl: string;
-  failureUrl: string;
   metadata?: Record<string, string>;
 }
 
 export interface YocoCheckoutResponse {
-  checkoutUrl: string;
+  redirectUrl: string;
   id: string;
 }
 
@@ -68,7 +65,7 @@ export async function createYocoCheckout(
 
     const data: YocoCheckoutResponse = await response.json();
     console.log('Yoco checkout created successfully:', data);
-    return { success: true, checkoutUrl: data.checkoutUrl, id: data.id };
+    return { success: true, checkoutUrl: data.redirectUrl, id: data.id };
   } catch (error: any) {
     console.error('Yoco checkout creation error:', error);
     return { success: false, error: error.message };
@@ -96,6 +93,47 @@ export async function getYocoPayment(paymentId: string): Promise<{
     const data: YocoPaymentResponse = await response.json();
     return { success: true, payment: data };
   } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export interface YocoCheckoutStatusResponse {
+  id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  metadata?: Record<string, string>;
+  createdAt: string;
+}
+
+export async function getYocoCheckoutStatus(checkoutId: string): Promise<{
+  success: boolean;
+  checkout?: YocoCheckoutStatusResponse;
+  error?: string;
+}> {
+  try {
+    console.log('Checking Yoco checkout status for:', checkoutId);
+
+    const response = await fetch(`${YOCO_API_URL}/checkout/sessions/${checkoutId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
+      },
+    });
+
+    console.log('Yoco checkout status response:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Yoco checkout status error:', errorText);
+      return { success: false, error: `Yoco API error (${response.status}): ${errorText}` };
+    }
+
+    const data: YocoCheckoutStatusResponse = await response.json();
+    console.log('Yoco checkout status retrieved:', data);
+    return { success: true, checkout: data };
+  } catch (error: any) {
+    console.error('Yoco checkout status error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -143,10 +181,8 @@ export async function registerYocoWebhook(
 ): Promise<{ success: boolean; webhook?: RegisterWebhookResponse; error?: string }> {
   try {
     console.log('Registering Yoco webhook:', webhookData);
-    console.log('Using Yoco API URL:', YOCO_API_URL);
 
-    // Try the newer v1 API first
-    let response = await fetch(`${YOCO_API_URL}/v1/webhooks/subscriptions/`, {
+    const response = await fetch(`${YOCO_API_URL}/v1/webhooks/subscriptions/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
@@ -155,25 +191,7 @@ export async function registerYocoWebhook(
       body: JSON.stringify(webhookData),
     });
 
-    console.log('Yoco v1 webhook registration response status:', response.status);
-
-    // If v1 fails, try the older API
-    if (!response.ok) {
-      console.log('v1 API failed, trying older /api/webhooks endpoint');
-      response = await fetch(`${YOCO_API_URL}/api/webhooks`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: webhookData.name,
-          url: webhookData.notification_url
-        }),
-      });
-
-      console.log('Yoco legacy webhook registration response status:', response.status);
-    }
+    console.log('Yoco webhook registration response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
