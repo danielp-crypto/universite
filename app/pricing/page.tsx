@@ -74,11 +74,11 @@ export default function PricingPage() {
       return;
     }
 
-    // Handle paid plans via PayFast
+    // Handle paid plans via Yoco
     try {
       setProcessing(planSlug);
 
-      const response = await fetch('/api/payments/payfast/create', {
+      const response = await fetch('/api/payments/yoco/create', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -89,25 +89,15 @@ export default function PricingPage() {
 
       if (response.ok) {
         const data = await response.json();
-        
-        console.log('PayFast API Response:', data);
-        console.log('Debug info:', data.debug);
-        
-        // Create form and submit to PayFast
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = data.payfastUrl;
 
-        Object.entries(data.paymentData).forEach(([key, value]) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = value as string;
-          form.appendChild(input);
-        });
+        console.log('Yoco API Response:', data);
 
-        document.body.appendChild(form);
-        form.submit();
+        // Redirect to Yoco checkout
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        } else {
+          alert('Failed to get checkout URL');
+        }
       } else {
         const error = await response.json();
         alert('Failed to initiate payment: ' + error.error);
