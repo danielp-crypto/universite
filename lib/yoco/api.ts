@@ -46,6 +46,9 @@ export async function createYocoCheckout(
   checkoutData: YocoCheckoutRequest
 ): Promise<{ success: boolean; checkoutUrl?: string; id?: string; error?: string }> {
   try {
+    console.log('Creating Yoco checkout with data:', checkoutData);
+    console.log('Using Yoco API URL:', YOCO_API_URL);
+
     const response = await fetch(`${YOCO_API_URL}/checkout/sessions`, {
       method: 'POST',
       headers: {
@@ -55,14 +58,19 @@ export async function createYocoCheckout(
       body: JSON.stringify(checkoutData),
     });
 
+    console.log('Yoco API response status:', response.status);
+
     if (!response.ok) {
-      const error = await response.text();
-      return { success: false, error: `Yoco API error: ${error}` };
+      const errorText = await response.text();
+      console.error('Yoco API error response:', errorText);
+      return { success: false, error: `Yoco API error (${response.status}): ${errorText}` };
     }
 
     const data: YocoCheckoutResponse = await response.json();
+    console.log('Yoco checkout created successfully:', data);
     return { success: true, checkoutUrl: data.checkoutUrl, id: data.id };
   } catch (error: any) {
+    console.error('Yoco checkout creation error:', error);
     return { success: false, error: error.message };
   }
 }
