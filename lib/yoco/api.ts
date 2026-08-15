@@ -1,0 +1,115 @@
+// Yoco Payment API Integration
+// Yoco uses a REST API with secret key authentication
+
+const YOCO_SECRET_KEY = process.env.YOCO_SECRET_KEY!;
+const YOCO_PUBLIC_KEY = process.env.YOCO_PUBLIC_KEY!;
+const YOCO_API_URL = 'https://online.yoco.com';
+
+export interface YocoPaymentRequest {
+  amountInCents: number;
+  currency: string;
+  description: string;
+  metadata?: Record<string, string>;
+}
+
+export interface YocoPaymentResponse {
+  id: string;
+  status: string;
+  amountInCents: number;
+  currency: string;
+  description: string;
+  metadata?: Record<string, string>;
+  createdAt: string;
+  source?: {
+    id: string;
+    type: string;
+  };
+}
+
+export interface YocoCheckoutRequest {
+  amountInCents: number;
+  currency: string;
+  itemName: string;
+  description: string;
+  successUrl: string;
+  cancelUrl: string;
+  failureUrl: string;
+  metadata?: Record<string, string>;
+}
+
+export interface YocoCheckoutResponse {
+  checkoutUrl: string;
+  id: string;
+}
+
+export async function createYocoCheckout(
+  checkoutData: YocoCheckoutRequest
+): Promise<{ success: boolean; checkoutUrl?: string; id?: string; error?: string }> {
+  try {
+    const response = await fetch(`${YOCO_API_URL}/checkout/sessions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(checkoutData),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      return { success: false, error: `Yoco API error: ${error}` };
+    }
+
+    const data: YocoCheckoutResponse = await response.json();
+    return { success: true, checkoutUrl: data.checkoutUrl, id: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getYocoPayment(paymentId: string): Promise<{
+  success: boolean;
+  payment?: YocoPaymentResponse;
+  error?: string;
+}> {
+  try {
+    const response = await fetch(`${YOCO_API_URL}/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      return { success: false, error: `Yoco API error: ${error}` };
+    }
+
+    const data: YocoPaymentResponse = await response.json();
+    return { success: true, payment: data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export function verifyYocoWebhookSignature(
+  payload: string,
+  signature: string,
+  webhookSecret?: string
+): boolean {
+  // Yoco webhooks are signed with HMAC-SHA256
+  // If webhook secret is configured, verify the signature
+  if (!webhookSecret) {
+    // If no webhook secret is configured, skip verification (not recommended for production)
+    console.warn('Yoco webhook verification skipped - no webhook secret configured');
+    return true;
+  }
+
+  const crypto = require('crypto');
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(payload)
+    .digest('hex');
+
+  return signature === expectedSignature;
+}
