@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiGet, apiPost } from '@/lib/api/client';
 
 // Yoco appends checkout id as query parameter to success URL
@@ -11,11 +11,12 @@ const MAX_POLL_ATTEMPTS = 10; // ~15 seconds total
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [status, setStatus] = useState<'verifying' | 'confirming' | 'confirmed' | 'timed_out'>('verifying');
 
   useEffect(() => {
-    const checkoutId = searchParams.get('checkoutId');
+    // Get checkoutId from URL search params
+    const urlParams = new URLSearchParams(window.location.search);
+    const checkoutId = urlParams.get('checkoutId');
     console.log('Payment success page loaded with checkoutId:', checkoutId);
 
     let attempts = 0;
@@ -76,7 +77,7 @@ export default function PaymentSuccessPage() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, router]);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
