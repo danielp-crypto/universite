@@ -143,8 +143,10 @@ export async function registerYocoWebhook(
 ): Promise<{ success: boolean; webhook?: RegisterWebhookResponse; error?: string }> {
   try {
     console.log('Registering Yoco webhook:', webhookData);
+    console.log('Using Yoco API URL:', YOCO_API_URL);
 
-    const response = await fetch(`${YOCO_API_URL}/v1/webhooks/subscriptions/`, {
+    // Try the newer v1 API first
+    let response = await fetch(`${YOCO_API_URL}/v1/webhooks/subscriptions/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
@@ -153,7 +155,25 @@ export async function registerYocoWebhook(
       body: JSON.stringify(webhookData),
     });
 
-    console.log('Yoco webhook registration response status:', response.status);
+    console.log('Yoco v1 webhook registration response status:', response.status);
+
+    // If v1 fails, try the older API
+    if (!response.ok) {
+      console.log('v1 API failed, trying older /api/webhooks endpoint');
+      response = await fetch(`${YOCO_API_URL}/api/webhooks`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: webhookData.name,
+          url: webhookData.notification_url
+        }),
+      });
+
+      console.log('Yoco legacy webhook registration response status:', response.status);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
