@@ -121,3 +121,51 @@ export function verifyYocoWebhookSignature(
 
   return signature === expectedSignature;
 }
+
+export interface RegisterWebhookRequest {
+  name: string;
+  notification_url: string;
+  event_types: string[];
+}
+
+export interface RegisterWebhookResponse {
+  id: string;
+  name: string;
+  notification_url: string;
+  event_types: string[];
+  secret: string; // This is only returned once, prefixed with whsec_
+  active: boolean;
+  created_at: string;
+}
+
+export async function registerYocoWebhook(
+  webhookData: RegisterWebhookRequest
+): Promise<{ success: boolean; webhook?: RegisterWebhookResponse; error?: string }> {
+  try {
+    console.log('Registering Yoco webhook:', webhookData);
+
+    const response = await fetch(`${YOCO_API_URL}/v1/webhooks/subscriptions/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(webhookData),
+    });
+
+    console.log('Yoco webhook registration response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Yoco webhook registration error:', errorText);
+      return { success: false, error: `Yoco API error (${response.status}): ${errorText}` };
+    }
+
+    const data: RegisterWebhookResponse = await response.json();
+    console.log('Yoco webhook registered successfully. SECRET (save this securely):', data.secret);
+    return { success: true, webhook: data };
+  } catch (error: any) {
+    console.error('Yoco webhook registration error:', error);
+    return { success: false, error: error.message };
+  }
+}
