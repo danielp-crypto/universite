@@ -58,7 +58,7 @@ export async function GET(
 
     const { data: lectures, error: lecturesError } = await supabaseAdmin
       .from('lectures')
-      .select('id, title, description, duration_seconds, transcription, summary, slides_text, created_at')
+      .select('id, title, description, duration_seconds, transcription, summary, created_at')
       .eq('user_id', user.id)
       .eq('module_id', moduleId)
       .order('created_at', { ascending: true });
@@ -83,7 +83,6 @@ export async function GET(
         duration: `${minutes}:${String(seconds).padStart(2, '0')}`,
         transcription: lecture.transcription,
         summary: lecture.summary,
-        slides_text: lecture.slides_text,
         keyConcepts: parseKeyConcepts(lecture.summary),
       };
     });

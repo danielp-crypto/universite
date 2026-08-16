@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
-import { getLectureChatUsage } from '@/lib/chat/quota';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -25,14 +24,6 @@ function formatLectureBlock(lecture: any, { fullTranscript }: { fullTranscript: 
   }
 
   parts.push(`Summary:\n${lecture.summary || 'No summary available'}`);
-
-  // Slide content (if the student uploaded slides) is included for every
-  // lecture in context, not just the primary one — unlike the full
-  // transcript, extracted slide text is typically compact (titles + bullet
-  // points, not full prose), so it doesn't meaningfully add to prompt size.
-  if (lecture.slides_text) {
-    parts.push(`Slide Content:\n${lecture.slides_text}`);
-  }
 
   // Only the primary (currently open) lecture gets its full transcript included —
   // additional lectures pulled in from a module contribute their summary and key
@@ -79,25 +70,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enforce the per-lecture chat message cap for the user's current plan.
-    // Free-tier beta users get a limited number of messages per lecture — combined
-    // with the separate cap on how many lectures a free user can create, this
-    // naturally bounds total lifetime usage without needing a monthly reset.
-    if (currentLecture?.id) {
-      const usage = await getLectureChatUsage(user.id, currentLecture.id);
-
-      if (!usage.isUnlimited && usage.used >= usage.limit) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'message_limit_reached',
-            usage,
-          },
-          { status: 403 }
-        );
-      }
-    }
-
     // Persist the student's message right away, before calling Gemini, so it's
     // saved even if generation fails downstream. Only possible when chatting
     // in the context of a specific lecture — there's nothing to key it to otherwise.
@@ -126,7 +98,7 @@ export async function POST(request: NextRequest) {
     const tutorRules = `You are an AI TUTOR. Your only role is to help the student understand their own lecture material — you are not a general assistant and you are not a homework-completion service.
 
 Follow these rules at all times:
-- Explain concepts, define terms, work through examples, and check understanding using the lecture content above (including slide content, when provided — slides often contain diagrams, definitions, or structure the spoken transcript alone doesn't capture as clearly).
+- Explain concepts, define terms, work through examples, and check understanding using the lecture content above.
 - Use a Socratic approach where useful: ask a guiding question, give a hint, or break a problem into steps rather than immediately handing over a final answer.
 - If the student asks you to write or complete an assignment, essay, quiz, homework problem set, or exam for them — or asks for answers with no interest in understanding them — do not produce the finished work. Instead, offer to explain the underlying concept, walk through a similar example, or help them build the answer themselves.
 - If a request looks like an attempt to get answers for an assignment or test that is meant to be done independently, say so plainly and redirect to teaching the concept instead of completing it.
@@ -215,17 +187,9 @@ No lecture context is available right now. Ask the student to select a lecture f
       }
     }
 
-    // Recompute usage now that this exchange's user message has been saved,
-    // so the frontend can update its "X of Y messages used" indicator without
-    // a separate round trip.
-    const usage = currentLecture?.id
-      ? await getLectureChatUsage(user.id, currentLecture.id)
-      : null;
-
     return NextResponse.json({
       success: true,
-      response: aiResponse,
-      usage,
+      response: aiResponse
     });
 
   } catch (error) {
