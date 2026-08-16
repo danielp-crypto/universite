@@ -11,7 +11,6 @@ import UpgradeModal from '../components/UpgradeModal';
 import Alert from '../components/Alert';
 import jsPDF from 'jspdf';
 import { transcribeAudioChunked } from '@/lib/audio/chunkedTranscribe';
-import { supabase } from '@/lib/supabase/client';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
@@ -19,8 +18,6 @@ function LectureDetailPageContent() {
   const lectureId = searchParams.get('id');
 
   const [currentLecture, setCurrentLecture] = useState<any>(null);
-  const [slidesUploading, setSlidesUploading] = useState(false);
-  const slidesInputRef = useRef<HTMLInputElement>(null);
   
   // Tabs
   const [activeTab, setActiveTab] = useState<'summary'>('summary');
@@ -672,14 +669,13 @@ function LectureDetailPageContent() {
         const { summary, degraded } = await generateSummary(finalTranscript);
 
         const segments = createSegmentsFromTranscription(finalTranscript);
-        
+
         setProcessingResults({
           segmentsCount: segments.length,
           summaryAvailable: !!summary,
           suggestionsCount: Math.min(5, segments.length * 2),
           summaryText: summary || undefined
         });
-        setCurrentLecture((prev: any) => prev ? { ...prev, degraded } : prev);
 
         // Save summary to Supabase
         if (summary) {
@@ -691,8 +687,7 @@ function LectureDetailPageContent() {
                 'Authorization': `Bearer ${session.access_token}`
               },
               body: JSON.stringify({
-                summary: summary,
-                degraded: degraded
+                summary: summary
               })
             });
           } catch (error) {
@@ -787,119 +782,6 @@ function LectureDetailPageContent() {
       showAlert('Error', `Failed to regenerate summary: ${error.message}`, 'error');
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const MAX_SLIDES_SIZE_BYTES = 20 * 1024 * 1024; // 20MB — slide decks are text/vector-based documents, not media, so this is generous
-
-  const handleSlidesFileSelected = async (file: File) => {
-    if (!currentLecture) return;
-
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    const isPptx = file.name.toLowerCase().endsWith('.pptx') ||
-      file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-
-    if (!isPdf && !isPptx) {
-      showAlert('Unsupported file', 'Please upload a PDF or PowerPoint (.pptx) file.', 'warning');
-      return;
-    }
-
-    if (file.size > MAX_SLIDES_SIZE_BYTES) {
-      showAlert('File too large', `This file is ${(file.size / (1024 * 1024)).toFixed(1)}MB. The maximum is 20MB.`, 'warning');
-      return;
-    }
-
-    setSlidesUploading(true);
-
-    try {
-      const session = await getSession();
-      if (!session) {
-        showAlert('Error', 'Please log in to add slides', 'error');
-        return;
-      }
-
-      const ext = isPptx ? 'pptx' : 'pdf';
-      const storagePath = `${session.user.id}/slides/${currentLecture.id}-${crypto.randomUUID()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('lecture-media')
-        .upload(storagePath, file, { contentType: file.type });
-
-      if (uploadError) {
-        console.error('Error uploading slides:', uploadError);
-        showAlert('Error', 'Failed to upload slides. Please try again.', 'error');
-        return;
-      }
-
-      const response = await fetch(`/api/lectures/${currentLecture.id}/slides`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          file_path: storagePath,
-          filename: file.name,
-          mime_type: file.type,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        showAlert(
-          'Error',
-          result.detail || 'Failed to extract text from these slides. They may be image-only with no text layer.',
-          'error'
-        );
-        return;
-      }
-
-      setCurrentLecture((prev: any) => prev ? {
-        ...prev,
-        slides_text: result.slidesText,
-        slides_file_path: storagePath,
-        slides_filename: file.name,
-      } : prev);
-
-      showAlert('Slides added', `${file.name} is now available as context for the AI Tutor.`, 'success');
-    } catch (error: any) {
-      console.error('Error adding slides:', error);
-      showAlert('Error', 'An unexpected error occurred while adding slides.', 'error');
-    } finally {
-      setSlidesUploading(false);
-      if (slidesInputRef.current) slidesInputRef.current.value = '';
-    }
-  };
-
-  const handleRemoveSlides = async () => {
-    if (!currentLecture) return;
-
-    try {
-      const session = await getSession();
-      if (!session) return;
-
-      const response = await fetch(`/api/lectures/${currentLecture.id}/slides`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-      });
-
-      if (!response.ok) {
-        showAlert('Error', 'Failed to remove slides. Please try again.', 'error');
-        return;
-      }
-
-      setCurrentLecture((prev: any) => prev ? {
-        ...prev,
-        slides_text: null,
-        slides_file_path: null,
-        slides_filename: null,
-      } : prev);
-
-      showAlert('Slides removed', '', 'success');
-    } catch (error) {
-      console.error('Error removing slides:', error);
-      showAlert('Error', 'Failed to remove slides. Please try again.', 'error');
     }
   };
 
@@ -1197,60 +1079,29 @@ function LectureDetailPageContent() {
                     </div>
                   </div>
                 )}
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-5">
                   <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                     <span className="text-xl leading-none">📝</span>
                     <span>Lecture Notes</span>
                   </h3>
                   <div className="flex items-center gap-2">
                     {processingResults?.summaryText && (
-                      <button
-                        onClick={handleRegenerateSummary}
-                        disabled={isProcessing}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Regenerate notes"
-                      >
-                        🔄 Regenerate Notes
-                      </button>
+                      <>
+                        <button
+                          onClick={handleRegenerateSummary}
+                          disabled={isProcessing}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Regenerate notes"
+                        >
+                          🔄 Regenerate Notes
+                        </button>
+                        
+                        <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
+                          📊 Add slides for context
+                        </span>
+                      </>
                     )}
                   </div>
-                </div>
-
-                <div className="mb-5">
-                  <input
-                    ref={slidesInputRef}
-                    type="file"
-                    accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleSlidesFileSelected(file);
-                    }}
-                  />
-                  {slidesUploading ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[11px] font-semibold">
-                      <span className="inline-block w-3 h-3 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></span>
-                      Extracting slide text...
-                    </span>
-                  ) : currentLecture?.slides_text ? (
-                    <span className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[11px] font-semibold">
-                      📊 {currentLecture.slides_filename || 'Slides'} added as context
-                      <button
-                        onClick={handleRemoveSlides}
-                        className="text-emerald-500 hover:text-emerald-800"
-                        title="Remove slides"
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => slidesInputRef.current?.click()}
-                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 uppercase tracking-wider"
-                    >
-                      📊 Add slides for context (PDF or PPTX)
-                    </button>
-                  )}
                 </div>
 
                 {processingResults?.summaryText ? (
