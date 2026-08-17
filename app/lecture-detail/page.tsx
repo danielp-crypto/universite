@@ -1508,9 +1508,7 @@ function LectureDetailPageContent() {
             <p className="text-slate-500 text-xs mb-3">
               Longer lectures can take a few minutes — hang tight.
             </p>
-            <p className="text-amber-600 text-xs font-semibold bg-amber-50 rounded-lg px-3 py-2">
-              ⚠️ Don't close this tab or navigate away — it'll cancel processing and you'll lose this recording.
-            </p>
+            
           </div>
         </div>
       )}
