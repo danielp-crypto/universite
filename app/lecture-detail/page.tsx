@@ -1096,9 +1096,7 @@ function LectureDetailPageContent() {
                           🔄 Regenerate Notes
                         </button>
                         
-                        <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
-                          📊 Add slides for context
-                        </span>
+                        
                       </>
                     )}
                   </div>
