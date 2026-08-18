@@ -1220,7 +1220,7 @@ function HomePageContent() {
           <div>
             <h2 className="text-lg font-semibold text-slate-800 mb-3">Study Tools</h2>
             <div className="space-y-2">
-              <Link href="/pricing" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full relative">
+              <Link href="/exam-mode" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                     <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1229,15 +1229,12 @@ function HomePageContent() {
                   </div>
                   <div>
                     <div className="font-medium text-slate-800 text-sm">Exam Mode</div>
-                    <div className="text-xs text-slate-500">Review key concepts</div>
+                    <div className="text-xs text-slate-500">Practice & test yourself</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Link href="/pricing" className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full hover:bg-amber-500 transition-colors">Upgrade</Link>
-                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
             </div>
           </div>
