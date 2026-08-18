@@ -953,6 +953,64 @@ function LectureDetailPageContent() {
     return text;
   };
 
+  // Enhanced text formatter that handles headings, lists, and better typography
+  const formatEnhancedText = (text: string) => {
+    if (!text) return null;
+
+    const lines = text.split('\n').filter(line => line.trim());
+    const elements: React.ReactNode[] = [];
+
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim();
+
+      // Handle ### headings
+      if (trimmedLine.startsWith('###')) {
+        const headingText = trimmedLine.replace(/^###\s*/, '').trim();
+        elements.push(
+          <h5 key={`heading-${index}`} className="text-sm font-bold text-slate-800 mt-4 mb-2">
+            {headingText}
+          </h5>
+        );
+      }
+      // Handle ## headings (though these should be parsed at section level)
+      else if (trimmedLine.startsWith('##')) {
+        // Skip these as they're handled at section level
+      }
+      // Handle bullet points
+      else if (trimmedLine.match(/^[\s]*[•\-\*]\s+/)) {
+        const bulletText = trimmedLine.replace(/^[\s]*[•\-\*]\s+/, '').trim();
+        elements.push(
+          <li key={`bullet-${index}`} className="flex items-start gap-2 text-sm text-slate-700 leading-relaxed mb-1.5">
+            <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+            <span>{formatNoteText(bulletText, `bullet-${index}`)}</span>
+          </li>
+        );
+      }
+      // Handle numbered lists
+      else if (trimmedLine.match(/^[\s]*\d+\.\s+/)) {
+        const numberedText = trimmedLine.replace(/^[\s]*\d+\.\s+/, '').trim();
+        elements.push(
+          <li key={`numbered-${index}`} className="flex items-start gap-2 text-sm text-slate-700 leading-relaxed mb-1.5">
+            <span className="mt-0.5 flex-shrink-0 text-indigo-600 font-semibold text-xs">
+              {trimmedLine.match(/^[\s]*(\d+)\./)?.[1]}.
+            </span>
+            <span>{formatNoteText(numberedText, `numbered-${index}`)}</span>
+          </li>
+        );
+      }
+      // Handle regular paragraphs
+      else if (trimmedLine.length > 0) {
+        elements.push(
+          <p key={`para-${index}`} className="text-sm text-slate-700 leading-relaxed mb-2">
+            {formatNoteText(trimmedLine, `para-${index}`)}
+          </p>
+        );
+      }
+    });
+
+    return elements;
+  };
+
   const currentSegments = currentLecture?.transcription
     ? createSegmentsFromTranscription(currentLecture.transcription)
     : currentLecture?.segments || [];
@@ -1356,8 +1414,8 @@ function LectureDetailPageContent() {
                                 })}
                               </ol>
                             ) : section.style === 'blue' ? (
-                              <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                                {formatNoteText(section.content, `notes-${idx}`)}
+                              <div className="text-sm text-slate-700 leading-relaxed">
+                                {formatEnhancedText(section.content)}
                               </div>
                             ) : section.style === 'rose' ? (() => {
                               // Parse Formulas and Definitions subsections
@@ -1388,9 +1446,9 @@ function LectureDetailPageContent() {
                                       </h5>
                                       <ul className="space-y-2">
                                         {formulas.map((formula: string, i: number) => (
-                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed bg-white border border-rose-100 rounded-lg px-3 py-2">
                                             <span className="mt-0.5 flex-shrink-0">📐</span>
-                                            <span>{formatNoteText(formula, `formula-${i}`)}</span>
+                                            <span className="font-mono text-xs text-slate-800">{formatNoteText(formula, `formula-${i}`)}</span>
                                           </li>
                                         ))}
                                       </ul>
@@ -1404,7 +1462,7 @@ function LectureDetailPageContent() {
                                       </h5>
                                       <ul className="space-y-2">
                                         {definitions.map((definition: string, i: number) => (
-                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed bg-white border border-rose-100 rounded-lg px-3 py-2">
                                             <span className="mt-0.5 flex-shrink-0">📖</span>
                                             <span>{formatNoteText(definition, `def-${i}`)}</span>
                                           </li>
