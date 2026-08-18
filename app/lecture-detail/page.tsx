@@ -224,40 +224,136 @@ function LectureDetailPageContent() {
         yPosition += 5;
       };
 
-      // Renders free-flowing paragraph text (used for the full lecture
-      // notes, which can be long). Wrapped in a bordered card only when the
-      // whole block fits on the current page; otherwise falls back to a
-      // plain flowing paragraph so the border doesn't break across pages.
+      // Renders free-flowing paragraph text with enhanced formatting (used for the full lecture
+      // notes, which can be long). Handles headings, bullet points, numbered lists, and paragraphs.
+      // Wrapped in a bordered card only when the whole block fits on the current page; otherwise
+      // falls back to a plain flowing paragraph so the border doesn't break across pages.
       const renderNotesBlock = (text: string, color: number[]) => {
         pdf.setFontSize(9.5);
-        const lines = pdf.splitTextToSize(text, contentWidth - 10);
         const lineHeight = 5;
-        const totalHeight = lines.length * lineHeight + 8;
+        const headingLineHeight = 6;
+        const bulletIndent = 6;
+        const numberIndent = 8;
+
+        // Parse text into formatted elements
+        const lines = text.split('\n').filter(line => line.trim());
+        const elements: { type: 'heading' | 'bullet' | 'numbered' | 'paragraph'; content: string; number?: string }[] = [];
+
+        lines.forEach((line) => {
+          const trimmedLine = line.trim();
+
+          // Handle ### headings
+          if (trimmedLine.startsWith('###')) {
+            const headingText = trimmedLine.replace(/^###\s*/, '').trim();
+            elements.push({ type: 'heading', content: headingText });
+          }
+          // Handle ## headings (skip these as they're handled at section level)
+          else if (trimmedLine.startsWith('##')) {
+            // Skip
+          }
+          // Handle bullet points
+          else if (trimmedLine.match(/^[\s]*[•\-\*]\s+/)) {
+            const bulletText = trimmedLine.replace(/^[\s]*[•\-\*]\s+/, '').trim();
+            elements.push({ type: 'bullet', content: bulletText });
+          }
+          // Handle numbered lists
+          else if (trimmedLine.match(/^[\s]*\d+\.\s+/)) {
+            const numberedText = trimmedLine.replace(/^[\s]*\d+\.\s+/, '').trim();
+            const number = trimmedLine.match(/^[\s]*(\d+)\./)?.[1];
+            elements.push({ type: 'numbered', content: numberedText, number });
+          }
+          // Handle regular paragraphs
+          else if (trimmedLine.length > 0) {
+            elements.push({ type: 'paragraph', content: trimmedLine });
+          }
+        });
+
+        // Calculate total height
+        let totalHeight = 8; // padding
+        elements.forEach((element) => {
+          const wrappedLines = pdf.splitTextToSize(element.content, contentWidth - (element.type === 'bullet' ? bulletIndent : element.type === 'numbered' ? numberIndent : 10));
+          const elementHeight = wrappedLines.length * (element.type === 'heading' ? headingLineHeight : lineHeight) + 2;
+          totalHeight += elementHeight;
+        });
+
         const remaining = pageHeight - 20 - yPosition;
+        const useCard = totalHeight <= remaining;
 
         pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
 
-        if (totalHeight <= remaining) {
+        if (useCard) {
           pdf.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
           pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
           pdf.roundedRect(margin, yPosition, contentWidth, totalHeight, 2, 2, 'FD');
           pdf.setFillColor(color[0], color[1], color[2]);
           pdf.rect(margin, yPosition, 1.4, totalHeight, 'F');
-          let ty = yPosition + 6;
-          lines.forEach((line: string) => {
-            pdf.text(line, margin + 6, ty);
-            ty += lineHeight;
-          });
-          yPosition += totalHeight + 8;
-        } else {
-          lines.forEach((line: string) => {
-            if (yPosition + lineHeight > pageHeight - 20) {
-              pdf.addPage();
-              yPosition = margin;
+          yPosition += 6;
+        }
+
+        elements.forEach((element) => {
+          const wrappedLines = pdf.splitTextToSize(element.content, contentWidth - (element.type === 'bullet' ? bulletIndent : element.type === 'numbered' ? numberIndent : 10));
+          const elementHeight = wrappedLines.length * (element.type === 'heading' ? headingLineHeight : lineHeight) + 2;
+
+          if (yPosition + elementHeight > pageHeight - 20) {
+            pdf.addPage();
+            yPosition = margin;
+            if (useCard) {
+              pdf.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+              pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+              pdf.roundedRect(margin, yPosition, contentWidth, elementHeight + 8, 2, 2, 'FD');
+              pdf.setFillColor(color[0], color[1], color[2]);
+              pdf.rect(margin, yPosition, 1.4, elementHeight + 8, 'F');
+              yPosition += 6;
             }
-            pdf.text(line, margin + 2, yPosition);
-            yPosition += lineHeight;
-          });
+          }
+
+          if (element.type === 'heading') {
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(10);
+            pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+            wrappedLines.forEach((line: string) => {
+              pdf.text(line, margin + 6, yPosition);
+              yPosition += headingLineHeight;
+            });
+            yPosition += 2;
+          } else if (element.type === 'bullet') {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9.5);
+            pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+            pdf.setFillColor(color[0], color[1], color[2]);
+            pdf.circle(margin + 4, yPosition - 1, 1.5, 'F');
+            wrappedLines.forEach((line: string) => {
+              pdf.text(line, margin + bulletIndent, yPosition);
+              yPosition += lineHeight;
+            });
+            yPosition += 1;
+          } else if (element.type === 'numbered') {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9.5);
+            pdf.setTextColor(color[0], color[1], color[2]);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(`${element.number}.`, margin + 2, yPosition);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+            wrappedLines.forEach((line: string) => {
+              pdf.text(line, margin + numberIndent, yPosition);
+              yPosition += lineHeight;
+            });
+            yPosition += 1;
+          } else {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9.5);
+            wrappedLines.forEach((line: string) => {
+              pdf.text(line, margin + (useCard ? 6 : 2), yPosition);
+              yPosition += lineHeight;
+            });
+            yPosition += 2;
+          }
+        });
+
+        if (useCard) {
+          yPosition += 8;
+        } else {
           yPosition += 8;
         }
       };
@@ -396,7 +492,20 @@ function LectureDetailPageContent() {
           pdf.setFont('helvetica', 'normal');
           yPosition += 6;
           const formulas = formulasMatch[1].split(/[\n•\-\*]/).filter((f: string) => f.trim());
-          renderCardList(formulas, colors.rose);
+          formulas.forEach((formula: string) => {
+            checkPageBreak(8);
+            pdf.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+            pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+            pdf.roundedRect(margin, yPosition, contentWidth, 7, 2, 2, 'FD');
+            pdf.setFillColor(colors.rose[0], colors.rose[1], colors.rose[2]);
+            pdf.rect(margin, yPosition, 1.4, 7, 'F');
+            pdf.setFont('courier', 'normal');
+            pdf.setFontSize(9);
+            pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+            pdf.text(formula.trim(), margin + 6, yPosition + 4);
+            pdf.setFont('helvetica', 'normal');
+            yPosition += 10;
+          });
         }
 
         const definitionsMatch = glossary.match(/### Definitions\s*([\s\S]*)/i);
@@ -409,7 +518,19 @@ function LectureDetailPageContent() {
           pdf.setFont('helvetica', 'normal');
           yPosition += 6;
           const definitions = definitionsMatch[1].split(/[\n•\-\*]/).filter((d: string) => d.trim());
-          renderCardList(definitions, colors.rose);
+          definitions.forEach((definition: string) => {
+            checkPageBreak(8);
+            pdf.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+            pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+            pdf.roundedRect(margin, yPosition, contentWidth, 7, 2, 2, 'FD');
+            pdf.setFillColor(colors.rose[0], colors.rose[1], colors.rose[2]);
+            pdf.rect(margin, yPosition, 1.4, 7, 'F');
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9);
+            pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
+            pdf.text(definition.trim(), margin + 6, yPosition + 4);
+            yPosition += 10;
+          });
         }
       }
 
