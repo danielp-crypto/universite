@@ -67,12 +67,6 @@ export default function PaymentSuccessPage() {
         </p>
 
         <div className="bg-slate-50 rounded-xl p-4 mb-6">
-          {status === 'verifying' && (
-            <p className="text-sm text-slate-600 flex items-center justify-center gap-2">
-              <span className="inline-block w-4 h-4 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin"></span>
-              Verifying payment with Yoco...
-            </p>
-          )}
           {status === 'confirming' && (
             <p className="text-sm text-slate-600 flex items-center justify-center gap-2">
               <span className="inline-block w-4 h-4 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin"></span>
