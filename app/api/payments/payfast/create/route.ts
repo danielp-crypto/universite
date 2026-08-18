@@ -14,7 +14,7 @@ const PAYFAST_SANDBOX = process.env.PAYFAST_SANDBOX === 'true';
 const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID!;
 const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY!;
 const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
-const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_SITE_URL!;
+const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
 
 export async function POST(request: NextRequest) {
   try {
