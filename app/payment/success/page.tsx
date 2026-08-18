@@ -2,77 +2,50 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiGet, apiPost } from '@/lib/api/client';
+import { apiGet } from '@/lib/api/client';
 
-// Yoco appends checkout id as query parameter to success URL
-// We need to verify the payment server-side before activating subscription
+// PayFast's server-to-server webhook (ITN) that actually activates the
+// subscription in our database fires independently of this page loading —
+// there's no guarantee it has completed by the time the browser lands here.
+// Rather than guessing at a fixed delay, poll /api/subscription until it
+// actually confirms an active paid plan, or give up after a reasonable time.
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 10; // ~15 seconds total
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<'verifying' | 'confirming' | 'confirmed' | 'timed_out'>('verifying');
+  const [status, setStatus] = useState<'confirming' | 'confirmed' | 'timed_out'>('confirming');
 
   useEffect(() => {
-    // Get checkoutId from URL search params
-    const urlParams = new URLSearchParams(window.location.search);
-    const checkoutId = urlParams.get('checkoutId');
-    console.log('Payment success page loaded with checkoutId:', checkoutId);
-
     let attempts = 0;
     let cancelled = false;
 
-    const verifyAndPoll = async () => {
+    const poll = async () => {
       try {
-        // First, verify the payment with Yoco if we have a checkout ID
-        if (checkoutId) {
-          console.log('Verifying Yoco payment...');
-          const verifyResult = await apiPost('/api/payments/yoco/verify', { checkoutId });
-          console.log('Verification result:', verifyResult);
+        const subscription = await apiGet('/api/subscription');
+        if (cancelled) return;
 
-          if (verifyResult.success) {
-            console.log('Payment verified successfully');
-          } else {
-            console.warn('Payment verification returned:', verifyResult);
-          }
+        if (subscription?.status === 'active' && subscription?.plan_slug !== 'free') {
+          setStatus('confirmed');
+          setTimeout(() => router.push('/dashboard'), 1200);
+          return;
         }
-
-        setStatus('confirming');
-
-        // Then poll for subscription activation
-        const poll = async () => {
-          try {
-            const subscription = await apiGet('/api/subscription');
-            if (cancelled) return;
-
-            if (subscription?.status === 'active' && subscription?.plan_slug !== 'free') {
-              setStatus('confirmed');
-              setTimeout(() => router.push('/dashboard'), 1200);
-              return;
-            }
-          } catch (error) {
-            console.error('Error checking subscription status:', error);
-          }
-
-          attempts += 1;
-          if (attempts >= MAX_POLL_ATTEMPTS) {
-            if (!cancelled) setStatus('timed_out');
-            return;
-          }
-
-          if (!cancelled) {
-            setTimeout(poll, POLL_INTERVAL_MS);
-          }
-        };
-
-        poll();
       } catch (error) {
-        console.error('Error during payment verification:', error);
-        setStatus('timed_out');
+        console.error('Error checking subscription status:', error);
+      }
+
+      attempts += 1;
+      if (attempts >= MAX_POLL_ATTEMPTS) {
+        if (!cancelled) setStatus('timed_out');
+        return;
+      }
+
+      if (!cancelled) {
+        setTimeout(poll, POLL_INTERVAL_MS);
       }
     };
 
-    verifyAndPoll();
+    poll();
 
     return () => {
       cancelled = true;
