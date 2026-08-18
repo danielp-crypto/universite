@@ -224,6 +224,36 @@ function LectureDetailPageContent() {
         yPosition += 5;
       };
 
+      // Helper function to render text with **bold** markdown formatting
+      const renderBoldText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number, baseColor: number[]) => {
+        if (!text.includes('**')) {
+          pdf.setTextColor(baseColor[0], baseColor[1], baseColor[2]);
+          pdf.text(text, x, y);
+          return lineHeight;
+        }
+
+        const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+        let currentX = x;
+        let currentY = y;
+
+        parts.forEach((part) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            const boldText = part.slice(2, -2);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(colors.indigo[0], colors.indigo[1], colors.indigo[2]);
+            pdf.text(boldText, currentX, currentY);
+            currentX += pdf.getTextWidth(boldText);
+          } else {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(baseColor[0], baseColor[1], baseColor[2]);
+            pdf.text(part, currentX, currentY);
+            currentX += pdf.getTextWidth(part);
+          }
+        });
+
+        return lineHeight;
+      };
+
       // Renders free-flowing paragraph text with enhanced formatting (used for the full lecture
       // notes, which can be long). Handles headings, bullet points, numbered lists, and paragraphs.
       // Wrapped in a bordered card only when the whole block fits on the current page; otherwise
@@ -312,7 +342,7 @@ function LectureDetailPageContent() {
             pdf.setFontSize(10);
             pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
             wrappedLines.forEach((line: string) => {
-              pdf.text(line, margin + 6, yPosition);
+              renderBoldText(line, margin + 6, yPosition, contentWidth - 10, headingLineHeight, colors.ink);
               yPosition += headingLineHeight;
             });
             yPosition += 2;
@@ -323,7 +353,7 @@ function LectureDetailPageContent() {
             pdf.setFillColor(color[0], color[1], color[2]);
             pdf.circle(margin + 4, yPosition - 1, 1.5, 'F');
             wrappedLines.forEach((line: string) => {
-              pdf.text(line, margin + bulletIndent, yPosition);
+              renderBoldText(line, margin + bulletIndent, yPosition, contentWidth - bulletIndent - 10, lineHeight, colors.ink);
               yPosition += lineHeight;
             });
             yPosition += 1;
@@ -336,7 +366,7 @@ function LectureDetailPageContent() {
             pdf.setFont('helvetica', 'normal');
             pdf.setTextColor(colors.ink[0], colors.ink[1], colors.ink[2]);
             wrappedLines.forEach((line: string) => {
-              pdf.text(line, margin + numberIndent, yPosition);
+              renderBoldText(line, margin + numberIndent, yPosition, contentWidth - numberIndent - 10, lineHeight, colors.ink);
               yPosition += lineHeight;
             });
             yPosition += 1;
@@ -344,7 +374,7 @@ function LectureDetailPageContent() {
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(9.5);
             wrappedLines.forEach((line: string) => {
-              pdf.text(line, margin + (useCard ? 6 : 2), yPosition);
+              renderBoldText(line, margin + (useCard ? 6 : 2), yPosition, contentWidth - 10, lineHeight, colors.ink);
               yPosition += lineHeight;
             });
             yPosition += 2;
@@ -1052,7 +1082,7 @@ function LectureDetailPageContent() {
       const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
       return parts.map((part: string, i: number) =>
         part.startsWith('**') && part.endsWith('**') ? (
-          <strong key={`${keyPrefix}-${i}`} className="font-semibold text-slate-900">
+          <strong key={`${keyPrefix}-${i}`} className="font-bold text-indigo-900 bg-indigo-50 px-1.5 py-0.5 rounded">
             {part.slice(2, -2)}
           </strong>
         ) : (
@@ -1065,7 +1095,7 @@ function LectureDetailPageContent() {
     if (labelMatch) {
       return (
         <>
-          <strong className="font-semibold text-slate-900">{labelMatch[1]}:</strong>{' '}
+          <strong className="font-bold text-indigo-900 bg-indigo-50 px-1.5 py-0.5 rounded">{labelMatch[1]}:</strong>{' '}
           {labelMatch[2]}
         </>
       );
