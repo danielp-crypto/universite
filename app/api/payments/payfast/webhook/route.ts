@@ -65,7 +65,10 @@ export async function POST(request: NextRequest) {
         .eq('user_id', userId)
         .single();
 
-      if (currentSub && currentSub.status === 'active' && currentSub.plan_slug === planSlug) {
+      // Check if this is a recurring payment by checking if token exists and matches
+      const isRecurring = token && currentSub?.subscription_token === token;
+
+      if (isRecurring && currentSub && currentSub.status === 'active' && currentSub.plan_slug === planSlug) {
         // Recurring payment on the same plan the user is already active on — extend it
         const currentExpiry = new Date(currentSub.expires_at || new Date());
         const newExpiry = new Date(currentExpiry);
@@ -107,7 +110,7 @@ export async function POST(request: NextRequest) {
             plan_slug: planSlug,
             status: 'active',
             payfast_payment_id: paymentId,
-            subscription_token: token,
+            subscription_token: token || null,
             started_at: startedAt.toISOString(),
             expires_at: expiresAt.toISOString()
           });
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
           console.error('Error activating subscription:', updateError);
         }
 
-        console.log('Subscription activated for user:', userId, 'Expires:', expiresAt);
+        console.log('Subscription activated for user:', userId, 'Expires:', expiresAt, 'Token:', token ? 'Yes' : 'No');
       }
     } else if (paymentStatus === 'FAILED' || paymentStatus === 'CANCELLED') {
       // Only cancel if this notification matches the subscription's own payment ID —

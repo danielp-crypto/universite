@@ -86,12 +86,10 @@ export async function POST(request: NextRequest) {
       custom_str2: plan_slug,
       email_confirmation: 1,
       confirmation_address: user.email,
-      // TEMPORARILY DISABLED again for diagnostic purposes, now that merchant
-      // credentials are correct — isolating whether recurring billing fields
-      // require a setting enabled on the PayFast account.
-      // subscription_type: 1, // 1 = recurring subscription
-      // frequency: plan.interval === 'month' ? 3 : 6, // 3 = monthly, 6 = yearly
-      // cycles: 0 // 0 = unlimited cycles
+      // Recurring billing for subscriptions
+      subscription_type: 1, // 1 = recurring subscription
+      frequency: plan.interval === 'month' ? 3 : 6, // 3 = monthly, 6 = yearly
+      cycles: 0 // 0 = unlimited cycles
     };
 
     // Add passphrase for signature generation only — PayFast requires a signature
