@@ -297,39 +297,39 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen flex flex-col pb-20">
+    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen flex flex-col pb-20">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-50">
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 md:py-4 sticky top-0 z-50">
         <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
             <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
           </div>
-          <h1 className="text-lg md:text-xl font-semibold text-slate-800">Settings</h1>
+          <h1 className="text-lg md:text-xl font-semibold text-slate-800 dark:text-slate-100">Settings</h1>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
         {/* Profile Section */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
               {getInitials()}
             </div>
             <div className="flex-1">
-              <div className="text-lg font-semibold text-slate-800">{getDisplayName()}</div>
-              <div className="text-sm text-slate-500">{getEmail()}</div>
+              <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">{getDisplayName()}</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">{getEmail()}</div>
             </div>
           </div>
           <button 
             onClick={() => setShowProfileModal(true)}
-            className="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium active:scale-95 transition-transform mb-2"
+            className="w-full px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium active:scale-95 transition-transform mb-2"
           >
             Edit Profile
           </button>
           <button
             onClick={handleSignOut}
-            className="w-full px-4 py-2 border border-red-200 text-red-600 rounded-xl font-medium active:scale-95 transition-transform hover:bg-red-50"
+            className="w-full px-4 py-2 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl font-medium active:scale-95 transition-transform hover:bg-red-50 dark:hover:bg-red-900/20"
           >
             Sign Out
           </button>
@@ -337,40 +337,40 @@ export default function SettingsPage() {
 
         {/* General Settings */}
         <div className="mb-4">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 px-2">General</h2>
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-200">
+          <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 px-2">General</h2>
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden divide-y divide-slate-200 dark:divide-slate-700">
             <button
               onClick={() => setShowNotifications(true)}
-              className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                   🔔
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-slate-800">Notifications</div>
-                  <div className="text-xs text-slate-500">Manage notification preferences</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">Notifications</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Manage notification preferences</div>
                 </div>
               </div>
-              <span className="text-slate-400">→</span>
+              <span className="text-slate-400 dark:text-slate-500">→</span>
             </button>
 
             <button
               onClick={() => setShowAppearance(true)}
-              className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                   🎨
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-slate-800">Appearance</div>
-                  <div className="text-xs text-slate-500">Theme and display options</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">Appearance</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Theme and display options</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-500 capitalize">{theme}</span>
-                <span className="text-slate-400">→</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400 capitalize">{theme}</span>
+                <span className="text-slate-400 dark:text-slate-500">→</span>
               </div>
             </button>
           </div>
@@ -378,22 +378,22 @@ export default function SettingsPage() {
 
         {/* Study Settings */}
         <div className="mb-4">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 px-2">Study</h2>
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-200">
+          <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 px-2">Study</h2>
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden divide-y divide-slate-200 dark:divide-slate-700">
             <button
               onClick={() => setShowDailyGoal(true)}
-              className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                   ⏰
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-black">Daily Study Goal</div>
-                  <div className="text-xs text-slate-500">{dailyGoal} hours per day</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">Daily Study Goal</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{dailyGoal} hours per day</div>
                 </div>
               </div>
-              <span className="text-slate-400">→</span>
+              <span className="text-slate-400 dark:text-slate-500">→</span>
             </button>
 
           </div>
@@ -402,22 +402,22 @@ export default function SettingsPage() {
         {/* Subscription Settings */}
         {subscription && subscription.plan_slug !== 'free' && (
           <div className="mb-4">
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 px-2">Subscription</h2>
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-200">
+            <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 px-2">Subscription</h2>
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden divide-y divide-slate-200 dark:divide-slate-700">
               <button
                 onClick={() => setShowSubscriptionModal(true)}
-                className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                     💎
                   </div>
                   <div className="text-left">
-                    <div className="font-medium text-slate-800">Manage Subscription</div>
-                    <div className="text-xs text-slate-500">Current plan: {subscription.plans?.name || subscription.plan_slug}</div>
+                    <div className="font-medium text-slate-800 dark:text-slate-100">Manage Subscription</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Current plan: {subscription.plans?.name || subscription.plan_slug}</div>
                   </div>
                 </div>
-                <span className="text-slate-400">→</span>
+                <span className="text-slate-400 dark:text-slate-500">→</span>
               </button>
             </div>
           </div>
@@ -425,22 +425,22 @@ export default function SettingsPage() {
 
         {/* About */}
         <div className="mb-4">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 px-2">About</h2>
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-200">
+          <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 px-2">About</h2>
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden divide-y divide-slate-200 dark:divide-slate-700">
             <button
               onClick={() => setShowHelp(true)}
-              className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
                   ❓
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-slate-800">Help & Support</div>
-                  <div className="text-xs text-slate-500">Get help using the app</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">Help & Support</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Get help using the app</div>
                 </div>
               </div>
-              <span className="text-slate-400">→</span>
+              <span className="text-slate-400 dark:text-slate-500">→</span>
             </button>
 
             <Link href="/privacy" className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
@@ -449,10 +449,10 @@ export default function SettingsPage() {
                   📄
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-slate-800">Privacy Policy</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">Privacy Policy</div>
                 </div>
               </div>
-              <span className="text-slate-400">→</span>
+              <span className="text-slate-400 dark:text-slate-500">→</span>
             </Link>
 
             <Link href="/terms" className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
@@ -461,10 +461,10 @@ export default function SettingsPage() {
                   📋
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-slate-800">Terms of Service</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">Terms of Service</div>
                 </div>
               </div>
-              <span className="text-slate-400">→</span>
+              <span className="text-slate-400 dark:text-slate-500">→</span>
             </Link>
 
             <div className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition-colors">
@@ -473,11 +473,11 @@ export default function SettingsPage() {
                   ℹ️
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-slate-800">About</div>
-                  <div className="text-xs text-slate-500">Version 1.0.0</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">About</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Version 1.0.0</div>
                 </div>
               </div>
-              <span className="text-slate-400">→</span>
+              <span className="text-slate-400 dark:text-slate-500">→</span>
             </div>
           </div>
         </div>
@@ -487,10 +487,10 @@ export default function SettingsPage() {
       {showNotifications && (
         <div className="fixed inset-0 z-50">
           <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-800">Notifications</h2>
-                <button onClick={() => setShowNotifications(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Notifications</h2>
+                <button onClick={() => setShowNotifications(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   ✕
                 </button>
               </div>
@@ -503,8 +503,8 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-slate-800">Daily Motivation 💪</div>
-                      <div className="text-sm text-slate-500">Get daily motivational messages</div>
+                      <div className="font-medium text-slate-800 dark:text-slate-100">Daily Motivation 💪</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Get daily motivational messages</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input 
@@ -519,8 +519,8 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-slate-800">Quiz Reminders 🎯</div>
-                      <div className="text-sm text-slate-500">Remind to take quizzes on lectures</div>
+                      <div className="font-medium text-slate-800 dark:text-slate-100">Quiz Reminders 🎯</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Remind to take quizzes on lectures</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input 
@@ -535,8 +535,8 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-black">Weekly Summary 📊</div>
-                      <div className="text-sm text-slate-500">Get weekly progress summaries</div>
+                      <div className="font-medium text-slate-800 dark:text-slate-100">Weekly Summary 📊</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Get weekly progress summaries</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input 
@@ -551,8 +551,8 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-black">Streak Reminders 🔥</div>
-                      <div className="text-sm text-slate-500">Remind to maintain learning streak</div>
+                      <div className="font-medium text-slate-800 dark:text-slate-100">Streak Reminders 🔥</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Remind to maintain learning streak</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input 
@@ -566,12 +566,12 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block font-medium text-black mb-2">Reminder Time</label>
+                    <label className="block font-medium text-slate-700 dark:text-slate-300 mb-2">Reminder Time</label>
                     <input
                       type="time"
                       value={notificationPrefs.reminder_time}
                       onChange={(e) => setNotificationPrefs(prev => ({ ...prev, reminder_time: e.target.value }))}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 dark:bg-slate-700"
                     />
                   </div>
                 </div>
@@ -601,10 +601,10 @@ export default function SettingsPage() {
       {showAppearance && (
         <div className="fixed inset-0 z-50">
           <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-800">Appearance</h2>
-                <button onClick={() => setShowAppearance(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Appearance</h2>
+                <button onClick={() => setShowAppearance(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   ✕
                 </button>
               </div>
@@ -623,8 +623,8 @@ export default function SettingsPage() {
                         t === 'light' ? 'bg-yellow-400' : t === 'dark' ? 'bg-slate-800' : 'bg-gradient-to-r from-yellow-400 to-slate-800'
                       }`}></div>
                       <div>
-                        <div className="font-medium text-slate-800 capitalize">{t}</div>
-                        <div className="text-sm text-slate-500">
+                        <div className="font-medium text-slate-800 dark:text-slate-100 capitalize">{t}</div>
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
                           {t === 'light' ? 'Clean and bright interface' : t === 'dark' ? 'Easy on the eyes in low light' : 'Follow your device settings'}
                         </div>
                       </div>
@@ -646,23 +646,23 @@ export default function SettingsPage() {
       {showDailyGoal && (
         <div className="fixed inset-0 z-50">
           <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-black">Daily Study Goal</h2>
-                <button onClick={() => setShowDailyGoal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Daily Study Goal</h2>
+                <button onClick={() => setShowDailyGoal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   ✕
                 </button>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Set Daily Goal</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Set Daily Goal</label>
                   <div className="grid grid-cols-4 gap-2">
                     {[1, 2, 3, 4].map((hours) => (
                       <button
                         key={hours}
                         onClick={() => setDailyGoal(hours)}
-                        className={`px-3 py-2 border rounded-lg text-sm text-black transition-colors ${
+                        className={`px-3 py-2 border rounded-lg text-sm text-slate-800 dark:text-slate-100 transition-colors ${
                           dailyGoal === hours ? 'border-indigo-300 bg-indigo-50 font-medium' : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50'
                         }`}
                       >
@@ -687,23 +687,23 @@ export default function SettingsPage() {
       {showHelp && (
         <div className="fixed inset-0 z-50">
           <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-800">Help & Support</h2>
-                <button onClick={() => setShowHelp(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Help & Support</h2>
+                <button onClick={() => setShowHelp(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   ✕
                 </button>
               </div>
 
               <div className="space-y-4">
                 <a href="mailto:support@universite.co.za" className="block p-4 border border-slate-200 rounded-xl hover:border-indigo-300 transition-colors">
-                  <div className="font-medium text-slate-800">Email Support</div>
-                  <div className="text-sm text-slate-500">support@universite.co.za</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">Email Support</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">support@universite.co.za</div>
                 </a>
 
                 <a href="mailto:legal@universite.co.za" className="block p-4 border border-slate-200 rounded-xl hover:border-indigo-300 transition-colors">
-                  <div className="font-medium text-slate-800">Legal Contact</div>
-                  <div className="text-sm text-slate-500">legal@universite.co.za</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">Legal Contact</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">legal@universite.co.za</div>
                 </a>
               </div>
 
@@ -722,59 +722,59 @@ export default function SettingsPage() {
           <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-800">Edit Profile</h2>
-                <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Edit Profile</h2>
+                <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   ✕
                 </button>
               </div>
 
               <form ref={formRef} onSubmit={handleSaveProfile} className="space-y-5">
                 <div>
-                  <label htmlFor="full_name" className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+                  <label htmlFor="full_name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Full Name</label>
                   <input
                     type="text"
                     id="full_name"
                     name="full_name"
                     defaultValue={profile?.full_name || user?.user_metadata?.full_name || ''}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"
                     placeholder="Your full name"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="university" className="block text-sm font-medium text-slate-700 mb-2">University/College</label>
+                  <label htmlFor="university" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">University/College</label>
                   <input
                     type="text"
                     id="university"
                     name="university"
                     defaultValue={profile?.university || ''}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"
                     placeholder="Your university or college"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="major" className="block text-sm font-medium text-slate-700 mb-2">Major/Field of Study</label>
+                  <label htmlFor="major" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Major/Field of Study</label>
                   <input
                     type="text"
                     id="major"
                     name="major"
                     defaultValue={profile?.major || ''}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"
                     placeholder="e.g., Computer Science, Biology"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="year" className="block text-sm font-medium text-slate-700 mb-2">Year of Study</label>
+                  <label htmlFor="year" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Year of Study</label>
                   <select
                     id="year"
                     name="year"
                     defaultValue={profile?.year || ''}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"
                   >
                     <option value="">Select your year</option>
                     <option value="freshman">Freshman</option>
@@ -787,12 +787,12 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="study_time" className="block text-sm font-medium text-slate-700 mb-2">Preferred Study Time</label>
+                  <label htmlFor="study_time" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Preferred Study Time</label>
                   <select
                     id="study_time"
                     name="study_time"
                     defaultValue={profile?.study_time || ''}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"
                   >
                     <option value="">Select preference</option>
                     <option value="morning">Morning (6AM - 12PM)</option>
@@ -804,12 +804,12 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="learning_style" className="block text-sm font-medium text-slate-700 mb-2">Learning Style</label>
+                  <label htmlFor="learning_style" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Learning Style</label>
                   <select
                     id="learning_style"
                     name="learning_style"
                     defaultValue={profile?.learning_style || ''}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"
                   >
                     <option value="">Select your style</option>
                     <option value="visual">Visual (diagrams, charts)</option>
@@ -824,7 +824,7 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setShowProfileModal(false)}
-                    className="flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300"
+                    className="flex-1 px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium hover:bg-slate-300 dark:hover:bg-slate-600"
                   >
                     Cancel
                   </button>
@@ -844,10 +844,10 @@ export default function SettingsPage() {
       {showSubscriptionModal && (
         <div className="fixed inset-0 z-50">
           <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-800">Manage Subscription</h2>
-                <button onClick={() => setShowSubscriptionModal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Manage Subscription</h2>
+                <button onClick={() => setShowSubscriptionModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   ✕
                 </button>
               </div>
@@ -859,8 +859,8 @@ export default function SettingsPage() {
                       💎
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-800">{subscription?.plans?.name || 'Premium'}</div>
-                      <div className="text-sm text-slate-600">Current plan</div>
+                      <div className="font-semibold text-slate-800 dark:text-slate-100">{subscription?.plans?.name || 'Premium'}</div>
+                      <div className="text-sm text-slate-600 dark:text-slate-400">Current plan</div>
                     </div>
                   </div>
                   {subscription?.expires_at && (
@@ -876,8 +876,8 @@ export default function SettingsPage() {
                       🆓
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-800">Free Beta</div>
-                      <div className="text-sm text-slate-600">After cancellation</div>
+                      <div className="font-semibold text-slate-800 dark:text-slate-100">Free Beta</div>
+                      <div className="text-sm text-slate-600 dark:text-slate-400">After cancellation</div>
                     </div>
                   </div>
                   <div className="text-sm text-slate-600 mt-2">
@@ -920,22 +920,22 @@ export default function SettingsPage() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 safe-area-inset-bottom z-10">
         <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
           <div className="flex items-center justify-around py-2">
-            <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
+            <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
               <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <span className="text-xs font-medium">Home</span>
             </Link>
-            <Link href="/lectures" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
+            <Link href="/lectures" className="flex flex-col items-center py-2 px-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
               <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
               <span className="text-xs font-medium">Lectures</span>
             </Link>
-            <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-indigo-600">
+            <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-indigo-600 dark:text-indigo-400">
               <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
