@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       ...module,
       credits_allocated: globalCreditsAllocated,
       credits_used: globalCreditsUsed,
-      lecture_count: module.lecture_count || module.lectures?.length || 0
+      lecture_count: module.lectures?.count || 0
     }));
 
     if (error) {
