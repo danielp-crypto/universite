@@ -51,6 +51,23 @@ export async function POST(
   try {
     payload = await request.json();
 
+    // Idempotency guard: Deepgram (like most webhook providers) treats
+    // delivery as "at least once" and may retry a callback that was slow to
+    // respond or errored transiently. Without this check, a retry would
+    // reprocess an already-completed lecture — regenerating the summary
+    // (wasted Gemini calls, and a contributor to the rate-limit issues seen
+    // earlier) and inserting a second credit charge for the same lecture.
+    const { data: existingLecture } = await supabaseAdmin
+      .from('lectures')
+      .select('status, title')
+      .eq('id', lectureId)
+      .single();
+
+    if (existingLecture?.status === 'completed') {
+      await logWebhookEvent({ lectureId, outcome: 'duplicate_callback_ignored' });
+      return NextResponse.json({ success: true });
+    }
+
     // Deepgram sends a different shape when it couldn't process the file at
     // all (e.g. couldn't fetch the URL, unsupported codec) — surface that
     // specific reason rather than a generic "no transcript" if present.
@@ -73,13 +90,7 @@ export async function POST(
     // "Lecture N" placeholder from a live recording — uploaded files keep
     // whatever title came from their filename, since that's often already
     // meaningful and shouldn't be silently overridden.
-    const { data: currentLecture } = await supabaseAdmin
-      .from('lectures')
-      .select('title')
-      .eq('id', lectureId)
-      .single();
-
-    const isGenericTitle = !!currentLecture?.title && /^Lecture \d+$/.test(currentLecture.title);
+    const isGenericTitle = !!existingLecture?.title && /^Lecture \d+$/.test(existingLecture.title);
 
     // Generate the summary the same way the old synchronous flow did —
     // same endpoint, just called server-to-server now instead of from the
