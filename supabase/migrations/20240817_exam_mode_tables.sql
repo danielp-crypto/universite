@@ -7,14 +7,14 @@ CREATE TABLE IF NOT EXISTS exam_sessions (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   module_id UUID REFERENCES modules(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  duration_minutes INTEGER NOT NULL, -- 0 for practice questions, 15, 30, or 60 for timed exams
+  duration_minutes INTEGER NOT NULL, -- 15, 30, or 60
   score DECIMAL(5,2), -- Overall percentage score
   readiness_score INTEGER, -- 0-100 readiness score
   questions_count INTEGER NOT NULL,
   correct_count INTEGER DEFAULT 0,
   status TEXT DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'abandoned')),
   submitted_at TIMESTAMP WITH TIME ZONE,
-
+  
   -- Indexes for common queries
   INDEX idx_exam_sessions_user_id (user_id),
   INDEX idx_exam_sessions_module_id (module_id),

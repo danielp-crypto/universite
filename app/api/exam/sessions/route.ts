@@ -27,13 +27,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { module_id, duration_minutes, questions_count } = body;
 
-    if (!module_id || duration_minutes === undefined || duration_minutes === null || !questions_count) {
+    if (!module_id || !duration_minutes || !questions_count) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Validate duration (allow 0 for practice questions without timer)
-    if (duration_minutes !== 0 && ![15, 30, 60].includes(duration_minutes)) {
-      return NextResponse.json({ error: 'Invalid duration. Must be 0, 15, 30, or 60 minutes' }, { status: 400 });
+    // Validate duration
+    if (![15, 30, 60].includes(duration_minutes)) {
+      return NextResponse.json({ error: 'Invalid duration. Must be 15, 30, or 60 minutes' }, { status: 400 });
     }
 
     // Validate questions count

@@ -77,8 +77,7 @@ export default function ExamModePage() {
 
   const getModuleLecturesCount = (moduleId: string) => {
     const module = modules.find(m => m.id === moduleId);
-    // Handle both direct lecture_count and nested lectures count from Supabase
-    return module?.lecture_count || module?.lectures?.length || 0;
+    return module?.lecture_count || 0;
   };
 
   const getReadinessLabel = (score: number) => {

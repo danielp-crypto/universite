@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     // Fetch modules for the user
     const { data: modules, error } = await supabaseAdmin
       .from('modules')
-      .select('*, lectures(count)')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -38,12 +38,11 @@ export async function GET(request: NextRequest) {
     const globalCreditsUsed = globalCreditsData?.length || 0;
     const globalCreditsAllocated = 4; // Free tier gets 4 credits globally
 
-    // Add global credit info to each module and normalize lecture count
+    // Add global credit info to each module
     const modulesWithCredits = (modules || []).map(module => ({
       ...module,
       credits_allocated: globalCreditsAllocated,
-      credits_used: globalCreditsUsed,
-      lecture_count: module.lecture_count || module.lectures?.length || 0
+      credits_used: globalCreditsUsed
     }));
 
     if (error) {
