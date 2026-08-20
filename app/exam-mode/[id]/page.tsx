@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { apiGet, apiPost } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
@@ -40,7 +40,7 @@ export default function ExamTakingPage() {
 
       return () => clearInterval(timer);
     }
-  }, [examStarted, timeRemaining]);
+  }, [examStarted, timeRemaining, submitExam]);
 
   const loadExamSession = async () => {
     try {
@@ -107,7 +107,7 @@ export default function ExamTakingPage() {
     }
   };
 
-  const submitExam = async () => {
+  const submitExam = useCallback(async () => {
     if (submitting) return;
     setSubmitting(true);
 
@@ -137,7 +137,7 @@ export default function ExamTakingPage() {
         const data = await response.json();
         setResults(data);
         setShowResults(true);
-        
+
         // Load weak topics
         loadWeakTopics();
       } else {
@@ -149,7 +149,7 @@ export default function ExamTakingPage() {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [submitting, answers, examSessionId]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
