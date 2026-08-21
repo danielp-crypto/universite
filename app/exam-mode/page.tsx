@@ -133,7 +133,30 @@ export default function ExamModePage() {
       if (response.ok) {
         const data = await response.json();
         console.log('Exam session created:', data);
-        router.push(`/exam-mode/${data.exam_session.id}`);
+
+        // Generate questions for the session
+        const questionsResponse = await fetch('/api/exam/questions/generate', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            exam_session_id: data.exam_session.id,
+            question_type: 'mixed',
+            difficulty: 'mixed',
+            count: 10
+          })
+        });
+
+        if (questionsResponse.ok) {
+          console.log('Questions generated successfully');
+          router.push(`/exam-mode/${data.exam_session.id}`);
+        } else {
+          const errorData = await questionsResponse.json();
+          console.error('Failed to generate questions:', errorData);
+          alert(`Failed to generate questions: ${errorData.error || 'Unknown error'}`);
+        }
       } else {
         const errorData = await response.json();
         console.error('Failed to start exam:', errorData);
