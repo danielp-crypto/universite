@@ -130,7 +130,7 @@ Important:
       console.error('AI API error:', aiResponse.statusText);
       const errorText = await aiResponse.text();
       console.error('AI API error body:', errorText);
-      return NextResponse.json({ error: 'Failed to generate questions' }, { status: 500 });
+      return NextResponse.json({ error: `AI API error: ${aiResponse.statusText} - ${errorText}` }, { status: 500 });
     }
 
     const aiData = await aiResponse.json();
@@ -138,7 +138,7 @@ Important:
 
     if (!aiData.candidates || !aiData.candidates[0] || !aiData.candidates[0].content || !aiData.candidates[0].content.parts[0]) {
       console.error('Invalid AI response structure:', aiData);
-      return NextResponse.json({ error: 'Invalid AI response' }, { status: 500 });
+      return NextResponse.json({ error: 'Invalid AI response structure from Gemini API' }, { status: 500 });
     }
 
     const generatedText = aiData.candidates[0].content.parts[0].text;
