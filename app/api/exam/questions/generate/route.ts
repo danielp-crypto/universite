@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { exam_session_id, question_type, difficulty, count } = body;
 
+    console.log('Question generation request:', { exam_session_id, question_type, difficulty, count });
+
     if (!exam_session_id || !count) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -40,8 +42,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (sessionError || !examSession) {
+      console.error('Exam session not found:', sessionError);
       return NextResponse.json({ error: 'Exam session not found' }, { status: 404 });
     }
+
+    console.log('Exam session found:', examSession.id, 'Module:', examSession.module_id);
 
     // Get lectures from the module
     const { data: lectures, error: lecturesError } = await supabaseAdmin
@@ -54,6 +59,8 @@ export async function POST(request: NextRequest) {
       console.error('Error fetching lectures:', lecturesError);
       return NextResponse.json({ error: 'Failed to fetch lectures' }, { status: 500 });
     }
+
+    console.log('Lectures found:', lectures?.length || 0);
 
     if (!lectures || lectures.length === 0) {
       console.log('No lectures found for module:', examSession.module_id);
@@ -96,6 +103,13 @@ Important:
 - Return valid JSON only, no additional text`;
 
     // Call AI API (using your existing AI integration)
+    console.log('Calling AI API...');
+    console.log('GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
+
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
+    }
+
     const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + process.env.GEMINI_API_KEY, {
       method: 'POST',
       headers: {
@@ -110,13 +124,25 @@ Important:
       })
     });
 
+    console.log('AI API response status:', aiResponse.status);
+
     if (!aiResponse.ok) {
       console.error('AI API error:', aiResponse.statusText);
+      const errorText = await aiResponse.text();
+      console.error('AI API error body:', errorText);
       return NextResponse.json({ error: 'Failed to generate questions' }, { status: 500 });
     }
 
     const aiData = await aiResponse.json();
+    console.log('AI API response data:', JSON.stringify(aiData).substring(0, 500));
+
+    if (!aiData.candidates || !aiData.candidates[0] || !aiData.candidates[0].content || !aiData.candidates[0].content.parts[0]) {
+      console.error('Invalid AI response structure:', aiData);
+      return NextResponse.json({ error: 'Invalid AI response' }, { status: 500 });
+    }
+
     const generatedText = aiData.candidates[0].content.parts[0].text;
+    console.log('Generated text length:', generatedText.length);
 
     // Parse AI response
     let questions;
