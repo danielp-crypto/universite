@@ -151,6 +151,7 @@ Important:
 
     const generatedText = aiData.candidates[0].content.parts[0].text;
     console.log('Generated text length:', generatedText.length);
+    console.log('Generated text preview:', generatedText.substring(0, 1000));
 
     // Parse AI response
     let questions;
@@ -158,10 +159,12 @@ Important:
       // Extract JSON from response (AI might add markdown formatting)
       const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
       const jsonString = jsonMatch ? jsonMatch[0] : generatedText;
+      console.log('Extracted JSON string:', jsonString.substring(0, 500));
       questions = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
-      return NextResponse.json({ error: 'Failed to parse generated questions' }, { status: 500 });
+      console.error('Full generated text:', generatedText);
+      return NextResponse.json({ error: `Failed to parse generated questions: ${parseError instanceof Error ? parseError.message : 'Unknown error'}` }, { status: 500 });
     }
 
     // Store questions in database
