@@ -182,7 +182,7 @@ export default function ExamTakingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -190,18 +190,18 @@ export default function ExamTakingPage() {
 
   if (showResults && results) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 sticky top-0 z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
             <button
               onClick={() => router.push('/exam-mode')}
-              className="p-1 text-slate-600"
+              className="p-1 text-slate-600 dark:text-slate-400"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-xl font-semibold text-slate-800">Exam Results</h1>
+            <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Exam Results</h1>
           </div>
         </div>
 
@@ -225,11 +225,11 @@ export default function ExamTakingPage() {
           </div>
 
           {/* Readiness Score */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-slate-800">Exam Readiness Score</h3>
-                <p className="text-sm text-slate-500">Based on your performance</p>
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100">Exam Readiness Score</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Based on your performance</p>
               </div>
               <div className="text-3xl font-bold text-indigo-600">{results.readiness_score}/100</div>
             </div>
@@ -237,8 +237,8 @@ export default function ExamTakingPage() {
 
           {/* Weak Topics Analysis */}
           {weakTopics.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
-              <h3 className="font-semibold text-slate-800 mb-3">Areas to Improve</h3>
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-3">Areas to Improve</h3>
               <div className="space-y-3">
                 {weakTopics.slice(0, 5).map((topic: any, index: number) => (
                   <div key={topic.id} className="flex items-start gap-3 p-3 bg-rose-50 rounded-xl">
@@ -246,8 +246,8 @@ export default function ExamTakingPage() {
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <div className="font-medium text-slate-800">{topic.topic}</div>
-                      <div className="text-xs text-slate-500 mt-1">
+                      <div className="font-medium text-slate-800 dark:text-slate-100">{topic.topic}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {topic.mistake_count} mistake{topic.mistake_count > 1 ? 's' : ''}
                       </div>
                     </div>
@@ -267,7 +267,7 @@ export default function ExamTakingPage() {
             </button>
             <button
               onClick={() => router.push('/dashboard')}
-              className="w-full py-4 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-all"
+              className="w-full py-4 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
             >
               Return to Dashboard
             </button>
@@ -279,30 +279,30 @@ export default function ExamTakingPage() {
 
   if (!examStarted) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 sticky top-0 z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
             <button
               onClick={() => router.push('/exam-mode')}
-              className="p-1 text-slate-600"
+              className="p-1 text-slate-600 dark:text-slate-400"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-xl font-semibold text-slate-800">Practice Exam</h1>
+            <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Practice Exam</h1>
           </div>
         </div>
 
         <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center">
             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
               <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Ready to Start?</h2>
-            <p className="text-slate-600 mb-6">
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Ready to Start?</h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
               This exam has {questions.length} questions and {examSession?.duration_minutes > 0 ? `${examSession.duration_minutes} minutes` : 'no time limit'}.
             </p>
             <button
@@ -329,23 +329,23 @@ export default function ExamTakingPage() {
                   router.push('/exam-mode');
                 }
               }}
-              className="p-1 text-slate-600"
+              className="p-1 text-slate-600 dark:text-slate-400"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <h1 className="text-lg font-semibold text-slate-800">Question {currentQuestionIndex + 1}/{questions.length}</h1>
+            <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Question {currentQuestionIndex + 1}/{questions.length}</h1>
           </div>
           {examSession?.duration_minutes > 0 && (
-            <div className={`text-xl font-bold ${timeRemaining < 300 ? 'text-red-600' : 'text-slate-800'}`}>
+            <div className={`text-xl font-bold ${timeRemaining < 300 ? 'text-red-600' : 'text-slate-800 dark:text-slate-100'}`}>
               {formatTime(timeRemaining)}
             </div>
           )}
         </div>
         {/* Progress Bar */}
         <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] mt-3">
-          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -356,12 +356,12 @@ export default function ExamTakingPage() {
 
       <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
         {/* Question Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-4">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 mb-4">
           <div className="mb-4">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 mb-3">
               {currentQuestion?.difficulty}
             </span>
-            <h2 className="text-lg font-semibold text-slate-800 leading-relaxed">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 leading-relaxed">
               {currentQuestion?.question}
             </h2>
           </div>
@@ -376,11 +376,11 @@ export default function ExamTakingPage() {
                     onClick={() => handleAnswerChange(currentQuestion.id, optionLetter)}
                     className={`w-full p-4 rounded-xl text-left transition-all ${
                       answers[currentQuestion.id] === optionLetter
-                        ? 'bg-indigo-50 border-2 border-indigo-500'
-                        : 'bg-slate-50 border-2 border-transparent hover:border-slate-300'
+                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-500'
+                        : 'bg-slate-50 dark:bg-slate-700 border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-500'
                     }`}
                   >
-                    <div className="font-medium text-slate-800">{option}</div>
+                    <div className="font-medium text-slate-800 dark:text-slate-100">{option}</div>
                   </button>
                 );
               })}
@@ -390,7 +390,7 @@ export default function ExamTakingPage() {
               value={answers[currentQuestion.id] || ''}
               onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
               placeholder="Type your answer here..."
-              className="w-full p-4 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none min-h-[150px]"
+              className="w-full p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none min-h-[150px] dark:bg-slate-700 dark:text-slate-100"
             />
           )}
         </div>
@@ -400,7 +400,7 @@ export default function ExamTakingPage() {
           <button
             onClick={goToPreviousQuestion}
             disabled={currentQuestionIndex === 0}
-            className="flex-1 py-4 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-4 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
