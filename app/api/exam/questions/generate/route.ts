@@ -56,7 +56,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (!lectures || lectures.length === 0) {
-      return NextResponse.json({ error: 'No lectures available in this module' }, { status: 400 });
+      console.log('No lectures found for module:', examSession.module_id);
+      return NextResponse.json({ error: 'No lectures with transcriptions available in this module. Please record or upload lectures first.' }, { status: 400 });
     }
 
     // Combine lecture content for AI context
