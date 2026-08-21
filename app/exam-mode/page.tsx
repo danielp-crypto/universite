@@ -111,7 +111,7 @@ export default function ExamModePage() {
 
   const startPracticeExam = async () => {
     if (!selectedModule) return;
-    
+
     try {
       const session = await getSession();
       if (!session) return;
@@ -132,9 +132,12 @@ export default function ExamModePage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Exam session created:', data);
         router.push(`/exam-mode/${data.exam_session.id}`);
       } else {
-        alert('Failed to start exam');
+        const errorData = await response.json();
+        console.error('Failed to start exam:', errorData);
+        alert(`Failed to start exam: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error starting exam:', error);
