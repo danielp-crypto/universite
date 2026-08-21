@@ -14,10 +14,12 @@ export default function ExamModePage() {
   const [readinessScore, setReadinessScore] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
+  const [lectures, setLectures] = useState<any[]>([]);
 
   useEffect(() => {
     loadModules();
     loadExamSessions();
+    loadLectures();
   }, []);
 
   const loadModules = async () => {
@@ -75,9 +77,29 @@ export default function ExamModePage() {
     }
   };
 
+  const loadLectures = async () => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/lectures', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const lecturesData = await response.json();
+        setLectures(lecturesData || []);
+      }
+    } catch (error) {
+      console.error('Error loading lectures:', error);
+    }
+  };
+
   const getModuleLecturesCount = (moduleId: string) => {
-    const module = modules.find(m => m.id === moduleId);
-    return module?.lecture_count || 0;
+    // Count lectures from the loaded lectures array
+    return lectures.filter(lecture => lecture.module_id === moduleId).length;
   };
 
   const getReadinessLabel = (score: number) => {
