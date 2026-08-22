@@ -92,18 +92,7 @@ export async function POST(request: NextRequest) {
       cycles: 0 // 0 = unlimited cycles
     };
 
-    // Add passphrase for signature generation only — PayFast requires a signature
-    // on every submission regardless of whether a passphrase is configured (if
-    // none is set, the passphrase term is simply omitted from the hashed string,
-    // but the signature field itself must still be present).
-    if (PAYFAST_PASSPHRASE) {
-      payfastData.passphrase = PAYFAST_PASSPHRASE;
-    }
-
-    const signature = generateSignature(payfastData);
-
-    // Remove passphrase from data sent to PayFast (it's only used for signature)
-    delete payfastData.passphrase;
+    const signature = generateSignature(payfastData, PAYFAST_PASSPHRASE);
 
     payfastData.signature = signature;
 
@@ -155,7 +144,7 @@ function phpUrlEncode(str: string): string {
 
 function generateSignature(data: any): string {
   // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
-  // generation. This is different from the form submission order.
+  // generation. The passphrase should already be in the data object if configured.
   //
   // PayFast's own reference implementation also SKIPS any field with a blank
   // value entirely (not just trims it) — e.g. name_last='' for a user with no

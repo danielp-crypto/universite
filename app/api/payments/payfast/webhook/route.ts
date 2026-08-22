@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     // Verify signature
     const receivedSignature = data.signature;
-    const calculatedSignature = generateSignature(data);
+    const calculatedSignature = generateSignature(data, PAYFAST_PASSPHRASE);
 
     if (receivedSignature !== calculatedSignature) {
       console.error('PayFast signature mismatch');
@@ -166,18 +166,13 @@ function phpUrlEncode(str: string): string {
     .replace(/%20/g, '+');
 }
 
-function generateSignature(data: any): string {
+function generateSignature(data: any, passphrase: string = ''): string {
   // Create a copy and remove signature
   const dataCopy = { ...data };
   delete dataCopy.signature;
 
-  // Add passphrase if set
-  if (PAYFAST_PASSPHRASE) {
-    dataCopy.passphrase = PAYFAST_PASSPHRASE;
-  }
-
   // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
-  // generation. This matches the signature generation in the create route.
+  // generation. The passphrase is added to the end of the parameter string.
   //
   // PayFast's own reference implementation also SKIPS any field with a blank
   // value entirely (not just trims it) when computing the signature.
@@ -187,6 +182,9 @@ function generateSignature(data: any): string {
     .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 
+  // Add passphrase to the end if provided
+  const signatureString = passphrase ? `${paramString}&passphrase=${phpUrlEncode(passphrase)}` : paramString;
+
   // Generate MD5 signature
-  return crypto.createHash('md5').update(paramString).digest('hex');
+  return crypto.createHash('md5').update(signatureString).digest('hex');
 }
