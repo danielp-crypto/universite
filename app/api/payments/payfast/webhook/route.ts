@@ -176,15 +176,14 @@ function generateSignature(data: any): string {
     dataCopy.passphrase = PAYFAST_PASSPHRASE;
   }
 
-  // IMPORTANT: PayFast requires fields hashed in the order they were received
-  // in the POST body — NOT sorted alphabetically. Object.keys() here preserves
-  // the order fields were inserted into `data` in the handler above, which
-  // matches formData.entries() order (i.e. the order PayFast actually sent them).
+  // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
+  // generation. This matches the signature generation in the create route.
   //
   // PayFast's own reference implementation also SKIPS any field with a blank
   // value entirely (not just trims it) when computing the signature.
   const paramString = Object.keys(dataCopy)
     .filter((key) => String(dataCopy[key]).trim() !== '')
+    .sort()
     .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 

@@ -154,16 +154,15 @@ function phpUrlEncode(str: string): string {
 }
 
 function generateSignature(data: any): string {
-  // IMPORTANT: PayFast requires fields to be hashed in the same order they are
-  // submitted in the form — NOT sorted alphabetically. Object.keys() preserves
-  // insertion order for string keys, which matches the order the hidden form
-  // fields are rendered in on the frontend (see Object.entries(paymentData)).
+  // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
+  // generation. This is different from the form submission order.
   //
   // PayFast's own reference implementation also SKIPS any field with a blank
   // value entirely (not just trims it) — e.g. name_last='' for a user with no
   // last name on file must not appear in the hashed string at all.
   const paramString = Object.keys(data)
     .filter((key) => String(data[key]).trim() !== '')
+    .sort()
     .map(key => `${key}=${phpUrlEncode(String(data[key]).trim())}`)
     .join('&');
 
