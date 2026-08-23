@@ -142,19 +142,22 @@ function phpUrlEncode(str: string): string {
     .replace(/%20/g, '+');
 }
 
-function generateSignature(data: any): string {
+function generateSignature(data: any, passphrase: string = ''): string {
   // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
-  // generation. The passphrase should already be in the data object if configured.
+  // generation. The passphrase is added to the end of the parameter string.
   //
-  // PayFast's own reference implementation also SKIPS any field with a blank
-  // value entirely (not just trims it) — e.g. name_last='' for a user with no
-  // last name on file must not appear in the hashed string at all.
+  // Include all fields in signature calculation, even empty ones.
   const paramString = Object.keys(data)
-    .filter((key) => String(data[key]).trim() !== '')
     .sort()
-    .map(key => `${key}=${phpUrlEncode(String(data[key]).trim())}`)
+    .map(key => `${key}=${phpUrlEncode(String(data[key]))}`)
     .join('&');
 
+  // Add passphrase to the end if provided
+  const signatureString = passphrase ? `${paramString}&passphrase=${phpUrlEncode(passphrase)}` : paramString;
+
+  console.log('Signature calculation:', signatureString);
+  console.log('Generated signature:', crypto.createHash('md5').update(signatureString).digest('hex'));
+
   // Generate MD5 signature
-  return crypto.createHash('md5').update(paramString).digest('hex');
+  return crypto.createHash('md5').update(signatureString).digest('hex');
 }

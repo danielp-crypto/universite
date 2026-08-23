@@ -174,16 +174,18 @@ function generateSignature(data: any, passphrase: string = ''): string {
   // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
   // generation. The passphrase is added to the end of the parameter string.
   //
-  // PayFast's own reference implementation also SKIPS any field with a blank
-  // value entirely (not just trims it) when computing the signature.
+  // Include all fields in signature calculation, even empty ones.
   const paramString = Object.keys(dataCopy)
-    .filter((key) => String(dataCopy[key]).trim() !== '')
     .sort()
-    .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
+    .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]))}`)
     .join('&');
 
   // Add passphrase to the end if provided
   const signatureString = passphrase ? `${paramString}&passphrase=${phpUrlEncode(passphrase)}` : paramString;
+
+  console.log('Webhook signature calculation:', signatureString);
+  console.log('Webhook received signature:', data.signature);
+  console.log('Webhook calculated signature:', crypto.createHash('md5').update(signatureString).digest('hex'));
 
   // Generate MD5 signature
   return crypto.createHash('md5').update(signatureString).digest('hex');
