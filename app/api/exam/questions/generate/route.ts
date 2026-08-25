@@ -114,7 +114,7 @@ Important:
       return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
     }
 
-    let aiResponse: Response;
+    let aiResponse: Response | null = null;
     let retryCount = 0;
     const maxRetries = 3;
     const baseDelay = 1000; // 1 second
@@ -154,6 +154,10 @@ Important:
       }
 
       break;
+    }
+
+    if (!aiResponse) {
+      return NextResponse.json({ error: 'Failed to get AI response' }, { status: 500 });
     }
 
     if (!aiResponse.ok) {
