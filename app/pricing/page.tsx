@@ -91,6 +91,7 @@ export default function PricingPage() {
         const data = await response.json();
 
         console.log('PayFast API Response:', data);
+        console.log('Payment data keys:', Object.keys(data.paymentData));
 
         // Create form and submit to PayFast
         const form = document.createElement('form');
@@ -103,6 +104,7 @@ export default function PricingPage() {
           input.name = key;
           input.value = value as string;
           form.appendChild(input);
+          console.log(`Form field: ${key} = ${value}`);
         });
 
         document.body.appendChild(form);

@@ -92,6 +92,8 @@ export async function POST(request: NextRequest) {
       cycles: 0 // 0 = unlimited cycles
     };
 
+    console.log('PayFast data before signature:', payfastData);
+
     const signature = generateSignature(payfastData, PAYFAST_PASSPHRASE);
 
     payfastData.signature = signature;
