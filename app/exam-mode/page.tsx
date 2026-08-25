@@ -30,18 +30,27 @@ export default function ExamModePage() {
         return;
       }
 
+      console.log('Loading modules...');
       const response = await fetch('/api/modules', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       });
 
+      console.log('Modules response status:', response.status);
+
       if (response.ok) {
         const modulesData = await response.json();
+        console.log('Modules data:', modulesData);
         setModules(modulesData || []);
         if (modulesData && modulesData.length > 0) {
           setSelectedModule(modulesData[0].id);
+          console.log('Selected module:', modulesData[0].id);
         }
+      } else {
+        console.error('Failed to load modules:', response.statusText);
+        const errorData = await response.json();
+        console.error('Error data:', errorData);
       }
     } catch (error) {
       console.error('Error loading modules:', error);
@@ -256,7 +265,11 @@ export default function ExamModePage() {
             {modules.map((module) => (
               <button
                 key={module.id}
-                onClick={() => setSelectedModule(module.id)}
+                onClick={() => {
+                  console.log('Module clicked:', module.id);
+                  setSelectedModule(module.id);
+                  console.log('Selected module set to:', module.id);
+                }}
                 className={`w-full p-3 rounded-xl text-left transition-all ${
                   selectedModule === module.id
                     ? 'bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-500'
