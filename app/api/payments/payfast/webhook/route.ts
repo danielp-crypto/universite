@@ -182,10 +182,15 @@ function generateSignature(data: any): string {
     .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 
-  console.log('Webhook signature calculation:', paramString);
+  // Append passphrase to the signature string if configured
+  const signatureString = PAYFAST_PASSPHRASE
+    ? `${paramString}&passphrase=${phpUrlEncode(PAYFAST_PASSPHRASE)}`
+    : paramString;
+
+  console.log('Webhook signature calculation:', signatureString);
   console.log('Webhook received signature:', data.signature);
-  console.log('Webhook calculated signature:', crypto.createHash('md5').update(paramString).digest('hex'));
+  console.log('Webhook calculated signature:', crypto.createHash('md5').update(signatureString).digest('hex'));
 
   // Generate MD5 signature
-  return crypto.createHash('md5').update(paramString).digest('hex');
+  return crypto.createHash('md5').update(signatureString).digest('hex');
 }

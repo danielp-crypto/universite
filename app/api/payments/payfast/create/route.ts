@@ -154,9 +154,14 @@ function generateSignature(data: any): string {
     .map(key => `${key}=${phpUrlEncode(String(data[key]).trim())}`)
     .join('&');
 
-  console.log('Signature calculation:', paramString);
-  console.log('Generated signature:', crypto.createHash('md5').update(paramString).digest('hex'));
+  // Append passphrase to the signature string if configured
+  const signatureString = PAYFAST_PASSPHRASE
+    ? `${paramString}&passphrase=${phpUrlEncode(PAYFAST_PASSPHRASE)}`
+    : paramString;
+
+  console.log('Signature calculation:', signatureString);
+  console.log('Generated signature:', crypto.createHash('md5').update(signatureString).digest('hex'));
 
   // Generate MD5 signature
-  return crypto.createHash('md5').update(paramString).digest('hex');
+  return crypto.createHash('md5').update(signatureString).digest('hex');
 }
