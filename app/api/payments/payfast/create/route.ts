@@ -68,33 +68,31 @@ export async function POST(request: NextRequest) {
       expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     }
 
-    // Build PayFast data
-    const payfastData: any = {
-      merchant_id: PAYFAST_MERCHANT_ID,
-      merchant_key: PAYFAST_MERCHANT_KEY,
-      return_url: `${NEXT_PUBLIC_APP_URL}/payment/success`,
-      cancel_url: `${NEXT_PUBLIC_APP_URL}/payment/cancelled`,
-      notify_url: `${NEXT_PUBLIC_APP_URL}/api/payments/payfast/webhook`,
-      name_first: user.user_metadata?.first_name || 'User',
-      name_last: user.user_metadata?.last_name || '',
-      email_address: user.email,
-      m_payment_id: paymentId,
-      amount: Number(plan.price_zar).toFixed(2),
-      item_name: `${plan.name} Subscription`,
-      item_description: `Universite ${plan.name} subscription`,
-      custom_str1: user.id,
-      custom_str2: plan_slug,
-      email_confirmation: 1,
-      confirmation_address: user.email,
-      // Recurring billing for subscriptions
-      subscription_type: 1, // 1 = recurring subscription
-      frequency: plan.interval === 'month' ? 3 : 6, // 3 = monthly, 6 = yearly
-      cycles: 0 // 0 = unlimited cycles
-    };
+    // Build PayFast data in exact order for signature
+    const payfastData: any = {};
+    payfastData.merchant_id = PAYFAST_MERCHANT_ID;
+    payfastData.merchant_key = PAYFAST_MERCHANT_KEY;
+    payfastData.return_url = `${NEXT_PUBLIC_APP_URL}/payment/success`;
+    payfastData.cancel_url = `${NEXT_PUBLIC_APP_URL}/payment/cancelled`;
+    payfastData.notify_url = `${NEXT_PUBLIC_APP_URL}/api/payments/payfast/webhook`;
+    payfastData.name_first = user.user_metadata?.first_name || 'User';
+    payfastData.name_last = user.user_metadata?.last_name || '';
+    payfastData.email_address = user.email;
+    payfastData.m_payment_id = paymentId;
+    payfastData.amount = Number(plan.price_zar).toFixed(2);
+    payfastData.item_name = `${plan.name} Subscription`;
+    payfastData.item_description = `Universite ${plan.name} subscription`;
+    payfastData.custom_str1 = user.id;
+    payfastData.custom_str2 = plan_slug;
+    payfastData.email_confirmation = 1;
+    payfastData.confirmation_address = user.email;
+    payfastData.subscription_type = 1; // 1 = recurring subscription
+    payfastData.frequency = plan.interval === 'month' ? 3 : 6; // 3 = monthly, 6 = yearly
+    payfastData.cycles = 0; // 0 = unlimited cycles
 
     console.log('PayFast data before signature:', payfastData);
 
-    const signature = generateSignature(payfastData, PAYFAST_PASSPHRASE);
+    const signature = generateSignature(payfastData);
 
     payfastData.signature = signature;
 
@@ -144,22 +142,21 @@ function phpUrlEncode(str: string): string {
     .replace(/%20/g, '+');
 }
 
-function generateSignature(data: any, passphrase: string = ''): string {
+function generateSignature(data: any): string {
   // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
-  // generation. The passphrase is added to the end of the parameter string.
+  // generation according to their official documentation.
   //
-  // Include all fields in signature calculation, even empty ones.
+  // PayFast's own reference implementation SKIPS any field with a blank
+  // value entirely (not just trims it) when computing the signature.
   const paramString = Object.keys(data)
+    .filter((key) => String(data[key]).trim() !== '')
     .sort()
-    .map(key => `${key}=${phpUrlEncode(String(data[key]))}`)
+    .map(key => `${key}=${phpUrlEncode(String(data[key]).trim())}`)
     .join('&');
 
-  // Add passphrase to the end if provided
-  const signatureString = passphrase ? `${paramString}&passphrase=${phpUrlEncode(passphrase)}` : paramString;
-
-  console.log('Signature calculation:', signatureString);
-  console.log('Generated signature:', crypto.createHash('md5').update(signatureString).digest('hex'));
+  console.log('Signature calculation:', paramString);
+  console.log('Generated signature:', crypto.createHash('md5').update(paramString).digest('hex'));
 
   // Generate MD5 signature
-  return crypto.createHash('md5').update(signatureString).digest('hex');
+  return crypto.createHash('md5').update(paramString).digest('hex');
 }

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     // Verify signature
     const receivedSignature = data.signature;
-    const calculatedSignature = generateSignature(data, PAYFAST_PASSPHRASE);
+    const calculatedSignature = generateSignature(data);
 
     if (receivedSignature !== calculatedSignature) {
       console.error('PayFast signature mismatch');
@@ -166,27 +166,26 @@ function phpUrlEncode(str: string): string {
     .replace(/%20/g, '+');
 }
 
-function generateSignature(data: any, passphrase: string = ''): string {
+function generateSignature(data: any): string {
   // Create a copy and remove signature
   const dataCopy = { ...data };
   delete dataCopy.signature;
 
   // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
-  // generation. The passphrase is added to the end of the parameter string.
+  // generation according to their official documentation.
   //
-  // Include all fields in signature calculation, even empty ones.
+  // PayFast's own reference implementation SKIPS any field with a blank
+  // value entirely (not just trims it) when computing the signature.
   const paramString = Object.keys(dataCopy)
+    .filter((key) => String(dataCopy[key]).trim() !== '')
     .sort()
-    .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]))}`)
+    .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 
-  // Add passphrase to the end if provided
-  const signatureString = passphrase ? `${paramString}&passphrase=${phpUrlEncode(passphrase)}` : paramString;
-
-  console.log('Webhook signature calculation:', signatureString);
+  console.log('Webhook signature calculation:', paramString);
   console.log('Webhook received signature:', data.signature);
-  console.log('Webhook calculated signature:', crypto.createHash('md5').update(signatureString).digest('hex'));
+  console.log('Webhook calculated signature:', crypto.createHash('md5').update(paramString).digest('hex'));
 
   // Generate MD5 signature
-  return crypto.createHash('md5').update(signatureString).digest('hex');
+  return crypto.createHash('md5').update(paramString).digest('hex');
 }
