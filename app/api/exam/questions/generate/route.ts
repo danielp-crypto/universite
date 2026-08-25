@@ -83,6 +83,8 @@ Difficulty: ${difficulty || 'mixed'}
 Available lecture content:
 ${JSON.stringify(lectureContent, null, 2)}
 
+IMPORTANT: Return ONLY valid JSON. Do not include any markdown formatting, explanations, or additional text. Your response must be a valid JSON array.
+
 Generate questions in the following JSON format:
 [
   {
@@ -90,8 +92,8 @@ Generate questions in the following JSON format:
     "question_type": "multiple_choice|short_answer|long_answer",
     "difficulty": "easy|medium|hard",
     "expected_answer": "The correct answer or model answer",
-    "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"], // Only for multiple choice
-    "correct_option": "A" // Only for multiple choice
+    "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"],
+    "correct_option": "A"
   }
 ]
 
@@ -100,7 +102,9 @@ Important:
 - Vary the difficulty levels
 - For multiple choice, provide 4 options with exactly one correct answer
 - For short/long answer, provide a model answer based on the content
-- Return valid JSON only, no additional text`;
+- Return valid JSON only, no markdown, no additional text
+- Ensure all strings are properly escaped
+- Do not use trailing commas in JSON arrays or objects`;
 
     // Call AI API (using your existing AI integration)
     console.log('Calling AI API...');
@@ -153,18 +157,50 @@ Important:
     console.log('Generated text length:', generatedText.length);
     console.log('Generated text preview:', generatedText.substring(0, 1000));
 
-    // Parse AI response
+    // Parse AI response with multiple fallback strategies
     let questions;
     try {
-      // Extract JSON from response (AI might add markdown formatting)
-      const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
-      const jsonString = jsonMatch ? jsonMatch[0] : generatedText;
-      console.log('Extracted JSON string:', jsonString.substring(0, 500));
-      questions = JSON.parse(jsonString);
+      // Strategy 1: Try to extract JSON array from markdown code blocks
+      const codeBlockMatch = generatedText.match(/```(?:json)?\s*(\[[\s\S]*\])\s*```/);
+      if (codeBlockMatch) {
+        console.log('Found JSON in code block');
+        questions = JSON.parse(codeBlockMatch[1]);
+      } else {
+        // Strategy 2: Try to find JSON array directly
+        const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          console.log('Found JSON array directly');
+          questions = JSON.parse(jsonMatch[0]);
+        } else {
+          // Strategy 3: Try to parse the entire response as JSON
+          console.log('Trying to parse entire response as JSON');
+          questions = JSON.parse(generatedText);
+        }
+      }
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
       console.error('Full generated text:', generatedText);
-      return NextResponse.json({ error: `Failed to parse generated questions: ${parseError instanceof Error ? parseError.message : 'Unknown error'}` }, { status: 500 });
+
+      // Try to fix common JSON issues
+      try {
+        // Remove common AI artifacts
+        const cleanedText = generatedText
+          .replace(/```json/g, '')
+          .replace(/```/g, '')
+          .replace(/^[^{[]*\s*/, '')
+          .replace(/\s*[^}\]]*$/, '')
+          .trim();
+
+        console.log('Cleaned text:', cleanedText.substring(0, 500));
+        questions = JSON.parse(cleanedText);
+      } catch (secondParseError) {
+        console.error('Second parse attempt failed:', secondParseError);
+        return NextResponse.json({
+          error: `Failed to parse generated questions. The AI response was not valid JSON.`,
+          details: parseError instanceof Error ? parseError.message : 'Unknown error',
+          raw_response: generatedText.substring(0, 1000)
+        }, { status: 500 });
+      }
     }
 
     // Store questions in database
