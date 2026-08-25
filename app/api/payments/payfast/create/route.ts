@@ -14,7 +14,7 @@ const PAYFAST_SANDBOX = process.env.PAYFAST_SANDBOX === 'true';
 const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID!;
 const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY!;
 const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
-const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
+const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
 export async function POST(request: NextRequest) {
   try {
@@ -143,14 +143,16 @@ function phpUrlEncode(str: string): string {
 }
 
 function generateSignature(data: any): string {
-  // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
-  // generation according to their official documentation.
+  // IMPORTANT: PayFast requires fields to be hashed in the exact order they
+  // are submitted in the form — NOT sorted alphabetically. This was verified
+  // by directly reproducing a real PayFast-rejected signature: hashing in
+  // insertion order matched what was actually submitted, and PayFast only
+  // accepted it once sorting was removed. Do not reintroduce .sort() here.
   //
-  // PayFast's own reference implementation SKIPS any field with a blank
+  // PayFast's own reference implementation also SKIPS any field with a blank
   // value entirely (not just trims it) when computing the signature.
   const paramString = Object.keys(data)
     .filter((key) => String(data[key]).trim() !== '')
-    .sort()
     .map(key => `${key}=${phpUrlEncode(String(data[key]).trim())}`)
     .join('&');
 
@@ -158,9 +160,6 @@ function generateSignature(data: any): string {
   const signatureString = PAYFAST_PASSPHRASE
     ? `${paramString}&passphrase=${phpUrlEncode(PAYFAST_PASSPHRASE)}`
     : paramString;
-
-  console.log('Signature calculation:', signatureString);
-  console.log('Generated signature:', crypto.createHash('md5').update(signatureString).digest('hex'));
 
   // Generate MD5 signature
   return crypto.createHash('md5').update(signatureString).digest('hex');

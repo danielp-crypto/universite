@@ -171,14 +171,16 @@ function generateSignature(data: any): string {
   const dataCopy = { ...data };
   delete dataCopy.signature;
 
-  // IMPORTANT: PayFast requires fields to be sorted alphabetically for signature
-  // generation according to their official documentation.
+  // IMPORTANT: PayFast requires fields to be hashed in the exact order they
+  // were received in the POST body — NOT sorted alphabetically. Confirmed by
+  // directly reproducing a real PayFast-rejected signature earlier: sorting
+  // was the actual cause, not a documentation-based guess. Do not re-add
+  // .sort() here.
   //
-  // PayFast's own reference implementation SKIPS any field with a blank
+  // PayFast's own reference implementation also SKIPS any field with a blank
   // value entirely (not just trims it) when computing the signature.
   const paramString = Object.keys(dataCopy)
     .filter((key) => String(dataCopy[key]).trim() !== '')
-    .sort()
     .map(key => `${key}=${phpUrlEncode(String(dataCopy[key]).trim())}`)
     .join('&');
 
@@ -186,10 +188,6 @@ function generateSignature(data: any): string {
   const signatureString = PAYFAST_PASSPHRASE
     ? `${paramString}&passphrase=${phpUrlEncode(PAYFAST_PASSPHRASE)}`
     : paramString;
-
-  console.log('Webhook signature calculation:', signatureString);
-  console.log('Webhook received signature:', data.signature);
-  console.log('Webhook calculated signature:', crypto.createHash('md5').update(signatureString).digest('hex'));
 
   // Generate MD5 signature
   return crypto.createHash('md5').update(signatureString).digest('hex');
