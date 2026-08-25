@@ -165,7 +165,12 @@ export default function ExamModePage() {
         } else {
           const errorData = await questionsResponse.json();
           console.error('Failed to generate questions:', errorData);
-          alert(`Failed to generate questions: ${errorData.error || 'Unknown error'}`);
+
+          if (errorData.retryable) {
+            alert(`${errorData.error}\n\nPlease wait a moment and try again.`);
+          } else {
+            alert(`Failed to generate questions: ${errorData.error || 'Unknown error'}`);
+          }
         }
       } else {
         const errorData = await response.json();
