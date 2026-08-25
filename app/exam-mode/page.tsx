@@ -15,6 +15,7 @@ export default function ExamModePage() {
   const [loading, setLoading] = useState(true);
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const [lectures, setLectures] = useState<any[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     loadModules();
@@ -261,27 +262,47 @@ export default function ExamModePage() {
         {/* Module Selection */}
         <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Select Module</h2>
-          <div className="space-y-2">
-            {modules.map((module) => (
-              <button
-                key={module.id}
-                onClick={() => {
-                  console.log('Module clicked:', module.id);
-                  setSelectedModule(module.id);
-                  console.log('Selected module set to:', module.id);
-                }}
-                className={`w-full p-3 rounded-xl text-left transition-all ${
-                  selectedModule === module.id
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-500'
-                    : 'bg-slate-50 dark:bg-slate-700 border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-500'
-                }`}
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="w-full p-3 rounded-xl text-left transition-all bg-slate-50 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 flex items-center justify-between"
+            >
+              <div className="font-medium text-slate-800 dark:text-slate-100">
+                {selectedModule ? modules.find(m => m.id === selectedModule)?.name : 'Select a module'}
+              </div>
+              <svg
+                className={`w-5 h-5 text-slate-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <div className="font-medium text-slate-800 dark:text-slate-100">{module.name}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {getModuleLecturesCount(module.id)} lectures
-                </div>
-              </button>
-            ))}
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute z-10 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                {modules.map((module) => (
+                  <button
+                    key={module.id}
+                    onClick={() => {
+                      setSelectedModule(module.id);
+                      setDropdownOpen(false);
+                    }}
+                    className={`w-full p-3 text-left transition-all ${
+                      selectedModule === module.id
+                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-500'
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <div className="font-medium text-slate-800 dark:text-slate-100">{module.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {getModuleLecturesCount(module.id)} lectures
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
