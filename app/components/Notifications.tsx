@@ -251,9 +251,9 @@ export default function Notifications({ onNotificationCountChange }: Notificatio
                     <div className={`p-3 rounded-xl border mb-2 ${getNotificationColor(notification.type)}`}>
                       <div className="flex items-start gap-3">
                         <span className="text-2xl">{getNotificationIcon(notification.type)}</span>
-                        <div className="flex-1">
-                          <p className="font-semibold text-slate-900 text-sm">{notification.title}</p>
-                          <p className="text-slate-700 text-sm mt-1">{notification.message}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900 text-sm truncate">{notification.title}</p>
+                          <p className="text-slate-700 text-sm mt-1 line-clamp-2">{notification.message}</p>
                         </div>
                       </div>
                     </div>
