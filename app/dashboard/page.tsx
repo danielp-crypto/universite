@@ -1220,7 +1220,7 @@ function HomePageContent() {
           <div>
             <h2 className="text-lg font-semibold text-slate-800 mb-3">Study Tools</h2>
             <div className="space-y-2">
-              <Link href="/exam-mode" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full">
+              <Link href="/exam" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                     <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
