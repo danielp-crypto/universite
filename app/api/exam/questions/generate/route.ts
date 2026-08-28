@@ -256,9 +256,25 @@ Important:
       return NextResponse.json({ error: 'Failed to save questions' }, { status: 500 });
     }
 
+    // FIX: never return the answer key (correct_option / expected_answer)
+    // in this response — this route is called right when the exam starts,
+    // so returning the full row here would let a student see every correct
+    // answer immediately via the network tab, before even seeing a question.
+    const safeQuestions = insertedQuestions
+      .map((q: any) => ({
+        id: q.id,
+        exam_session_id: q.exam_session_id,
+        question: q.question,
+        question_type: q.question_type,
+        difficulty: q.difficulty,
+        options: q.options,
+        order_index: q.order_index,
+      }))
+      .sort((a: any, b: any) => a.order_index - b.order_index);
+
     return NextResponse.json({
       success: true,
-      questions: insertedQuestions
+      questions: safeQuestions
     });
 
   } catch (error: any) {
