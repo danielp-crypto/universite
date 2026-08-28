@@ -6,19 +6,20 @@ import { signOut, getSession } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Alert from '../components/Alert';
+import { useTheme } from '../components/ThemeProvider';
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAppearance, setShowAppearance] = useState(false);
   const [showDailyGoal, setShowDailyGoal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [theme, setTheme] = useState('light');
   const [subscription, setSubscription] = useState<any>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
-  
+
   // Notification preferences state
   const [notificationPrefs, setNotificationPrefs] = useState({
     daily_motivation: true,
@@ -28,30 +29,6 @@ export default function SettingsPage() {
     reminder_time: '09:00'
   });
   const [loadingPrefs, setLoadingPrefs] = useState(false);
-
-  // Load theme from localStorage on mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-   setTheme(savedTheme);
-    applyTheme(savedTheme);
-  }, []);
-
-  // Apply theme to document
-  const applyTheme = (newTheme: string) => {
-    const html = document.documentElement;
-    if (newTheme === 'dark') {
-      html.classList.add('dark');
-    } else {
-      html.classList.remove('dark');
-    }
-  };
-
-  // Handle theme change
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
-  };
   const [dailyGoal, setDailyGoal] = useState(3);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
