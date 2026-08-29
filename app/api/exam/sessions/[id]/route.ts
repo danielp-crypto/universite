@@ -44,7 +44,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           answer,
           score,
           feedback,
-          is_correct
+          is_correct,
+          missing_concepts,
+          suggested_improvements,
+          model_answer
         )
       `)
       .eq('id', id)
@@ -53,6 +56,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error || !session) {
       return NextResponse.json({ error: 'Exam session not found' }, { status: 404 });
+    }
+
+    // FIX: correct_option was always included in exam_questions above,
+    // regardless of session status — meaning a student could see the answer
+    // key mid-exam (e.g. via the network tab) just by this page loading.
+    // Only expose it once the exam is actually completed.
+    if (session.status !== 'completed') {
+      session.exam_questions = (session.exam_questions || []).map((q: any) => {
+        const { correct_option, ...safeQuestion } = q;
+        return safeQuestion;
+      });
     }
 
     return NextResponse.json({
