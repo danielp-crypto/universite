@@ -590,7 +590,7 @@ export default function SettingsPage() {
                 {['light', 'dark', 'system'].map((t) => (
                   <div
                     key={t}
-                    onClick={() => handleThemeChange(t)}
+                    onClick={() => setTheme(t)}
                     className={`p-4 border rounded-xl cursor-pointer transition-colors ${
                       theme === t ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'
                     }`}
