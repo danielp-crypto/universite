@@ -1,422 +1,374 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { apiGet, apiPost } from '@/lib/api/client';
-import { getSession } from '@/lib/supabase/auth';
 
-export default function ExamTakingPage() {
-  const router = useRouter();
+function formatTime(totalSeconds: number): string {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+// Options come back pre-labeled from the generator, e.g. "A) Paris" — this
+// pulls just the letter out so it can be compared against correct_option
+// (which is stored as a bare letter) and used as the student's answer value.
+function optionLetter(option: string): string {
+  const match = option.match(/^([A-D])\)/);
+  return match ? match[1] : option;
+}
+
+export default function ExamSessionPage() {
   const params = useParams();
-  const examSessionId = params.id as string;
+  const sessionId = params.sessionId as string;
 
-  const [examSession, setExamSession] = useState<any>(null);
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeRemaining, setTimeRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
+  const [isUntimed, setIsUntimed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [examStarted, setExamStarted] = useState(false);
-  const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<any>(null);
-  const [weakTopics, setWeakTopics] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const submittedRef = useRef(false);
 
   useEffect(() => {
-    loadExamSession();
-  }, [examSessionId]);
+    loadSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
-  useEffect(() => {
-    if (examStarted && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            submitExam();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [examStarted, timeRemaining]);
-
-  const loadExamSession = async () => {
+  const loadSession = async () => {
     try {
-      const session = await getSession();
-      if (!session) {
-        router.push('/login');
+      const result = await apiGet(`/api/exam/sessions/${sessionId}`);
+      if (!result.success) {
+        setError('Could not load this exam.');
+        setLoading(false);
         return;
       }
 
-      const response = await fetch(`/api/exam/sessions/${examSessionId}`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
+      const s = result.session;
+      setSession(s);
+      setQuestions((s.exam_questions || []).slice().sort((a: any, b: any) => a.order_index - b.order_index));
 
-      if (response.ok) {
-        const data = await response.json();
-        setExamSession(data.session);
-        setQuestions(data.session.exam_questions || []);
-        
-        // Set timer if duration is set
-        if (data.session.duration_minutes > 0) {
-          setTimeRemaining(data.session.duration_minutes * 60);
-        }
-
-        // Check if already completed
-        if (data.session.status === 'completed') {
-          setShowResults(true);
-          setResults(data.session);
-        }
+      if (s.status === 'completed') {
+        setResults({
+          score: s.score,
+          readiness_score: s.readiness_score,
+          correct_count: s.correct_count,
+          total_questions: s.questions_count,
+          answers: s.student_answers || [],
+        });
+      } else if (s.duration_minutes === 0) {
+        setIsUntimed(true);
       } else {
-        alert('Failed to load exam session');
-        router.push('/exam-mode');
+        const endTime = new Date(s.created_at).getTime() + s.duration_minutes * 60 * 1000;
+        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        setSecondsRemaining(remaining);
       }
-    } catch (error) {
-      console.error('Error loading exam session:', error);
-      alert('Failed to load exam session');
-      router.push('/exam-mode');
+    } catch (err) {
+      console.error('Error loading exam session:', err);
+      setError('Could not load this exam.');
     } finally {
       setLoading(false);
     }
   };
 
-  const startExam = async () => {
-    setExamStarted(true);
-  };
-
-  const handleAnswerChange = (questionId: string, answer: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
-  };
-
-  const goToNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    }
-  };
-
-  const goToPreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    }
-  };
-
-  const submitExam = async () => {
-    if (submitting) return;
+  const handleSubmit = useCallback(async () => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
     setSubmitting(true);
 
     try {
-      const session = await getSession();
-      if (!session) return;
-
-      // Prepare answers array
-      const answersArray = Object.entries(answers).map(([questionId, answer]) => ({
-        question_id: questionId,
-        answer
+      const answerPayload = questions.map((q) => ({
+        question_id: q.id,
+        answer: answers[q.id] || '',
       }));
 
-      const response = await fetch('/api/exam/submit', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          exam_session_id: examSessionId,
-          answers: answersArray
-        })
+      const result = await apiPost('/api/exam/submit', {
+        exam_session_id: sessionId,
+        answers: answerPayload,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data);
-        setShowResults(true);
-        
-        // Load weak topics
-        loadWeakTopics();
+      if (result.success) {
+        setResults(result);
       } else {
-        alert('Failed to submit exam');
+        setError('Failed to submit your exam. Please try again.');
+        submittedRef.current = false;
       }
-    } catch (error) {
-      console.error('Error submitting exam:', error);
-      alert('Failed to submit exam');
+    } catch (err) {
+      console.error('Error submitting exam:', err);
+      setError('Failed to submit your exam. Please try again.');
+      submittedRef.current = false;
     } finally {
       setSubmitting(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions, answers, sessionId]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Countdown timer — only runs when the exam is timed. Auto-submits at zero.
+  useEffect(() => {
+    if (isUntimed || secondsRemaining === null || results) return;
 
-  const loadWeakTopics = async () => {
-    try {
-      const session = await getSession();
-      if (!session || !examSession) return;
-
-      const response = await fetch(`/api/exam/weak-topics?module_id=${examSession.module_id}`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setWeakTopics(data.weak_topics || []);
-      }
-    } catch (error) {
-      console.error('Error loading weak topics:', error);
+    if (secondsRemaining <= 0) {
+      handleSubmit();
+      return;
     }
-  };
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+    const interval = setInterval(() => {
+      setSecondsRemaining((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [secondsRemaining, results, isUntimed, handleSubmit]);
+
+  // Warn before leaving mid-exam — answers aren't saved until final submission.
+  useEffect(() => {
+    if (results) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [results]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
-  if (showResults && results) {
+  if (error && !results) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 sticky top-0 z-10">
-          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
-            <button
-              onClick={() => router.push('/exam-mode')}
-              className="p-1 text-slate-600 dark:text-slate-400"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full text-center">
+          <p className="text-slate-600 mb-4">{error}</p>
+          <Link href="/exam" className="text-indigo-600 font-semibold text-sm">Back to Exam Mode</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== RESULTS VIEW =====
+  if (results) {
+    const overallScore = results.score ?? 0;
+    const correctCount = results.correct_count ?? 0;
+    const questionsCount = results.total_questions ?? questions.length;
+    const readinessScore = results.readiness_score ?? Math.round(overallScore);
+    const answersByQuestionId = new Map((results.answers || []).map((a: any) => [a.question_id, a]));
+
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="bg-white border-b border-slate-200 px-4 py-4">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <Link href="/dashboard" className="text-slate-500 hover:text-slate-700">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </button>
-            <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Exam Results</h1>
+            </Link>
+            <h1 className="text-lg font-semibold text-slate-900">Exam Results</h1>
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
-          {/* Score Card */}
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 mb-4 text-white">
-            <div className="text-center">
-              <div className="text-6xl font-bold mb-2">{Math.round(results.score)}%</div>
-              <div className="text-indigo-100 mb-4">Overall Score</div>
-              <div className="flex justify-center gap-8 text-sm">
-                <div>
-                  <div className="font-bold text-2xl">{results.correct_count}</div>
-                  <div className="text-indigo-100">Correct</div>
-                </div>
-                <div>
-                  <div className="font-bold text-2xl">{results.total_questions - results.correct_count}</div>
-                  <div className="text-indigo-100">Incorrect</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Readiness Score */}
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
-            <div className="flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 text-center">
+            <div className="text-5xl font-bold text-indigo-600 mb-1">{Math.round(overallScore)}%</div>
+            <p className="text-slate-500 text-sm mb-4">Overall score</p>
+            <div className="flex items-center justify-center gap-6 text-sm">
               <div>
-                <h3 className="font-semibold text-slate-800 dark:text-slate-100">Exam Readiness Score</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Based on your performance</p>
+                <div className="font-bold text-slate-800">{correctCount}/{questionsCount}</div>
+                <div className="text-slate-400 text-xs">Correct</div>
               </div>
-              <div className="text-3xl font-bold text-indigo-600">{results.readiness_score}/100</div>
+              <div className="w-px h-8 bg-slate-200"></div>
+              <div>
+                <div className="font-bold text-slate-800">{readinessScore}%</div>
+                <div className="text-slate-400 text-xs">Readiness</div>
+              </div>
             </div>
           </div>
 
-          {/* Weak Topics Analysis */}
-          {weakTopics.length > 0 && (
-            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
-              <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-3">Areas to Improve</h3>
-              <div className="space-y-3">
-                {weakTopics.slice(0, 5).map((topic: any, index: number) => (
-                  <div key={topic.id} className="flex items-start gap-3 p-3 bg-rose-50 rounded-xl">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-rose-200 flex items-center justify-center text-rose-700 font-bold text-sm">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-slate-800 dark:text-slate-100">{topic.topic}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {topic.mistake_count} mistake{topic.mistake_count > 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Question breakdown</h2>
           <div className="space-y-3">
-            <button
-              onClick={() => router.push('/exam-mode')}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-            >
-              Back to Exam Mode
-            </button>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="w-full py-4 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-            >
-              Return to Dashboard
-            </button>
+            {questions.map((q: any, i: number) => {
+              const a = answersByQuestionId.get(q.id) || {} as any;
+              return (
+                <div key={q.id} className={`bg-white rounded-2xl border p-4 ${a.is_correct ? 'border-emerald-200' : 'border-red-200'}`}>
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <p className="text-sm font-medium text-slate-800 flex-1">
+                      {i + 1}. {q.question}
+                    </p>
+                    <span className={`flex-shrink-0 text-xs font-bold px-2 py-1 rounded-full ${
+                      a.is_correct ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                    }`}>
+                      {Math.round(a.score ?? 0)}%
+                    </span>
+                  </div>
+
+                  <div className="text-sm text-slate-600 mb-1">
+                    <span className="font-medium text-slate-500">Your answer: </span>
+                    {a.answer || <span className="italic text-slate-400">No answer given</span>}
+                  </div>
+
+                  {q.question_type === 'multiple_choice' ? (
+                    !a.is_correct && (
+                      <div className="text-sm text-emerald-700 mb-1">
+                        <span className="font-medium">Correct answer: </span>{q.correct_option}
+                      </div>
+                    )
+                  ) : (
+                    (a.model_answer || q.expected_answer) && (
+                      <div className="text-sm text-slate-600 mb-1">
+                        <span className="font-medium text-slate-500">Model answer: </span>{a.model_answer || q.expected_answer}
+                      </div>
+                    )
+                  )}
+
+                  {a.feedback && (
+                    <p className="text-sm text-slate-700 bg-slate-50 rounded-lg px-3 py-2 mt-2">{a.feedback}</p>
+                  )}
+
+                  {a.missing_concepts?.length > 0 && (
+                    <div className="text-xs text-amber-700 mt-2">
+                      <span className="font-semibold">Missing: </span>{a.missing_concepts.join(', ')}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+
+          <Link
+            href="/exam"
+            className="block w-full text-center py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all mt-6"
+          >
+            Take Another Exam
+          </Link>
         </div>
       </div>
     );
   }
 
-  if (!examStarted) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 sticky top-0 z-10">
-          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
-            <button
-              onClick={() => router.push('/exam-mode')}
-              className="p-1 text-slate-600 dark:text-slate-400"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Practice Exam</h1>
-          </div>
-        </div>
-
-        <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
-              <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Ready to Start?</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
-              This exam has {questions.length} questions and {examSession?.duration_minutes > 0 ? `${examSession.duration_minutes} minutes` : 'no time limit'}.
-            </p>
-            <button
-              onClick={startExam}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-            >
-              Start Exam
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ===== EXAM-TAKING VIEW =====
+  const currentQuestion = questions[currentIndex];
+  const isLastQuestion = currentIndex === questions.length - 1;
+  const answeredCount = Object.values(answers).filter((a) => a && a.trim().length > 0).length;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header with Timer */}
+    <div className="min-h-screen bg-slate-50 pb-24">
       <div className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
-        <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                if (confirm('Are you sure you want to abandon this exam? Your progress will be lost.')) {
-                  router.push('/exam-mode');
-                }
-              }}
-              className="p-1 text-slate-600 dark:text-slate-400"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Question {currentQuestionIndex + 1}/{questions.length}</h1>
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-sm font-semibold text-slate-900">{session?.modules?.name}</h1>
+            <p className="text-xs text-slate-500">Question {currentIndex + 1} of {questions.length} · {answeredCount} answered</p>
           </div>
-          {examSession?.duration_minutes > 0 && (
-            <div className={`text-xl font-bold ${timeRemaining < 300 ? 'text-red-600' : 'text-slate-800 dark:text-slate-100'}`}>
-              {formatTime(timeRemaining)}
+          {isUntimed ? (
+            <span className="px-3 py-1.5 rounded-full text-sm font-bold bg-slate-100 text-slate-600">
+              Untimed
+            </span>
+          ) : (
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold ${
+              secondsRemaining !== null && secondsRemaining < 60
+                ? 'bg-red-50 text-red-600'
+                : 'bg-indigo-50 text-indigo-600'
+            }`}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {secondsRemaining !== null ? formatTime(secondsRemaining) : '--:--'}
             </div>
           )}
-        </div>
-        {/* Progress Bar */}
-        <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] mt-3">
-          <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
-        {/* Question Card */}
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 mb-4">
-          <div className="mb-4">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 mb-3">
-              {currentQuestion?.difficulty}
-            </span>
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 leading-relaxed">
-              {currentQuestion?.question}
-            </h2>
-          </div>
-
-          {currentQuestion?.question_type === 'multiple_choice' && currentQuestion?.options ? (
-            <div className="space-y-3">
-              {currentQuestion.options.map((option: string, index: number) => {
-                const optionLetter = String.fromCharCode(65 + index);
-                return (
-                  <button
-                    key={index}
-                    onClick={() => handleAnswerChange(currentQuestion.id, optionLetter)}
-                    className={`w-full p-4 rounded-xl text-left transition-all ${
-                      answers[currentQuestion.id] === optionLetter
-                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-500'
-                        : 'bg-slate-50 dark:bg-slate-700 border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-500'
-                    }`}
-                  >
-                    <div className="font-medium text-slate-800 dark:text-slate-100">{option}</div>
-                  </button>
-                );
-              })}
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        {currentQuestion && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                {currentQuestion.difficulty}
+              </span>
+              <span className="text-slate-300">·</span>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                {currentQuestion.question_type === 'multiple_choice' ? 'Multiple Choice' : currentQuestion.question_type === 'long_answer' ? 'Long Answer' : 'Short Answer'}
+              </span>
             </div>
-          ) : (
-            <textarea
-              value={answers[currentQuestion.id] || ''}
-              onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-              placeholder="Type your answer here..."
-              className="w-full p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none min-h-[150px] dark:bg-slate-700 dark:text-slate-100"
-            />
-          )}
-        </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between gap-3">
+            <p className="text-base font-medium text-slate-900 mb-5">{currentQuestion.question}</p>
+
+            {currentQuestion.question_type === 'multiple_choice' ? (
+              <div className="space-y-2">
+                {(currentQuestion.options || []).map((option: string) => {
+                  const letter = optionLetter(option);
+                  const isSelected = answers[currentQuestion.id] === letter;
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => setAnswers((prev) => ({ ...prev, [currentQuestion.id]: letter }))}
+                      className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                        isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <span className="text-sm text-slate-700">{option}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <textarea
+                value={answers[currentQuestion.id] || ''}
+                onChange={(e) => setAnswers((prev) => ({ ...prev, [currentQuestion.id]: e.target.value }))}
+                placeholder="Write your answer..."
+                rows={6}
+                className="w-full border-2 border-slate-200 rounded-xl p-3 text-sm text-slate-800 outline-none focus:border-indigo-500 transition-all resize-none"
+              />
+            )}
+          </div>
+        )}
+
+        <div className="flex items-center justify-center gap-1.5 mt-4 flex-wrap">
+          {questions.map((q, i) => (
+            <button
+              key={q.id}
+              onClick={() => setCurrentIndex(i)}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
+                i === currentIndex
+                  ? 'bg-indigo-600 w-6'
+                  : answers[q.id]
+                  ? 'bg-emerald-400'
+                  : 'bg-slate-200'
+              }`}
+              title={`Question ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3">
+        <div className="max-w-2xl mx-auto flex gap-2">
           <button
-            onClick={goToPreviousQuestion}
-            disabled={currentQuestionIndex === 0}
-            className="flex-1 py-4 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+            disabled={currentIndex === 0}
+            className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Previous
           </button>
-          
-          {currentQuestionIndex === questions.length - 1 ? (
+          {isLastQuestion ? (
             <button
-              onClick={submitExam}
+              onClick={handleSubmit}
               disabled={submitting}
-              className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50"
             >
-              {submitting ? 'Submitting...' : 'Submit Exam'}
+              {submitting ? 'Grading your exam...' : 'Submit Exam'}
             </button>
           ) : (
             <button
-              onClick={goToNextQuestion}
-              className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+              onClick={() => setCurrentIndex((i) => Math.min(questions.length - 1, i + 1))}
+              className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm"
             >
               Next
             </button>

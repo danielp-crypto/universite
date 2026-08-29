@@ -1,29 +1,37 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet, apiPost } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 
+const DURATIONS = [
+  { minutes: 0, label: 'Untimed', sub: 'Practice at your own pace' },
+  { minutes: 15, label: '15 min', sub: 'Quick check' },
+  { minutes: 30, label: '30 min', sub: 'Standard' },
+  { minutes: 60, label: '60 min', sub: 'Full exam' },
+];
+
+const QUESTION_COUNTS = [5, 10, 20];
+
 export default function ExamModePage() {
   const router = useRouter();
-  const [modules, setModules] = useState<any[]>([]);
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [examSessions, setExamSessions] = useState<any[]>([]);
-  const [readinessScore, setReadinessScore] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [generatingQuestions, setGeneratingQuestions] = useState(false);
-  const [lectures, setLectures] = useState<any[]>([]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [modules, setModules] = useState<any[]>([]);
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number>(30);
+  const [selectedCount, setSelectedCount] = useState<number>(10);
+  const [starting, setStarting] = useState(false);
+  const [startingStep, setStartingStep] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadModules();
-    loadExamSessions();
-    loadLectures();
+    loadInitialState();
   }, []);
 
-  const loadModules = async () => {
+  const loadInitialState = async () => {
     try {
       const session = await getSession();
       if (!session) {
@@ -31,351 +39,211 @@ export default function ExamModePage() {
         return;
       }
 
-      console.log('Loading modules...');
-      const response = await fetch('/api/modules', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
+      const [subscription, modulesData] = await Promise.all([
+        fetch('/api/subscription', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }).then((r) => (r.ok ? r.json() : null)),
+        apiGet('/api/modules').catch(() => []),
+      ]);
 
-      console.log('Modules response status:', response.status);
-
-      if (response.ok) {
-        const modulesData = await response.json();
-        console.log('Modules data:', modulesData);
-        setModules(modulesData || []);
-        if (modulesData && modulesData.length > 0) {
-          setSelectedModule(modulesData[0].id);
-          console.log('Selected module:', modulesData[0].id);
-        }
-      } else {
-        console.error('Failed to load modules:', response.statusText);
-        const errorData = await response.json();
-        console.error('Error data:', errorData);
+      setIsPremium(!!subscription?.plan_slug && subscription.plan_slug !== 'free');
+      setModules(Array.isArray(modulesData) ? modulesData : []);
+      if (Array.isArray(modulesData) && modulesData.length > 0) {
+        setSelectedModuleId(modulesData[0].id);
       }
-    } catch (error) {
-      console.error('Error loading modules:', error);
+    } catch (err) {
+      console.error('Error loading exam mode:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadExamSessions = async () => {
-    try {
-      const session = await getSession();
-      if (!session) return;
+  const handleStart = async () => {
+    if (!selectedModuleId) return;
 
-      const response = await fetch('/api/exam/sessions', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+    setStarting(true);
+    setError(null);
+
+    try {
+      setStartingStep('Setting up your exam...');
+      const sessionResult = await apiPost('/api/exam/sessions', {
+        module_id: selectedModuleId,
+        duration_minutes: selectedDuration,
+        questions_count: selectedCount,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setExamSessions(data.sessions || []);
-        
-        // Calculate readiness score from recent sessions
-        if (data.sessions && data.sessions.length > 0) {
-          const recentSessions = data.sessions.slice(0, 5);
-          const avgScore = recentSessions.reduce((sum: number, s: any) => sum + (s.readiness_score || 0), 0) / recentSessions.length;
-          setReadinessScore(Math.round(avgScore));
-        }
+      if (!sessionResult.success) {
+        setError('Could not start an exam right now. Please try again.');
+        setStarting(false);
+        return;
       }
-    } catch (error) {
-      console.error('Error loading exam sessions:', error);
-    }
-  };
 
-  const loadLectures = async () => {
-    try {
-      const session = await getSession();
-      if (!session) return;
+      const examSessionId = sessionResult.exam_session.id;
 
-      const response = await fetch('/api/lectures', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+      setStartingStep('Generating questions from your lectures...');
+      const questionsResult = await apiPost('/api/exam/questions/generate', {
+        exam_session_id: examSessionId,
+        count: selectedCount,
       });
 
-      if (response.ok) {
-        const lecturesData = await response.json();
-        setLectures(lecturesData || []);
+      if (!questionsResult.success) {
+        setError(questionsResult.error || 'Could not generate questions for this module. Try a different module.');
+        setStarting(false);
+        return;
       }
-    } catch (error) {
-      console.error('Error loading lectures:', error);
-    }
-  };
 
-  const getModuleLecturesCount = (moduleId: string) => {
-    // Count lectures from the loaded lectures array
-    return lectures.filter(lecture => lecture.module_id === moduleId).length;
-  };
-
-  const getReadinessLabel = (score: number) => {
-    if (score >= 91) return { label: 'Excellent', color: 'emerald' };
-    if (score >= 71) return { label: 'Exam Ready', color: 'blue' };
-    if (score >= 41) return { label: 'Getting There', color: 'amber' };
-    return { label: 'Needs Work', color: 'rose' };
-  };
-
-  const startPracticeExam = async () => {
-    if (!selectedModule) return;
-
-    try {
-      const session = await getSession();
-      if (!session) return;
-
-      // Create exam session
-      const response = await fetch('/api/exam/sessions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          module_id: selectedModule,
-          duration_minutes: 30,
-          questions_count: 10
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Exam session created:', data);
-
-        // Generate questions for the session
-        const questionsResponse = await fetch('/api/exam/questions/generate', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            exam_session_id: data.exam_session.id,
-            question_type: 'mixed',
-            difficulty: 'mixed',
-            count: 10
-          })
-        });
-
-        if (questionsResponse.ok) {
-          console.log('Questions generated successfully');
-          router.push(`/exam-mode/${data.exam_session.id}`);
-        } else {
-          const errorData = await questionsResponse.json();
-          console.error('Failed to generate questions:', errorData);
-
-          if (errorData.retryable) {
-            alert(`${errorData.error}\n\nPlease wait a moment and try again.`);
-          } else {
-            alert(`Failed to generate questions: ${errorData.error || 'Unknown error'}`);
-          }
-        }
+      router.push(`/exam/${examSessionId}`);
+    } catch (err: any) {
+      console.error('Error starting exam:', err);
+      if (err?.message === 'premium_required') {
+        setError('Exam Mode is a Premium feature. Please upgrade to continue.');
       } else {
-        const errorData = await response.json();
-        console.error('Failed to start exam:', errorData);
-        alert(`Failed to start exam: ${errorData.error || 'Unknown error'}`);
+        setError(err?.body?.error || 'Something went wrong starting your exam. Please try again.');
       }
-    } catch (error) {
-      console.error('Error starting exam:', error);
-      alert('Failed to start exam');
-    }
-  };
-
-  const generatePracticeQuestions = async () => {
-    if (!selectedModule) return;
-    
-    setGeneratingQuestions(true);
-    try {
-      const session = await getSession();
-      if (!session) return;
-
-      // Create exam session first
-      const sessionResponse = await fetch('/api/exam/sessions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          module_id: selectedModule,
-          duration_minutes: 0,
-          questions_count: 5
-        })
-      });
-
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        
-        // Generate questions
-        const questionsResponse = await fetch('/api/exam/questions/generate', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            exam_session_id: sessionData.exam_session.id,
-            question_type: 'mixed',
-            difficulty: 'mixed',
-            count: 5
-          })
-        });
-
-        if (questionsResponse.ok) {
-          router.push(`/exam-mode/${sessionData.exam_session.id}`);
-        } else {
-          alert('Failed to generate questions');
-        }
-      } else {
-        alert('Failed to create session');
-      }
-    } catch (error) {
-      console.error('Error generating questions:', error);
-      alert('Failed to generate questions');
-    } finally {
-      setGeneratingQuestions(false);
+      setStarting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
-  const readinessInfo = getReadinessLabel(readinessScore);
+  if (!isPremium) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Exam Mode is a Premium feature</h1>
+          <p className="text-slate-600 text-sm mb-6">
+            Generate full practice exams — multiple choice and open-ended, AI-graded with detailed feedback — from any of your modules.
+          </p>
+          <Link
+            href="/pricing"
+            className="block w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+          >
+            Upgrade to Premium
+          </Link>
+          <button onClick={() => router.back()} className="mt-3 text-sm text-slate-500 hover:text-slate-700">
+            Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 sticky top-0 z-10">
-        <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
-          <Link href="/dashboard" className="p-1 text-slate-600">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-white border-b border-slate-200 px-4 py-4">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <button onClick={() => router.back()} className="text-slate-500 hover:text-slate-700">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-          </Link>
-          <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Exam Mode</h1>
+          </button>
+          <h1 className="text-lg font-semibold text-slate-900">Exam Mode</h1>
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
-        {/* Module Selection */}
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Select Module</h2>
-          <div className="relative">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full p-3 rounded-xl text-left transition-all bg-slate-50 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 flex items-center justify-between"
-            >
-              <div className="font-medium text-slate-800 dark:text-slate-100">
-                {selectedModule ? modules.find(m => m.id === selectedModule)?.name : 'Select a module'}
-              </div>
-              <svg
-                className={`w-5 h-5 text-slate-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {dropdownOpen && (
-              <div className="absolute z-10 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                {modules.map((module) => (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {modules.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+            <p className="text-slate-600">You don't have any modules yet. Create one from the dashboard and upload at least one lecture before starting an exam.</p>
+          </div>
+        ) : starting ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-slate-700 font-medium">{startingStep}</p>
+            <p className="text-slate-400 text-sm mt-1">This can take a moment for longer exams.</p>
+          </div>
+        ) : (
+          <>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+              <h2 className="text-sm font-semibold text-slate-700 mb-3">Which module?</h2>
+              <div className="grid grid-cols-1 gap-2">
+                {modules.map((m: any) => (
                   <button
-                    key={module.id}
-                    onClick={() => {
-                      setSelectedModule(module.id);
-                      setDropdownOpen(false);
-                    }}
-                    className={`w-full p-3 text-left transition-all ${
-                      selectedModule === module.id
-                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-500'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-700'
+                    key={m.id}
+                    onClick={() => setSelectedModuleId(m.id)}
+                    className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                      selectedModuleId === m.id
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
-                    <div className="font-medium text-slate-800 dark:text-slate-100">{module.name}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {getModuleLecturesCount(module.id)} lectures
-                    </div>
+                    <span
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: m.color || '#6366f1' }}
+                    ></span>
+                    <span className="font-medium text-slate-800 text-sm">{m.name}</span>
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+              <h2 className="text-sm font-semibold text-slate-700 mb-3">Timing</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {DURATIONS.map((d) => (
+                  <button
+                    key={d.minutes}
+                    onClick={() => setSelectedDuration(d.minutes)}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${
+                      selectedDuration === d.minutes
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="font-bold text-slate-800">{d.label}</div>
+                    <div className="text-xs text-slate-500">{d.sub}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+              <h2 className="text-sm font-semibold text-slate-700 mb-3">How many questions?</h2>
+              <div className="grid grid-cols-3 gap-2">
+                {QUESTION_COUNTS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setSelectedCount(c)}
+                    className={`p-3 rounded-xl border-2 text-center font-bold transition-all ${
+                      selectedCount === c
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-800'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-3 mb-4">
+                {error}
+              </div>
             )}
-          </div>
-        </div>
 
-        {/* Exam Readiness Score */}
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 mb-4 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Exam Readiness Score</h2>
-            <div className={`px-3 py-1 rounded-full text-xs font-semibold bg-white/20`}>
-              {readinessInfo.label}
-            </div>
-          </div>
-          <div className="text-5xl font-bold mb-2">{readinessScore}/100</div>
-          <p className="text-indigo-100 text-sm">
-            Based on your recent practice exam performance
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3 mb-6">
-          <button
-            onClick={startPracticeExam}
-            disabled={!selectedModule}
-            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Start Practice Exam
-          </button>
-          <button
-            onClick={generatePracticeQuestions}
-            disabled={!selectedModule || generatingQuestions}
-            className="w-full py-4 bg-white border-2 border-indigo-600 text-indigo-600 rounded-xl font-semibold hover:bg-indigo-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generatingQuestions ? 'Generating Questions...' : 'Generate Practice Questions'}
-          </button>
-        </div>
-
-        {/* Previous Attempts */}
-        {examSessions.length > 0 && (
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Previous Attempts</h2>
-            <div className="space-y-2">
-              {examSessions.slice(0, 5).map((session) => (
-                <Link
-                  key={session.id}
-                  href={`/exam-mode/${session.id}`}
-                  className="block p-3 bg-slate-50 dark:bg-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-slate-800 dark:text-slate-100 text-sm">
-                        {new Date(session.created_at).toLocaleDateString()}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {session.questions_count} questions • {session.duration_minutes} min
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-indigo-600">
-                        {session.score ? Math.round(session.score) : 0}%
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {session.correct_count || 0}/{session.questions_count} correct
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+            <button
+              onClick={handleStart}
+              disabled={!selectedModuleId}
+              className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Start Exam
+            </button>
+            <p className="text-xs text-slate-400 text-center mt-3">
+              Questions are generated from all completed lectures in this module — mix of multiple choice and open-ended, AI-graded when you submit.
+            </p>
+          </>
         )}
       </div>
     </div>
