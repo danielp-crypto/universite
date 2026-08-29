@@ -587,7 +587,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-4">
-                {['light', 'dark', 'system'].map((t) => (
+                {(['light', 'dark', 'system'] as const).map((t) => (
                   <div
                     key={t}
                     onClick={() => setTheme(t)}
