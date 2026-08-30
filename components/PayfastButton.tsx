@@ -11,6 +11,12 @@ interface PayfastButtonProps {
   userId?: string;
   className?: string;
   children?: React.ReactNode;
+  disabled?: boolean;
+  // Subscription parameters
+  subscriptionType?: number;
+  recurringAmount?: number;
+  cycles?: number;
+  frequency?: number;
 }
 
 export default function PayfastButton({
@@ -21,6 +27,11 @@ export default function PayfastButton({
   userId,
   className = '',
   children = 'Pay Now',
+  disabled = false,
+  subscriptionType,
+  recurringAmount,
+  cycles,
+  frequency,
 }: PayfastButtonProps) {
   const [loading, setLoading] = useState(false);
   const [paymentData, setPaymentData] = useState<Record<string, string> | null>(null);
@@ -37,6 +48,10 @@ export default function PayfastButton({
         item_description: itemDescription,
         email,
         user_id: userId,
+        subscription_type: subscriptionType,
+        recurring_amount: recurringAmount,
+        cycles,
+        frequency,
       });
 
       if (result.success && result.payment_data) {
@@ -64,7 +79,7 @@ export default function PayfastButton({
     <>
       <button
         onClick={handlePayNow}
-        disabled={loading}
+        disabled={loading || disabled}
         className={`bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       >
         {loading ? 'Processing...' : children}

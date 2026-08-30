@@ -26,7 +26,7 @@ function generateCheckoutSignature(data: Record<string, string>): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { amount, item_name, item_description, email, user_id } = body;
+    const { amount, item_name, item_description, email, user_id, subscription_type, recurring_amount, cycles, frequency } = body;
 
     // Validate required fields
     if (!amount || !item_name) {
@@ -73,6 +73,20 @@ export async function POST(request: NextRequest) {
       // Payment method (optional - leave empty for all methods)
       payment_method: '',
     };
+
+    // Add subscription parameters if provided
+    if (subscription_type) {
+      paymentData.subscription_type = subscription_type.toString();
+    }
+    if (recurring_amount) {
+      paymentData.recurring_amount = recurring_amount.toFixed(2);
+    }
+    if (cycles !== undefined) {
+      paymentData.cycles = cycles.toString();
+    }
+    if (frequency !== undefined) {
+      paymentData.frequency = frequency.toString();
+    }
 
     // Generate signature
     const signature = generateCheckoutSignature(paymentData);

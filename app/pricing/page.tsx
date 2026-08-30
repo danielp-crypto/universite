@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSession } from '@/lib/supabase/auth';
+import PayfastButton from '@/components/PayfastButton';
 
 interface Plan {
   plan_slug: string;
@@ -225,25 +226,42 @@ export default function PricingPage() {
                   </li>
                 </ul>
 
-                <button
-                  onClick={() => handleSubscribe(plan.plan_slug)}
-                  disabled={isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug) || processing === plan.plan_slug}
-                  className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${
-                    isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug)
-                      ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg'
-                  }`}
-                >
-                  {processing === plan.plan_slug ? (
-                    'Processing...'
-                  ) : isCurrentPlan(plan.plan_slug) ? (
-                    'Current Plan'
-                  ) : isFreePlan(plan.plan_slug) ? (
-                    'Free Plan'
-                  ) : (
-                    'Subscribe'
-                  )}
-                </button>
+                {!isFreePlan(plan.plan_slug) && Number(plan.price_zar) === 149 ? (
+                  // PayFast subscription button for premium tier
+                  <PayfastButton
+                    amount={Number(plan.price_zar)}
+                    itemName="premium"
+                    itemDescription="premium features"
+                    subscriptionType={1}
+                    recurringAmount={Number(plan.price_zar)}
+                    cycles={0}
+                    frequency={3}
+                    className="w-full"
+                    disabled={isCurrentPlan(plan.plan_slug)}
+                  >
+                    {isCurrentPlan(plan.plan_slug) ? 'Current Plan' : 'Subscribe'}
+                  </PayfastButton>
+                ) : (
+                  <button
+                    onClick={() => handleSubscribe(plan.plan_slug)}
+                    disabled={isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug) || processing === plan.plan_slug}
+                    className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${
+                      isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug)
+                        ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg'
+                    }`}
+                  >
+                    {processing === plan.plan_slug ? (
+                      'Processing...'
+                    ) : isCurrentPlan(plan.plan_slug) ? (
+                      'Current Plan'
+                    ) : isFreePlan(plan.plan_slug) ? (
+                      'Free Plan'
+                    ) : (
+                      'Subscribe'
+                    )}
+                  </button>
+                )}
 
                 {isCurrentPlan(plan.plan_slug) && currentSubscription?.expires_at && (
                   <p className="text-center text-sm text-slate-500 mt-3">
