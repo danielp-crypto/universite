@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSession } from '@/lib/supabase/auth';
-import PayfastButton from '@/components/PayfastButton';
 
 interface Plan {
   plan_slug: string;
@@ -75,11 +74,11 @@ export default function PricingPage() {
       return;
     }
 
-    // Handle paid plans via PayFast
+    // Handle paid plans via Yoco
     try {
       setProcessing(planSlug);
 
-      const response = await fetch('/api/payments/payfast/create', {
+      const response = await fetch('/api/payments/yoco/create', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -91,25 +90,14 @@ export default function PricingPage() {
       if (response.ok) {
         const data = await response.json();
 
-        console.log('PayFast API Response:', data);
-        console.log('Payment data keys:', Object.keys(data.paymentData));
+        console.log('Yoco API Response:', data);
 
-        // Create form and submit to PayFast
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = data.payfastUrl;
-
-        Object.entries(data.paymentData).forEach(([key, value]) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = value as string;
-          form.appendChild(input);
-          console.log(`Form field: ${key} = ${value}`);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
+        // Redirect to Yoco checkout
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        } else {
+          alert('Failed to initiate payment: No checkout URL returned');
+        }
       } else {
         const error = await response.json();
         alert('Failed to initiate payment: ' + error.error);
@@ -226,42 +214,25 @@ export default function PricingPage() {
                   </li>
                 </ul>
 
-                {!isFreePlan(plan.plan_slug) && Number(plan.price_zar) === 149 ? (
-                  // PayFast subscription button for premium tier
-                  <PayfastButton
-                    amount={Number(plan.price_zar)}
-                    itemName="premium"
-                    itemDescription="premium features"
-                    subscriptionType={1}
-                    recurringAmount={Number(plan.price_zar)}
-                    cycles={0}
-                    frequency={3}
-                    className="w-full"
-                    disabled={isCurrentPlan(plan.plan_slug)}
-                  >
-                    {isCurrentPlan(plan.plan_slug) ? 'Current Plan' : 'Subscribe'}
-                  </PayfastButton>
-                ) : (
-                  <button
-                    onClick={() => handleSubscribe(plan.plan_slug)}
-                    disabled={isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug) || processing === plan.plan_slug}
-                    className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${
-                      isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug)
-                        ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg'
-                    }`}
-                  >
-                    {processing === plan.plan_slug ? (
-                      'Processing...'
-                    ) : isCurrentPlan(plan.plan_slug) ? (
-                      'Current Plan'
-                    ) : isFreePlan(plan.plan_slug) ? (
-                      'Free Plan'
-                    ) : (
-                      'Subscribe'
-                    )}
-                  </button>
-                )}
+                <button
+                  onClick={() => handleSubscribe(plan.plan_slug)}
+                  disabled={isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug) || processing === plan.plan_slug}
+                  className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${
+                    isCurrentPlan(plan.plan_slug) || isFreePlan(plan.plan_slug)
+                      ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg'
+                  }`}
+                >
+                  {processing === plan.plan_slug ? (
+                    'Processing...'
+                  ) : isCurrentPlan(plan.plan_slug) ? (
+                    'Current Plan'
+                  ) : isFreePlan(plan.plan_slug) ? (
+                    'Free Plan'
+                  ) : (
+                    'Subscribe'
+                  )}
+                </button>
 
                 {isCurrentPlan(plan.plan_slug) && currentSubscription?.expires_at && (
                   <p className="text-center text-sm text-slate-500 mt-3">
