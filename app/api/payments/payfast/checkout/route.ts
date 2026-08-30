@@ -1,23 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-// PayFast checkout signature generation (NOT sorted, unlike REST API)
-// This follows the standard form-field signature for on-site checkout
+// PayFast checkout signature generation
+// For on-site checkout, parameters must be sorted alphabetically
 function generateCheckoutSignature(data: Record<string, string>): string {
   // Remove signature field if present
   const { signature, ...dataToSign } = data;
+  
+  // Filter out empty values
+  const filteredData: Record<string, string> = {};
+  Object.entries(dataToSign).forEach(([key, value]) => {
+    if (value !== '' && value !== null && value !== undefined) {
+      filteredData[key] = value;
+    }
+  });
   
   // Get passphrase from env
   const passphrase = process.env.PAYFAST_PASSPHRASE || '';
   
   // Add passphrase if configured
   if (passphrase) {
-    dataToSign.passphrase = passphrase;
+    filteredData.passphrase = passphrase;
   }
   
-  // Create parameter string - IMPORTANT: do NOT sort for checkout signature
-  const paramString = Object.keys(dataToSign)
-    .map((key) => `${key}=${encodeURIComponent(dataToSign[key]).replace(/%20/g, '+')}`)
+  // Create parameter string - IMPORTANT: sort alphabetically for checkout signature
+  const paramString = Object.keys(filteredData)
+    .sort()
+    .map((key) => `${key}=${encodeURIComponent(filteredData[key]).replace(/%20/g, '+')}`)
     .join('&');
   
   return crypto.createHash('md5').update(paramString).digest('hex');
@@ -50,6 +59,9 @@ export async function POST(request: NextRequest) {
 
     // Build payment data
     const paymentData: Record<string, string> = {
+      // Command for PayFast
+      cmd: '_paynow',
+      
       // Merchant credentials
       merchant_id: merchantId,
       merchant_key: merchantKey,
@@ -92,10 +104,15 @@ export async function POST(request: NextRequest) {
     const signature = generateCheckoutSignature(paymentData);
     paymentData.signature = signature;
 
+    // Log for debugging (remove in production)
+    console.log('PayFast Payment Data:', JSON.stringify(paymentData, null, 2));
+    console.log('Generated Signature:', signature);
+    console.log('Is Sandbox:', isSandbox);
+
     // Determine PayFast URL
     const payfastUrl = isSandbox
       ? 'https://sandbox.payfast.co.za/eng/process'
-      : 'https://www.payfast.co.za/eng/process';
+      : 'https://payment.payfast.io/eng/process';
 
     return NextResponse.json({
       success: true,
