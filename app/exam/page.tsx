@@ -87,11 +87,7 @@ export default function ExamModePage() {
       router.push(`/exam/${examSessionId}`);
     } catch (err: any) {
       console.error('Error starting exam:', err);
-      if (err?.message === 'premium_required') {
-        setError('Exam Mode is a Premium feature. Please upgrade to continue.');
-      } else {
-        setError(err?.body?.error || 'Something went wrong starting your exam. Please try again.');
-      }
+      setError(err?.body?.error || 'Something went wrong starting your exam. Please try again.');
       setStarting(false);
     }
   };

@@ -24,20 +24,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Premium gate — Exam Mode is a paid feature. No active subscription row
-    // defaults to free, matching the fallback used throughout the rest of the app.
-    const { data: subscription } = await supabaseAdmin
-      .from('user_subscriptions')
-      .select('plan_slug, status')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .maybeSingle();
-
-    const planSlug = subscription?.plan_slug || 'free';
-    if (planSlug === 'free') {
-      return NextResponse.json({ error: 'premium_required' }, { status: 403 });
-    }
-
     const body = await request.json();
     const { module_id, duration_minutes, questions_count } = body;
 
