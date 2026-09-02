@@ -13,13 +13,11 @@ CREATE TABLE IF NOT EXISTS exam_sessions (
   questions_count INTEGER NOT NULL,
   correct_count INTEGER DEFAULT 0,
   status TEXT DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'abandoned')),
-  submitted_at TIMESTAMP WITH TIME ZONE,
-  
-  -- Indexes for common queries
-  INDEX idx_exam_sessions_user_id (user_id),
-  INDEX idx_exam_sessions_module_id (module_id),
-  INDEX idx_exam_sessions_created_at (created_at DESC)
+  submitted_at TIMESTAMP WITH TIME ZONE
 );
+CREATE INDEX IF NOT EXISTS idx_exam_sessions_user_id ON exam_sessions (user_id);
+CREATE INDEX IF NOT EXISTS idx_exam_sessions_module_id ON exam_sessions (module_id);
+CREATE INDEX IF NOT EXISTS idx_exam_sessions_created_at ON exam_sessions (created_at DESC);
 
 -- Exam Questions: Stores questions for each exam session
 CREATE TABLE IF NOT EXISTS exam_questions (
@@ -32,12 +30,10 @@ CREATE TABLE IF NOT EXISTS exam_questions (
   options JSONB, -- For multiple choice questions: ["A) Option 1", "B) Option 2", ...]
   correct_option TEXT, -- For multiple choice: "A", "B", "C", or "D"
   order_index INTEGER NOT NULL, -- Order in the exam
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Indexes for common queries
-  INDEX idx_exam_questions_session_id (exam_session_id),
-  INDEX idx_exam_questions_order (exam_session_id, order_index)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_exam_questions_session_id ON exam_questions (exam_session_id);
+CREATE INDEX IF NOT EXISTS idx_exam_questions_order ON exam_questions (exam_session_id, order_index);
 
 -- Student Answers: Stores student responses to exam questions
 CREATE TABLE IF NOT EXISTS student_answers (
@@ -53,12 +49,10 @@ CREATE TABLE IF NOT EXISTS student_answers (
   is_correct BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Indexes for common queries
-  INDEX idx_student_answers_session_id (exam_session_id),
-  INDEX idx_student_answers_question_id (question_id),
   UNIQUE(exam_session_id, question_id) -- One answer per question per session
 );
+CREATE INDEX IF NOT EXISTS idx_student_answers_session_id ON student_answers (exam_session_id);
+CREATE INDEX IF NOT EXISTS idx_student_answers_question_id ON student_answers (question_id);
 
 -- Weak Topics: Tracks topics where students struggle
 CREATE TABLE IF NOT EXISTS weak_topics (
@@ -72,13 +66,11 @@ CREATE TABLE IF NOT EXISTS weak_topics (
   recommended_lecture_ids UUID[], -- Array of lecture IDs to review
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Indexes for common queries
-  INDEX idx_weak_topics_user_id (user_id),
-  INDEX idx_weak_topics_module_id (module_id),
-  INDEX idx_weak_topics_mistake_count (mistake_count DESC),
   UNIQUE(user_id, module_id, topic) -- One entry per topic per module per user
 );
+CREATE INDEX IF NOT EXISTS idx_weak_topics_user_id ON weak_topics (user_id);
+CREATE INDEX IF NOT EXISTS idx_weak_topics_module_id ON weak_topics (module_id);
+CREATE INDEX IF NOT EXISTS idx_weak_topics_mistake_count ON weak_topics (mistake_count DESC);
 
 -- Enable Row Level Security
 ALTER TABLE exam_sessions ENABLE ROW LEVEL SECURITY;

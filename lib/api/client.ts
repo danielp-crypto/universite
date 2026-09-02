@@ -19,7 +19,10 @@ export async function apiRequest(url: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || 'Request failed');
+    const requestError = new Error(error.error || 'Request failed') as Error & { body?: typeof error; status?: number };
+    requestError.body = error;
+    requestError.status = response.status;
+    throw requestError;
   }
 
   return response.json();
