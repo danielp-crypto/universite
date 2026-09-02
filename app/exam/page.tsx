@@ -18,7 +18,6 @@ const QUESTION_COUNTS = [5, 10, 20];
 export default function ExamModePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
   const [modules, setModules] = useState<any[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number>(30);
@@ -39,14 +38,7 @@ export default function ExamModePage() {
         return;
       }
 
-      const [subscription, modulesData] = await Promise.all([
-        fetch('/api/subscription', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }).then((r) => (r.ok ? r.json() : null)),
-        apiGet('/api/modules').catch(() => []),
-      ]);
-
-      setIsPremium(!!subscription?.plan_slug && subscription.plan_slug !== 'free');
+      const modulesData = await apiGet('/api/modules').catch(() => []);
       setModules(Array.isArray(modulesData) ? modulesData : []);
       if (Array.isArray(modulesData) && modulesData.length > 0) {
         setSelectedModuleId(modulesData[0].id);
@@ -112,32 +104,6 @@ export default function ExamModePage() {
     );
   }
 
-  if (!isPremium) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-bold text-slate-900 mb-2">Exam Mode is a Premium feature</h1>
-          <p className="text-slate-600 text-sm mb-6">
-            Generate full practice exams — multiple choice and open-ended, AI-graded with detailed feedback — from any of your modules.
-          </p>
-          <Link
-            href="/pricing"
-            className="block w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-          >
-            Upgrade to Premium
-          </Link>
-          <button onClick={() => router.back()} className="mt-3 text-sm text-slate-500 hover:text-slate-700">
-            Go back
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50">
