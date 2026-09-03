@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     console.log('Checkout status:', checkout.status);
 
     // Check if payment was successful
-    if (checkout.status !== 'successful' && checkout.status !== 'completed') {
+    if (!['successful', 'succeeded', 'completed'].includes(checkout.status)) {
       return NextResponse.json({
         success: false,
         status: checkout.status,

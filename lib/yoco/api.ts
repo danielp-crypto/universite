@@ -3,7 +3,7 @@
 
 const YOCO_SECRET_KEY = process.env.YOCO_SECRET_KEY!;
 const YOCO_PUBLIC_KEY = process.env.YOCO_PUBLIC_KEY!;
-const YOCO_API_URL = 'https://yoco.com';
+const YOCO_API_URL = 'https://payments.yoco.com/api';
 
 export interface YocoPaymentRequest {
   amountInCents: number;
@@ -46,7 +46,7 @@ export async function createYocoCheckout(
     console.log('Creating Yoco checkout with data:', checkoutData);
     console.log('Using Yoco API URL:', YOCO_API_URL);
 
-    const response = await fetch(`${YOCO_API_URL}/checkout/sessions`, {
+    const response = await fetch(`${YOCO_API_URL}/checkouts`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
@@ -78,7 +78,7 @@ export async function getYocoPayment(paymentId: string): Promise<{
   error?: string;
 }> {
   try {
-    const response = await fetch(`${YOCO_API_URL}/payments/${paymentId}`, {
+    const response = await fetch(`${YOCO_API_URL}/checkouts/${paymentId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
@@ -114,7 +114,7 @@ export async function getYocoCheckoutStatus(checkoutId: string): Promise<{
   try {
     console.log('Checking Yoco checkout status for:', checkoutId);
 
-    const response = await fetch(`${YOCO_API_URL}/checkout/sessions/${checkoutId}`, {
+    const response = await fetch(`${YOCO_API_URL}/checkouts/${checkoutId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${YOCO_SECRET_KEY}`,
