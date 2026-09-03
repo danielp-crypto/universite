@@ -136,7 +136,8 @@ Important:
             }],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 2048,
+              maxOutputTokens: 8192,
+              responseMimeType: 'application/json',
             }
           })
         }
@@ -191,23 +192,11 @@ Important:
     // Parse AI response with multiple fallback strategies
     let questions;
     try {
-      // Strategy 1: Try to extract JSON array from markdown code blocks
-      const codeBlockMatch = generatedText.match(/```(?:json)?\s*(\[[\s\S]*\])\s*```/);
-      if (codeBlockMatch) {
-        console.log('Found JSON in code block');
-        questions = JSON.parse(codeBlockMatch[1]);
-      } else {
-        // Strategy 2: Try to find JSON array directly
-        const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          console.log('Found JSON array directly');
-          questions = JSON.parse(jsonMatch[0]);
-        } else {
-          // Strategy 3: Try to parse the entire response as JSON
-          console.log('Trying to parse entire response as JSON');
-          questions = JSON.parse(generatedText);
-        }
-      }
+      const cleanedText = generatedText
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
+      questions = JSON.parse(cleanedText);
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
       console.error('Full generated text:', generatedText);
@@ -215,12 +204,10 @@ Important:
       // Try to fix common JSON issues
       try {
         // Remove common AI artifacts
-        const cleanedText = generatedText
-          .replace(/```json/g, '')
-          .replace(/```/g, '')
-          .replace(/^[^{[]*\s*/, '')
-          .replace(/\s*[^}\]]*$/, '')
-          .trim();
+        const arrayStart = generatedText.indexOf('[');
+        const arrayEnd = generatedText.lastIndexOf(']');
+        if (arrayStart < 0 || arrayEnd <= arrayStart) throw parseError;
+        const cleanedText = generatedText.slice(arrayStart, arrayEnd + 1);
 
         console.log('Cleaned text:', cleanedText.substring(0, 500));
         questions = JSON.parse(cleanedText);
@@ -232,6 +219,10 @@ Important:
           raw_response: generatedText.substring(0, 1000)
         }, { status: 500 });
       }
+    }
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return NextResponse.json({ error: 'The AI returned no valid exam questions. Please try again.' }, { status: 500 });
     }
 
     // Store questions in database
