@@ -87,7 +87,8 @@ export default function ExamModePage() {
       router.push(`/exam/${examSessionId}`);
     } catch (err: any) {
       console.error('Error starting exam:', err);
-      setError(err?.body?.error || 'Something went wrong starting your exam. Please try again.');
+      const apiError = err?.body;
+      setError(apiError?.details || apiError?.error || err?.message || 'Something went wrong starting your exam. Please try again.');
       setStarting(false);
     }
   };

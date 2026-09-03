@@ -56,7 +56,12 @@ export async function POST(request: NextRequest) {
 
     if (sessionError) {
       console.error('Error creating exam session:', sessionError);
-      return NextResponse.json({ error: 'Failed to create exam session' }, { status: 500 });
+      return NextResponse.json({
+        error: 'Failed to create exam session',
+        details: sessionError.message,
+        code: sessionError.code,
+        hint: sessionError.hint,
+      }, { status: 500 });
     }
 
     return NextResponse.json({
