@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiGet } from '@/lib/api/client';
+import { useSearchParams } from 'next/navigation';
+import { apiGet, apiPost } from '@/lib/api/client';
 
 // PayFast's server-to-server webhook (ITN) that actually activates the
 // subscription in our database fires independently of this page loading —
@@ -14,6 +15,7 @@ const MAX_POLL_ATTEMPTS = 10; // ~15 seconds total
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<'confirming' | 'confirmed' | 'timed_out'>('confirming');
 
   useEffect(() => {
@@ -22,6 +24,10 @@ export default function PaymentSuccessPage() {
 
     const poll = async () => {
       try {
+        const checkoutId = searchParams.get('checkoutId') || searchParams.get('checkout_id') || searchParams.get('id');
+        if (checkoutId) {
+          await apiPost('/api/payments/yoco/verify', { checkoutId });
+        }
         const subscription = await apiGet('/api/subscription');
         if (cancelled) return;
 
@@ -50,7 +56,7 @@ export default function PaymentSuccessPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
