@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS exam_sessions (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   module_id UUID REFERENCES modules(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  duration_minutes INTEGER NOT NULL, -- 15, 30, or 60
+  duration_minutes INTEGER NOT NULL CHECK (duration_minutes IN (0, 15, 30, 60)),
   score DECIMAL(5,2), -- Overall percentage score
   readiness_score INTEGER, -- 0-100 readiness score
   questions_count INTEGER NOT NULL,
