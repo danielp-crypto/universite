@@ -14,7 +14,20 @@ export async function POST(request: NextRequest) {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     const body = await request.json();
-    const { checkoutId } = body;
+    let { checkoutId, paymentId: requestedPaymentId } = body;
+
+    if (!checkoutId && requestedPaymentId) {
+      const { data: pendingPayment, error: pendingPaymentError } = await supabaseAdmin
+        .from('user_subscriptions')
+        .select('yoco_checkout_id')
+        .eq('yoco_payment_id', requestedPaymentId)
+        .single();
+
+      if (pendingPaymentError || !pendingPayment?.yoco_checkout_id) {
+        return NextResponse.json({ error: 'Pending Yoco payment not found' }, { status: 404 });
+      }
+      checkoutId = pendingPayment.yoco_checkout_id;
+    }
 
     if (!checkoutId) {
       return NextResponse.json({ error: 'Checkout ID is required' }, { status: 400 });

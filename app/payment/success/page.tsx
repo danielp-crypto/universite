@@ -26,8 +26,9 @@ function PaymentSuccessContent() {
     const poll = async () => {
       try {
         const checkoutId = searchParams.get('checkoutId') || searchParams.get('checkout_id') || searchParams.get('session_id') || searchParams.get('id');
-        if (checkoutId) {
-          await apiPost('/api/payments/yoco/verify', { checkoutId });
+        const paymentId = searchParams.get('paymentId');
+        if (checkoutId || paymentId) {
+          await apiPost('/api/payments/yoco/verify', checkoutId ? { checkoutId } : { paymentId });
         }
         const subscription = await apiGet('/api/subscription');
         if (cancelled) return;

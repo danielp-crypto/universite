@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     const checkoutResult = await createYocoCheckout({
       amount: amountInCents,
       currency: 'ZAR',
-      successUrl: `${NEXT_PUBLIC_APP_URL}/payment/success`,
+      successUrl: `${NEXT_PUBLIC_APP_URL}/payment/success?paymentId=${encodeURIComponent(paymentId)}`,
       cancelUrl: `${NEXT_PUBLIC_APP_URL}/payment/cancelled`,
       metadata: {
         userId: user.id,
