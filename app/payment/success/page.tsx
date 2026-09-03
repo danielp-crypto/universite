@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { apiGet, apiPost } from '@/lib/api/client';
+import { Suspense } from 'react';
 
 // PayFast's server-to-server webhook (ITN) that actually activates the
 // subscription in our database fires independently of this page loading —
@@ -13,7 +14,7 @@ import { apiGet, apiPost } from '@/lib/api/client';
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 10; // ~15 seconds total
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'confirming' | 'confirmed' | 'timed_out'>('confirming');
@@ -100,5 +101,13 @@ export default function PaymentSuccessPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
