@@ -64,9 +64,9 @@ export default function ExamSessionPage() {
       } else if (s.duration_minutes === 0) {
         setIsUntimed(true);
       } else {
-        const endTime = new Date(s.created_at).getTime() + s.duration_minutes * 60 * 1000;
-        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-        setSecondsRemaining(remaining);
+        // The session is created before AI question generation. Starting
+        // from created_at would charge the student for generation time.
+        setSecondsRemaining(s.duration_minutes * 60);
       }
     } catch (err) {
       console.error('Error loading exam session:', err);
