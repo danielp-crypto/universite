@@ -36,13 +36,21 @@ export async function GET(request: NextRequest) {
       .neq('used_for', 'free_tier_credit');
 
     const globalCreditsUsed = globalCreditsData?.length || 0;
-    const globalCreditsAllocated = 4; // Free tier gets 4 credits globally
+    const { data: subscription } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('status, plan_slug, plans(monthly_lecture_uploads)')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const isPremium = subscription?.status === 'active' && subscription.plan_slug !== 'free';
+    const paidLimit = (subscription?.plans as any)?.monthly_lecture_uploads;
+    const globalCreditsAllocated = isPremium ? (paidLimit || 999999) : 4;
 
     // Add global credit info to each module
     const modulesWithCredits = (modules || []).map(module => ({
       ...module,
       credits_allocated: globalCreditsAllocated,
-      credits_used: globalCreditsUsed
+      credits_used: globalCreditsUsed,
+      is_premium: isPremium
     }));
 
     if (error) {

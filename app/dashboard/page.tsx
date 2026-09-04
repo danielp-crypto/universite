@@ -920,9 +920,9 @@ function HomePageContent() {
                 </h1>
               </div>
               <div className="flex items-center gap-3">
-                <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                {!modules.some((module: any) => module.is_premium) && <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
                   Upgrade
-                </Link>
+                </Link>}
                 <Notifications />
               </div>
             </div>
