@@ -1193,7 +1193,7 @@ function HomePageContent() {
           </div>
 
           {/* Credits Display */}
-          <div className="mb-6">
+          {!modules.some((module: any) => module.is_premium) && <div className="mb-6">
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -1214,7 +1214,7 @@ function HomePageContent() {
                 ></div>
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* Study Tools Quick Links */}
           <div>
