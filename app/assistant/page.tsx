@@ -413,14 +413,14 @@ function AssistantPageContent(): React.ReactNode {
                       )}
                     </div>
 
-                    <div className={`flex-1 max-w-[75%] md:max-w-[80%]`}>
-                      <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                    <div className={`flex-1 min-w-0 max-w-[75%] md:max-w-[80%]`}>
+                      <div className={`min-w-0 max-w-full overflow-hidden break-words p-4 rounded-2xl text-sm leading-relaxed ${
                         isUser 
                           ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-tr-sm' 
                           : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm'
                       }`}>
                         {isUser ? (
-                          <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                          <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.content}</div>
                         ) : (
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
