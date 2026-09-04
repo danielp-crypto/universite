@@ -27,6 +27,32 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { module_id, duration_minutes, questions_count } = body;
 
+    const { data: subscription } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('status, plan_slug')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const isPremium = subscription?.status === 'active' && subscription.plan_slug !== 'free';
+
+    if (!isPremium) {
+      const { count: examCount, error: countError } = await supabaseAdmin
+        .from('exam_sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (countError) {
+        console.error('Error checking free exam limit:', countError);
+        return NextResponse.json({ error: 'Unable to check exam limit' }, { status: 500 });
+      }
+
+      if ((examCount || 0) >= 2) {
+        return NextResponse.json({
+          error: 'Free users can generate up to 2 exams. Upgrade to Premium for unlimited exams.',
+          code: 'FREE_EXAM_LIMIT_REACHED'
+        }, { status: 403 });
+      }
+    }
+
     if (!module_id || duration_minutes === undefined || !questions_count) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
