@@ -9,6 +9,7 @@ import { apiPost, apiGet } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { useRouter } from 'next/navigation';
 import Alert from '../components/Alert';
+import Notifications from '../components/Notifications';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -255,6 +256,14 @@ function AssistantPageContent(): React.ReactNode {
               <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 Universite
               </h1>
+              <div className="ml-auto flex items-center gap-3">
+                {subscription?.plan_slug === 'free' && (
+                  <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                    Upgrade
+                  </Link>
+                )}
+                <Notifications />
+              </div>
             </div>
           </div>
         </div>
