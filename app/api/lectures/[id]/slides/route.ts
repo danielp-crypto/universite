@@ -3,6 +3,9 @@ import { supabaseAdmin } from '@/lib/supabase/client';
 import { PDFParse } from 'pdf-parse';
 import JSZip from 'jszip';
 
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 // Extracts plain text from a PDF, page by page. PowerPoint-exported PDFs
 // (the overwhelming majority of "lecture slides as PDF" uploads) always
 // retain a text layer even for visually-laid-out slides, so this works well
