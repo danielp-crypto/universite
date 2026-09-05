@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet, apiPost } from '@/lib/api/client';
@@ -15,7 +15,7 @@ const DURATIONS = [
 
 const QUESTION_COUNTS = [5, 10, 20];
 
-export default function ExamModePage() {
+function ExamModePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -212,5 +212,13 @@ export default function ExamModePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ExamModePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center" />}>
+      <ExamModePageContent />
+    </Suspense>
   );
 }
