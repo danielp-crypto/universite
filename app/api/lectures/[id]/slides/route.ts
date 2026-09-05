@@ -16,7 +16,7 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     disableWorker: true,
     useWorkerFetch: false,
     isEvalSupported: false,
-  }).promise;
+  } as any).promise;
   const pages: string[] = [];
   for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
     const page = await document.getPage(pageNumber);
