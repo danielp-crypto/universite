@@ -289,7 +289,38 @@ async function analyzeWeakTopics(
     .map((a) => ({ ...a, question: questionById.get(a.question_id)?.question }));
 
   if (incorrectAnswers.length === 0) return;
-  if (!GEMINI_API_KEY) return;
+  const saveFallbackTopics = async () => {
+    for (const incorrect of incorrectAnswers) {
+      const topic = `Review: ${(incorrect.question || 'This question').trim().slice(0, 100)}`;
+      const { data: existing } = await supabaseAdmin
+        .from('weak_topics')
+        .select('id, mistake_count, confidence')
+        .eq('user_id', userId)
+        .eq('module_id', moduleId)
+        .eq('topic', topic)
+        .maybeSingle();
+      if (existing) {
+        await supabaseAdmin.from('weak_topics').update({
+          mistake_count: existing.mistake_count + 1,
+          last_practiced_at: new Date().toISOString(),
+        }).eq('id', existing.id);
+      } else {
+        await supabaseAdmin.from('weak_topics').insert({
+          user_id: userId,
+          module_id: moduleId,
+          topic,
+          mistake_count: 1,
+          confidence: 0.5,
+          last_practiced_at: new Date().toISOString(),
+        });
+      }
+    }
+  };
+
+  if (!GEMINI_API_KEY) {
+    await saveFallbackTopics();
+    return;
+  }
 
   const prompt = `Analyze these incorrect exam answers and identify the key topics/concepts the student is struggling with.
 
@@ -333,6 +364,11 @@ Respond with ONLY JSON, no markdown fences, no commentary, in this exact shape:
     const generatedText = aiData.candidates[0].content.parts[0].text;
     const analysisResult = extractJson(generatedText);
 
+    if (!Array.isArray(analysisResult.weak_topics) || analysisResult.weak_topics.length === 0) {
+      await saveFallbackTopics();
+      return;
+    }
+
     for (const weakTopic of analysisResult.weak_topics || []) {
       const { data: existingTopic } = await supabaseAdmin
         .from('weak_topics')
@@ -363,5 +399,6 @@ Respond with ONLY JSON, no markdown fences, no commentary, in this exact shape:
     }
   } catch (error) {
     console.error('Error analyzing weak topics:', error);
+    await saveFallbackTopics();
   }
 }
