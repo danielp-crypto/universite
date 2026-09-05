@@ -14,6 +14,7 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     (globalThis as any).DOMMatrix = class DOMMatrix {};
   }
   const { PDFParse } = await import('pdf-parse');
+  PDFParse.setWorker();
   const parser = new PDFParse({ data: buffer });
   const result = await parser.getText();
   return result.text.trim();
