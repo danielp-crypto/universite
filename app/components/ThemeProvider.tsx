@@ -32,6 +32,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       html.classList.remove('dark');
     }
+    html.style.colorScheme = isDark ? 'dark' : 'light';
   };
 
   // Apply theme whenever theme changes
