@@ -317,8 +317,9 @@ async function analyzeWeakTopics(
     }
   };
 
+  await saveFallbackTopics();
+
   if (!GEMINI_API_KEY) {
-    await saveFallbackTopics();
     return;
   }
 
@@ -365,7 +366,6 @@ Respond with ONLY JSON, no markdown fences, no commentary, in this exact shape:
     const analysisResult = extractJson(generatedText);
 
     if (!Array.isArray(analysisResult.weak_topics) || analysisResult.weak_topics.length === 0) {
-      await saveFallbackTopics();
       return;
     }
 
@@ -399,6 +399,5 @@ Respond with ONLY JSON, no markdown fences, no commentary, in this exact shape:
     }
   } catch (error) {
     console.error('Error analyzing weak topics:', error);
-    await saveFallbackTopics();
   }
 }
