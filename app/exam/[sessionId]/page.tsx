@@ -36,6 +36,15 @@ export default function ExamSessionPage() {
   const [error, setError] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
+  const loadWeakTopics = async (moduleId: string) => {
+    try {
+      const weakResult = await apiGet(`/api/exam/weak-topics?module_id=${moduleId}`);
+      setWeakTopics(weakResult.weak_topics || []);
+    } catch (weakError) {
+      console.error('Error loading weak topics:', weakError);
+    }
+  };
+
   useEffect(() => {
     loadSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -62,12 +71,7 @@ export default function ExamSessionPage() {
           total_questions: s.questions_count,
           answers: s.student_answers || [],
         });
-        try {
-          const weakResult = await apiGet(`/api/exam/weak-topics?module_id=${s.module_id}`);
-          setWeakTopics(weakResult.weak_topics || []);
-        } catch (weakError) {
-          console.error('Error loading weak topics:', weakError);
-        }
+        await loadWeakTopics(s.module_id);
       } else if (s.duration_minutes === 0) {
         setIsUntimed(true);
       } else {
@@ -101,6 +105,9 @@ export default function ExamSessionPage() {
 
       if (result.success) {
         setResults(result);
+        if (session?.module_id) {
+          await loadWeakTopics(session.module_id);
+        }
       } else {
         setError('Failed to submit your exam. Please try again.');
         submittedRef.current = false;

@@ -44,9 +44,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch weak topics' }, { status: 500 });
     }
 
+    const conceptWeakTopics = (weakTopics || []).filter(
+      (weakTopic) => !/^review\s*:/i.test(weakTopic.topic || '')
+    );
+
     return NextResponse.json({
       success: true,
-      weak_topics: weakTopics || []
+      weak_topics: conceptWeakTopics
     });
 
   } catch (error: any) {

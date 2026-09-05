@@ -275,6 +275,22 @@ function calculateReadinessScore(averageScore: number, totalQuestions: number, c
   return Math.round(Math.min(100, Math.max(0, readinessScore)));
 }
 
+function normalizeWeakTopic(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+
+  const topic = value.replace(/\s+/g, ' ').trim();
+  if (
+    topic.length < 3 ||
+    topic.length > 100 ||
+    /^review\s*:/i.test(topic) ||
+    /\?$/.test(topic)
+  ) {
+    return null;
+  }
+
+  return topic;
+}
+
 async function analyzeWeakTopics(
   supabaseAdmin: any,
   userId: string,
@@ -289,37 +305,9 @@ async function analyzeWeakTopics(
     .map((a) => ({ ...a, question: questionById.get(a.question_id)?.question }));
 
   if (incorrectAnswers.length === 0) return;
-  const saveFallbackTopics = async () => {
-    for (const incorrect of incorrectAnswers) {
-      const topic = `Review: ${(incorrect.question || 'This question').trim().slice(0, 100)}`;
-      const { data: existing } = await supabaseAdmin
-        .from('weak_topics')
-        .select('id, mistake_count, confidence')
-        .eq('user_id', userId)
-        .eq('module_id', moduleId)
-        .eq('topic', topic)
-        .maybeSingle();
-      if (existing) {
-        await supabaseAdmin.from('weak_topics').update({
-          mistake_count: existing.mistake_count + 1,
-          last_practiced_at: new Date().toISOString(),
-        }).eq('id', existing.id);
-      } else {
-        await supabaseAdmin.from('weak_topics').insert({
-          user_id: userId,
-          module_id: moduleId,
-          topic,
-          mistake_count: 1,
-          confidence: 0.5,
-          last_practiced_at: new Date().toISOString(),
-        });
-      }
-    }
-  };
-
-  await saveFallbackTopics();
 
   if (!GEMINI_API_KEY) {
+    console.error('Weak-topic analysis skipped: GEMINI_API_KEY is not configured');
     return;
   }
 
@@ -334,9 +322,15 @@ ${JSON.stringify(lectureContent, null, 2)}
 Respond with ONLY JSON, no markdown fences, no commentary, in this exact shape:
 {
   "weak_topics": [
-    { "topic": "Topic name", "confidence": 0.0-1.0 }
+    { "topic": "Concise academic concept name", "confidence": 0.0-1.0, "mistake_count": 1 }
   ]
-}`;
+}
+
+Rules:
+- Return concepts, not question text, instructions, or labels such as "Review: ...".
+- Combine related incorrect answers under one normalized concept.
+- Set mistake_count to the number of incorrect answers that demonstrate that concept.
+- Include only concepts supported by the incorrect answers and lecture content.`;
 
   try {
     const aiResponse = await fetch(
@@ -369,31 +363,39 @@ Respond with ONLY JSON, no markdown fences, no commentary, in this exact shape:
       return;
     }
 
-    for (const weakTopic of analysisResult.weak_topics || []) {
+    for (const weakTopic of analysisResult.weak_topics) {
+      const topic = normalizeWeakTopic(weakTopic?.topic);
+      if (!topic) continue;
+
+      const confidence = typeof weakTopic.confidence === 'number'
+        ? Math.max(0, Math.min(1, weakTopic.confidence))
+        : 0.5;
+      const mistakeCount = typeof weakTopic.mistake_count === 'number'
+        ? Math.max(1, Math.min(incorrectAnswers.length, Math.round(weakTopic.mistake_count)))
+        : 1;
       const { data: existingTopic } = await supabaseAdmin
         .from('weak_topics')
         .select('*')
         .eq('user_id', userId)
         .eq('module_id', moduleId)
-        .eq('topic', weakTopic.topic)
+        .eq('topic', topic)
         .maybeSingle();
 
       if (existingTopic) {
         await supabaseAdmin
           .from('weak_topics')
           .update({
-            mistake_count: existingTopic.mistake_count + 1,
-            confidence: Math.min(1.0, (existingTopic.confidence + weakTopic.confidence) / 2),
-            last_practiced_at: new Date().toISOString(),
+            mistake_count: existingTopic.mistake_count + mistakeCount,
+            confidence: Math.min(1.0, (Number(existingTopic.confidence) + confidence) / 2),
           })
           .eq('id', existingTopic.id);
       } else {
         await supabaseAdmin.from('weak_topics').insert({
           user_id: userId,
           module_id: moduleId,
-          topic: weakTopic.topic,
-          mistake_count: 1,
-          confidence: weakTopic.confidence || 0.5,
+          topic,
+          mistake_count: mistakeCount,
+          confidence,
         });
       }
     }
