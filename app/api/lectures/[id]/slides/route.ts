@@ -10,6 +10,10 @@ export const maxDuration = 60;
 // retain a text layer even for visually-laid-out slides, so this works well
 // for the common case without needing OCR or multimodal AI calls.
 async function extractPdfText(buffer: Buffer): Promise<string> {
+  const runtimeGlobals = globalThis as any;
+  runtimeGlobals.DOMMatrix ||= class DOMMatrix {};
+  runtimeGlobals.ImageData ||= class ImageData {};
+  runtimeGlobals.Path2D ||= class Path2D {};
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const document = await getDocument({
     data: new Uint8Array(buffer),
