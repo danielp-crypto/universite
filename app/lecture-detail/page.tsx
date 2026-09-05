@@ -11,6 +11,7 @@ import UpgradeModal from '../components/UpgradeModal';
 import Alert from '../components/Alert';
 import jsPDF from 'jspdf';
 import { transcribeAudioChunked } from '@/lib/audio/chunkedTranscribe';
+import { supabase } from '@/lib/supabase/client';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
@@ -47,6 +48,32 @@ function LectureDetailPageContent() {
 
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
+  const [slidesUploading, setSlidesUploading] = useState(false);
+  const slidesInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleSlidesUpload = async (file: File) => {
+    if (!lectureId) return;
+    if (!['application/pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'].includes(file.type) && !/\.(pdf|pptx)$/i.test(file.name)) {
+      showAlert('Invalid file', 'Please choose a PDF or PowerPoint (.pptx) file.', 'error');
+      return;
+    }
+    setSlidesUploading(true);
+    try {
+      const session = await getSession();
+      if (!session) throw new Error('Please sign in again.');
+      const path = `${session.user.id}/slides/${lectureId}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { error: uploadError } = await supabase.storage.from('lecture-media').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const result = await apiPost(`/api/lectures/${lectureId}/slides`, { file_path: path, filename: file.name, mime_type: file.type });
+      if (!result.success) throw new Error(result.detail || result.error || 'Slide processing failed.');
+      setCurrentLecture((prev: any) => ({ ...prev, slides_filename: file.name, slides_text: result.slidesText }));
+      showAlert('Slides added', 'Your lecture slides are now available to the AI Tutor and Exam Mode.', 'success');
+    } catch (error: any) {
+      showAlert('Upload failed', error.message || 'Could not upload lecture slides.', 'error');
+    } finally {
+      setSlidesUploading(false);
+    }
+  };
 
   // Warn before the tab is closed/refreshed while transcribing/summarizing —
   // there's no queue yet, so navigating away mid-processing loses the work.
@@ -1296,14 +1323,33 @@ function LectureDetailPageContent() {
                   <div className="flex items-center gap-2">
                     {processingResults?.summaryText && (
                       <>
-                        <button
-                          onClick={handleRegenerateSummary}
+                          <button
+                            onClick={handleRegenerateSummary}
                           disabled={isProcessing}
                           className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Regenerate notes"
                         >
-                          🔄 Regenerate Notes
-                        </button>
+                            🔄 Regenerate Notes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => slidesInputRef.current?.click()}
+                            disabled={slidesUploading}
+                            className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-700 disabled:opacity-50"
+                          >
+                            {slidesUploading ? 'Adding Slides...' : 'Add lecture slides'}
+                          </button>
+                          <input
+                            ref={slidesInputRef}
+                            type="file"
+                            accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                            className="hidden"
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (file) handleSlidesUpload(file);
+                              event.target.value = '';
+                            }}
+                          />
                         
                         
                       </>
