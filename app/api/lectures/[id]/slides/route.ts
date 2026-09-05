@@ -87,7 +87,7 @@ export async function POST(
 
     if (downloadError || !fileBlob) {
       console.error('Error downloading slides file:', downloadError);
-      return NextResponse.json({ success: false, error: 'download_failed' }, { status: 500 });
+      return NextResponse.json({ success: false, error: 'download_failed', detail: downloadError?.message }, { status: 500 });
     }
 
     const buffer = Buffer.from(await fileBlob.arrayBuffer());
@@ -122,7 +122,7 @@ export async function POST(
 
     if (updateError) {
       console.error('Error saving slides text:', updateError);
-      return NextResponse.json({ success: false, error: 'save_failed' }, { status: 500 });
+      return NextResponse.json({ success: false, error: 'save_failed', detail: updateError.message, code: updateError.code }, { status: 500 });
     }
 
     return NextResponse.json({
