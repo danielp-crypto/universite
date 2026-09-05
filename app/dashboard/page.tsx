@@ -990,7 +990,7 @@ function HomePageContent() {
           {/* Profile Completion Widget */}
           {profileWidgetVisible && (
             <div id="profile-widget" className="mb-6">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-indigo-950 border border-blue-200 dark:border-indigo-800 rounded-xl p-6">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -1043,7 +1043,7 @@ function HomePageContent() {
                   
                   if (isLocal) {
                     return (
-                      <div key={lecture.id} className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                      <div key={lecture.id} className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <h3 className="text-base font-semibold text-slate-800 mb-1">{lecture.title}</h3>
@@ -1070,7 +1070,7 @@ function HomePageContent() {
                     return (
                       <div
                         key={lecture.id}
-                        className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                        className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start justify-between mb-2">
                           <Link
@@ -1183,7 +1183,7 @@ function HomePageContent() {
                 <div className="text-2xl font-bold text-purple-600 mb-1">{stats.aiChats}</div>
                 <div className="text-xs text-slate-600">Lecture Chats</div>
               </div>
-              <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl p-3 text-center">
+              <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border border-orange-200 dark:border-orange-800 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-orange-600 mb-1 flex items-center justify-center gap-1">
                   🔥 {streak}
                 </div>
@@ -1194,7 +1194,7 @@ function HomePageContent() {
 
           {/* Credits Display */}
           {!modules.some((module: any) => module.is_premium) && <div className="mb-6">
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800 mb-1">Free Tier Credits</h3>
