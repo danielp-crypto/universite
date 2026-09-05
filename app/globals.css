@@ -95,6 +95,22 @@ body {
   background-color: #450a0a !important;
 }
 
+.dark .bg-blue-50 {
+  background-color: #172554 !important;
+}
+
+.dark .bg-green-50 {
+  background-color: #052e16 !important;
+}
+
+.dark .bg-violet-50 {
+  background-color: #2e1065 !important;
+}
+
+.dark .bg-rose-50 {
+  background-color: #4c0519 !important;
+}
+
 .dark .text-slate-800,
 .dark .text-slate-900 {
   color: #f1f5f9 !important;
@@ -145,6 +161,14 @@ body {
 .dark .border-slate-100,
 .dark .border-slate-200 {
   border-color: #334155 !important;
+}
+
+.dark .border-indigo-100,
+.dark .border-indigo-200,
+.dark .border-violet-200,
+.dark .border-rose-100,
+.dark .border-rose-200 {
+  border-color: #475569 !important;
 }
 
 .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
