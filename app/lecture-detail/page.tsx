@@ -69,7 +69,7 @@ function LectureDetailPageContent() {
       setCurrentLecture((prev: any) => ({ ...prev, slides_filename: file.name, slides_text: result.slidesText }));
       showAlert('Slides added', 'Your lecture slides are now available to the AI Tutor and Exam Mode.', 'success');
     } catch (error: any) {
-      showAlert('Upload failed', error.message || 'Could not upload lecture slides.', 'error');
+      showAlert('Upload failed', error?.body?.detail || error?.body?.error || error.message || 'Could not upload lecture slides.', 'error');
     } finally {
       setSlidesUploading(false);
     }
