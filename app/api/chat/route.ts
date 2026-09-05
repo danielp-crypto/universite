@@ -24,6 +24,9 @@ function formatLectureBlock(lecture: any, { fullTranscript }: { fullTranscript: 
   }
 
   parts.push(`Summary:\n${lecture.summary || 'No summary available'}`);
+  if (lecture.slides_text) {
+    parts.push(`Lecture slides:\n${lecture.slides_text}`);
+  }
 
   // Only the primary (currently open) lecture gets its full transcript included —
   // additional lectures pulled in from a module contribute their summary and key

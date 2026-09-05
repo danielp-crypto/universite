@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Get lectures from the module
     const { data: lectures, error: lecturesError } = await supabaseAdmin
       .from('lectures')
-      .select('id, title, transcription, summary')
+      .select('id, title, transcription, summary, slides_text')
       .eq('module_id', examSession.module_id)
       .not('transcription', 'is', null);
 
@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       title: lecture.title,
       transcription: lecture.transcription,
       summary: lecture.summary
+      ,slides: lecture.slides_text
     }));
 
     // Generate questions using AI
