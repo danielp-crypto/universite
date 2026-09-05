@@ -10,7 +10,10 @@ export const maxDuration = 60;
 // retain a text layer even for visually-laid-out slides, so this works well
 // for the common case without needing OCR or multimodal AI calls.
 async function extractPdfText(buffer: Buffer): Promise<string> {
-  const { PDFParse } = await import('pdf-parse/node');
+  if (!(globalThis as any).DOMMatrix) {
+    (globalThis as any).DOMMatrix = class DOMMatrix {};
+  }
+  const { PDFParse } = await import('pdf-parse');
   const parser = new PDFParse({ data: buffer });
   const result = await parser.getText();
   return result.text.trim();
