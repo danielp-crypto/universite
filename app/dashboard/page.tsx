@@ -1197,14 +1197,14 @@ function HomePageContent() {
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-800 mb-1">Free Tier Credits</h3>
-                  <p className="text-xs text-slate-600">Credits Used (Global)</p>
+                  <h3 className="text-sm font-semibold text-slate-800 mb-1">Free Tier Usage</h3>
+                  <p className="text-xs text-slate-600">Lectures</p>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-indigo-600">
                     {globalCredits.used}/{globalCredits.allocated}
                   </div>
-                  <div className="text-xs text-slate-600">Credits</div>
+                  <div className="text-xs text-slate-600">Lectures</div>
                 </div>
               </div>
               <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
