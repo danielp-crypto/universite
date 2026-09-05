@@ -217,7 +217,7 @@ export default function ExamSessionPage() {
                 ))}
               </div>
               <Link
-                href={`/exam?module_id=${session?.module_id}&focus=${encodeURIComponent(weakTopics.slice(0, 8).map((topic: any) => topic.topic).join('|'))}&previous_score=${Math.round(overallScore)}`}
+                href={`/assistant?module_id=${session?.module_id}&weak_topics=${encodeURIComponent(weakTopics.slice(0, 8).map((topic: any) => topic.topic).join('|'))}`}
                 className="inline-block px-4 py-2.5 bg-amber-600 text-white rounded-xl font-semibold text-sm"
               >
                 Practice Weak Areas
@@ -277,7 +277,7 @@ export default function ExamSessionPage() {
 
           <Link
             href={weakTopics.length > 0
-              ? `/exam?module_id=${session?.module_id}&focus=${encodeURIComponent(weakTopics.slice(0, 8).map((topic: any) => topic.topic).join('|'))}&previous_score=${Math.round(overallScore)}`
+              ? `/assistant?module_id=${session?.module_id}&weak_topics=${encodeURIComponent(weakTopics.slice(0, 8).map((topic: any) => topic.topic).join('|'))}`
               : '/exam'}
             className="block w-full text-center py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all mt-6"
           >
