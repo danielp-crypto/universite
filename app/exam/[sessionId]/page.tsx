@@ -269,10 +269,12 @@ export default function ExamSessionPage() {
           </div>
 
           <Link
-            href="/exam"
+            href={weakTopics.length > 0
+              ? `/exam?module_id=${session?.module_id}&focus=${encodeURIComponent(weakTopics.slice(0, 8).map((topic: any) => topic.topic).join('|'))}&previous_score=${Math.round(overallScore)}`
+              : '/exam'}
             className="block w-full text-center py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all mt-6"
           >
-            Take Another Exam
+            {weakTopics.length > 0 ? 'Practice Weak Areas' : 'Take Another Exam'}
           </Link>
         </div>
       </div>
