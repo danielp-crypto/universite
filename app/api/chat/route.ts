@@ -54,6 +54,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { data: studentProfile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('major, year, learning_style')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error loading student profile for tutor:', profileError);
+    }
+
     const { message, currentLecture, additionalLectures, messages } = await request.json();
 
     if (!message) {
@@ -94,6 +104,18 @@ export async function POST(request: NextRequest) {
           .slice(0, MAX_ADDITIONAL_LECTURES)
       : [];
 
+    const personalization = studentProfile
+      ? `Student profile for personalization:
+- Major/field of study: ${studentProfile.major || 'not provided'}
+- Year of study: ${studentProfile.year || 'not provided'}
+- Learning style: ${studentProfile.learning_style || 'not provided'}
+
+Personalization guidance:
+- Adjust terminology and examples to the student's academic level and major when relevant.
+- Match explanations to the stated learning style where possible (for example, use structured steps for reading/writing learners, verbal explanations for auditory learners, and practical examples for kinesthetic learners).
+- Do not stereotype or assume ability from the profile; ask a brief clarifying question when the preferred approach is unclear.`
+      : 'No student profile information is available. Use clear, adaptable explanations and ask how the student prefers to learn when useful.';
+
     // Build context from lecture if available
     const tutorRules = `You are an AI TUTOR. Your only role is to help the student understand their own lecture material — you are not a general assistant and you are not a homework-completion service.
 
@@ -122,6 +144,8 @@ Follow these rules at all times:
 
       context = `${tutorRules}
 
+${personalization}
+
 ${lectureCountNote}
 
 ${lectureBlocks.map((block, i) => `--- Lecture ${i + 1} ---\n${block}`).join('\n\n')}
@@ -129,6 +153,8 @@ ${lectureBlocks.map((block, i) => `--- Lecture ${i + 1} ---\n${block}`).join('\n
 Answer the student's questions based on this lecture content, following the tutoring rules above.`;
     } else {
       context = `${tutorRules}
+
+${personalization}
 
 No lecture context is available right now. Ask the student to select a lecture from the dashboard first, and remind them you're here to help them understand material, not to do assignments for them.`;
     }
