@@ -32,6 +32,7 @@ export default function ExamSessionPage() {
   const [isUntimed, setIsUntimed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<any>(null);
+  const [weakTopics, setWeakTopics] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
@@ -61,6 +62,12 @@ export default function ExamSessionPage() {
           total_questions: s.questions_count,
           answers: s.student_answers || [],
         });
+        try {
+          const weakResult = await apiGet(`/api/exam/weak-topics?module_id=${s.module_id}`);
+          setWeakTopics(weakResult.weak_topics || []);
+        } catch (weakError) {
+          console.error('Error loading weak topics:', weakError);
+        }
       } else if (s.duration_minutes === 0) {
         setIsUntimed(true);
       } else {
@@ -191,6 +198,25 @@ export default function ExamSessionPage() {
               </div>
             </div>
           </div>
+
+          {weakTopics.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6">
+              <h2 className="text-base font-semibold text-amber-900 mb-2">Your weak topics</h2>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {weakTopics.slice(0, 8).map((topic: any) => (
+                  <span key={topic.id} className="px-3 py-1 bg-white border border-amber-200 rounded-full text-sm text-amber-800">
+                    {topic.topic}
+                  </span>
+                ))}
+              </div>
+              <Link
+                href={`/exam?module_id=${session?.module_id}&focus=${encodeURIComponent(weakTopics.slice(0, 8).map((topic: any) => topic.topic).join('|'))}&previous_score=${Math.round(overallScore)}`}
+                className="inline-block px-4 py-2.5 bg-amber-600 text-white rounded-xl font-semibold text-sm"
+              >
+                Practice Weak Areas
+              </Link>
+            </div>
+          )}
 
           <h2 className="text-sm font-semibold text-slate-700 mb-3">Question breakdown</h2>
           <div className="space-y-3">

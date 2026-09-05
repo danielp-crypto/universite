@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet, apiPost } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
@@ -17,6 +17,7 @@ const QUESTION_COUNTS = [5, 10, 20];
 
 export default function ExamModePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState<any[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function ExamModePage() {
       const modulesData = await apiGet('/api/modules').catch(() => []);
       setModules(Array.isArray(modulesData) ? modulesData : []);
       if (Array.isArray(modulesData) && modulesData.length > 0) {
-        setSelectedModuleId(modulesData[0].id);
+        setSelectedModuleId(searchParams.get('module_id') || modulesData[0].id);
       }
     } catch (err) {
       console.error('Error loading exam mode:', err);
@@ -76,6 +77,7 @@ export default function ExamModePage() {
       const questionsResult = await apiPost('/api/exam/questions/generate', {
         exam_session_id: examSessionId,
         count: selectedCount,
+        focus_topics: searchParams.get('focus')?.split('|').filter(Boolean),
       });
 
       if (!questionsResult.success) {

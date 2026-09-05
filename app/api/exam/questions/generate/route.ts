@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { exam_session_id, question_type, difficulty, count } = body;
+    const { exam_session_id, question_type, difficulty, count, focus_topics } = body;
 
     console.log('Question generation request:', { exam_session_id, question_type, difficulty, count });
 
@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
 
 Question type: ${question_type || 'mixed'}
 Difficulty: ${difficulty || 'mixed'}
+${Array.isArray(focus_topics) && focus_topics.length ? `\nTarget weak topics: ${focus_topics.join(', ')}\nPrioritize these topics while still using only the lecture content.` : ''}
 
 Available lecture content:
 ${JSON.stringify(lectureContent, null, 2)}
