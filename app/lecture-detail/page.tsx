@@ -1335,7 +1335,7 @@ function LectureDetailPageContent() {
                             type="button"
                             onClick={() => slidesInputRef.current?.click()}
                             disabled={slidesUploading}
-                            className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-700 disabled:opacity-50"
+                            className="hidden text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-700 disabled:opacity-50"
                           >
                             {slidesUploading ? 'Adding Slides...' : 'Add lecture slides'}
                           </button>
