@@ -10,15 +10,24 @@ export const maxDuration = 60;
 // retain a text layer even for visually-laid-out slides, so this works well
 // for the common case without needing OCR or multimodal AI calls.
 async function extractPdfText(buffer: Buffer): Promise<string> {
-  if (!(globalThis as any).DOMMatrix) {
-    (globalThis as any).DOMMatrix = class DOMMatrix {};
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const document = await getDocument({
+    data: new Uint8Array(buffer),
+    disableWorker: true,
+    useWorkerFetch: false,
+    isEvalSupported: false,
+  }).promise;
+  const pages: string[] = [];
+  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
+    const page = await document.getPage(pageNumber);
+    const content = await page.getTextContent();
+    const text = content.items
+      .map((item: any) => ('str' in item ? item.str : ''))
+      .join(' ')
+      .trim();
+    if (text) pages.push(`Page ${pageNumber}: ${text}`);
   }
-  const { PDFParse } = await import('pdf-parse');
-  const { getPath } = await import('pdf-parse/worker');
-  PDFParse.setWorker(getPath());
-  const parser = new PDFParse({ data: buffer });
-  const result = await parser.getText();
-  return result.text.trim();
+  return pages.join('\n\n').trim();
 }
 
 // A .pptx file is a ZIP archive of XML files, one per slide
