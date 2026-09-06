@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       console.error('Error loading student profile for tutor:', profileError);
     }
 
-    const { message, currentLecture, additionalLectures, weakTopics, messages } = await request.json();
+    const { message, currentLecture, additionalLectures, messages } = await request.json();
 
     if (!message) {
       return NextResponse.json(
@@ -106,13 +106,6 @@ export async function POST(request: NextRequest) {
           .filter((l: any) => l && l.id !== currentLecture?.id)
           .slice(0, MAX_ADDITIONAL_LECTURES)
       : [];
-    const practiceWeakTopics = Array.isArray(weakTopics)
-      ? weakTopics
-          .filter((topic: unknown): topic is string => typeof topic === 'string')
-          .map((topic) => topic.replace(/\s+/g, ' ').trim())
-          .filter((topic) => topic.length > 0 && topic.length <= 100)
-          .slice(0, 8)
-      : [];
 
     const personalization = studentProfile
       ? `Student profile for personalization:
@@ -139,9 +132,6 @@ Follow these rules at all times:
 - Be encouraging, clear, and educational.`;
 
     let context = '';
-    const weakTopicPracticeContext = practiceWeakTopics.length > 0
-      ? `\n\nWeak-area practice context:\nThe student recently missed questions related to: ${practiceWeakTopics.join(', ')}. Prioritize these concepts throughout this conversation. Teach one idea at a time, use a brief example based on the lecture material, then check understanding with a short practice question. Do not claim a topic was mastered without the student's answer demonstrating it.`
-      : '';
     if (currentLecture) {
       const lectureBlocks = [formatLectureBlock(currentLecture, { fullTranscript: true })];
 
@@ -163,13 +153,13 @@ ${lectureCountNote}
 
 ${lectureBlocks.map((block, i) => `--- Lecture ${i + 1} ---\n${block}`).join('\n\n')}
 
-Answer the student's questions based on this lecture content, following the tutoring rules above.${weakTopicPracticeContext}`;
+Answer the student's questions based on this lecture content, following the tutoring rules above.`;
     } else {
       context = `${tutorRules}
 
 ${personalization}
 
-No lecture context is available right now. Ask the student to select a lecture from the dashboard first, and remind them you're here to help them understand material, not to do assignments for them.${weakTopicPracticeContext}`;
+No lecture context is available right now. Ask the student to select a lecture from the dashboard first, and remind them you're here to help them understand material, not to do assignments for them.`;
     }
 
     // Build conversation history

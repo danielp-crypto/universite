@@ -17,17 +17,7 @@ function AssistantPageContent(): React.ReactNode {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialLectureId = searchParams.get('lecture');
-  const initialModuleId = searchParams.get('module_id');
   const initialQuery = searchParams.get('q');
-  const weakTopicParam = searchParams.get('weak_topics') || '';
-  const weakTopics = React.useMemo(
-    () => weakTopicParam
-      .split('|')
-      .map((topic) => topic.trim())
-      .filter((topic) => topic.length > 0 && topic.length <= 100)
-      .slice(0, 8),
-    [weakTopicParam]
-  );
 
   const [messages, setMessages] = useState<any[]>([]);
   const [currentLecture, setCurrentLecture] = useState<any>(null);
@@ -110,29 +100,16 @@ function AssistantPageContent(): React.ReactNode {
       } catch (error) {
         console.error('Error loading lecture:', error);
       }
-    } else if (initialModuleId) {
-      try {
-        const result = await apiGet(`/api/modules/${initialModuleId}/lectures`);
-        setContextModules([result]);
-
-        if (result.lectures?.length) {
-          setCurrentLecture(result.lectures[0]);
-        }
-      } catch (error) {
-        console.error('Error loading practice module context:', error);
-      }
     }
 
     if (initialQuery) {
       setInputValue(initialQuery);
-    } else if (weakTopics.length > 0) {
-      setInputValue(`Help me practise these weak topics: ${weakTopics.join(', ')}.`);
     }
   };
 
   useEffect(() => {
     loadInitialState();
-  }, [initialLectureId, initialModuleId, initialQuery, weakTopics]);
+  }, [initialLectureId, initialQuery]);
 
   useEffect(() => {
     scrollToBottom();
@@ -257,7 +234,6 @@ function AssistantPageContent(): React.ReactNode {
       message: query,
       currentLecture: currentLecture,
       additionalLectures: additionalLectures,
-      weakTopics,
       messages: currentHistory.map((m) => ({ sender: m.sender, content: m.content }))
     });
 
@@ -321,12 +297,6 @@ function AssistantPageContent(): React.ReactNode {
                     </button>
                   </span>
                 ))}
-
-                {weakTopics.length > 0 && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 rounded-full text-xs font-medium border border-amber-200">
-                    Practising: {weakTopics.join(', ')}
-                  </span>
-                )}
 
                 <button
                   onClick={openModulePicker}
@@ -408,9 +378,7 @@ function AssistantPageContent(): React.ReactNode {
               )}
               {currentLecture && (
                 <p className="text-sm md:text-base text-slate-600 max-w-md mb-2">
-                  {weakTopics.length > 0
-                    ? `We'll focus on ${weakTopics.join(', ')}. I can explain, quiz, and guide you through these areas.`
-                    : 'I can help you understand these concepts, work through tricky ideas, or quiz you — ask away.'}
+                  I can help you understand these concepts, work through tricky ideas, or quiz you — ask away.
                 </p>
               )}
               {!currentLecture && (
