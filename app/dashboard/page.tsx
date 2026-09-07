@@ -12,6 +12,21 @@ import Alert from '../components/Alert';
 import Notifications from '../components/Notifications';
 import { uploadWithProgress } from '@/lib/supabase/uploadWithProgress';
 
+// Maps a MediaRecorder mimeType to a sensible file extension. Browsers report
+// mimeType as e.g. "audio/webm;codecs=opus" — strip codec params before
+// matching. Safari/iOS reports "audio/mp4" here, not webm.
+function getExtensionForMimeType(mimeType: string): string {
+  const base = (mimeType || '').split(';')[0].trim().toLowerCase();
+  switch (base) {
+    case 'audio/webm': return 'webm';
+    case 'audio/mp4': return 'm4a';
+    case 'audio/ogg': return 'ogg';
+    case 'audio/wav': return 'wav';
+    case 'audio/mpeg': return 'mp3';
+    default: return 'webm';
+  }
+}
+
 function HomePageContent() {
   const router = useRouter();
   const [lectures, setLectures] = useState<any[]>([]);
@@ -60,6 +75,12 @@ function HomePageContent() {
 
   const mediaRecorderRef = useRef<any>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  // The browser decides its own actual recording codec/container — Safari/iOS
+  // uses audio/mp4, not webm. MediaRecorder.mimeType always reflects what it
+  // actually picked, so this is read from the recorder itself rather than
+  // assumed, and used consistently for the Blob, the Supabase Storage
+  // content-type, and the mime_type sent to the backend/Deepgram.
+  const audioMimeTypeRef = useRef<string>('audio/webm');
   const recordingStartTimeRef = useRef<number | null>(null);
   const recordingTimerIntervalRef = useRef<any>(null);
   const wakeLockRef = useRef<any>(null);
@@ -426,6 +447,7 @@ function HomePageContent() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setAudioStream(stream);
       mediaRecorderRef.current = new MediaRecorder(stream);
+      audioMimeTypeRef.current = mediaRecorderRef.current.mimeType || 'audio/webm';
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event: any) => {
@@ -435,7 +457,7 @@ function HomePageContent() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: audioMimeTypeRef.current });
         stream.getTracks().forEach(track => track.stop());
         setAudioStream(null);
         await saveRecording(audioBlob);
@@ -535,8 +557,10 @@ function HomePageContent() {
       // Storage, hand off to Deepgram, and return immediately — the student
       // doesn't need to stay in the lecture hall waiting for transcription
       // and summary generation to finish.
+      const recordingMimeType = audioMimeTypeRef.current || 'audio/webm';
+      const fileExtension = getExtensionForMimeType(recordingMimeType);
       const randomId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const storagePath = `${session.user.id}/${randomId}.webm`;
+      const storagePath = `${session.user.id}/${randomId}.${fileExtension}`;
 
       try {
         await uploadWithProgress(
@@ -544,7 +568,7 @@ function HomePageContent() {
           storagePath,
           blob,
           session.access_token,
-          'audio/webm',
+          recordingMimeType,
           (percent) => {
             setUploadProgress(percent);
             setProcessingText(`Uploading recording... ${percent}%`);
@@ -573,7 +597,7 @@ function HomePageContent() {
           title: `Lecture ${lectureNumber}`,
           duration: elapsed,
           module_id: selectedModule,
-          mime_type: 'audio/webm',
+          mime_type: recordingMimeType,
           file_path: storagePath,
           file_size: blob.size
         })
