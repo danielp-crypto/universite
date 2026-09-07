@@ -80,7 +80,7 @@ export default function Home() {
             <a href="#about" className="block text-slate-600 hover:text-indigo-600 transition-colors font-medium py-2" onClick={() => setMobileMenuOpen(false)}>About</a>
             <div className="pt-3 border-t border-slate-200 space-y-3">
               <Link href="/login" className="block text-slate-600 hover:text-indigo-600 font-medium transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-              <Link href="/signup" className="block px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all text-center" onClick={() => setMobileMenuOpen(false)}>Free Beta</Link>
+              <Link href="/signup" className="block px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all text-center" onClick={() => setMobileMenuOpen(false)}>Start for Free</Link>
             </div>
           </div>
         )}
@@ -299,7 +299,7 @@ export default function Home() {
                 </li>
               </ul>
               <Link href="/signup" className="w-full inline-flex justify-center items-center px-4 sm:px-6 py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg transition-all text-center font-semibold">
-                Beta
+                Free
               </Link>
             </div>
 
