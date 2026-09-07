@@ -2,3 +2,5 @@
 - [ ] Update Android Gradle Plugin to 9.3.1
 - [ ] Update Google Services plugin to 4.5.0
 - [ ] Sync Gradle
+- [ ] Implement redirection to `/login` in `app/page.tsx`
+- [ ] Build and verify
