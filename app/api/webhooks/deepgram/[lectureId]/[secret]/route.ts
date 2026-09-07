@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
+// Without this, Vercel Hobby kills the function at its 10s default before
+// this handler ever reaches the DB update that marks a lecture 'completed'.
+// This route does a Supabase read, an internal fetch to /api/generate-summary
+// (multi-stage Gemini map/reduce, including the documented 20s backoff on
+// 429s), then a title-generation call — routinely well past 10s for any real
+// lecture. generate-summary and transcribe already set this; this route was
+// missed, which is why recordings were silently timing out before ever
+// reaching the success/failure branches (and often before any log row too).
+export const maxDuration = 60;
+
 const DEEPGRAM_WEBHOOK_SECRET = process.env.DEEPGRAM_WEBHOOK_SECRET || '';
 const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
