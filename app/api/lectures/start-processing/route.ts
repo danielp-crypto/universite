@@ -107,8 +107,23 @@ export async function POST(request: NextRequest) {
     // which Deepgram rejected with "Invalid query string" when tried.
     const callbackUrl = `${NEXT_PUBLIC_SITE_URL}/api/webhooks/deepgram/${lecture.id}/${encodeURIComponent(DEEPGRAM_WEBHOOK_SECRET)}`;
 
+    // Explicitly request nova-2 — without this, Deepgram silently falls back
+    // to its older/weaker "base" model. That's forgiving enough to still get
+    // a transcript from clean, professionally-produced audio (a downloaded
+    // lecture video, a podcast-quality MP3), but on real browser-mic
+    // recordings — background noise, room echo, distance from the speaker —
+    // it can fail to detect any speech at all, returning an empty transcript
+    // at 0 confidence rather than erroring, which is exactly what was
+    // silently killing recorded (but not uploaded) lectures. utterances/
+    // smart_format/punctuate match the quality settings already used by the
+    // synchronous /api/transcribe path.
     const deepgramParams = new URLSearchParams({
       callback: callbackUrl,
+      model: 'nova-2',
+      language: 'en-US',
+      smart_format: 'true',
+      punctuate: 'true',
+      utterances: 'true',
     });
 
     try {
