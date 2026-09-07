@@ -95,17 +95,17 @@ export default function Home() {
                 Capture Every Lecture. Master Every  <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Module</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed">
-                Start free with 4 lectures, then upgrade for unlimited AI-powered study tools.
+                Start for free with 4 lectures, then upgrade for unlimited AI-powered study tools.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="#pricing" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105 text-center">
-                  Free Beta
+                  Start for Free
                 </Link>
                 <a href="#how-it-works" className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold text-lg hover:border-indigo-300 transition-all text-center">
                   Learn More
                 </a>
               </div>
-              <p className="mt-6 text-sm text-slate-500">Free Beta : notes + exam questions + memo + Quiz + AI chat for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
+              <p className="mt-6 text-sm text-slate-500">Free : notes + exam questions + memo + Quiz + AI chat for 4 lectures • Premium: R149/month: unlimited lectures and AI study tools.</p>
             </div>
 
             <div className="animate-fade-in animate-float order-first md:order-last">
@@ -262,9 +262,9 @@ export default function Home() {
             {/* Free trial */}
             <div className="relative bg-slate-50 rounded-3xl border border-slate-200 p-6 sm:p-8 md:p-10">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-4">
-              Limited Beta Access
+              Limited Usage
               </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free Beta</h3>
+              <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">Free</h3>
               <p className="text-sm uppercase tracking-wide text-slate-500 mb-4">No bank card • Perfect for trying Universite</p>
               <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">R0<span className="text-sm sm:text-base font-medium text-slate-500 ml-1">/ for 4 lectures</span></p>
               <ul className="space-y-3 text-slate-700 mb-8 text-sm">
@@ -425,8 +425,8 @@ export default function Home() {
                 answer: "Universite is an AI-powered learning assistant for university students. It helps you record lectures, automatically generates transcripts, notes, exam questions, and provides 24/7 AI tutoring to help you understand difficult concepts."
               },
               {
-                question: "How does the free beta work?",
-                answer: "The free beta gives you 4 lecture credits to try the platform. You can record or upload up to 4 lectures (max 90 minutes each) and get AI-generated notes, exam questions, and basic AI chat. No credit card required."
+                question: "How does the free account work?",
+                answer: "The free account gives you 4 lecture credits to try the platform. You can record or upload up to 4 lectures (max 90 minutes each) and get AI-generated notes, exam questions, and basic AI chat. No credit card required."
               },
               {
                 question: "What's included in Premium?",
