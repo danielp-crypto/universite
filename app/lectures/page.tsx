@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { apiGet, apiPut } from '@/lib/api/client';
+import { apiGet, apiPost, apiPut } from '@/lib/api/client';
 import { getSession } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,7 @@ function LecturesPageContent() {
   const [allLectures, setAllLectures] = useState<any[]>([]);
   const [counts, setCounts] = useState({ all: 0, today: 0, week: 0, favorites: 0 });
   const [loading, setLoading] = useState(true);
+  const [retryingLectureId, setRetryingLectureId] = useState<string | null>(null);
 
   // Modules state
   const [modules, setModules] = useState<any[]>([]);
@@ -160,6 +161,29 @@ function LecturesPageContent() {
     } catch (error) {
       console.error('Error deleting lecture:', error);
       showAlert('Error', 'Error deleting lecture', 'error');
+    }
+  };
+
+  const retryLecture = async (id: string) => {
+    if (retryingLectureId) return; // one retry in flight at a time
+    setRetryingLectureId(id);
+    try {
+      await apiPost(`/api/lectures/${id}/retry`, {});
+      showAlert(
+        'Retrying',
+        "We're processing this lecture again — you'll get a notification when it's ready.",
+        'success'
+      );
+      loadLectures();
+    } catch (error: any) {
+      console.error('Error retrying lecture:', error);
+      const errorCode = error?.body?.error;
+      const message = errorCode === 'file_unavailable'
+        ? 'The original audio for this lecture is no longer available. Please upload it again.'
+        : 'Could not retry this lecture. Please try again.';
+      showAlert('Retry failed', message, 'error');
+    } finally {
+      setRetryingLectureId(null);
     }
   };
 
@@ -406,7 +430,15 @@ function LecturesPageContent() {
                       </div>
                     )}
                     <div className="flex gap-2">
-                      {lecture.status === 'processing' ? (
+                      {lecture.status === 'failed' ? (
+                        <button
+                          onClick={() => retryLecture(lecture.id)}
+                          disabled={retryingLectureId === lecture.id}
+                          className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+                        >
+                          {retryingLectureId === lecture.id ? 'Retrying…' : 'Retry Processing'}
+                        </button>
+                      ) : lecture.status === 'processing' ? (
                         <span
                           className="flex-1 px-3 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
                           title="Available once transcription and notes are ready"
@@ -418,7 +450,7 @@ function LecturesPageContent() {
                           Review
                         </Link>
                       )}
-                      {lecture.status === 'processing' ? (
+                      {lecture.status === 'failed' ? null : lecture.status === 'processing' ? (
                         <span
                           className="flex-1 px-3 py-2 bg-indigo-200 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
                           title="Available once transcription and notes are ready"

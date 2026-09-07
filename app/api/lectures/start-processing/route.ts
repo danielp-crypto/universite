@@ -160,12 +160,6 @@ export async function POST(request: NextRequest) {
 
 async function markLectureFailed(lectureId: string, reason: string) {
   try {
-    const { data: lecture } = await supabaseAdmin
-      .from('lectures')
-      .select('file_path')
-      .eq('id', lectureId)
-      .single();
-
     await supabaseAdmin
       .from('lectures')
       .update({
@@ -185,14 +179,9 @@ async function markLectureFailed(lectureId: string, reason: string) {
       error: reason,
     });
 
-    // Deepgram never picked this file up, so the webhook (which normally
-    // handles cleanup) will never fire — clean it up here instead.
-    if (lecture?.file_path) {
-      const { error } = await supabaseAdmin.storage.from('lecture-media').remove([lecture.file_path]);
-      if (error) {
-        console.error('Failed to clean up storage file after failed submission:', error);
-      }
-    }
+    // Deliberately NOT deleting the storage file here anymore — it needs to
+    // stay so a "Retry" from the UI has the original audio to resubmit. It
+    // now only gets cleaned up by the webhook once processing succeeds.
   } catch (err) {
     console.error('Failed to mark lecture as failed:', err);
   }

@@ -72,6 +72,7 @@ function HomePageContent() {
   const [processingText, setProcessingText] = useState('Saving audio...');
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [retryingLectureId, setRetryingLectureId] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<any>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -663,6 +664,48 @@ function HomePageContent() {
     }
   };
 
+  const retryLecture = async (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (retryingLectureId) return; // one retry in flight at a time
+    setRetryingLectureId(id);
+    try {
+      const session = await getSession();
+      if (!session) {
+        showAlert('Please log in', 'Please log in to retry this lecture.', 'warning');
+        return;
+      }
+
+      const response = await fetch(`/api/lectures/${id}/retry`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showAlert(
+          'Retrying',
+          "We're processing this lecture again — you'll get a notification when it's ready.",
+          'success'
+        );
+        loadData();
+      } else {
+        const message = result.error === 'file_unavailable'
+          ? 'The original audio for this lecture is no longer available. Please upload it again.'
+          : 'Could not retry this lecture. Please try again.';
+        showAlert('Retry failed', message, 'error');
+      }
+    } catch (error) {
+      console.error('Error retrying lecture:', error);
+      showAlert('Retry failed', 'Could not retry this lecture. Please try again.', 'error');
+    } finally {
+      setRetryingLectureId(null);
+    }
+  };
+
   const shareRecording = async (lecture: any) => {
     try {
       if (navigator.share) {
@@ -1148,7 +1191,15 @@ function HomePageContent() {
                           </div>
                         )}
                         <div className="flex gap-2">
-                          {lecture.status === 'processing' ? (
+                          {lecture.status === 'failed' ? (
+                            <button
+                              onClick={(e) => retryLecture(lecture.id, e)}
+                              disabled={retryingLectureId === lecture.id}
+                              className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+                            >
+                              {retryingLectureId === lecture.id ? 'Retrying…' : 'Retry Processing'}
+                            </button>
+                          ) : lecture.status === 'processing' ? (
                             <span
                               className="flex-1 px-3 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
                               title="Available once transcription and notes are ready"
@@ -1160,7 +1211,7 @@ function HomePageContent() {
                               Review
                             </Link>
                           )}
-                          {lecture.status === 'processing' ? (
+                          {lecture.status === 'failed' ? null : lecture.status === 'processing' ? (
                             <span
                               className="flex-1 px-3 py-2 bg-indigo-200 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
                               title="Available once transcription and notes are ready"

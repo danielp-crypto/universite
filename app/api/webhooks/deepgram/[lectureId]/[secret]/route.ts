@@ -92,7 +92,10 @@ export async function POST(
       await markLectureFailed(lectureId, reason);
       await logWebhookEvent({ lectureId, outcome: 'no_transcript', error: reason, rawPayload: payload });
       await notifyStudent(lectureId, 'failed');
-      await cleanupStorageFile(lectureId);
+      // Deliberately NOT calling cleanupStorageFile here — the file needs to
+      // stay in storage so a "Retry" from the UI has the original audio to
+      // resubmit to Deepgram. It only gets cleaned up on the success path
+      // below, once it's no longer needed for anything.
       return NextResponse.json({ success: true }); // ack regardless — nothing to retry
     }
 
