@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
-// Without this, Vercel Hobby kills the function at its 10s default before
-// this handler ever reaches the DB update that marks a lecture 'completed'.
-// This route does a Supabase read, an internal fetch to /api/generate-summary
-// (multi-stage Gemini map/reduce, including the documented 20s backoff on
-// 429s), then a title-generation call — routinely well past 10s for any real
-// lecture. generate-summary and transcribe already set this; this route was
-// missed, which is why recordings were silently timing out before ever
-// reaching the success/failure branches (and often before any log row too).
 export const maxDuration = 60;
 
 const DEEPGRAM_WEBHOOK_SECRET = process.env.DEEPGRAM_WEBHOOK_SECRET || '';
 const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-// Writes a row to deepgram_webhook_logs so this webhook's behavior can be
-// inspected directly in Supabase's Table Editor, without needing access to
-// Vercel's function logs. Never let a logging failure break the webhook itself.
 async function logWebhookEvent(entry: {
   lectureId: string | null;
   outcome: string;
@@ -43,9 +32,6 @@ export async function POST(
 ) {
   const { lectureId, secret } = await params;
 
-  // Deepgram doesn't sign callback requests itself, so this shared secret
-  // (embedded in the callback URL path we gave Deepgram) is what stops a
-  // random internet request from spoofing a lecture completion.
   if (!DEEPGRAM_WEBHOOK_SECRET || secret !== DEEPGRAM_WEBHOOK_SECRET) {
     await logWebhookEvent({ lectureId, outcome: 'unauthorized', error: 'Invalid or missing secret' });
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -61,57 +47,91 @@ export async function POST(
   try {
     payload = await request.json();
 
-    // Idempotency guard: Deepgram (like most webhook providers) treats
-    // delivery as "at least once" and may retry a callback that was slow to
-    // respond or errored transiently. Without this check, a retry would
-    // reprocess an already-completed lecture — regenerating the summary
-    // (wasted Gemini calls, and a contributor to the rate-limit issues seen
-    // earlier) and inserting a second credit charge for the same lecture.
-    const { data: existingLecture } = await supabaseAdmin
+    const { data: existingLecture, error: lectureLookupError } = await supabaseAdmin
       .from('lectures')
-      .select('status, title')
+      .select('id, status, title, transcription_status')
       .eq('id', lectureId)
       .single();
 
-    if (existingLecture?.status === 'completed') {
+    if (lectureLookupError || !existingLecture) {
+      await logWebhookEvent({ lectureId, outcome: 'lecture_not_found', error: lectureLookupError?.message });
+      return NextResponse.json({ error: 'lecture_not_found' }, { status: 404 });
+    }
+
+    // Deepgram callbacks are at-least-once. A completed lecture must never
+    // be summarized, credited, or cleaned up twice.
+    if (existingLecture.status === 'completed') {
       await logWebhookEvent({ lectureId, outcome: 'duplicate_callback_ignored' });
       return NextResponse.json({ success: true });
     }
 
-    // Deepgram sends a different shape when it couldn't process the file at
-    // all (e.g. couldn't fetch the URL, unsupported codec) — surface that
-    // specific reason rather than a generic "no transcript" if present.
     const deepgramError = payload?.err_msg || payload?.error || payload?.err_code;
-    const transcript = payload?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
+    const alternative = payload?.results?.channels?.[0]?.alternatives?.[0];
+    const transcript = String(alternative?.transcript || '').trim();
+    const confidence = typeof alternative?.confidence === 'number' ? alternative.confidence : null;
 
     if (!transcript) {
-      const reason = deepgramError
-        ? `Deepgram error: ${deepgramError}`
-        : 'Deepgram returned no transcript';
-
-      await markLectureFailed(lectureId, reason);
+      const reason = deepgramError ? `Deepgram error: ${deepgramError}` : 'Deepgram returned no transcript';
+      await markLectureFailed(lectureId, 'NO_TRANSCRIPT', reason);
       await logWebhookEvent({ lectureId, outcome: 'no_transcript', error: reason, rawPayload: payload });
       await notifyStudent(lectureId, 'failed');
-      // Deliberately NOT calling cleanupStorageFile here — the file needs to
-      // stay in storage so a "Retry" from the UI has the original audio to
-      // resubmit to Deepgram. It only gets cleaned up on the success path
-      // below, once it's no longer needed for anything.
-      return NextResponse.json({ success: true }); // ack regardless — nothing to retry
+      return NextResponse.json({ success: true });
     }
 
-    // Only generate an AI title for lectures still on the generic
-    // "Lecture N" placeholder from a live recording — uploaded files keep
-    // whatever title came from their filename, since that's often already
-    // meaningful and shouldn't be silently overridden.
-    const isGenericTitle = !!existingLecture?.title && /^Lecture \d+$/.test(existingLecture.title);
+    // Persist the transcript BEFORE any Gemini work. This is the key MVP
+    // guarantee: if summary generation times out or rate-limits, the student
+    // still gets a usable transcript instead of losing the entire lecture.
+    const { error: transcriptionUpsertError } = await supabaseAdmin
+      .from('transcriptions')
+      .upsert({
+        lecture_id: lectureId,
+        content: transcript,
+        word_count: transcript.split(/\s+/).filter(Boolean).length,
+        model_used: 'deepgram-nova-2',
+        language: 'en',
+        confidence_score: confidence,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'lecture_id' });
 
-    // Generate the summary the same way the old synchronous flow did —
-    // same endpoint, just called server-to-server now instead of from the
-    // browser, since this webhook has no direct relationship to the
-    // student's original request.
+    if (transcriptionUpsertError) {
+      await markLectureFailed(lectureId, 'TRANSCRIPT_PERSIST_FAILED', transcriptionUpsertError.message);
+      await logWebhookEvent({ lectureId, outcome: 'transcript_persist_failed', transcriptLength: transcript.length, error: transcriptionUpsertError.message });
+      return NextResponse.json({ error: 'transcript_persist_failed' }, { status: 500 });
+    }
+
+    // Claim the AI-processing stage atomically. If Deepgram retries while the
+    // first callback is already working, only one callback gets to continue.
+    const { data: claimedLecture, error: claimError } = await supabaseAdmin
+      .from('lectures')
+      .update({
+        transcription: transcript,
+        transcription_status: 'completed',
+        has_transcription: true,
+        transcription_completed_at: new Date().toISOString(),
+        processing_error_code: null,
+      })
+      .eq('id', lectureId)
+      .eq('status', 'processing')
+      .eq('transcription_status', 'processing')
+      .select('user_id, module_id, title')
+      .maybeSingle();
+
+    if (claimError) {
+      await logWebhookEvent({ lectureId, outcome: 'transcript_claim_failed', error: claimError.message });
+      return NextResponse.json({ error: 'claim_failed' }, { status: 500 });
+    }
+
+    if (!claimedLecture) {
+      await logWebhookEvent({ lectureId, outcome: 'duplicate_callback_ignored_after_transcript_save' });
+      return NextResponse.json({ success: true });
+    }
+
+    const isGenericTitle = /^Lecture \d+$/.test(claimedLecture.title || '');
+
     let summary = '';
     let summaryDegraded = false;
     let summaryError: string | null = null;
+
     try {
       const summaryResponse = await fetch(`${NEXT_PUBLIC_SITE_URL}/api/generate-summary`, {
         method: 'POST',
@@ -127,52 +147,41 @@ export async function POST(
         summaryError = `generate-summary responded ${summaryResponse.status}`;
       }
     } catch (err: any) {
-      summaryError = `generate-summary threw: ${err.message}`;
+      summaryError = `generate-summary threw: ${err?.message || 'unknown error'}`;
     }
 
-    // Title generation runs AFTER the summary call finishes, not in
-    // parallel with it — generate-summary already fires up to 6 concurrent
-    // Gemini calls of its own (map + reduce steps) against a per-minute
-    // free-tier quota; adding a 7th on top of that during the same window
-    // was contributing to rate-limit failures on longer lectures. This is
-    // background processing the student never watches, so a few extra
-    // seconds here costs nothing in practice.
     const generatedTitle = isGenericTitle ? await generateLectureTitle(transcript) : null;
 
     const updatePayload: Record<string, any> = {
-      transcription: transcript,
       summary: summary || null,
-      degraded: summaryDegraded,
+      degraded: summaryDegraded || !!summaryError,
       status: 'completed',
       transcription_status: 'completed',
       has_transcription: true,
       transcription_completed_at: new Date().toISOString(),
+      processing_error_code: summaryError ? 'SUMMARY_GENERATION_FAILED' : null,
     };
 
-    if (generatedTitle) {
-      updatePayload.title = generatedTitle;
-    }
+    if (generatedTitle) updatePayload.title = generatedTitle;
 
     const { data: updatedLecture, error: updateError } = await supabaseAdmin
       .from('lectures')
       .update(updatePayload)
       .eq('id', lectureId)
+      .eq('status', 'processing')
       .select('user_id, module_id')
-      .single();
+      .maybeSingle();
 
     if (updateError || !updatedLecture) {
       await logWebhookEvent({
         lectureId,
-        outcome: 'lecture_update_failed',
+        outcome: 'lecture_completion_update_failed',
         transcriptLength: transcript.length,
-        error: updateError?.message,
-        rawPayload: payload,
+        error: updateError?.message || 'Lecture was no longer in processing state',
       });
       return NextResponse.json({ error: 'update_failed' }, { status: 500 });
     }
 
-    // Credit usage is recorded here, on success, not at upload time — a
-    // lecture that fails processing shouldn't consume the student's credit.
     if (updatedLecture.module_id) {
       const { error: creditError } = await supabaseAdmin.from('credits').insert({
         user_id: updatedLecture.user_id,
@@ -180,8 +189,10 @@ export async function POST(
         lecture_id: lectureId,
         used_for: 'upload',
       });
-      if (creditError) {
+
+      if (creditError && creditError.code !== '23505') {
         console.error('Error recording credit usage:', creditError);
+        await logWebhookEvent({ lectureId, outcome: 'credit_record_failed', error: creditError.message });
       }
     }
 
@@ -190,28 +201,21 @@ export async function POST(
       outcome: summaryError ? 'completed_without_summary' : 'completed',
       transcriptLength: transcript.length,
       error: summaryError,
-      rawPayload: null, // no need to store the full payload on success — it's large and rarely needed
     });
 
     await notifyStudent(lectureId, 'completed');
     await cleanupStorageFile(lectureId);
 
     return NextResponse.json({ success: true });
-
   } catch (error: any) {
     console.error('Deepgram webhook error:', error);
-    await markLectureFailed(lectureId, error.message);
-    await logWebhookEvent({ lectureId, outcome: 'exception', error: error.message, rawPayload: payload });
+    await markLectureFailed(lectureId, 'WEBHOOK_EXCEPTION', error?.message || 'Webhook processing failed');
+    await logWebhookEvent({ lectureId, outcome: 'exception', error: error?.message || 'unknown error', rawPayload: payload });
     await notifyStudent(lectureId, 'failed');
     return NextResponse.json({ error: 'server_error' }, { status: 500 });
   }
 }
 
-// Generates a short descriptive title from the transcript, used only to
-// replace the generic "Lecture N" placeholder from a live recording. Uses
-// just the first ~4000 chars — lecturers almost always establish the topic
-// early, and this keeps the call small and fast rather than sending the
-// full (potentially very long) transcript for a 5-8 word output.
 async function generateLectureTitle(transcript: string): Promise<string | null> {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
   if (!GEMINI_API_KEY) return null;
@@ -220,17 +224,14 @@ async function generateLectureTitle(transcript: string): Promise<string | null> 
   const prompt = `Based on this excerpt from a university lecture transcript, write a short, descriptive title (5-8 words) capturing the main topic covered. Return ONLY the title text — no quotes, no markdown, no trailing punctuation, no preamble or explanation.\n\nTranscript excerpt:\n${excerpt}`;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 30, thinkingConfig: { thinkingBudget: 0 } },
-        }),
-      }
-    );
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 30, thinkingConfig: { thinkingBudget: 0 } },
+      }),
+    });
 
     if (!response.ok) {
       console.error('Title generation failed:', response.status, await response.text().catch(() => ''));
@@ -240,9 +241,6 @@ async function generateLectureTitle(transcript: string): Promise<string | null> 
     const result = await response.json();
     const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
     if (!text) return null;
-
-    // Strip any stray quotes/markdown the model might add despite instructions,
-    // and hard-cap length as a safety net.
     return text.replace(/^["'*]+|["'*]+$/g, '').slice(0, 100);
   } catch (err) {
     console.error('Title generation threw:', err);
@@ -250,17 +248,15 @@ async function generateLectureTitle(transcript: string): Promise<string | null> 
   }
 }
 
-async function markLectureFailed(lectureId: string, reason: string) {
+async function markLectureFailed(lectureId: string, errorCode: string, reason: string) {
   try {
-    await supabaseAdmin
-      .from('lectures')
-      .update({
-        status: 'failed',
-        transcription_status: 'failed',
-        transcription_error: reason,
-        transcription_failed_at: new Date().toISOString(),
-      })
-      .eq('id', lectureId);
+    await supabaseAdmin.from('lectures').update({
+      status: 'failed',
+      transcription_status: 'failed',
+      transcription_error: reason,
+      processing_error_code: errorCode,
+      transcription_failed_at: new Date().toISOString(),
+    }).eq('id', lectureId);
   } catch (err) {
     console.error('Failed to mark lecture as failed:', err);
   }
@@ -273,13 +269,12 @@ async function notifyStudent(lectureId: string, outcome: 'completed' | 'failed')
       .select('user_id, title')
       .eq('id', lectureId)
       .single();
-
     if (!lecture) return;
 
     const title = outcome === 'completed' ? 'Your lecture notes are ready 🎉' : 'Lecture processing failed';
     const message = outcome === 'completed'
       ? `"${lecture.title}" has been transcribed and summarized — open it to start studying.`
-      : `We couldn't process "${lecture.title}". This didn't use up a credit — please try uploading it again.`;
+      : `We couldn't process "${lecture.title}". This didn't use up a credit — please try again.`;
 
     await supabaseAdmin.from('notifications').insert({
       user_id: lecture.user_id,
@@ -293,23 +288,12 @@ async function notifyStudent(lectureId: string, outcome: 'completed' | 'failed')
   }
 }
 
-// The raw uploaded file is only needed for Deepgram to fetch it — once
-// processing finishes (successfully or not), it can be deleted to keep
-// Supabase Storage usage bounded rather than growing with every upload.
 async function cleanupStorageFile(lectureId: string) {
   try {
-    const { data: lecture } = await supabaseAdmin
-      .from('lectures')
-      .select('file_path')
-      .eq('id', lectureId)
-      .single();
-
+    const { data: lecture } = await supabaseAdmin.from('lectures').select('file_path').eq('id', lectureId).single();
     if (!lecture?.file_path) return;
-
     const { error } = await supabaseAdmin.storage.from('lecture-media').remove([lecture.file_path]);
-    if (error) {
-      console.error('Failed to clean up storage file:', error);
-    }
+    if (error) console.error('Failed to clean up storage file:', error);
   } catch (err) {
     console.error('Failed to clean up storage file:', err);
   }
