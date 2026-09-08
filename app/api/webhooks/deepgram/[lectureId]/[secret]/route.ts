@@ -23,7 +23,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     payload = await request.json();
     const { data: existingLecture, error: lectureLookupError } = await supabaseAdmin.from('lectures')
-      .select('id, status, title, transcription_status, mime_type').eq('id', lectureId).single();
+      .select('id, status, title, transcription_status, mime_type, user_id, module_id').eq('id', lectureId).single();
     if (lectureLookupError || !existingLecture) {
       await logWebhookEvent({ lectureId, outcome: 'lecture_not_found', error: lectureLookupError?.message });
       return NextResponse.json({ error: 'lecture_not_found' }, { status: 404 });
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const alternative = payload?.results?.channels?.[0]?.alternatives?.[0];
     const transcript = String(alternative?.transcript || '').trim();
     const confidence = typeof alternative?.confidence === 'number' ? alternative.confidence : null;
-    if (!transcript) {
+    if (!transcript && existingLecture.transcription_status !== 'completed') {
       const reason = deepgramError ? `Deepgram error: ${deepgramError}` : 'Deepgram returned no transcript';
       await markLectureFailed(lectureId, 'NO_TRANSCRIPT', reason);
       await logWebhookEvent({ lectureId, outcome: 'no_transcript', error: reason, rawPayload: payload });
@@ -45,38 +45,59 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ success: true });
     }
 
-    const modelUsed = String(existingLecture.mime_type || '').startsWith('video/') ? 'deepgram-nova-2-video' : 'deepgram-nova-2';
-    const { error: transcriptionUpsertError } = await supabaseAdmin.from('transcriptions').upsert({
-      lecture_id: lectureId,
-      content: transcript,
-      word_count: transcript.split(/\s+/).filter(Boolean).length,
-      model_used: modelUsed,
-      language: 'en',
-      confidence_score: confidence,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'lecture_id' });
-    if (transcriptionUpsertError) {
-      await markLectureFailed(lectureId, 'TRANSCRIPT_PERSIST_FAILED', transcriptionUpsertError.message);
-      await logWebhookEvent({ lectureId, outcome: 'transcript_persist_failed', transcriptLength: transcript.length, error: transcriptionUpsertError.message });
-      return NextResponse.json({ error: 'transcript_persist_failed' }, { status: 500 });
+    let claimedLecture = {
+      user_id: existingLecture.user_id,
+      module_id: existingLecture.module_id,
+      title: existingLecture.title,
+    };
+
+    // If a previous callback already persisted the transcript but timed out
+    // during AI work, resume from that checkpoint instead of leaving the
+    // lecture permanently stuck in processing.
+    if (existingLecture.transcription_status !== 'completed') {
+      const modelUsed = String(existingLecture.mime_type || '').startsWith('video/') ? 'deepgram-nova-2-video' : 'deepgram-nova-2';
+      const { error: transcriptionUpsertError } = await supabaseAdmin.from('transcriptions').upsert({
+        lecture_id: lectureId,
+        content: transcript,
+        word_count: transcript.split(/\s+/).filter(Boolean).length,
+        model_used: modelUsed,
+        language: 'en',
+        confidence_score: confidence,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'lecture_id' });
+      if (transcriptionUpsertError) {
+        await markLectureFailed(lectureId, 'TRANSCRIPT_PERSIST_FAILED', transcriptionUpsertError.message);
+        await logWebhookEvent({ lectureId, outcome: 'transcript_persist_failed', transcriptLength: transcript.length, error: transcriptionUpsertError.message });
+        return NextResponse.json({ error: 'transcript_persist_failed' }, { status: 500 });
+      }
+
+      const { data: claimed, error: claimError } = await supabaseAdmin.from('lectures').update({
+        transcription,
+        transcription_status: 'completed',
+        has_transcription: true,
+        transcription_completed_at: new Date().toISOString(),
+        processing_error_code: null,
+      }).eq('id', lectureId).eq('status', 'processing').eq('transcription_status', 'processing')
+        .select('user_id, module_id, title').maybeSingle();
+      if (claimError) {
+        await logWebhookEvent({ lectureId, outcome: 'transcript_claim_failed', error: claimError.message });
+        return NextResponse.json({ error: 'claim_failed' }, { status: 500 });
+      }
+      if (!claimed) {
+        // Another callback may have won the transcript race. The transcript is
+        // durable, so safely resume/finish the AI stage with the lecture owner.
+        await logWebhookEvent({ lectureId, outcome: 'transcript_already_claimed' });
+      } else {
+        claimedLecture = claimed;
+      }
     }
 
-    const { data: claimedLecture, error: claimError } = await supabaseAdmin.from('lectures').update({
-      transcription: transcript,
-      transcription_status: 'completed',
-      has_transcription: true,
-      transcription_completed_at: new Date().toISOString(),
-      processing_error_code: null,
-    }).eq('id', lectureId).eq('status', 'processing').eq('transcription_status', 'processing')
-      .select('user_id, module_id, title').maybeSingle();
-    if (claimError) {
-      await logWebhookEvent({ lectureId, outcome: 'transcript_claim_failed', error: claimError.message });
-      return NextResponse.json({ error: 'claim_failed' }, { status: 500 });
-    }
-    if (!claimedLecture) {
-      await logWebhookEvent({ lectureId, outcome: 'duplicate_callback_ignored_after_transcript_save' });
-      return NextResponse.json({ success: true });
-    }
+    // The transcript is now durable. Everything below is best-effort AI
+    // enrichment; a Gemini failure must never turn a usable transcript into
+    // a failed lecture.
+    const { data: persistedTranscript } = await supabaseAdmin.from('transcriptions').select('content').eq('lecture_id', lectureId).maybeSingle();
+    const transcriptForAI = persistedTranscript?.content || transcript;
+    if (!transcriptForAI) return NextResponse.json({ success: true });
 
     const isGenericTitle = /^Lecture \d+$/.test(claimedLecture.title || '');
     let summary = '';
@@ -84,7 +105,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     let summaryError: string | null = null;
     try {
       const summaryResponse = await fetch(`${NEXT_PUBLIC_SITE_URL}/api/generate-summary`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript: transcriptForAI }),
       });
       if (summaryResponse.ok) {
         const summaryData = await summaryResponse.json();
@@ -93,7 +114,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       } else summaryError = `generate-summary responded ${summaryResponse.status}`;
     } catch (err: any) { summaryError = `generate-summary threw: ${err?.message || 'unknown error'}`; }
 
-    const generatedTitle = isGenericTitle ? await generateLectureTitle(transcript) : null;
+    const generatedTitle = isGenericTitle ? await generateLectureTitle(transcriptForAI) : null;
     const updatePayload: Record<string, any> = {
       summary: summary || null,
       degraded: summaryDegraded || !!summaryError,
@@ -108,7 +129,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { data: updatedLecture, error: updateError } = await supabaseAdmin.from('lectures').update(updatePayload)
       .eq('id', lectureId).eq('status', 'processing').select('user_id, module_id').maybeSingle();
     if (updateError || !updatedLecture) {
-      await logWebhookEvent({ lectureId, outcome: 'lecture_completion_update_failed', transcriptLength: transcript.length, error: updateError?.message || 'Lecture was no longer in processing state' });
+      await logWebhookEvent({ lectureId, outcome: 'lecture_completion_update_failed', transcriptLength: transcriptForAI.length, error: updateError?.message || 'Lecture was no longer in processing state' });
       return NextResponse.json({ error: 'update_failed' }, { status: 500 });
     }
 
@@ -120,7 +141,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    await logWebhookEvent({ lectureId, outcome: summaryError ? 'completed_without_summary' : 'completed', transcriptLength: transcript.length, error: summaryError });
+    await logWebhookEvent({ lectureId, outcome: summaryError ? 'completed_without_summary' : 'completed', transcriptLength: transcriptForAI.length, error: summaryError });
     await notifyStudent(lectureId, 'completed', !!summaryError);
     await cleanupStorageFile(lectureId);
     return NextResponse.json({ success: true });
@@ -151,9 +172,8 @@ async function generateLectureTitle(transcript: string): Promise<string | null> 
 }
 
 async function markLectureFailed(lectureId: string, errorCode: string, reason: string) {
-  try {
-    await supabaseAdmin.from('lectures').update({ status: 'failed', transcription_status: 'failed', transcription_error: reason, processing_error_code: errorCode, transcription_failed_at: new Date().toISOString() }).eq('id', lectureId);
-  } catch (err) { console.error('Failed to mark lecture as failed:', err); }
+  try { await supabaseAdmin.from('lectures').update({ status: 'failed', transcription_status: 'failed', transcription_error: reason, processing_error_code: errorCode, transcription_failed_at: new Date().toISOString() }).eq('id', lectureId); }
+  catch (err) { console.error('Failed to mark lecture as failed:', err); }
 }
 
 async function notifyStudent(lectureId: string, outcome: 'completed' | 'failed', degraded = false) {
