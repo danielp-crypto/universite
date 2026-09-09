@@ -1159,7 +1159,7 @@ function LectureDetailPageContent() {
         const bulletText = trimmedLine.replace(/^[\s]*[•\-\*]\s+/, '').trim();
         elements.push(
           <li key={`bullet-${index}`} className="flex items-start gap-2 text-sm text-slate-700 leading-relaxed mb-1.5">
-            <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+            <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-slate-400"></span>
             <span>{formatNoteText(bulletText, `bullet-${index}`)}</span>
           </li>
         );
@@ -1169,7 +1169,7 @@ function LectureDetailPageContent() {
         const numberedText = trimmedLine.replace(/^[\s]*\d+\.\s+/, '').trim();
         elements.push(
           <li key={`numbered-${index}`} className="flex items-start gap-2 text-sm text-slate-700 leading-relaxed mb-1.5">
-            <span className="mt-0.5 flex-shrink-0 text-indigo-600 font-semibold text-xs">
+            <span className="mt-0.5 flex-shrink-0 text-slate-600 font-semibold text-xs">
               {trimmedLine.match(/^[\s]*(\d+)\./)?.[1]}.
             </span>
             <span>{formatNoteText(numberedText, `numbered-${index}`)}</span>
@@ -1452,39 +1452,39 @@ function LectureDetailPageContent() {
 
                       const styleMap: Record<string, { border: string; bg: string; badge: string; chip: string }> = {
                         indigo: {
-                          border: 'border-indigo-100',
-                          bg: 'from-indigo-50/80 to-white',
-                          badge: 'bg-indigo-100',
-                          chip: 'bg-white border-indigo-200 text-indigo-700'
+                          border: 'border-slate-200',
+                          bg: 'from-slate-50/80 to-white',
+                          badge: 'bg-slate-100',
+                          chip: 'bg-white border-slate-200 text-slate-700'
                         },
                         blue: {
-                          border: 'border-blue-100',
-                          bg: 'from-blue-50/80 to-white',
-                          badge: 'bg-blue-100',
+                          border: 'border-slate-200',
+                          bg: 'from-slate-50/80 to-white',
+                          badge: 'bg-slate-100',
                           chip: ''
                         },
                         amber: {
-                          border: 'border-amber-100',
-                          bg: 'from-amber-50/80 to-white',
-                          badge: 'bg-amber-100',
+                          border: 'border-slate-200',
+                          bg: 'from-slate-50/80 to-white',
+                          badge: 'bg-slate-100',
                           chip: ''
                         },
                         emerald: {
-                          border: 'border-emerald-100',
-                          bg: 'from-emerald-50/80 to-white',
-                          badge: 'bg-emerald-100',
+                          border: 'border-slate-200',
+                          bg: 'from-slate-50/80 to-white',
+                          badge: 'bg-slate-100',
                           chip: ''
                         },
                         violet: {
-                          border: 'border-violet-100',
-                          bg: 'from-violet-50/80 to-white',
-                          badge: 'bg-violet-100',
+                          border: 'border-slate-200',
+                          bg: 'from-slate-50/80 to-white',
+                          badge: 'bg-slate-100',
                           chip: ''
                         },
                         rose: {
-                          border: 'border-rose-100',
-                          bg: 'from-rose-50/80 to-white',
-                          badge: 'bg-rose-100',
+                          border: 'border-slate-200',
+                          bg: 'from-slate-50/80 to-white',
+                          badge: 'bg-slate-100',
                           chip: ''
                         }
                       };
@@ -1533,11 +1533,11 @@ function LectureDetailPageContent() {
                                           aria-expanded={isExpanded}
                                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold shadow-sm transition-colors active:scale-95 ${
                                             isExpanded
-                                              ? 'bg-indigo-600 border-indigo-600 text-white'
+                                              ? 'bg-slate-800 border-slate-800 text-white'
                                               : colors.chip
                                           }`}
                                         >
-                                          <span className={`text-[10px] ${isExpanded ? 'text-indigo-200' : 'text-indigo-400'}`}>●</span>
+                                          <span className={`text-[10px] ${isExpanded ? 'text-slate-300' : 'text-slate-400'}`}>●</span>
                                           {c.term}
                                         </button>
                                       );
@@ -1550,7 +1550,7 @@ function LectureDetailPageContent() {
                                         expandedConcepts.has(i) && c.definition ? (
                                           <div
                                             key={i}
-                                            className="text-xs text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-indigo-100 dark:border-slate-600 rounded-lg px-3 py-2 leading-relaxed"
+                                            className="text-xs text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 leading-relaxed"
                                           >
                                             <span className="font-semibold text-slate-800">{c.term}: </span>
                                             {c.definition}
@@ -1585,19 +1585,19 @@ function LectureDetailPageContent() {
 
                                   return (
                                     <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
-                                      <span className="mt-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-violet-500 text-white text-[10px] font-bold flex-shrink-0">
+                                      <span className="mt-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-slate-700 text-white text-[10px] font-bold flex-shrink-0">
                                         {i + 1}
                                       </span>
                                       <span className="flex-1">
                                         {level && (
-                                          <span className="mr-1.5 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-violet-100 text-violet-700">
+                                          <span className="mr-1.5 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-600">
                                             {level}
                                           </span>
                                         )}
                                         {formatNoteText(question, `ty-${i}`)}
                                         {answer && (
-                                          <div className="mt-2 pl-3 border-l-2 border-violet-300">
-                                            <span className="block text-[10px] font-semibold uppercase tracking-wide text-violet-500 mb-0.5">
+                                          <div className="mt-2 pl-3 border-l-2 border-slate-300">
+                                            <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-0.5">
                                               Answer
                                             </span>
                                             <span className="font-bold text-black">
@@ -1643,7 +1643,7 @@ function LectureDetailPageContent() {
                                       </h5>
                                       <ul className="space-y-2">
                                         {formulas.map((formula: string, i: number) => (
-                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-700 border border-rose-100 dark:border-slate-600 rounded-lg px-3 py-2">
+                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2">
                                             <span className="mt-0.5 flex-shrink-0">📐</span>
                                             <span className="font-mono text-xs text-slate-800">{formatNoteText(formula, `formula-${i}`)}</span>
                                           </li>
@@ -1659,7 +1659,7 @@ function LectureDetailPageContent() {
                                       </h5>
                                       <ul className="space-y-2">
                                         {definitions.map((definition: string, i: number) => (
-                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-700 border border-rose-100 dark:border-slate-600 rounded-lg px-3 py-2">
+                                          <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2">
                                             <span className="mt-0.5 flex-shrink-0">📖</span>
                                             <span>{formatNoteText(definition, `def-${i}`)}</span>
                                           </li>
@@ -1678,7 +1678,7 @@ function LectureDetailPageContent() {
                               <ul className="space-y-2.5">
                                 {items.map((item: string, i: number) => (
                                   <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
-                                    <span className="mt-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex-shrink-0">
+                                    <span className="mt-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-slate-700 text-white text-[10px] font-bold flex-shrink-0">
                                       ✓
                                     </span>
                                     <span>{formatNoteText(item, `sm-${i}`)}</span>
