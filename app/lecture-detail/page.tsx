@@ -1450,40 +1450,34 @@ function LectureDetailPageContent() {
                         );
                       }
 
-                      const styleMap: Record<string, { border: string; bg: string; badge: string; chip: string }> = {
+                      const styleMap: Record<string, { border: string; badge: string; chip: string }> = {
                         indigo: {
                           border: 'border-slate-200',
-                          bg: 'from-slate-50/80 to-white',
                           badge: 'bg-slate-100',
                           chip: 'bg-white border-slate-200 text-slate-700'
                         },
                         blue: {
                           border: 'border-slate-200',
-                          bg: 'from-slate-50/80 to-white',
                           badge: 'bg-slate-100',
                           chip: ''
                         },
                         amber: {
                           border: 'border-slate-200',
-                          bg: 'from-slate-50/80 to-white',
                           badge: 'bg-slate-100',
                           chip: ''
                         },
                         emerald: {
                           border: 'border-slate-200',
-                          bg: 'from-slate-50/80 to-white',
                           badge: 'bg-slate-100',
                           chip: ''
                         },
                         violet: {
                           border: 'border-slate-200',
-                          bg: 'from-slate-50/80 to-white',
                           badge: 'bg-slate-100',
                           chip: ''
                         },
                         rose: {
                           border: 'border-slate-200',
-                          bg: 'from-slate-50/80 to-white',
                           badge: 'bg-slate-100',
                           chip: ''
                         }
@@ -1496,7 +1490,7 @@ function LectureDetailPageContent() {
                         return (
                           <div
                             key={idx}
-                            className={`rounded-xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4`}
+                            className={`rounded-xl border ${colors.border} bg-white p-4`}
                           >
                             <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
                               <span className={`flex items-center justify-center w-6 h-6 rounded-full ${colors.badge} text-sm`}>
