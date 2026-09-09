@@ -1,6 +1,7 @@
-- [ ] Update Gradle wrapper to 9.7.0
-- [ ] Update Android Gradle Plugin to 9.3.1
-- [ ] Update Google Services plugin to 4.5.0
-- [ ] Sync Gradle
-- [ ] Implement redirection to `/login` in `app/page.tsx`
-- [ ] Build and verify
+- [x] Revert AGP and Gradle to original working versions (8.13.0 / 8.14.3)
+- [x] Implement redirection to `/login` in `app/page.tsx`
+- [x] Configure `next.config.ts` for static export
+- [x] Update `capacitor.config.ts` `webDir` to `out`
+- [/] Run `npm run build`
+- [ ] Run `npx cap sync android`
+- [ ] Run `./gradlew assembleDebug`
