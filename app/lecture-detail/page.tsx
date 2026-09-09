@@ -1109,7 +1109,7 @@ function LectureDetailPageContent() {
       const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
       return parts.map((part: string, i: number) =>
         part.startsWith('**') && part.endsWith('**') ? (
-          <strong key={`${keyPrefix}-${i}`} className="font-bold text-indigo-900 bg-indigo-50 px-1.5 py-0.5 rounded">
+          <strong key={`${keyPrefix}-${i}`} className="font-bold text-black">
             {part.slice(2, -2)}
           </strong>
         ) : (
@@ -1122,7 +1122,7 @@ function LectureDetailPageContent() {
     if (labelMatch) {
       return (
         <>
-          <strong className="font-bold text-indigo-900 bg-indigo-50 px-1.5 py-0.5 rounded">{labelMatch[1]}:</strong>{' '}
+          <strong className="font-bold text-black">{labelMatch[1]}:</strong>{' '}
           {labelMatch[2]}
         </>
       );
@@ -1600,7 +1600,7 @@ function LectureDetailPageContent() {
                                             <span className="block text-[10px] font-semibold uppercase tracking-wide text-violet-500 mb-0.5">
                                               Answer
                                             </span>
-                                            <span className="font-bold text-violet-900">
+                                            <span className="font-bold text-black">
                                               {formatNoteText(answer, `tya-${i}`)}
                                             </span>
                                           </div>
