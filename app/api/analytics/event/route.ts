@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 // Self-tests are tracked via the existing quiz_results table (one row per
 // completed quiz, written by /api/quiz-results) rather than here — this
 // table only needs to cover ai_chat now.
