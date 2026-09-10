@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 import JSZip from 'jszip';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 

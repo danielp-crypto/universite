@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 // Deepgram + retries can take a while on a slow connection; make sure
 // Vercel doesn't cut the function off before it's done.
 export const maxDuration = 60;

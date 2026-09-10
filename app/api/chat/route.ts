@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 // Cap how many extra lectures can be folded in as context alongside the

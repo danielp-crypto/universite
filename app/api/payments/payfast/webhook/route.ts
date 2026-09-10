@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 // PAYFAST_SANDBOX only controls behavior/URLs elsewhere — your merchant ID,
 // key, and passphrase are always your own real credentials from env vars.
 // There is no shared "generic" sandbox account to fall back to.

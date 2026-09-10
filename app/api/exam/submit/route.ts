@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 export const maxDuration = 60;
 

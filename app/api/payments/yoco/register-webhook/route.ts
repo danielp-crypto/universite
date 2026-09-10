@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { registerYocoWebhook } from '@/lib/yoco/api';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
 
 export async function POST(request: NextRequest) {

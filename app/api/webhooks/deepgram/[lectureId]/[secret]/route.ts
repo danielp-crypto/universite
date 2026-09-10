@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 export const maxDuration = 60;
 const DEEPGRAM_WEBHOOK_SECRET = process.env.DEEPGRAM_WEBHOOK_SECRET || '';
 const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
@@ -72,7 +75,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
 
       const { data: claimed, error: claimError } = await supabaseAdmin.from('lectures').update({
-        transcription,
+        transcription: transcript,
         transcription_status: 'completed',
         has_transcription: true,
         transcription_completed_at: new Date().toISOString(),

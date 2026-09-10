@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyYocoWebhookSignature } from '@/lib/yoco/api';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 const YOCO_WEBHOOK_SECRET = process.env.YOCO_WEBHOOK_SECRET;
 
 export async function POST(request: NextRequest) {

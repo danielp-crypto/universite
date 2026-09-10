@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 export const maxDuration = 60;
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || '';
 const NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';

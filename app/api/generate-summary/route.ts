@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 // Map-reduce over many chunks (long lectures) plus the Gemini reduce call
 // can take a while. Vercel Hobby hard-caps function duration at 60s (a
 // higher value fails to deploy at all, not just gets silently clamped),

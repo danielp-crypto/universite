@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 // Pulls just the bolded term out of each "**Term**: Definition" line under
 // "## Key Concepts". We deliberately do NOT split on '*' or '-' here — the
 // definition text often contains hyphens, and splitting on '*' shreds the

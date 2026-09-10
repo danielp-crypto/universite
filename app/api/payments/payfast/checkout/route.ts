@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 // PayFast checkout signature generation
 // For on-site checkout, parameters must be sorted alphabetically
 function generateCheckoutSignature(data: Record<string, string>): string {

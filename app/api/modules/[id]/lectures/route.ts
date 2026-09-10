@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 // Pulls just the bolded term out of each "**Term**: Definition" line under
 // "## Key Concepts". Mirrors the parser in app/api/lectures/route.ts and
 // app/api/lectures/[id]/route.ts — kept in sync deliberately, see the
