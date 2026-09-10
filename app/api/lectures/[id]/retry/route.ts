@@ -71,7 +71,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ success: false, error: 'deepgram_submission_failed' }, { status: 502 });
     }
 
-    
+     
 
     return NextResponse.json({ success: true, attempt: nextAttempt });
   } catch (error: any) {
