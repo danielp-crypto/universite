@@ -104,7 +104,10 @@ export async function POST(request: NextRequest) {
 
     const callbackUrl = `${NEXT_PUBLIC_SITE_URL}/api/webhooks/deepgram/${lecture.id}/${encodeURIComponent(DEEPGRAM_WEBHOOK_SECRET)}`;
     const model = normalizedMimeType.startsWith('video/') ? 'nova-2-video' : 'nova-2';
-    const deepgramParams = new URLSearchParams({ callback: callbackUrl, callback_method: 'POST', model, language: 'en-US', smart_format: 'true', punctuate: 'true', utterances: 'true' });
+    // callback_method deliberately omitted — POST is already Deepgram's
+    // default, and this redundant param was the actual cause of the 400s
+    // (Deepgram's own docs only ever show it lowercase, e.g. callback_method=put).
+    const deepgramParams = new URLSearchParams({ callback: callbackUrl, model, language: 'en-US', smart_format: 'true', punctuate: 'true', utterances: 'true' });
 
     try {
       const deepgramResponse = await fetch(`https://api.deepgram.com/v1/listen?${deepgramParams.toString()}`, {
@@ -114,7 +117,9 @@ export async function POST(request: NextRequest) {
       if (!deepgramResponse.ok) {
         const errorText = await deepgramResponse.text().catch(() => '');
         console.error('Deepgram submission failed:', deepgramResponse.status, errorText);
-        await markLectureFailed(lecture.id, 'DEEPGRAM_SUBMISSION_FAILED', `Deepgram submission failed (${deepgramResponse.status})`);
+        // Store the actual response body, not just the status code — this is
+        // what let us diagnose the callback_method issue in the first place.
+        await markLectureFailed(lecture.id, 'DEEPGRAM_SUBMISSION_FAILED', `Deepgram submission failed (${deepgramResponse.status}): ${errorText || '(no response body)'}`);
         return NextResponse.json({ success: false, error: 'deepgram_submission_failed' }, { status: 502 });
       }
       const deepgramAccepted = await deepgramResponse.json().catch(() => null);
