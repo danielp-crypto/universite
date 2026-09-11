@@ -10,6 +10,7 @@ import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
 import Alert from '../components/Alert';
 import Notifications from '../components/Notifications';
+import DesktopSidebar from '../components/DesktopSidebar';
 import { uploadWithProgress } from '@/lib/supabase/uploadWithProgress';
 
 // Maps a MediaRecorder mimeType to a sensible file extension. Browsers report
@@ -972,21 +973,40 @@ function HomePageContent() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
-      <div id="app" className="flex-1 flex flex-col pb-20">
-        {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
-          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                  <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+    <div className="bg-slate-50 min-h-screen font-sans flex">
+      {/* Desktop Sidebar */}
+      <DesktopSidebar />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        <div id="app" className="flex-1 flex flex-col pb-20 lg:pb-0">
+          {/* Header - Mobile Only */}
+          <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+            <div className="mx-auto w-full max-w-[430px] md:max-w-[680px]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+                  </div>
+                  <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    Universite
+                  </h1>
                 </div>
-                <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  Universite
-                </h1>
+                <div className="flex items-center gap-3">
+                  {!modules.some((module: any) => module.is_premium) && <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                    Upgrade
+                  </Link>}
+                  <Notifications />
+                </div>
               </div>
-              <div className="flex items-center gap-3">
+            </div>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="hidden lg:block bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-10">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+              <div className="flex items-center gap-4">
                 {!modules.some((module: any) => module.is_premium) && <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
                   Upgrade
                 </Link>}
@@ -994,329 +1014,328 @@ function HomePageContent() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-6">
-          {/* Module Selector */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Select a Module first before recording/uploading a lecture (Required)</label>
-            <div className="flex gap-2">
-              <select
-                value={selectedModule || ''}
-                onChange={(e) => setSelectedModule(e.target.value || null)}
-                className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Select a module...</option>
-                {modules.map((module) => (
-                  <option key={module.id} value={module.id}>{module.name}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => setShowCreateModuleModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all active:scale-95"
-              >
-                + New
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="mb-6">
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={startRecording}
-                className="block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-md active:scale-95 transition-transform"
-              >
-                <div className="flex flex-col items-center text-center text-white">
-                  <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                  </svg>
-                  <span className="font-semibold text-sm">Record Lecture</span>
-                </div>
-              </button>
-              <div
-                onClick={handleFileUpload}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                className={`block p-4 bg-white border-2 rounded-2xl active:scale-95 transition-transform cursor-pointer ${
-                  isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200'
-                }`}
-              >
-                <div className="flex flex-col items-center text-center text-slate-700">
-                  <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                  <span className="font-semibold text-sm">{isDragging ? 'Drop file here' : 'Upload Audio or Video'}</span>
-                </div>
+          {/* Main Content */}
+          <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-5xl lg:px-8 px-4 py-6">
+            {/* Module Selector */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-2">Select a Module first before recording/uploading a lecture (Required)</label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedModule || ''}
+                  onChange={(e) => setSelectedModule(e.target.value || null)}
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Select a module...</option>
+                  {modules.map((module) => (
+                    <option key={module.id} value={module.id}>{module.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowCreateModuleModal(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all active:scale-95"
+                >
+                  + New
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* Profile Completion Widget */}
-          {profileWidgetVisible && (
-            <div id="profile-widget" className="mb-6">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-indigo-950 border border-blue-200 dark:border-indigo-800 rounded-xl p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
+            {/* Quick Actions */}
+            <div className="mb-6">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={startRecording}
+                  className="block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-md active:scale-95 transition-transform"
+                >
+                  <div className="flex flex-col items-center text-center text-white">
+                    <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                    <span className="font-semibold text-sm">Record Lecture</span>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-2">Complete Your Profile</h3>
-                    <p className="text-slate-600 mb-4 text-sm">Tell us about yourself to get personalized AI assistance and study recommendations</p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Better AI</span>
-                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Study Tips</span>
-                      <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Course Help</span>
-                    </div>
-                    <button
-                      onClick={() => setProfileModalVisible(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      Add Details (2 min)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setProfileWidgetVisible(false);
-                        localStorage.setItem('profile_widget_dismissed', Date.now().toString());
-                      }}
-                      className="ml-3 text-slate-500 hover:text-slate-700 transition-colors text-sm"
-                    >
-                      Maybe Later
-                    </button>
+                </button>
+                <div
+                  onClick={handleFileUpload}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`block p-4 bg-white border-2 rounded-2xl active:scale-95 transition-transform cursor-pointer ${
+                    isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200'
+                  }`}
+                >
+                  <div className="flex flex-col items-center text-center text-slate-700">
+                    <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span className="font-semibold text-sm">{isDragging ? 'Drop file here' : 'Upload Audio or Video'}</span>
                   </div>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Recent Lectures */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-slate-800">Recent Lectures</h2>
-              <Link href="/lectures" className="text-sm text-indigo-600 font-medium">View All</Link>
-            </div>
-            
-            {lectures.length > 0 ? (
-              <div className="space-y-3">
-                {lectures.slice(0, 3).map((lecture) => {
-                  const dateStr = formatDate(new Date(lecture.created_at || lecture.createdAt));
-                  const isLocal = lecture.isLocal || !!lecture.local_audio;
-                  
-                  if (isLocal) {
-                    return (
-                      <div key={lecture.id} className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h3 className="text-base font-semibold text-slate-800 mb-1">{lecture.title}</h3>
-                            <div className="flex items-center gap-2 text-xs text-slate-500">
-                              <span>{dateStr}</span>
-                              <span>•</span>
-                              <span>{lecture.duration || 'N/A'}</span>
-                              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>
+            {/* Profile Completion Widget */}
+            {profileWidgetVisible && (
+              <div id="profile-widget" className="mb-6">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-indigo-950 border border-blue-200 dark:border-indigo-800 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-slate-800 mb-2">Complete Your Profile</h3>
+                      <p className="text-slate-600 mb-4 text-sm">Tell us about yourself to get personalized AI assistance and study recommendations</p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Better AI</span>
+                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Study Tips</span>
+                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Course Help</span>
+                      </div>
+                      <button
+                        onClick={() => setProfileModalVisible(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Add Details (2 min)
+                      </button>
+                      <button
+                        onClick={() => {
+                          setProfileWidgetVisible(false);
+                          localStorage.setItem('profile_widget_dismissed', Date.now().toString());
+                        }}
+                        className="ml-3 text-slate-500 hover:text-slate-700 transition-colors text-sm"
+                      >
+                        Maybe Later
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recent Lectures */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold text-slate-800">Recent Lectures</h2>
+                <Link href="/lectures" className="text-sm text-indigo-600 font-medium">View All</Link>
+              </div>
+
+              {lectures.length > 0 ? (
+                <div className="space-y-3">
+                  {lectures.slice(0, 3).map((lecture) => {
+                    const dateStr = formatDate(new Date(lecture.created_at || lecture.createdAt));
+                    const isLocal = lecture.isLocal || !!lecture.local_audio;
+
+                    if (isLocal) {
+                      return (
+                        <div key={lecture.id} className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="text-base font-semibold text-slate-800 mb-1">{lecture.title}</h3>
+                              <div className="flex items-center gap-2 text-xs text-slate-500">
+                                <span>{dateStr}</span>
+                                <span>•</span>
+                                <span>{lecture.duration || 'N/A'}</span>
+                                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <AudioPlayer src={lecture.audioUrl} className="mb-3" />
-                        <div className="flex gap-2">
-                          <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
-                            Review
-                          </Link>
-                          <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
-                            Ask Lecture
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div
-                        key={lecture.id}
-                        className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <Link
-                            href={`/lecture-detail?id=${lecture.id}`}
-                            className="flex-1 min-w-0"
-                          >
-                            <h3 className="text-base font-semibold text-slate-800 hover:text-indigo-600 transition-colors truncate">{lecture.title}</h3>
-                          </Link>
-                          {lecture.status === 'processing' && (
-                            <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
-                              <span className="inline-block w-2 h-2 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></span>
-                              Processing
-                            </span>
-                          )}
-                          {lecture.status === 'failed' && (
-                            <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 rounded-full text-xs font-medium">
-                              Failed
-                            </span>
-                          )}
-                          <button
-                            onClick={(e) => deleteSupabaseLecture(lecture.id, e)}
-                            className="ml-2 p-1 text-slate-400 hover:text-red-600 transition-colors flex-shrink-0"
-                            title="Delete"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
-                          <span>{dateStr}</span>
-                          <span>•</span>
-                          <span>{lecture.duration || 'N/A'}</span>
-                          {lecture.module && (
-                            <>
-                              <span>•</span>
-                              <div className="flex items-center gap-1">
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                                </svg>
-                                <span className="text-indigo-600 font-medium">{lecture.module.name}</span>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-3">
-                            {lecture.keyConcepts.slice(0, 5).map((concept: string, idx: number) => (
-                              <span key={idx} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{concept}</span>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          {lecture.status === 'failed' ? (
-                            <button
-                              onClick={(e) => retryLecture(lecture.id, e)}
-                              disabled={retryingLectureId === lecture.id}
-                              className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
-                            >
-                              {retryingLectureId === lecture.id ? 'Retrying…' : 'Retry Processing'}
-                            </button>
-                          ) : lecture.status === 'processing' ? (
-                            <span
-                              className="flex-1 px-3 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
-                              title="Available once transcription and notes are ready"
-                            >
-                              Review
-                            </span>
-                          ) : (
+                          <AudioPlayer src={lecture.audioUrl} className="mb-3" />
+                          <div className="flex gap-2">
                             <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
                               Review
                             </Link>
-                          )}
-                          {lecture.status === 'failed' ? null : lecture.status === 'processing' ? (
-                            <span
-                              className="flex-1 px-3 py-2 bg-indigo-200 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
-                              title="Available once transcription and notes are ready"
-                            >
-                              Ask Lecture
-                            </span>
-                          ) : (
                             <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
                               Ask Lecture
                             </Link>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  }
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-white border border-slate-200 rounded-2xl">
-                <p className="text-slate-500 mb-4 text-sm">No lectures yet</p>
-                <button
-                  onClick={startRecording}
-                  className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium"
-                >
-                  Record or Upload Your First Lecture
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Study Stats */}
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-3">This Week</h2>
-            <div className="grid grid-cols-4 gap-3">
-              <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.lectures}</div>
-                <div className="text-xs text-slate-600">Lectures</div>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-violet-600 mb-1">{stats.selfTests}</div>
-                <div className="text-xs text-slate-600">Self-Tests</div>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-purple-600 mb-1">{stats.aiChats}</div>
-                <div className="text-xs text-slate-600">Lecture Chats</div>
-              </div>
-              <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border border-orange-200 dark:border-orange-800 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-orange-600 mb-1 flex items-center justify-center gap-1">
-                  🔥 {streak}
+                      );
+                    } else {
+                      return (
+                        <div
+                          key={lecture.id}
+                          className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <Link
+                              href={`/lecture-detail?id=${lecture.id}`}
+                              className="flex-1 min-w-0"
+                            >
+                              <h3 className="text-base font-semibold text-slate-800 hover:text-indigo-600 transition-colors truncate">{lecture.title}</h3>
+                            </Link>
+                            {lecture.status === 'processing' && (
+                              <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
+                                <span className="inline-block w-2 h-2 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></span>
+                                Processing
+                              </span>
+                            )}
+                            {lecture.status === 'failed' && (
+                              <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 rounded-full text-xs font-medium">
+                                Failed
+                              </span>
+                            )}
+                            <button
+                              onClick={(e) => deleteSupabaseLecture(lecture.id, e)}
+                              className="ml-2 p-1 text-slate-400 hover:text-red-600 transition-colors flex-shrink-0"
+                              title="Delete"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                            <span>{dateStr}</span>
+                            <span>•</span>
+                            <span>{lecture.duration || 'N/A'}</span>
+                            {lecture.module && (
+                              <>
+                                <span>•</span>
+                                <div className="flex items-center gap-1">
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                  </svg>
+                                  <span className="text-indigo-600 font-medium">{lecture.module.name}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-3">
+                              {lecture.keyConcepts.slice(0, 5).map((concept: string, idx: number) => (
+                                <span key={idx} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{concept}</span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            {lecture.status === 'failed' ? (
+                              <button
+                                onClick={(e) => retryLecture(lecture.id, e)}
+                                disabled={retryingLectureId === lecture.id}
+                                className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+                              >
+                                {retryingLectureId === lecture.id ? 'Retrying…' : 'Retry Processing'}
+                              </button>
+                            ) : lecture.status === 'processing' ? (
+                              <span
+                                className="flex-1 px-3 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
+                                title="Available once transcription and notes are ready"
+                              >
+                                Review
+                              </span>
+                            ) : (
+                              <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
+                                Review
+                              </Link>
+                            )}
+                            {lecture.status === 'failed' ? null : lecture.status === 'processing' ? (
+                              <span
+                                className="flex-1 px-3 py-2 bg-indigo-200 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
+                                title="Available once transcription and notes are ready"
+                              >
+                                Ask Lecture
+                              </span>
+                            ) : (
+                              <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
+                                Ask Lecture
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
                 </div>
-                <div className="text-xs text-slate-600">Day Streak</div>
-              </div>
+              ) : (
+                <div className="text-center py-8 bg-white border border-slate-200 rounded-2xl">
+                  <p className="text-slate-500 mb-4 text-sm">No lectures yet</p>
+                  <button
+                    onClick={startRecording}
+                    className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium"
+                  >
+                    Record or Upload Your First Lecture
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Credits Display */}
-          {!modules.some((module: any) => module.is_premium) && <div className="mb-6">
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-800 mb-1">Free Tier Usage</h3>
-                  <p className="text-xs text-slate-600">Lectures</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-indigo-600">
-                    {globalCredits.used}/{globalCredits.allocated}
-                  </div>
+            {/* Study Stats */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-slate-800 mb-3">This Week</h2>
+              <div className="grid grid-cols-4 gap-3">
+                <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
+                  <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.lectures}</div>
                   <div className="text-xs text-slate-600">Lectures</div>
                 </div>
-              </div>
-              <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
-                  style={{ width: `${(globalCredits.used / globalCredits.allocated) * 100}%` }}
-                ></div>
+                <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
+                  <div className="text-2xl font-bold text-violet-600 mb-1">{stats.selfTests}</div>
+                  <div className="text-xs text-slate-600">Self-Tests</div>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
+                  <div className="text-2xl font-bold text-purple-600 mb-1">{stats.aiChats}</div>
+                  <div className="text-xs text-slate-600">Lecture Chats</div>
+                </div>
+                <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border border-orange-200 dark:border-orange-800 rounded-xl p-3 text-center">
+                  <div className="text-2xl font-bold text-orange-600 mb-1 flex items-center justify-center gap-1">
+                    🔥 {streak}
+                  </div>
+                  <div className="text-xs text-slate-600">Day Streak</div>
+                </div>
               </div>
             </div>
-          </div>}
 
-          {/* Study Tools Quick Links */}
-          <div>
-            <h2 className="text-lg font-semibold text-slate-800 mb-3">Study Tools</h2>
-            <div className="space-y-2">
-              <Link href="/exam" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                    </svg>
-                  </div>
+            {/* Credits Display */}
+            {!modules.some((module: any) => module.is_premium) && <div className="mb-6">
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium text-slate-800 text-sm">Exam Mode</div>
-                    <div className="text-xs text-slate-500">Practice & test yourself</div>
+                    <h3 className="text-sm font-semibold text-slate-800 mb-1">Free Tier Usage</h3>
+                    <p className="text-xs text-slate-600">Lectures</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-indigo-600">
+                      {globalCredits.used}/{globalCredits.allocated}
+                    </div>
+                    <div className="text-xs text-slate-600">Lectures</div>
                   </div>
                 </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                <div className="mt-3 bg-white rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                    style={{ width: `${(globalCredits.used / globalCredits.allocated) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>}
+
+            {/* Study Tools Quick Links */}
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800 mb-3">Study Tools</h2>
+              <div className="space-y-2">
+                <Link href="/exam" className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl active:scale-[0.99] transition-transform w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-800 text-sm">Exam Mode</div>
+                      <div className="text-xs text-slate-500">Practice & test yourself</div>
+                    </div>
+                  </div>
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
+        {/* Bottom Navigation - Mobile Only */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <div className="flex items-center justify-around py-2">
               <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-indigo-600">

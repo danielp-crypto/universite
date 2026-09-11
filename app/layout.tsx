@@ -8,16 +8,12 @@ export const metadata: Metadata = {
   description: "AI-powered lecture recording and study assistant",
   icons: {
     icon: "/assets/images/icon-removebg-preview.png-128x128.png",
-    shortcut: "/assets/images/icon-removebg-preview.png-128x128.png",
-    apple: "/assets/images/icon-removebg-preview.png-128x128.png",
   },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({

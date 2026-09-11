@@ -216,3 +216,44 @@ body {
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
+
+/* Desktop-specific styles */
+@media (min-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
+
+  /* Desktop scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Desktop hover effects */
+  .hover\:shadow-lg {
+    transition: box-shadow 0.2s ease-in-out;
+  }
+
+  .hover\:shadow-lg:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* Desktop sidebar transition */
+aside {
+  transition: transform 0.3s ease-in-out;
+}
