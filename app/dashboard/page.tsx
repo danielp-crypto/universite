@@ -1675,6 +1675,7 @@ function HomePageContent() {
         actionUrl={alertActionUrl}
       />
     </div>
+    </div>
   );
 }
 
