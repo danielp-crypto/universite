@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Alert from '../components/Alert';
 import { useTheme } from '../components/ThemeProvider';
+import DesktopSidebar from '../../components/DesktopSidebar';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -274,19 +275,34 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen flex flex-col pb-20">
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 md:py-4 sticky top-0 z-50">
-        <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-            <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
-          </div>
-          <h1 className="text-lg md:text-xl font-semibold text-slate-800 dark:text-slate-100">Settings</h1>
-        </div>
-      </div>
+    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen flex">
+      {/* Desktop Sidebar */}
+      <DesktopSidebar />
 
-      {/* Main Content */}
-      <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        {/* Header - Mobile Only */}
+        <div className="lg:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 md:py-4 sticky top-0 z-50">
+          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+            </div>
+            <h1 className="text-lg md:text-xl font-semibold text-slate-800 dark:text-slate-100">Settings</h1>
+          </div>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden lg:block bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-8 py-4 sticky top-0 z-50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <img alt="Universite logo" className="w-6 h-6 object-contain" src="/assets/images/icon-white-removebg.png" />
+            </div>
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Settings</h1>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
         {/* Profile Section */}
         <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
           <div className="flex items-center gap-4 mb-4">
@@ -460,7 +476,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Alert Modal */}
       {showNotifications && (
         <div className="fixed inset-0 z-50">
           <div className="modal-overlay flex items-end sm:items-center justify-center min-h-screen p-4 bg-black/50 backdrop-blur-sm">
@@ -896,8 +912,8 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 safe-area-inset-bottom z-10">
+      {/* Bottom Navigation - Mobile Only */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 safe-area-inset-bottom z-10">
         <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
           <div className="flex items-center justify-around py-2">
             <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">

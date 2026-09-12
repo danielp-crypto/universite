@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import AudioPlayer from '../components/AudioPlayer';
 import Alert from '../components/Alert';
+import DesktopSidebar from '../../components/DesktopSidebar';
 
 function LecturesPageContent() {
   const router = useRouter();
@@ -260,10 +261,15 @@ function LecturesPageContent() {
   const filtered = getFilteredLectures();
 
   return (
-    <div className="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
-      <div id="app" className="flex-1 flex flex-col pb-20">
-        {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+    <div className="bg-slate-50 min-h-screen font-sans flex">
+      {/* Desktop Sidebar */}
+      <DesktopSidebar />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        <div id="app" className="flex-1 flex flex-col pb-20 lg:pb-0">
+          {/* Header - Mobile Only */}
+          <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -277,9 +283,16 @@ function LecturesPageContent() {
               </svg>
             </Link>
           </div>
-        </div>
+          </div>
 
-        {/* Filter Tabs */}
+          {/* Desktop Header */}
+          <div className="hidden lg:block bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-10">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-semibold text-slate-900">My Lectures</h1>
+            </div>
+          </div>
+
+          {/* Filter Tabs */}
         <div className="bg-white border-b border-slate-200 px-4 sticky top-[57px] md:top-[61px] z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <div className="flex gap-4 overflow-x-auto pb-2 pt-2 scrollbar-none">
@@ -477,8 +490,8 @@ function LecturesPageContent() {
           )}
         </div>
 
-        {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
+          {/* Bottom Navigation - Mobile Only */}
+          <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <div className="flex items-center justify-around py-2">
               <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
@@ -503,8 +516,10 @@ function LecturesPageContent() {
             </div>
           </div>
         </nav>
+        </div>
+      </div>
 
-        <Alert
+      <Alert
           isOpen={alertOpen}
           onClose={() => setAlertOpen(false)}
           title={alertTitle}

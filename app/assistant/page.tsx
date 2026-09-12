@@ -12,6 +12,7 @@ import Alert from '../components/Alert';
 import Notifications from '../components/Notifications';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import DesktopSidebar from '../../components/DesktopSidebar';
 
 function AssistantPageContent(): React.ReactNode {
   const router = useRouter();
@@ -244,10 +245,15 @@ function AssistantPageContent(): React.ReactNode {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen font-sans flex flex-col">
-      <div id="app" className="flex-1 flex flex-col mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
-        {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+    <div className="bg-slate-50 min-h-screen font-sans flex">
+      {/* Desktop Sidebar */}
+      <DesktopSidebar />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        <div id="app" className="flex-1 flex flex-col mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+          {/* Header - Mobile Only */}
+          <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -266,9 +272,29 @@ function AssistantPageContent(): React.ReactNode {
               </div>
             </div>
           </div>
-        </div>
+          </div>
 
-        {/* Context Bar */}
+          {/* Desktop Header */}
+          <div className="hidden lg:block bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <img alt="Universite logo" className="w-6 h-6 object-contain" src="/assets/images/icon-white-removebg.png" />
+              </div>
+              <h1 className="text-2xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Universite
+              </h1>
+              <div className="ml-auto flex items-center gap-3">
+                {subscription?.plan_slug === 'free' && (
+                  <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                    Upgrade
+                  </Link>
+                )}
+                <Notifications />
+              </div>
+            </div>
+          </div>
+
+          {/* Context Bar */}
         {currentLecture && (
           <div className="bg-white border-b border-slate-200 px-4 py-2.5 relative">
             <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
@@ -503,8 +529,8 @@ function AssistantPageContent(): React.ReactNode {
           )}
         </div>
 
-        {/* Input Area */}
-        <div className="fixed bottom-20 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 safe-area-inset-bottom z-10">
+          {/* Input Area */}
+          <div className="lg:hidden fixed bottom-20 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 safe-area-inset-bottom z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <form onSubmit={handleSend} className="flex gap-2 items-end">
               <div className="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-2 focus-within:border-indigo-500 transition-all">
@@ -536,32 +562,64 @@ function AssistantPageContent(): React.ReactNode {
           </div>
         </div>
 
-        {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-40">
-          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
-            <div className="flex items-center justify-around py-2">
-              <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
-                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+          {/* Desktop Input Area */}
+          <div className="hidden lg:block bg-white border-t border-slate-200 px-8 py-4">
+            <form onSubmit={handleSend} className="flex gap-2 items-end max-w-4xl mx-auto">
+              <div className="flex-1 relative flex items-center bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-2 focus-within:border-indigo-500 transition-all">
+                <textarea
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder="Ask about your lecture..."
+                  rows={1}
+                  className="flex-1 border-none bg-transparent outline-none resize-none text-sm text-slate-800 placeholder-slate-400 min-h-[24px] max-h-[80px]"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!inputValue.trim() || isBotTyping}
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md active:scale-95 disabled:opacity-50 transition-all flex-shrink-0"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
                 </svg>
-                <span className="text-xs font-medium">Home</span>
-              </Link>
-              <Link href="/lectures" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
-                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <span className="text-xs font-medium">Lectures</span>
-              </Link>
-              <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
-                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="text-xs font-medium">Settings</span>
-              </Link>
-            </div>
+              </button>
+            </form>
           </div>
-        </nav>
+
+          {/* Bottom Navigation - Mobile Only */}
+          <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-40">
+            <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
+              <div className="flex items-center justify-around py-2">
+                <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
+                  <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                  </svg>
+                  <span className="text-xs font-medium">Home</span>
+                </Link>
+                <Link href="/lectures" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
+                  <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  <span className="text-xs font-medium">Lectures</span>
+                </Link>
+                <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
+                  <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-xs font-medium">Settings</span>
+                </Link>
+              </div>
+            </div>
+          </nav>
+        </div>
       </div>
 
       {/* Alert Modal */}

@@ -12,6 +12,7 @@ import Alert from '../components/Alert';
 import jsPDF from 'jspdf';
 import { transcribeAudioChunked } from '@/lib/audio/chunkedTranscribe';
 import { supabase } from '@/lib/supabase/client';
+import DesktopSidebar from '../../components/DesktopSidebar';
 
 function LectureDetailPageContent() {
   const searchParams = useSearchParams();
@@ -1194,10 +1195,15 @@ function LectureDetailPageContent() {
     : currentLecture?.segments || [];
 
   return (
-    <div className="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
-      <div id="app" className="flex-1 flex flex-col pb-20">
-        {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+    <div className="bg-slate-50 min-h-screen font-sans flex">
+      {/* Desktop Sidebar */}
+      <DesktopSidebar />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        <div id="app" className="flex-1 flex flex-col pb-20 lg:pb-0">
+          {/* Header - Mobile Only */}
+          <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
             <Link href="/lectures" className="p-1 text-slate-600">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1209,9 +1215,21 @@ function LectureDetailPageContent() {
             </div>
             <h1 className="text-lg md:text-xl font-semibold text-slate-800 flex-1">Lecture Details</h1>
           </div>
-        </div>
+          </div>
 
-        {/* Main Content */}
+          {/* Desktop Header */}
+          <div className="hidden lg:block bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <Link href="/lectures" className="p-1 text-slate-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <h1 className="text-2xl font-semibold text-slate-900 flex-1">Lecture Details</h1>
+            </div>
+          </div>
+
+          {/* Main Content */}
         <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
           {currentLecture ? (
             <>
@@ -1925,6 +1943,21 @@ function LectureDetailPageContent() {
           </div>
         </div>
       )}
+        </div>
+      </div>
+
+      <Alert
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
+      />
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+      />
     </div>
   );
 }
