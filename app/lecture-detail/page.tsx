@@ -1943,8 +1943,6 @@ function LectureDetailPageContent() {
           </div>
         </div>
       )}
-        </div>
-      </div>
 
       <Alert
         isOpen={alertOpen}
@@ -1958,6 +1956,7 @@ function LectureDetailPageContent() {
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
       />
+    </div>
     </div>
   );
 }
