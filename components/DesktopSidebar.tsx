@@ -8,12 +8,9 @@ export default function DesktopSidebar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/dashboard', label: 'Home', icon: 'home' },
+    { href: '/dashboard', label: 'Dashboard', icon: 'home' },
     { href: '/lectures', label: 'Lectures', icon: 'lectures' },
-    { href: '/notes', label: 'Notes', icon: 'notes' },
-    { href: '/flashcards', label: 'Flashcards', icon: 'flashcards' },
     { href: '/exam', label: 'Exam Mode', icon: 'exam' },
-    { href: '/assistant', label: 'AI Assistant', icon: 'assistant' },
     { href: '/settings', label: 'Settings', icon: 'settings' },
   ];
 
