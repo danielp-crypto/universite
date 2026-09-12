@@ -10,7 +10,7 @@ import WaveformVisualizer from '../components/WaveformVisualizer';
 import AudioPlayer from '../components/AudioPlayer';
 import Alert from '../components/Alert';
 import Notifications from '../components/Notifications';
-import DesktopSidebar from '../components/DesktopSidebar';
+import DesktopSidebar from '../../components/DesktopSidebar';
 import { uploadWithProgress } from '@/lib/supabase/uploadWithProgress';
 
 // Maps a MediaRecorder mimeType to a sensible file extension. Browsers report
