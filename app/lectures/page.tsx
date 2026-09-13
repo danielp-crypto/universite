@@ -516,7 +516,7 @@ function LecturesPageContent() {
             </div>
           </div>
         </nav>
-        </div>
+      </div>
       </div>
 
       <Alert
@@ -526,7 +526,6 @@ function LecturesPageContent() {
           message={alertMessage}
           type={alertType}
         />
-      </div>
     </div>
   );
 }

@@ -946,6 +946,7 @@ export default function SettingsPage() {
         message={alertMessage}
         type={alertType}
       />
+      </div>
     </div>
   );
 }

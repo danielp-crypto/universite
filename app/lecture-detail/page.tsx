@@ -1752,6 +1752,7 @@ function LectureDetailPageContent() {
           </div>
         </nav>
       </div>
+      </div>
 
       {/* Processing Overlay */}
       {isProcessing && (
@@ -1934,8 +1935,6 @@ function LectureDetailPageContent() {
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
       />
-      </div>
-      </div>
     </div>
   );
 }
