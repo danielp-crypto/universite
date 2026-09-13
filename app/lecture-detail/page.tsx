@@ -1204,17 +1204,17 @@ function LectureDetailPageContent() {
         <div id="app" className="flex-1 flex flex-col pb-20 lg:pb-0">
           {/* Header - Mobile Only */}
           <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
-          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
-            <Link href="/lectures" className="p-1 text-slate-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+            <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
+              <Link href="/lectures" className="p-1 text-slate-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
+              </div>
+              <h1 className="text-lg md:text-xl font-semibold text-slate-800 flex-1">Lecture Details</h1>
             </div>
-            <h1 className="text-lg md:text-xl font-semibold text-slate-800 flex-1">Lecture Details</h1>
-          </div>
           </div>
 
           {/* Desktop Header */}
@@ -1230,7 +1230,7 @@ function LectureDetailPageContent() {
           </div>
 
           {/* Main Content */}
-        <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
+          <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
           {currentLecture ? (
             <>
               {/* Lecture Card */}
@@ -1725,16 +1725,8 @@ function LectureDetailPageContent() {
           )}
         </div>
 
-        {/* Upgrade Modal */}
-        <UpgradeModal
-          isOpen={upgradeModalOpen}
-          onClose={() => setUpgradeModalOpen(false)}
-          feature={upgradeFeature}
-          onUpgrade={() => showAlert('Coming Soon', 'Premium upgrade coming soon!', 'info')}
-        />
-
-        {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
+        {/* Bottom Navigation - Mobile Only */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-area-inset-bottom z-10">
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <div className="flex items-center justify-around py-2">
               <Link href="/dashboard" className="flex flex-col items-center py-2 px-4 text-slate-400 hover:text-slate-600">
@@ -1761,6 +1753,7 @@ function LectureDetailPageContent() {
         </nav>
       </div>
 
+      {/* Processing Overlay */}
       {isProcessing && (
         <div className="fixed inset-0 bg-black/55 z-50 flex items-center justify-center">
           <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl text-center">
@@ -1775,24 +1768,9 @@ function LectureDetailPageContent() {
             <p className="text-slate-500 text-xs mb-3">
               Longer lectures can take a few minutes — hang tight.
             </p>
-            
           </div>
         </div>
       )}
-
-      <UpgradeModal
-        isOpen={upgradeModalOpen}
-        onClose={() => setUpgradeModalOpen(false)}
-        feature={upgradeFeature}
-      />
-
-      <Alert
-        isOpen={alertOpen}
-        onClose={() => setAlertOpen(false)}
-        title={alertTitle}
-        message={alertMessage}
-        type={alertType}
-      />
 
       {/* Quiz Modal */}
       {quizOpen && (
@@ -1956,7 +1934,8 @@ function LectureDetailPageContent() {
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
       />
-    </div>
+      </div>
+      </div>
     </div>
   );
 }
