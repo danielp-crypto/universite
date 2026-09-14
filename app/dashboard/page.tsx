@@ -28,44 +28,6 @@ function getExtensionForMimeType(mimeType: string): string {
   }
 }
 
-function getDownloadExtension(
-  mimeType?: string | null
-): string {
-  const mime = String(
-    mimeType || ''
-  )
-    .split(';')[0]
-    .toLowerCase();
-
-  switch (mime) {
-    case 'audio/mpeg':
-      return 'mp3';
-
-    case 'audio/mp4':
-    case 'audio/m4a':
-      return 'm4a';
-
-    case 'audio/wav':
-    case 'audio/x-wav':
-      return 'wav';
-
-    case 'audio/ogg':
-      return 'ogg';
-
-    case 'video/mp4':
-      return 'mp4';
-
-    case 'video/webm':
-      return 'webm';
-
-    case 'video/quicktime':
-      return 'mov';
-
-    default:
-      return 'webm';
-  }
-}
-
 function HomePageContent() {
   const router = useRouter();
   const [lectures, setLectures] = useState<any[]>([]);
@@ -770,9 +732,7 @@ function HomePageContent() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const extension = getDownloadExtension(lecture.mime_type);
-      const filename = `${lecture.title || 'recording'}.${extension}`;
-      a.download = filename;
+      a.download = `${lecture.title || 'recording'}.webm`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
