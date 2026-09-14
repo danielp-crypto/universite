@@ -431,11 +431,13 @@ export async function POST(request: NextRequest) {
         downloadError
       );
 
-      await markLectureFailed(
-        lectureId,
-        'STORAGE_DOWNLOAD_FAILED',
-        'Could not download uploaded lecture from storage'
-      );
+      if (lectureId) {
+        await markLectureFailed(
+          lectureId,
+          'STORAGE_DOWNLOAD_FAILED',
+          'Could not download uploaded lecture from storage'
+        );
+      }
 
       return NextResponse.json(
         {
@@ -502,11 +504,13 @@ export async function POST(request: NextRequest) {
             processedUploadError
           );
 
-          await markLectureFailed(
-            lectureId,
-            'PROCESSED_AUDIO_UPLOAD_FAILED',
-            'Could not upload extracted lecture audio'
-          );
+          if (lectureId) {
+            await markLectureFailed(
+              lectureId,
+              'PROCESSED_AUDIO_UPLOAD_FAILED',
+              'Could not upload extracted lecture audio'
+            );
+          }
 
           return NextResponse.json(
             {
@@ -528,12 +532,14 @@ export async function POST(request: NextRequest) {
           ffmpegError
         );
 
-        await markLectureFailed(
-          lectureId,
-          'FFMPEG_EXTRACTION_FAILED',
-          ffmpegError?.message ||
-            'Could not extract audio from video'
-        );
+        if (lectureId) {
+          await markLectureFailed(
+            lectureId,
+            'FFMPEG_EXTRACTION_FAILED',
+            ffmpegError?.message ||
+              'Could not extract audio from video'
+          );
+        }
 
         return NextResponse.json(
           {
@@ -551,11 +557,13 @@ export async function POST(request: NextRequest) {
         `[Lecture ${lectureId}] Audio file detected. Skipping FFmpeg.` 
       );
     } else {
-      await markLectureFailed(
-        lectureId,
-        'UNSUPPORTED_MEDIA_TYPE',
-        `Unsupported media type: ${normalizedMimeType}` 
-      );
+      if (lectureId) {
+        await markLectureFailed(
+          lectureId,
+          'UNSUPPORTED_MEDIA_TYPE',
+          `Unsupported media type: ${normalizedMimeType}` 
+        );
+      }
 
       return NextResponse.json(
         {
@@ -592,11 +600,13 @@ export async function POST(request: NextRequest) {
         signedUrlError
       );
 
-      await markLectureFailed(
-        lectureId,
-        'STORAGE_SIGNED_URL_FAILED',
-        'Could not generate signed URL for lecture audio'
-      );
+      if (lectureId) {
+        await markLectureFailed(
+          lectureId,
+          'STORAGE_SIGNED_URL_FAILED',
+          'Could not generate signed URL for lecture audio'
+        );
+      }
 
       return NextResponse.json(
         {
@@ -677,13 +687,15 @@ export async function POST(request: NextRequest) {
           errorText
         );
 
-        await markLectureFailed(
-          lectureId,
-          'DEEPGRAM_SUBMISSION_FAILED',
-          `Deepgram submission failed (${deepgramResponse.status}): ${
-            errorText || '(no response body)'
-          }`
-        );
+        if (lectureId) {
+          await markLectureFailed(
+            lectureId,
+            'DEEPGRAM_SUBMISSION_FAILED',
+            `Deepgram submission failed (${deepgramResponse.status}): ${
+              errorText || '(no response body)'
+            }`
+          );
+        }
 
         // Clean up processed MP3 if we created one.
         if (processedFilePath) {
@@ -723,12 +735,14 @@ export async function POST(request: NextRequest) {
         deepgramError
       );
 
-      await markLectureFailed(
-        lectureId,
-        'DEEPGRAM_NETWORK_ERROR',
-        deepgramError?.message ||
-          'Deepgram request failed'
-      );
+      if (lectureId) {
+        await markLectureFailed(
+          lectureId,
+          'DEEPGRAM_NETWORK_ERROR',
+          deepgramError?.message ||
+            'Deepgram request failed'
+        );
+      }
 
       if (processedFilePath) {
         await removeStorageFile(
