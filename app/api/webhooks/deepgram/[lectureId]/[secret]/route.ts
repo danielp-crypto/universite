@@ -193,9 +193,72 @@ async function notifyStudent(lectureId: string, outcome: 'completed' | 'failed',
 
 async function cleanupStorageFile(lectureId: string) {
   try {
-    const { data: lecture } = await supabaseAdmin.from('lectures').select('file_path').eq('id', lectureId).single();
-    if (!lecture?.file_path) return;
-    const { error } = await supabaseAdmin.storage.from('lecture-media').remove([lecture.file_path]);
-    if (error) console.error('Failed to clean up storage file:', error);
-  } catch (err) { console.error('Failed to clean up storage file:', err); }
+    const {
+      data: lecture,
+      error: lectureError,
+    } = await supabaseAdmin
+      .from('lectures')
+      .select(
+        'user_id, file_path, mime_type'
+      )
+      .eq('id', lectureId)
+      .single();
+
+    if (lectureError || !lecture) {
+      console.error(
+        'Could not find lecture for storage cleanup:',
+        lectureError
+      );
+
+      return;
+    }
+
+    const filesToRemove: string[] = [];
+
+    // Original uploaded file.
+    if (lecture.file_path) {
+      filesToRemove.push(
+        lecture.file_path
+      );
+    }
+
+    // Processed MP3 generated from a video.
+    if (
+      lecture.mime_type?.startsWith(
+        'video/'
+      ) &&
+      lecture.user_id
+    ) {
+      filesToRemove.push(
+        `${lecture.user_id}/processed/${lectureId}.mp3` 
+      );
+    }
+
+    if (!filesToRemove.length) {
+      return;
+    }
+
+    const {
+      error: removeError,
+    } = await supabaseAdmin.storage
+      .from('lecture-media')
+      .remove(filesToRemove);
+
+    if (removeError) {
+      console.error(
+        'Failed to clean up lecture media:',
+        removeError
+      );
+    } else {
+      console.log(
+        `[Lecture ${lectureId}] Cleaned up storage:`,
+        filesToRemove
+      );
+    }
+  } catch (err) {
+    console.error(
+      'Failed to clean up lecture storage:',
+      err
+    );
+  }
 }
