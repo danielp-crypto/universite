@@ -12,6 +12,7 @@ import Alert from '../components/Alert';
 import Notifications from '../components/Notifications';
 import DesktopSidebar from '../../components/DesktopSidebar';
 import { uploadWithProgress } from '@/lib/supabase/uploadWithProgress';
+import { extractAudioFromVideo } from '@/lib/audio/extractAudioFromVideo';
 
 // Maps a MediaRecorder mimeType to a sensible file extension. Browsers report
 // mimeType as e.g. "audio/webm;codecs=opus" — strip codec params before
@@ -757,7 +758,13 @@ function HomePageContent() {
       return;
     }
 
-    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+    const isVideo = file.type.startsWith('video/');
+
+    // Non-video files can't be shrunk by extraction, so fail fast here as
+    // before. Video files skip this check for now — extraction below
+    // usually brings them well under the limit, so we check again with the
+    // final (possibly much smaller) blob instead of rejecting upfront.
+    if (!isVideo && file.size > MAX_UPLOAD_SIZE_BYTES) {
       showAlert(
         'File too large',
         `This file is ${(file.size / (1024 * 1024)).toFixed(1)}MB. The maximum allowed size is 50MB — try a shorter recording or a more compressed format.`,
@@ -794,22 +801,67 @@ function HomePageContent() {
         mediaEl.src = URL.createObjectURL(file);
       });
 
-      // Upload the raw file straight to Supabase Storage — Deepgram will
-      // fetch it directly from there. Nothing is decoded or chunked in the
-      // browser anymore: no memory pressure on the student's device, no
-      // Vercel body-size limit to work around, and it works the same way
+      // What actually gets uploaded — defaults to the original file, but for
+      // video gets replaced below with just its audio track. Transcription
+      // only ever needs the audio, and a video's audio track alone is
+      // typically a fraction of the file size — usually enough on its own
+      // to get a lecture video under Supabase's free-tier 50MB cap without
+      // the student needing to re-encode or trim anything themselves.
+      let uploadBlob: Blob = file;
+      let uploadMimeType: string = file.type;
+      let uploadFileExt: string = file.name.includes('.') ? file.name.split('.').pop()! : 'bin';
+
+      if (isVideo) {
+        setProcessingText('Extracting audio from video... 0%');
+        try {
+          const { blob, mimeType } = await extractAudioFromVideo(file, (percent) => {
+            setUploadProgress(percent);
+            setProcessingText(`Extracting audio from video... ${percent}%`);
+          });
+          uploadBlob = blob;
+          uploadMimeType = mimeType;
+          uploadFileExt = 'webm';
+          setUploadProgress(null);
+        } catch (extractError) {
+          console.error('Error extracting audio from video:', extractError);
+          setProcessingError('Could not process this video file. Please try a different file or format.');
+          setRecordingState('idle');
+          setUploadProgress(null);
+          return;
+        }
+
+        // Check the extracted audio against the size limit — if a lecture
+        // is so long that even compressed mono audio exceeds 50MB, there's
+        // nothing more we can do client-side.
+        if (uploadBlob.size > MAX_UPLOAD_SIZE_BYTES) {
+          showAlert(
+            'File too large',
+            `Even after extracting just the audio, this lecture is ${(uploadBlob.size / (1024 * 1024)).toFixed(1)}MB. The maximum allowed size is 50MB — try a shorter recording.`,
+            'warning'
+          );
+          setRecordingState('idle');
+          return;
+        }
+
+        setProcessingText('Uploading file...');
+        setUploadProgress(0);
+      }
+
+      // Upload the (possibly audio-extracted) file straight to Supabase
+      // Storage — Deepgram will fetch it directly from there. No memory
+      // pressure on the student's device beyond the extraction step above,
+      // no Vercel body-size limit to work around, and it works the same way
       // regardless of file length.
-      const fileExt = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
       const randomId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const storagePath = `${session.user.id}/${randomId}.${fileExt}`;
+      const storagePath = `${session.user.id}/${randomId}.${uploadFileExt}`;
 
       try {
         await uploadWithProgress(
           'lecture-media',
           storagePath,
-          file,
+          uploadBlob,
           session.access_token,
-          file.type,
+          uploadMimeType,
           (percent) => {
             setUploadProgress(percent);
             setProcessingText(`Uploading file... ${percent}%`);
@@ -839,9 +891,9 @@ function HomePageContent() {
           title: file.name.replace(/\.[^/.]+$/, ''),
           duration: Math.floor(mediaDuration),
           module_id: selectedModule,
-          mime_type: file.type,
+          mime_type: uploadMimeType,
           file_path: storagePath,
-          file_size: file.size
+          file_size: uploadBlob.size
         })
       });
 
