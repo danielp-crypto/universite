@@ -1,11 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getAccessToken } from '@/lib/supabase/auth';
 
 export default function DesktopSidebar() {
   const pathname = usePathname();
+  const [subscription, setSubscription] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: 'home' },
@@ -13,6 +16,35 @@ export default function DesktopSidebar() {
     { href: '/exam', label: 'Exam Mode', icon: 'exam' },
     { href: '/settings', label: 'Settings', icon: 'settings' },
   ];
+
+  useEffect(() => {
+    async function fetchSubscription() {
+      try {
+        const token = await getAccessToken();
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch('/api/subscription', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSubscription(data);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSubscription();
+  }, []);
 
   const getIcon = (iconName: string, isActive: boolean) => {
     const colorClass = isActive ? 'text-indigo-600' : 'text-slate-400';
@@ -104,14 +136,38 @@ export default function DesktopSidebar() {
       {/* Upgrade CTA */}
       <div className="p-4 border-t border-slate-200">
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4">
-          <p className="text-sm font-medium text-slate-800 mb-2">Upgrade to Premium</p>
-          <p className="text-xs text-slate-600 mb-3">Get unlimited lectures and AI features</p>
-          <Link
-            href="/pricing"
-            className="block w-full px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium text-center hover:shadow-md transition-all"
-          >
-            Upgrade
-          </Link>
+          {loading ? (
+            <>
+              <p className="text-sm font-medium text-slate-800 mb-2">Loading plan...</p>
+              <div className="h-8 bg-slate-200 rounded-lg animate-pulse"></div>
+            </>
+          ) : subscription?.plan_slug === 'free' ? (
+            <>
+              <p className="text-sm font-medium text-slate-800 mb-2">Upgrade to Premium</p>
+              <p className="text-xs text-slate-600 mb-3">Get unlimited lectures and AI features</p>
+              <Link
+                href="/pricing"
+                className="block w-full px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium text-center hover:shadow-md transition-all"
+              >
+                Upgrade
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium text-slate-800 mb-2">
+                {subscription?.plans?.name || subscription?.plan_slug || 'Premium'} Plan
+              </p>
+              <p className="text-xs text-slate-600 mb-3">
+                {subscription?.plans?.description || 'You have full access to all features'}
+              </p>
+              <Link
+                href="/settings"
+                className="block w-full px-4 py-2 bg-white border border-indigo-600 text-indigo-600 rounded-lg text-sm font-medium text-center hover:bg-indigo-50 transition-all"
+              >
+                Manage
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </aside>
