@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { embedQuery } from '@/lib/documents/embeddings';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
+
+// How many study-material chunks to pull in per focus topic when targeting
+// weak topics, and as a flat cap when no topics are given (a general/mixed
+// exam has no natural query to search against, so this falls back to a
+// bounded sample rather than true retrieval — same "include it directly,
+// but capped" approach already used for lecture content below).
+const CHUNKS_PER_FOCUS_TOPIC = 4;
+const MAX_UNTARGETED_CHUNKS = 20;
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,6 +87,64 @@ export async function POST(request: NextRequest) {
       ,slides: lecture.slides_text
     }));
 
+    // Pull in relevant uploaded study materials too. When targeting specific
+    // weak topics, each topic is a natural retrieval query — this is a much
+    // better fit than the lecture-content approach above, since it actually
+    // finds the passages relevant to what the student is weak on rather
+    // than including everything. Without focus topics there's no specific
+    // query to search against, so this falls back to a flat, capped sample
+    // instead of true retrieval.
+    let studyMaterialsContent = '';
+    try {
+      const hasFocusTopics = Array.isArray(focus_topics) && focus_topics.length > 0;
+
+      if (hasFocusTopics) {
+        const seenChunkIds = new Set<string>();
+        const matchedChunks: string[] = [];
+
+        for (const topic of focus_topics) {
+          const queryEmbedding = await embedQuery(String(topic));
+          const { data: chunks, error: matchError } = await supabaseAdmin.rpc('match_study_material_chunks', {
+            query_embedding: queryEmbedding,
+            match_module_id: examSession.module_id,
+            match_count: CHUNKS_PER_FOCUS_TOPIC,
+          });
+          if (matchError) {
+            console.error('Error retrieving study material chunks for topic', topic, matchError);
+            continue;
+          }
+          for (const chunk of chunks || []) {
+            if (!seenChunkIds.has(chunk.id)) {
+              seenChunkIds.add(chunk.id);
+              matchedChunks.push(chunk.content);
+            }
+          }
+        }
+
+        if (matchedChunks.length > 0) {
+          studyMaterialsContent = matchedChunks.map((c, i) => `[Excerpt ${i + 1}]\n${c}`).join('\n\n');
+        }
+      } else {
+        const { data: chunks, error: chunksError } = await supabaseAdmin
+          .from('study_material_chunks')
+          .select('content')
+          .eq('module_id', examSession.module_id)
+          .order('chunk_index', { ascending: true })
+          .limit(MAX_UNTARGETED_CHUNKS);
+
+        if (chunksError) {
+          console.error('Error fetching study material chunks:', chunksError);
+        } else if (chunks && chunks.length > 0) {
+          studyMaterialsContent = chunks.map((c: any, i: number) => `[Excerpt ${i + 1}]\n${c.content}`).join('\n\n');
+        }
+      }
+    } catch (retrievalError) {
+      // Retrieval failing shouldn't block exam generation entirely — it
+      // just falls back to lecture-only content, same as before this
+      // feature existed.
+      console.error('Error during study material retrieval for exam generation:', retrievalError);
+    }
+
     // Generate questions using AI
     const prompt = `You are an expert exam question generator. Generate ${count} exam questions based ONLY on the following lecture content. Do not invent facts outside the provided content.
 
@@ -87,7 +154,7 @@ ${Array.isArray(focus_topics) && focus_topics.length ? `\nTarget weak topics: ${
 
 Available lecture content:
 ${JSON.stringify(lectureContent, null, 2)}
-
+${studyMaterialsContent ? `\nAlso use these excerpts from the student's uploaded study materials, in addition to the lecture content above:\n${studyMaterialsContent}\n` : ''}
 IMPORTANT: Return ONLY valid JSON. Do not include any markdown formatting, explanations, or additional text. Your response must be a valid JSON array.
 
 Generate questions in the following JSON format:
@@ -103,7 +170,7 @@ Generate questions in the following JSON format:
 ]
 
 Important:
-- Questions must be based ONLY on the provided lecture content
+- Questions must be based ONLY on the provided lecture content${studyMaterialsContent ? ' and study material excerpts' : ''}
 - Vary the difficulty levels
 - For multiple choice, provide 4 options with exactly one correct answer
 - For short/long answer, provide a model answer based on the content

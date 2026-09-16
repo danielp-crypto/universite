@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
+import { embedQuery } from '@/lib/documents/embeddings';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,12 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 // this, but a sane ceiling keeps prompt size, latency, and free-tier token
 // usage predictable as students add whole modules at once.
 const MAX_ADDITIONAL_LECTURES = 12;
+
+// How many study-material chunks to retrieve per question. A student's
+// message is usually one focused question, so a handful of the most
+// relevant passages covers it without ballooning prompt size the way
+// including a whole uploaded document would.
+const MAX_STUDY_MATERIAL_CHUNKS = 5;
 
 function formatLectureBlock(lecture: any, { fullTranscript }: { fullTranscript: boolean }): string {
   const parts = [
@@ -148,15 +155,46 @@ Follow these rules at all times:
         ? `The student is currently viewing "${currentLecture.title || 'Untitled'}" and has also brought in ${extraLectures.length} additional lecture(s) for context.`
         : `The student is currently viewing "${currentLecture.title || 'Untitled'}".`;
 
+      // Retrieve whichever uploaded study-material passages are most
+      // relevant to what the student just asked, scoped to this lecture's
+      // module. Unlike lecture transcripts/slides (dumped in full, since a
+      // single lecture is naturally bounded), uploaded study materials can
+      // be arbitrarily large — a whole textbook chapter — so this uses real
+      // similarity search rather than including everything.
+      let studyMaterialsBlock = '';
+      if (currentLecture.module_id) {
+        try {
+          const queryEmbedding = await embedQuery(message);
+          const { data: chunks, error: matchError } = await supabaseAdmin.rpc('match_study_material_chunks', {
+            query_embedding: queryEmbedding,
+            match_module_id: currentLecture.module_id,
+            match_count: MAX_STUDY_MATERIAL_CHUNKS,
+          });
+
+          if (matchError) {
+            console.error('Error retrieving study material chunks:', matchError);
+          } else if (chunks && chunks.length > 0) {
+            studyMaterialsBlock = `\n\n--- Relevant excerpts from the student's uploaded study materials ---\n${
+              chunks.map((c: any, i: number) => `[Excerpt ${i + 1}]\n${c.content}`).join('\n\n')
+            }`;
+          }
+        } catch (retrievalError) {
+          // Retrieval failing (e.g. Gemini embedding call error) shouldn't
+          // break the tutor entirely — it just falls back to lecture-only
+          // context, same as before this feature existed.
+          console.error('Error during study material retrieval:', retrievalError);
+        }
+      }
+
       context = `${tutorRules}
 
 ${personalization}
 
 ${lectureCountNote}
 
-${lectureBlocks.map((block, i) => `--- Lecture ${i + 1} ---\n${block}`).join('\n\n')}
+${lectureBlocks.map((block, i) => `--- Lecture ${i + 1} ---\n${block}`).join('\n\n')}${studyMaterialsBlock}
 
-Answer the student's questions based on this lecture content, following the tutoring rules above.`;
+Answer the student's questions based on this lecture content${studyMaterialsBlock ? ' and the study material excerpts' : ''}, following the tutoring rules above. When you draw on a study material excerpt, mention that it's from their uploaded materials rather than the lecture itself.`;
     } else {
       context = `${tutorRules}
 

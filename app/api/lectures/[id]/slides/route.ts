@@ -1,71 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
-import JSZip from 'jszip';
+import { extractDocumentText } from '@/lib/documents/extractText';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
-
-// Extracts plain text from a PDF, page by page. PowerPoint-exported PDFs
-// (the overwhelming majority of "lecture slides as PDF" uploads) always
-// retain a text layer even for visually-laid-out slides, so this works well
-// for the common case without needing OCR or multimodal AI calls.
-async function extractPdfText(buffer: Buffer): Promise<string> {
-  const runtimeGlobals = globalThis as any;
-  runtimeGlobals.DOMMatrix ||= class DOMMatrix {};
-  runtimeGlobals.ImageData ||= class ImageData {};
-  runtimeGlobals.Path2D ||= class Path2D {};
-  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const document = await getDocument({
-    data: new Uint8Array(buffer),
-    disableWorker: true,
-    useWorkerFetch: false,
-    isEvalSupported: false,
-  } as any).promise;
-  const pages: string[] = [];
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
-    const page = await document.getPage(pageNumber);
-    const content = await page.getTextContent();
-    const text = content.items
-      .map((item: any) => ('str' in item ? item.str : ''))
-      .join(' ')
-      .trim();
-    if (text) pages.push(`Page ${pageNumber}: ${text}`);
-  }
-  return pages.join('\n\n').trim();
-}
-
-// A .pptx file is a ZIP archive of XML files, one per slide
-// (ppt/slides/slide1.xml, slide2.xml, ...). Each slide's text runs live in
-// <a:t> tags. This pulls out just the text — diagrams/images without text
-// aren't captured, but slide titles, bullets, and body text all are, which
-// covers the large majority of what's actually useful as study context.
-async function extractPptxText(buffer: Buffer): Promise<string> {
-  const zip = await JSZip.loadAsync(buffer);
-
-  const slideFiles = Object.keys(zip.files)
-    .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
-    .sort((a, b) => {
-      const numA = parseInt(a.match(/slide(\d+)\.xml/)![1], 10);
-      const numB = parseInt(b.match(/slide(\d+)\.xml/)![1], 10);
-      return numA - numB;
-    });
-
-  const slideTexts: string[] = [];
-
-  for (let i = 0; i < slideFiles.length; i++) {
-    const xml = await zip.files[slideFiles[i]].async('string');
-    const matches = [...xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)];
-    const text = matches.map((m) => m[1]).join(' ').trim();
-    if (text) {
-      slideTexts.push(`Slide ${i + 1}: ${text}`);
-    }
-  }
-
-  return slideTexts.join('\n\n');
-}
 
 export async function POST(
   request: NextRequest,
@@ -115,11 +56,11 @@ export async function POST(
     }
 
     const buffer = Buffer.from(await fileBlob.arrayBuffer());
-    const isPptx = mime_type?.includes('presentation') || filename.toLowerCase().endsWith('.pptx');
 
     let slidesText: string;
     try {
-      slidesText = isPptx ? await extractPptxText(buffer) : await extractPdfText(buffer);
+      const result = await extractDocumentText(buffer, { mimeType: mime_type, filename });
+      slidesText = result.text;
     } catch (extractError: any) {
       console.error('Error extracting slide text:', extractError);
       return NextResponse.json(

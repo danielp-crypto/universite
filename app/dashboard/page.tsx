@@ -60,6 +60,12 @@ function HomePageContent() {
   const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
   const [newModuleName, setNewModuleName] = useState('');
 
+  // Study materials state (uploaded documents used for RAG in the AI tutor
+  // and exam mode, separate from lecture recordings)
+  const [studyMaterials, setStudyMaterials] = useState<any[]>([]);
+  const [studyMaterialUploadProgress, setStudyMaterialUploadProgress] = useState<number | null>(null);
+  const [uploadingStudyMaterial, setUploadingStudyMaterial] = useState(false);
+
   // Processing states
   const [processingSteps, setProcessingSteps] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -963,6 +969,143 @@ function HomePageContent() {
     }
   };
 
+  // Loads the uploaded study materials for the currently selected module —
+  // these power retrieval in the AI tutor and exam mode, separate from
+  // lecture recordings.
+  const loadStudyMaterials = async (moduleId: string) => {
+    try {
+      const result = await apiGet(`/api/study-materials?module_id=${moduleId}`);
+      setStudyMaterials(result?.materials || []);
+    } catch (error) {
+      console.error('Error loading study materials:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedModule) {
+      loadStudyMaterials(selectedModule);
+    } else {
+      setStudyMaterials([]);
+    }
+  }, [selectedModule]);
+
+  const handleStudyMaterialUpload = () => {
+    if (!selectedModule) {
+      showAlert('Module Required', 'Please select a module before uploading study material.', 'warning');
+      return;
+    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.pptx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/markdown';
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        await uploadStudyMaterial(file);
+      }
+    };
+    input.click();
+  };
+
+  const uploadStudyMaterial = async (file: File) => {
+    if (!selectedModule) return;
+
+    const MAX_MATERIAL_SIZE_BYTES = 50 * 1024 * 1024; // matches Supabase free-tier cap
+    if (file.size > MAX_MATERIAL_SIZE_BYTES) {
+      showAlert(
+        'File too large',
+        `This file is ${(file.size / (1024 * 1024)).toFixed(1)}MB. The maximum allowed size is 50MB.`,
+        'warning'
+      );
+      return;
+    }
+
+    setUploadingStudyMaterial(true);
+    setStudyMaterialUploadProgress(0);
+
+    try {
+      const session = await getSession();
+      if (!session) {
+        showAlert('Please log in', 'Please log in to upload study material.', 'warning');
+        return;
+      }
+
+      const fileExt = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
+      const randomId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const storagePath = `${session.user.id}/study-materials/${randomId}.${fileExt}`;
+
+      await uploadWithProgress(
+        'lecture-media',
+        storagePath,
+        file,
+        session.access_token,
+        file.type,
+        (percent) => setStudyMaterialUploadProgress(percent)
+      );
+
+      setStudyMaterialUploadProgress(null);
+
+      // This call does the actual extraction/chunking/embedding inline and
+      // can take a little while for a longer document — the UI shows an
+      // "uploadingStudyMaterial" spinner state for this whole stretch, not
+      // just the file transfer above.
+      const response = await fetch('/api/study-materials', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          module_id: selectedModule,
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          filename: file.name,
+          file_path: storagePath,
+          mime_type: file.type,
+          file_size: file.size
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        loadStudyMaterials(selectedModule);
+      } else {
+        const message = result.error === 'no_text_found'
+          ? "Couldn't find any readable text in this file — it may be image-only with no text layer."
+          : result.error === 'unsupported_file_type'
+          ? 'Please upload a PDF, PowerPoint (.pptx), or plain text/markdown file.'
+          : 'Failed to process this study material. Please try again.';
+        showAlert('Upload failed', message, 'error');
+      }
+    } catch (error) {
+      console.error('Error uploading study material:', error);
+      showAlert('Upload failed', 'Failed to upload study material. Please try again.', 'error');
+    } finally {
+      setUploadingStudyMaterial(false);
+      setStudyMaterialUploadProgress(null);
+    }
+  };
+
+  const deleteStudyMaterial = async (id: string) => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      const response = await fetch(`/api/study-materials/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+
+      if (response.ok && selectedModule) {
+        loadStudyMaterials(selectedModule);
+      } else {
+        showAlert('Error', 'Could not delete this study material.', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting study material:', error);
+      showAlert('Error', 'Could not delete this study material.', 'error');
+    }
+  };
+
   // Profile management
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1090,6 +1233,55 @@ function HomePageContent() {
                   + New
                 </button>
               </div>
+            </div>
+
+            {/* Study Materials */}
+            <div className="mb-6 bg-white border border-slate-200 rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-900">Study Materials</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Upload notes, slides, or study guides — your AI tutor and exam mode will use them alongside your lectures.</p>
+                </div>
+                <button
+                  onClick={handleStudyMaterialUpload}
+                  disabled={!selectedModule || uploadingStudyMaterial}
+                  className="flex-shrink-0 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                >
+                  {uploadingStudyMaterial
+                    ? (studyMaterialUploadProgress !== null ? `Uploading... ${studyMaterialUploadProgress}%` : 'Processing...')
+                    : '+ Upload'}
+                </button>
+              </div>
+
+              {!selectedModule ? (
+                <p className="text-xs text-slate-400 py-2">Select a module above to see or upload its study materials.</p>
+              ) : studyMaterials.length === 0 ? (
+                <p className="text-xs text-slate-400 py-2">No study materials uploaded yet for this module.</p>
+              ) : (
+                <div className="space-y-2">
+                  {studyMaterials.map((material: any) => (
+                    <div key={material.id} className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 rounded-lg">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-slate-800 truncate">{material.title}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {material.status === 'processing' && 'Processing…'}
+                          {material.status === 'completed' && `${material.chunk_count} section${material.chunk_count === 1 ? '' : 's'} indexed${material.truncated ? ' (document was long — only the first portion was used)' : ''}`}
+                          {material.status === 'failed' && (material.error || 'Processing failed')}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => deleteStudyMaterial(material.id)}
+                        className="flex-shrink-0 p-1 text-slate-400 hover:text-red-600 transition-colors"
+                        title="Delete"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Quick Actions */}
