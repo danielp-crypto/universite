@@ -13,7 +13,7 @@ export default function DesktopSidebar() {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: 'home' },
     { href: '/lectures', label: 'Lectures', icon: 'lectures' },
-    { href: '/exam', label: 'Exam Mode', icon: 'exam' },
+    { href: '/exam', label: 'Mock Exam', icon: 'exam' },
     { href: '/settings', label: 'Settings', icon: 'settings' },
   ];
 

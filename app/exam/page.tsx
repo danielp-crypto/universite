@@ -119,7 +119,7 @@ function ExamModePageContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-lg font-semibold text-slate-900">Exam Mode</h1>
+            <h1 className="text-lg font-semibold text-slate-900">Mock Exam</h1>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ function ExamModePageContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-2xl font-semibold text-slate-900">Exam Mode</h1>
+            <h1 className="text-2xl font-semibold text-slate-900">Mock Exam</h1>
           </div>
         </div>
 
