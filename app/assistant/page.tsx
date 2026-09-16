@@ -260,7 +260,7 @@ function AssistantPageContent(): React.ReactNode {
                 <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
               </div>
               <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Universite
+                Tutor
               </h1>
               <div className="ml-auto flex items-center gap-3">
                 {subscription?.plan_slug === 'free' && (
@@ -281,7 +281,7 @@ function AssistantPageContent(): React.ReactNode {
                 <img alt="Universite logo" className="w-6 h-6 object-contain" src="/assets/images/icon-white-removebg.png" />
               </div>
               <h1 className="text-2xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Universite
+                Tutor
               </h1>
               <div className="ml-auto flex items-center gap-3">
                 {subscription?.plan_slug === 'free' && (
