@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { embedQuery } from '@/lib/documents/embeddings';
+import { groq } from '@/lib/groq';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
@@ -178,88 +179,62 @@ Important:
 - Ensure all strings are properly escaped
 - Do not use trailing commas in JSON arrays or objects`;
 
-    // Call AI API (using your existing AI integration) with retry logic
-    console.log('Calling AI API...');
-    console.log('GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
+    // Call AI API using Groq with retry logic
+    console.log('Calling Groq API...');
+    console.log('GROQ_API_KEY exists:', !!process.env.GROQ_API_KEY);
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 });
     }
 
-    let aiResponse: Response | null = null;
+    let completion: any = null;
     let retryCount = 0;
     const maxRetries = 3;
     const baseDelay = 1000; // 1 second
 
     while (retryCount <= maxRetries) {
-      aiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': process.env.GEMINI_API_KEY,
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: prompt
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 8192,
-              responseMimeType: 'application/json',
-            }
-          })
+      try {
+        completion = await groq.chat.completions.create({
+          model: 'openai/gpt-oss-20b',
+          messages: [
+            { role: 'system', content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 8192,
+          response_format: { type: 'json_object' },
+        });
+        break;
+      } catch (error: any) {
+        console.log('Groq API error:', error);
+        
+        // Check for rate limit error
+        if (error.status === 429 && retryCount < maxRetries) {
+          const delay = baseDelay * Math.pow(2, retryCount);
+          console.log(`Rate limited. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retryCount++;
+          continue;
         }
-      );
-
-      console.log('AI API response status:', aiResponse.status);
-
-      // Check for rate limit error
-      if (aiResponse.status === 429 && retryCount < maxRetries) {
-        const delay = baseDelay * Math.pow(2, retryCount);
-        console.log(`Rate limited. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        retryCount++;
-        continue;
+        
+        // Provide user-friendly error message for rate limiting
+        if (error.status === 429) {
+          return NextResponse.json({
+            error: 'AI service is currently busy due to high demand. Please wait a moment and try again.',
+            retryable: true
+          }, { status: 429 });
+        }
+        
+        return NextResponse.json({ error: `Groq API error: ${error.message || 'Unknown error'}` }, { status: 500 });
       }
-
-      break;
     }
 
-    if (!aiResponse) {
+    if (!completion) {
       return NextResponse.json({ error: 'Failed to get AI response' }, { status: 500 });
     }
 
-    if (!aiResponse.ok) {
-      console.error('AI API error:', aiResponse.statusText);
-      const errorText = await aiResponse.text();
-      console.error('AI API error body:', errorText);
-
-      // Provide user-friendly error message for rate limiting
-      if (aiResponse.status === 429) {
-        return NextResponse.json({
-          error: 'AI service is currently busy due to high demand. Please wait a moment and try again.',
-          retryable: true
-        }, { status: 429 });
-      }
-
-      return NextResponse.json({ error: `AI API error: ${aiResponse.statusText} - ${errorText}` }, { status: 500 });
-    }
-
-    const aiData = await aiResponse.json();
-    console.log('AI API response data:', JSON.stringify(aiData).substring(0, 500));
-
-    if (!aiData.candidates || !aiData.candidates[0] || !aiData.candidates[0].content || !aiData.candidates[0].content.parts[0]) {
-      console.error('Invalid AI response structure:', aiData);
-      return NextResponse.json({ error: 'Invalid AI response structure from Gemini API' }, { status: 500 });
-    }
-
-    const generatedText = aiData.candidates[0].content.parts[0].text;
-    console.log('Generated text length:', generatedText.length);
-    console.log('Generated text preview:', generatedText.substring(0, 1000));
+    const generatedText = completion.choices[0]?.message?.content;
+    console.log('Generated text length:', generatedText?.length || 0);
+    console.log('Generated text preview:', generatedText?.substring(0, 1000) || '');
 
     // Parse AI response with multiple fallback strategies
     let questions;

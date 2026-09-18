@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 import { embedQuery } from '@/lib/documents/embeddings';
+import { groq } from '@/lib/groq';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-
 // Cap how many extra lectures can be folded in as context alongside the
-// primary one. Gemini 2.5 Flash's context window can handle far more than
+// primary one. Groq's context window can handle far more than
 // this, but a sane ceiling keeps prompt size, latency, and free-tier token
 // usage predictable as students add whole modules at once.
 const MAX_ADDITIONAL_LECTURES = 12;
@@ -86,14 +85,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!GEMINI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
       return NextResponse.json(
         { success: false, error: 'missing_api_key' },
         { status: 500 }
       );
     }
 
-    // Persist the student's message right away, before calling Gemini, so it's
+    // Persist the student's message right away, before calling Groq, so it's
     // saved even if generation fails downstream. Only possible when chatting
     // in the context of a specific lecture — there's nothing to key it to otherwise.
     if (currentLecture?.id) {
@@ -203,44 +202,26 @@ ${personalization}
 No lecture context is available right now. Ask the student to select a lecture from the dashboard first, and remind them you're here to help them understand material, not to do assignments for them.`;
     }
 
-    // Build conversation history
+    // Build conversation history for Groq
     const conversationHistory = messages
       .slice(-10) // Keep last 10 messages for context
       .map((msg: any) => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.content
       }));
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [
-            { role: 'user', parts: [{ text: context }] },
-            ...conversationHistory,
-            { role: 'user', parts: [{ text: message }] }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-          }
-        }),
-      }
-    );
+    const completion = await groq.chat.completions.create({
+      model: 'openai/gpt-oss-20b',
+      messages: [
+        { role: 'system', content: context },
+        ...conversationHistory,
+        { role: 'user', content: message }
+      ],
+      temperature: 0.7,
+      max_tokens: 2048,
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API error:', errorText);
-      throw new Error('Gemini API request failed');
-    }
-
-    const result = await response.json();
-    const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
+    const aiResponse = completion.choices[0]?.message?.content || 'No response generated';
 
     if (currentLecture?.id) {
       const { error: insertBotMsgError } = await supabaseAdmin
