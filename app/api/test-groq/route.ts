@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { groq } from "@/lib/groq";
 
+// Force dynamic rendering for API routes with static export
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const completion = await groq.chat.completions.create({
