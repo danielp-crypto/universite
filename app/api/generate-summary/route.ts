@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { groq } from '@/lib/groq';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
 
-// Map-reduce over many chunks (long lectures) plus the Gemini reduce call
+// Map-reduce over many chunks (long lectures) plus the Groq reduce call
 // can take a while. Vercel Hobby hard-caps function duration at 60s (a
 // higher value fails to deploy at all, not just gets silently clamped),
 // so this is the max we can set until/unless the project moves to Pro.
 export const maxDuration = 60;
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 // Safety cap to avoid runaway cost/quota usage on pathological inputs.
 // This is generous on purpose — a 90min lecture transcript is typically
@@ -255,16 +254,17 @@ D) [option text]
 CORRECT: [A, B, C, or D]
 ` + REDUCE_FOOTER;
 
-// Shared Gemini call with retry + backoff. Rate limiting (HTTP 429) needs a
+// Shared Groq call with retry + backoff. Rate limiting (HTTP 429) needs a
 // fundamentally different backoff strategy than other transient failures:
-// Gemini's free tier quota resets on a per-minute window, so a 1-4 second
+// Groq's rate limit resets on a per-minute window, so a 1-4 second
 // exponential backoff is pointless against it — by the time you retry,
 // you're still in the same rate-limited window. This waits long enough to
-// actually clear it, honoring a Retry-After header if Gemini provides one.
-async function callGemini(
-  body: Record<string, unknown>,
+// actually clear it.
+async function callGroq(
+  messages: { role: string; content: string }[],
   context: string,
-  maxRetries: number
+  maxRetries: number,
+  maxTokens: number
 ): Promise<{ text: string; finishReason?: string }> {
   let retryDelay = 2000;
   let lastError = '';
@@ -273,57 +273,40 @@ async function callGemini(
     let wasRateLimited = false;
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': GEMINI_API_KEY,
-          },
-          body: JSON.stringify(body),
+      const completion = await groq.chat.completions.create({
+        model: 'openai/gpt-oss-20b',
+        messages,
+        temperature: 0.2,
+        max_tokens: maxTokens,
+      });
+
+      const text = completion.choices[0]?.message?.content || '';
+      const finishReason = completion.choices[0]?.finish_reason;
+
+      if (text) {
+        if (finishReason === 'length') {
+          console.warn(`${context}: response was cut off by max_tokens.`);
         }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        const candidate = result.candidates?.[0];
-        const text = candidate?.content?.parts?.[0]?.text || '';
-        const finishReason = candidate?.finishReason;
-
-        if (text) {
-          if (finishReason === 'MAX_TOKENS') {
-            console.warn(`${context}: response was cut off by maxOutputTokens.`);
-          }
-          return { text, finishReason };
-        }
-
-        // Empty text usually means a safety/recitation block, or the model
-        // returning nothing for the given input — worth retrying rather
-        // than treating an empty string as a valid summary.
-        lastError = `empty response (finishReason: ${finishReason || 'unknown'})`;
-      } else if (response.status === 429) {
-        wasRateLimited = true;
-        const retryAfterHeader = response.headers.get('retry-after');
-        const retryAfterMs = retryAfterHeader ? parseInt(retryAfterHeader, 10) * 1000 : NaN;
-        // Honor Retry-After if Gemini sent one; otherwise wait long enough
-        // to clear a typical per-minute quota window rather than guessing low.
-        retryDelay = !isNaN(retryAfterMs) ? retryAfterMs : Math.max(retryDelay, 20000);
-        lastError = `HTTP 429 (rate limited): ${await response.text()}`;
-      } else {
-        lastError = `HTTP ${response.status}: ${await response.text()}`;
+        return { text, finishReason };
       }
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : String(error);
+
+      // Empty text — worth retrying rather than treating as valid
+      lastError = `empty response (finishReason: ${finishReason || 'unknown'})`;
+    } catch (error: any) {
+      if (error?.status === 429) {
+        wasRateLimited = true;
+        const retryAfterMs = error?.headers?.['retry-after'] ? parseInt(error.headers['retry-after'], 10) * 1000 : NaN;
+        retryDelay = !isNaN(retryAfterMs) ? retryAfterMs : Math.max(retryDelay, 20000);
+        lastError = `HTTP 429 (rate limited): ${error.message || 'Unknown error'}`;
+      } else {
+        lastError = error?.message || String(error);
+      }
     }
 
     console.warn(`${context} attempt ${attempt + 1}/${maxRetries} failed: ${lastError}`);
 
     if (attempt < maxRetries - 1) {
       await new Promise(resolve => setTimeout(resolve, retryDelay));
-      // Only escalate exponentially for non-rate-limit errors — a 429's
-      // wait time was already set explicitly above and shouldn't also
-      // double on top of that.
       if (!wasRateLimited) {
         retryDelay *= 2;
       }
@@ -350,7 +333,7 @@ function splitIntoChunks(transcript: string, wordsPerChunk: number = 1400): stri
 }
 
 // Runs async tasks with limited concurrency so we don't blow past the
-// Gemini API's requests-per-minute limit on longer transcripts (which can
+// Groq API's requests-per-minute limit on longer transcripts (which can
 // produce 15-20+ chunks). Failed/rate-limited calls are handled by the
 // caller (mapChunk already catches and returns '' on failure).
 async function runWithConcurrencyLimit<T>(
@@ -375,17 +358,11 @@ async function runWithConcurrencyLimit<T>(
 // Map step: Extract key info from each chunk
 async function mapChunk(chunk: string, index: number): Promise<string> {
   try {
-    const { text } = await callGemini(
-      {
-        contents: [{ parts: [{ text: MAP_PROMPT + chunk }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 600,
-          thinkingConfig: { thinkingBudget: 0 }
-        }
-      },
+    const { text } = await callGroq(
+      [{ role: 'user', content: MAP_PROMPT + chunk }],
       `Map chunk ${index}`,
-      3 // bumped from 2 — now that backoff actually waits out a rate limit, more attempts is worth it
+      3,
+      600
     );
     return text;
   } catch (error) {
@@ -395,30 +372,24 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
   }
 }
 
-// Reduce step: Generate the final summary as THREE independent parallel Gemini
+// Reduce step: Generate the final summary as THREE independent parallel Groq
 // calls instead of one giant sequential one. Each covers a disjoint set of
-// sections and gets its own (smaller) maxOutputTokens budget — total wall-clock
+// sections and gets its own (smaller) max_tokens budget — total wall-clock
 // time becomes roughly the slowest of the three, not the sum of all of them.
 async function reduceSummary(extractedContent: string): Promise<string> {
-  const calls: { prompt: string; context: string; maxOutputTokens: number }[] = [
-    { prompt: REDUCE_PROMPT_CONCEPTS_GLOSSARY, context: 'Reduce: Key Concepts + Glossary', maxOutputTokens: 4096 },
-    { prompt: REDUCE_PROMPT_NOTES_SUMMARY, context: 'Reduce: Full Notes + Assessment Hints + 10-Bullet Summary', maxOutputTokens: 16384 },
-    { prompt: REDUCE_PROMPT_TESTS_QUIZ, context: 'Reduce: Test Predictor + Quiz Bank', maxOutputTokens: 16384 },
+  const calls: { prompt: string; context: string; maxTokens: number }[] = [
+    { prompt: REDUCE_PROMPT_CONCEPTS_GLOSSARY, context: 'Reduce: Key Concepts + Glossary', maxTokens: 4096 },
+    { prompt: REDUCE_PROMPT_NOTES_SUMMARY, context: 'Reduce: Full Notes + Assessment Hints + 10-Bullet Summary', maxTokens: 16384 },
+    { prompt: REDUCE_PROMPT_TESTS_QUIZ, context: 'Reduce: Test Predictor + Quiz Bank', maxTokens: 16384 },
   ];
 
   const results = await Promise.all(
-    calls.map(({ prompt, context, maxOutputTokens }) =>
-      callGemini(
-        {
-          contents: [{ parts: [{ text: prompt + extractedContent }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens,
-            thinkingConfig: { thinkingBudget: 0 }
-          }
-        },
+    calls.map(({ prompt, context, maxTokens }) =>
+      callGroq(
+        [{ role: 'user', content: prompt + extractedContent }],
         context,
-        5 // bumped from 3 — now that backoff actually waits out a rate limit, more attempts is worth it
+        5,
+        maxTokens
       )
     )
   );
@@ -430,8 +401,8 @@ async function reduceSummary(extractedContent: string): Promise<string> {
 }
 
 async function generateSummary(transcript: string): Promise<{ summary: string; degraded: boolean }> {
-  if (!GEMINI_API_KEY) {
-    console.warn('GEMINI_API_KEY is not set — using minimally-structured fallback');
+  if (!process.env.GROQ_API_KEY) {
+    console.warn('GROQ_API_KEY is not set — using minimally-structured fallback');
     return { summary: generateFallbackSummary(transcript), degraded: true };
   }
 
@@ -443,8 +414,8 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
 
     // Step 2: Map - Extract key info from each chunk (with index for debugging).
     // Limited to 3 concurrent requests — kept modest specifically because the
-    // reduce step right after this fires 3 more parallel Gemini calls of its
-    // own, and both draw from the same per-minute free-tier quota. A larger
+    // reduce step right after this fires 3 more parallel Groq calls of its
+    // own, and both draw from the same per-minute quota. A larger
     // map burst was leaving no headroom for the reduce step that follows it.
     const mapResults = await runWithConcurrencyLimit(
       chunks.map((chunk, index) => () => mapChunk(chunk, index)),
@@ -458,12 +429,12 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
 
     console.log('Extracted content length:', extractedContent.length);
 
-    // Reduce the extracted, tagged content. callGemini now retries with
+    // Reduce the extracted, tagged content. callGroq now retries with
     // rate-limit-aware backoff (up to 5 attempts per call, waiting out an
     // actual per-minute quota window instead of a token 1-4s delay), so a
     // transient failure here is handled by that retry logic directly rather
     // than by falling through to a second attempt. A second full attempt
-    // used to fire 3 more parallel Gemini calls immediately after the first
+    // used to fire 3 more parallel Groq calls immediately after the first
     // 3 had already failed — almost always into the same still-rate-limited
     // window, which made failures worse, not better.
     if (extractedContent.length > 0) {
@@ -490,7 +461,7 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
     }
 
     // Last resort: the structured attempt failed even after retries (e.g. a
-    // persistent Gemini outage, not just a transient rate limit). Return a
+    // persistent Groq outage, not just a transient rate limit). Return a
     // minimally-structured, clearly-flagged summary so the page still has
     // Key Concepts / Full Lecture Notes sections to render instead of a
     // blank or malformed page.
@@ -529,7 +500,7 @@ const NAIVE_KEYWORD_STOPWORDS = new Set([
 ]);
 
 // Very rough keyword picker used only by the last-resort fallback below, so
-// the Key Concepts bubbles aren't empty even when Gemini is unreachable.
+// the Key Concepts bubbles aren't empty even when Groq is unreachable.
 // This is NOT a substitute for the real AI-generated Key Concepts section.
 function extractNaiveKeywords(transcript: string, count = 5): string[] {
   const words = transcript
@@ -547,7 +518,7 @@ function extractNaiveKeywords(transcript: string, count = 5): string[] {
     .map(([word]) => word.charAt(0).toUpperCase() + word.slice(1));
 }
 
-// Last-resort summary used only when both real Gemini attempts fail (e.g. a
+// Last-resort summary used only when both real Groq attempts fail (e.g. a
 // persistent outage). Kept in the same "## Heading" / "### Subheading"
 // structure the app's section-parsing regex expects, so the page renders
 // Key Concepts bubbles and a Full Lecture Notes card instead of blank
