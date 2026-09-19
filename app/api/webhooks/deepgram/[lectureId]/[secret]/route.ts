@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
+import { groq } from '@/lib/groq';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
@@ -158,18 +159,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 }
 
 async function generateLectureTitle(transcript: string): Promise<string | null> {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-  if (!GEMINI_API_KEY) return null;
+  if (!process.env.GROQ_API_KEY) return null;
   const excerpt = transcript.slice(0, 4000);
   const prompt = `Based on this excerpt from a university lecture transcript, write a short, descriptive title (5-8 words) capturing the main topic covered. Return ONLY the title text — no quotes, no markdown, no trailing punctuation, no preamble or explanation.\n\nTranscript excerpt:\n${excerpt}`;
   try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 30, thinkingConfig: { thinkingBudget: 0 } } }),
+    const completion = await groq.chat.completions.create({
+      model: 'openai/gpt-oss-20b',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      max_tokens: 30,
     });
-    if (!response.ok) return null;
-    const result = await response.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const text = completion.choices[0]?.message?.content?.trim();
     return text ? text.replace(/^["'*]+|["'*]+$/g, '').slice(0, 100) : null;
   } catch (err) { console.error('Title generation threw:', err); return null; }
 }
