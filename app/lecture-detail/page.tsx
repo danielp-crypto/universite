@@ -1708,8 +1708,9 @@ function LectureDetailPageContent() {
                     <div className="text-3xl mb-2">🗒️</div>
                     <p className="text-slate-500 text-sm mb-4">No notes available for this lecture yet.</p>
                     <button
-                      onClick={handleProcessTranscript}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
+                      onClick={handleRegenerateSummary}
+                      disabled={isProcessing}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       ✨ Generate Summary
                     </button>
