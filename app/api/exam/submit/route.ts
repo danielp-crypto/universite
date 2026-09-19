@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { groq } from '@/lib/groq';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 export const maxDuration = 60;
 
 const PASS_THRESHOLD = 70;
@@ -17,6 +17,60 @@ function extractJson(text: string): any {
     if (match) return JSON.parse(match[0]);
     throw new Error('Could not extract JSON from model response');
   }
+}
+
+// Same rate-limit-aware retry as generate-summary's callGroq — a fixed
+// exponential backoff (1s/2s/4s) is pointless against Groq's per-minute
+// rate limit window; this waits out an actual retry-after (or a 20s
+// minimum) instead of retrying straight back into the same window.
+async function callGroqJson(
+  messages: any[],
+  context: string,
+  maxTokens: number
+): Promise<any> {
+  const maxRetries = 5;
+  let retryDelay = 2000;
+  let lastError = '';
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    let wasRateLimited = false;
+
+    try {
+      const completion = await groq.chat.completions.create({
+        model: 'openai/gpt-oss-20b',
+        messages,
+        temperature: 0.2,
+        max_tokens: maxTokens,
+        response_format: { type: 'json_object' },
+      });
+
+      const text = completion.choices[0]?.message?.content || '';
+      if (text) {
+        return extractJson(text);
+      }
+      lastError = `empty response (finishReason: ${completion.choices[0]?.finish_reason || 'unknown'})`;
+    } catch (error: any) {
+      if (error?.status === 429) {
+        wasRateLimited = true;
+        const retryAfterMs = error?.headers?.['retry-after'] ? parseInt(error.headers['retry-after'], 10) * 1000 : NaN;
+        retryDelay = !isNaN(retryAfterMs) ? retryAfterMs : Math.max(retryDelay, 20000);
+        lastError = `HTTP 429 (rate limited): ${error.message || 'Unknown error'}`;
+      } else {
+        lastError = error?.message || String(error);
+      }
+    }
+
+    console.warn(`${context} attempt ${attempt + 1}/${maxRetries} failed: ${lastError}`);
+
+    if (attempt < maxRetries - 1) {
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      if (!wasRateLimited) {
+        retryDelay *= 2;
+      }
+    }
+  }
+
+  throw new Error(`${context} failed after ${maxRetries} attempts: ${lastError}`);
 }
 
 export async function POST(request: NextRequest) {
@@ -101,13 +155,10 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    // FIX: short/long answers are graded in ONE batched Gemini call instead
-    // of one call per question fired in parallel — the same rate-limit
-    // failure pattern already root-caused and fixed in generate-summary.
     let openResults: any[] = [];
     if (openQuestions.length > 0) {
-      if (!GEMINI_API_KEY) {
-        return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
+      if (!process.env.GROQ_API_KEY) {
+        return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 });
       }
 
       const gradingItems = openQuestions.map((q) => ({
@@ -128,37 +179,42 @@ Question: ${item.question}
 Expected answer: ${item.expected_answer}
 Student's answer: ${item.student_answer || '(no answer given)'}`).join('\n\n')}
 
-Respond with ONLY a JSON array, no markdown fences, no commentary. One object per item, in the same order, each shaped exactly like:
+Respond with ONLY a JSON object, no markdown fences, no commentary, shaped exactly like:
 {
-  "id": "...",
-  "score": 0-100,
-  "is_correct": true/false,
-  "feedback": "Detailed, specific feedback on this particular answer",
-  "missing_concepts": ["concept the answer should have covered but didn't"],
-  "suggested_improvements": ["concrete, actionable suggestion"]
-}`;
+  "results": [
+    {
+      "id": "...",
+      "score": 0-100,
+      "is_correct": true/false,
+      "feedback": "Detailed, specific feedback on this particular answer",
+      "missing_concepts": ["concept the answer should have covered but didn't"],
+      "suggested_improvements": ["concrete, actionable suggestion"]
+    }
+  ]
+}
+One object per item, in the same order as the items above.`;
 
-      // FIX: gemini-pro is deprecated. gemini-2.5-flash matches the rest of the app.
-      const aiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 8192,
-              thinkingConfig: { thinkingBudget: 0 },
-              responseMimeType: 'application/json',
-            },
-          }),
-        }
-      );
+      try {
+        const parsed = await callGroqJson([{ role: 'user', content: prompt }], 'Exam grading', 8192);
+        const graded = Array.isArray(parsed?.results) ? parsed.results : [];
+        const gradedById = new Map(graded.map((g: any) => [g.id, g]));
 
-      if (!aiResponse.ok) {
-        const errorText = await aiResponse.text().catch(() => '');
-        console.error('AI grading error:', aiResponse.status, errorText);
+        openResults = openQuestions.map((q) => {
+          const g: any = gradedById.get(q.id);
+          const score = typeof g?.score === 'number' ? Math.max(0, Math.min(100, g.score)) : 0;
+          return {
+            question_id: q.id,
+            answer: (answerByQuestionId.get(q.id) as string) || '',
+            score,
+            is_correct: typeof g?.is_correct === 'boolean' ? g.is_correct : score >= PASS_THRESHOLD,
+            feedback: g?.feedback || '',
+            missing_concepts: Array.isArray(g?.missing_concepts) ? g.missing_concepts : [],
+            suggested_improvements: Array.isArray(g?.suggested_improvements) ? g.suggested_improvements : [],
+            model_answer: q.expected_answer,
+          };
+        });
+      } catch (gradingError) {
+        console.error('AI grading error after all retries:', gradingError);
         openResults = openQuestions.map((q) => ({
           question_id: q.id,
           answer: (answerByQuestionId.get(q.id) as string) || '',
@@ -169,40 +225,6 @@ Respond with ONLY a JSON array, no markdown fences, no commentary. One object pe
           suggested_improvements: [],
           model_answer: q.expected_answer,
         }));
-      } else {
-        try {
-          const aiData = await aiResponse.json();
-          const generatedText = aiData.candidates[0].content.parts[0].text;
-          const graded = extractJson(generatedText);
-          const gradedById = new Map(graded.map((g: any) => [g.id, g]));
-
-          openResults = openQuestions.map((q) => {
-            const g: any = gradedById.get(q.id);
-            const score = typeof g?.score === 'number' ? Math.max(0, Math.min(100, g.score)) : 0;
-            return {
-              question_id: q.id,
-              answer: (answerByQuestionId.get(q.id) as string) || '',
-              score,
-              is_correct: typeof g?.is_correct === 'boolean' ? g.is_correct : score >= PASS_THRESHOLD,
-              feedback: g?.feedback || '',
-              missing_concepts: Array.isArray(g?.missing_concepts) ? g.missing_concepts : [],
-              suggested_improvements: Array.isArray(g?.suggested_improvements) ? g.suggested_improvements : [],
-              model_answer: q.expected_answer,
-            };
-          });
-        } catch (parseError) {
-          console.error('Error parsing batched grading response:', parseError);
-          openResults = openQuestions.map((q) => ({
-            question_id: q.id,
-            answer: (answerByQuestionId.get(q.id) as string) || '',
-            score: 0,
-            is_correct: false,
-            feedback: 'Unable to parse grading result.',
-            missing_concepts: [],
-            suggested_improvements: [],
-            model_answer: q.expected_answer,
-          }));
-        }
       }
     }
 
@@ -309,8 +331,8 @@ async function analyzeWeakTopics(
 
   if (incorrectAnswers.length === 0) return;
 
-  if (!GEMINI_API_KEY) {
-    console.error('Weak-topic analysis skipped: GEMINI_API_KEY is not configured');
+  if (!process.env.GROQ_API_KEY) {
+    console.error('Weak-topic analysis skipped: GROQ_API_KEY is not configured');
     return;
   }
 
@@ -336,33 +358,9 @@ Rules:
 - Include only concepts supported by the incorrect answers and lecture content.`;
 
   try {
-    const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 2048,
-            thinkingConfig: { thinkingBudget: 0 },
-            responseMimeType: 'application/json',
-          },
-        }),
-      }
-    );
+    const analysisResult = await callGroqJson([{ role: 'user', content: prompt }], 'Weak topic analysis', 2048);
 
-    if (!aiResponse.ok) {
-      console.error('AI weak topic analysis error:', aiResponse.status, await aiResponse.text().catch(() => ''));
-      return;
-    }
-
-    const aiData = await aiResponse.json();
-    const generatedText = aiData.candidates[0].content.parts[0].text;
-    const analysisResult = extractJson(generatedText);
-
-    if (!Array.isArray(analysisResult.weak_topics) || analysisResult.weak_topics.length === 0) {
+    if (!Array.isArray(analysisResult?.weak_topics) || analysisResult.weak_topics.length === 0) {
       return;
     }
 
