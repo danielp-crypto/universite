@@ -261,7 +261,7 @@ CORRECT: [A, B, C, or D]
 // you're still in the same rate-limited window. This waits long enough to
 // actually clear it.
 async function callGroq(
-  messages: { role: string; content: string }[],
+  messages: any[],
   context: string,
   maxRetries: number,
   maxTokens: number
