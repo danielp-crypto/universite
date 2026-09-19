@@ -115,15 +115,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const summaryData = await summaryResponse.json();
         summary = summaryData.summary || '';
         summaryDegraded = !!summaryData.degraded;
-      } else {
-        const errorText = await summaryResponse.text().catch(() => 'Unknown error');
-        summaryError = `generate-summary responded ${summaryResponse.status}: ${errorText}`;
-        console.error('Summary generation failed:', summaryError);
-      }
-    } catch (err: any) {
-      summaryError = `generate-summary threw: ${err?.message || 'unknown error'}`;
-      console.error('Summary generation exception:', summaryError);
-    }
+      } else summaryError = `generate-summary responded ${summaryResponse.status}`;
+    } catch (err: any) { summaryError = `generate-summary threw: ${err?.message || 'unknown error'}`; }
 
     const generatedTitle = isGenericTitle ? await generateLectureTitle(transcriptForAI) : null;
     const updatePayload: Record<string, any> = {
