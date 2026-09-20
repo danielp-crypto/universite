@@ -67,8 +67,8 @@ export default function AssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
   const [title, setTitle] = useState("");
-  const [moduleCode, setModuleCode] = useState("");
-  const [moduleName, setModuleName] = useState("");
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [modules, setModules] = useState<any[]>([]);
   const [brief, setBrief] = useState("");
 
   const [studentWork, setStudentWork] = useState("");
@@ -86,6 +86,7 @@ export default function AssignmentsPage() {
 
   useEffect(() => {
     loadAssignments();
+    loadModules();
   }, []);
 
   async function getToken() {
@@ -112,6 +113,26 @@ export default function AssignmentsPage() {
       });
 
     setAssignments(data || []);
+  }
+
+  async function loadModules() {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("modules")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setModules(data || []);
+    } catch (error) {
+      console.error("Error loading modules:", error);
+    }
   }
 
   async function analyzeAssignment() {
@@ -142,8 +163,8 @@ export default function AssignmentsPage() {
 
           body: JSON.stringify({
             title,
-            moduleCode,
-            moduleName,
+            moduleCode: selectedModule || "",
+            moduleName: modules.find(m => m.id === selectedModule)?.name || "",
             assignmentBrief: brief,
           }),
         }
@@ -260,8 +281,7 @@ export default function AssignmentsPage() {
   function startNewAssignment() {
     setAssignment(null);
     setTitle("");
-    setModuleCode("");
-    setModuleName("");
+    setSelectedModule(null);
     setBrief("");
     setStudentWork("");
     setMessages([]);
@@ -271,8 +291,7 @@ export default function AssignmentsPage() {
   function selectAssignment(item: Assignment) {
     setAssignment(item);
     setTitle(item.title);
-    setModuleCode(item.module_code || "");
-    setModuleName(item.module_name || "");
+    setSelectedModule(null);
     setBrief(item.assignment_brief);
     setStudentWork(item.student_work || "");
 
@@ -364,24 +383,20 @@ export default function AssignmentsPage() {
                     className="rounded-lg border border-slate-300 bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <input
-                      value={moduleCode}
-                      onChange={(e) =>
-                        setModuleCode(e.target.value)
-                      }
-                      placeholder="Module code e.g. COS1511"
-                      className="rounded-lg border border-slate-300 bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-
-                    <input
-                      value={moduleName}
-                      onChange={(e) =>
-                        setModuleName(e.target.value)
-                      }
-                      placeholder="Module name"
-                      className="rounded-lg border border-slate-300 bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Module</label>
+                    <select
+                      value={selectedModule || ""}
+                      onChange={(e) => setSelectedModule(e.target.value || null)}
+                      className="w-full rounded-lg border border-slate-300 bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    >
+                      <option value="">Select a module (optional)</option>
+                      {modules.map((module) => (
+                        <option key={module.id} value={module.id}>
+                          {module.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <textarea
