@@ -260,16 +260,32 @@ CORRECT: [A, B, C, or D]
 // exponential backoff is pointless against it — by the time you retry,
 // you're still in the same rate-limited window. This waits long enough to
 // actually clear it.
+//
+// `deadline` (a Date.now()-style timestamp) is optional but important when
+// this is called from generateSummary's own budget-aware flow: rate-limit
+// backoff can legitimately want to wait 20s+ per retry, and stacking
+// several of those across map+reduce calls can quietly exceed Vercel's
+// hard 60s function cap. When that happens Vercel kills the function
+// outright and the caller (e.g. the Deepgram webhook, which has its own
+// clock already ticking from the nested fetch) sees a raw 504 instead of
+// a clean response — which is exactly the failure this deadline exists to
+// avoid. Once the deadline is reached, this stops retrying and throws
+// immediately so the caller can fall back gracefully instead.
 async function callGroq(
   messages: any[],
   context: string,
   maxRetries: number,
-  maxTokens: number
+  maxTokens: number,
+  deadline?: number
 ): Promise<{ text: string; finishReason?: string }> {
   let retryDelay = 2000;
   let lastError = '';
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
+    if (deadline && Date.now() >= deadline) {
+      throw new Error(`${context}: giving up — internal time budget exceeded before attempt ${attempt + 1}`);
+    }
+
     let wasRateLimited = false;
 
     try {
@@ -306,7 +322,17 @@ async function callGroq(
     console.warn(`${context} attempt ${attempt + 1}/${maxRetries} failed: ${lastError}`);
 
     if (attempt < maxRetries - 1) {
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      // Don't wait past the deadline just to make a retry we know we won't
+      // have time to use — cap the sleep to whatever's actually left.
+      let sleepMs = retryDelay;
+      if (deadline) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) {
+          throw new Error(`${context}: giving up — internal time budget exceeded after attempt ${attempt + 1}`);
+        }
+        sleepMs = Math.min(sleepMs, remaining);
+      }
+      await new Promise(resolve => setTimeout(resolve, sleepMs));
       if (!wasRateLimited) {
         retryDelay *= 2;
       }
@@ -356,13 +382,14 @@ async function runWithConcurrencyLimit<T>(
 }
 
 // Map step: Extract key info from each chunk
-async function mapChunk(chunk: string, index: number): Promise<string> {
+async function mapChunk(chunk: string, index: number, deadline: number): Promise<string> {
   try {
     const { text } = await callGroq(
       [{ role: 'user', content: MAP_PROMPT + chunk }],
       `Map chunk ${index}`,
       3,
-      600
+      600,
+      deadline
     );
     return text;
   } catch (error) {
@@ -376,7 +403,7 @@ async function mapChunk(chunk: string, index: number): Promise<string> {
 // calls instead of one giant sequential one. Each covers a disjoint set of
 // sections and gets its own (smaller) max_tokens budget — total wall-clock
 // time becomes roughly the slowest of the three, not the sum of all of them.
-async function reduceSummary(extractedContent: string): Promise<string> {
+async function reduceSummary(extractedContent: string, deadline: number): Promise<string> {
   const calls: { prompt: string; context: string; maxTokens: number }[] = [
     { prompt: REDUCE_PROMPT_CONCEPTS_GLOSSARY, context: 'Reduce: Key Concepts + Glossary', maxTokens: 4096 },
     { prompt: REDUCE_PROMPT_NOTES_SUMMARY, context: 'Reduce: Full Notes + Assessment Hints + 10-Bullet Summary', maxTokens: 16384 },
@@ -389,7 +416,8 @@ async function reduceSummary(extractedContent: string): Promise<string> {
         [{ role: 'user', content: prompt + extractedContent }],
         context,
         5,
-        maxTokens
+        maxTokens,
+        deadline
       )
     )
   );
@@ -406,6 +434,17 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
     return { summary: generateFallbackSummary(transcript), degraded: true };
   }
 
+  // This function's own maxDuration is 60s, but when called from the
+  // Deepgram webhook (the normal path), that nested fetch counts against
+  // the WEBHOOK's clock too — its own DB reads/writes and title generation
+  // eat into the same budget before this even starts. 45s leaves enough
+  // margin for those, plus this function's own wrap-up, so we hit a clean
+  // internal fallback instead of Vercel force-killing the function and the
+  // webhook seeing a raw 504 (which used to be exactly what left lectures
+  // completed with no summary at all — see deepgram_webhook_logs entries
+  // with outcome 'completed_without_summary' and error containing "responded 504").
+  const deadline = Date.now() + 45000;
+
   try {
     // Step 1: Split transcript into chunks
     const chunks = splitIntoChunks(transcript);
@@ -418,7 +457,7 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
     // own, and both draw from the same per-minute quota. A larger
     // map burst was leaving no headroom for the reduce step that follows it.
     const mapResults = await runWithConcurrencyLimit(
-      chunks.map((chunk, index) => () => mapChunk(chunk, index)),
+      chunks.map((chunk, index) => () => mapChunk(chunk, index, deadline)),
       3
     );
 
@@ -429,17 +468,19 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
 
     console.log('Extracted content length:', extractedContent.length);
 
-    // Reduce the extracted, tagged content. callGroq now retries with
-    // rate-limit-aware backoff (up to 5 attempts per call, waiting out an
-    // actual per-minute quota window instead of a token 1-4s delay), so a
-    // transient failure here is handled by that retry logic directly rather
-    // than by falling through to a second attempt. A second full attempt
-    // used to fire 3 more parallel Groq calls immediately after the first
-    // 3 had already failed — almost always into the same still-rate-limited
-    // window, which made failures worse, not better.
-    if (extractedContent.length > 0) {
+    if (Date.now() >= deadline) {
+      console.warn('Time budget exhausted after map step — skipping reduce, falling back');
+    } else if (extractedContent.length > 0) {
+      // Reduce the extracted, tagged content. callGroq now retries with
+      // rate-limit-aware backoff (up to 5 attempts per call, waiting out an
+      // actual per-minute quota window instead of a token 1-4s delay), so a
+      // transient failure here is handled by that retry logic directly rather
+      // than by falling through to a second attempt. A second full attempt
+      // used to fire 3 more parallel Groq calls immediately after the first
+      // 3 had already failed — almost always into the same still-rate-limited
+      // window, which made failures worse, not better.
       try {
-        const summary = await reduceSummary(extractedContent);
+        const summary = await reduceSummary(extractedContent, deadline);
         console.log('Generated summary length:', summary.length);
         console.log('Summary preview:', summary.substring(0, 200));
         return { summary, degraded: false };
@@ -452,7 +493,7 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
       // transcript directly, since there's no extracted content to retry.
       console.warn('No content extracted from any chunk — attempting the raw transcript directly');
       try {
-        const summary = await reduceSummary(transcript);
+        const summary = await reduceSummary(transcript, deadline);
         console.log('Generated summary from raw transcript, length:', summary.length);
         return { summary, degraded: false };
       } catch (rawError) {

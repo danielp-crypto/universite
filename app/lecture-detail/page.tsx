@@ -750,12 +750,23 @@ function LectureDetailPageContent() {
         const response = await fetch(currentLecture.audioUrl);
         audioBlob = await response.blob();
       } else if (currentLecture.file_path) {
-        const token = session.access_token;
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hiruufvoyigrcdohqjkm.supabase.co';
-        const downloadUrl = `${supabaseUrl}/storage/v1/object/public/${currentLecture.file_path}`;
-        const response = await fetch(downloadUrl, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        // The lecture-media bucket is private — the public object endpoint
+        // rejects every request regardless of any Authorization header
+        // attached to it (that header does nothing there; it's simply the
+        // wrong endpoint for a private bucket). A signed URL is required,
+        // so fetch one from the server first.
+        const urlResponse = await fetch(`/api/lectures/${currentLecture.id}/audio-url`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
         });
+        if (!urlResponse.ok) {
+          const urlResult = await urlResponse.json().catch(() => ({}));
+          if (urlResult.error === 'file_unavailable') {
+            throw new Error('The original audio for this lecture is no longer available — it\'s deleted once processing succeeds.');
+          }
+          throw new Error('Failed to prepare audio file for download');
+        }
+        const { url: signedUrl } = await urlResponse.json();
+        const response = await fetch(signedUrl);
         if (!response.ok) throw new Error('Failed to download audio file');
         audioBlob = await response.blob();
       } else {
@@ -1708,7 +1719,7 @@ function LectureDetailPageContent() {
                     <div className="text-3xl mb-2">🗒️</div>
                     <p className="text-slate-500 text-sm mb-4">No notes available for this lecture yet.</p>
                     <button
-                      onClick={handleProcessTranscript}
+                      onClick={handleRegenerateSummary}
                       className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
                     >
                       ✨ Generate Summary
