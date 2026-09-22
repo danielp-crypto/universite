@@ -289,12 +289,26 @@ async function callGroq(
     let wasRateLimited = false;
 
     try {
-      const completion = await groq.chat.completions.create({
-        model: 'openai/gpt-oss-20b',
-        messages,
-        temperature: 0.2,
-        max_tokens: maxTokens,
-      });
+      // maxRetries: 0 disables the Groq SDK's OWN internal retry (defaults
+      // to 2) — without this, a single call in our loop could silently
+      // turn into up to 3 real HTTP attempts with their own backoff,
+      // invisible to and uncounted by our deadline logic entirely. timeout
+      // hard-caps this one call to whatever's actually left before our
+      // deadline, so a single slow generation (this model can be asked for
+      // up to 16k output tokens in the reduce step, which can genuinely
+      // take a while) can't quietly consume the whole remaining budget on
+      // its own — it gets cut off and treated as a retry-worthy failure
+      // like any other, same as a 429 would be.
+      const remainingMs = deadline ? Math.max(1000, deadline - Date.now()) : 55000;
+      const completion = await groq.chat.completions.create(
+        {
+          model: 'openai/gpt-oss-20b',
+          messages,
+          temperature: 0.2,
+          max_tokens: maxTokens,
+        },
+        { timeout: remainingMs, maxRetries: 0 }
+      );
 
       const text = completion.choices[0]?.message?.content || '';
       const finishReason = completion.choices[0]?.finish_reason;
@@ -437,13 +451,16 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
   // This function's own maxDuration is 60s, but when called from the
   // Deepgram webhook (the normal path), that nested fetch counts against
   // the WEBHOOK's clock too — its own DB reads/writes and title generation
-  // eat into the same budget before this even starts. 45s leaves enough
-  // margin for those, plus this function's own wrap-up, so we hit a clean
-  // internal fallback instead of Vercel force-killing the function and the
-  // webhook seeing a raw 504 (which used to be exactly what left lectures
-  // completed with no summary at all — see deepgram_webhook_logs entries
-  // with outcome 'completed_without_summary' and error containing "responded 504").
-  const deadline = Date.now() + 45000;
+  // eat into the same budget before this even starts, and neither of us
+  // can see Vercel's own cold-start overhead from inside our code. 35s
+  // (not 45s — the first version of this fix still hit real 504s, likely
+  // from cold start eating the difference) leaves real margin for all of
+  // that, so we hit a clean internal fallback instead of Vercel
+  // force-killing the function and the webhook seeing a raw 504 (which
+  // used to be exactly what left lectures completed with no summary at
+  // all — see deepgram_webhook_logs entries with outcome
+  // 'completed_without_summary' and error containing "responded 504").
+  const deadline = Date.now() + 35000;
 
   try {
     // Step 1: Split transcript into chunks
