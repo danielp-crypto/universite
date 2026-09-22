@@ -442,10 +442,10 @@ async function reduceSummary(extractedContent: string, deadline: number): Promis
   return results.map((r) => r.text.trim()).join('\n\n');
 }
 
-async function generateSummary(transcript: string): Promise<{ summary: string; degraded: boolean }> {
+async function generateSummary(transcript: string): Promise<{ summary: string; degraded: boolean; degradeReason?: string }> {
   if (!process.env.GROQ_API_KEY) {
     console.warn('GROQ_API_KEY is not set — using minimally-structured fallback');
-    return { summary: generateFallbackSummary(transcript), degraded: true };
+    return { summary: generateFallbackSummary(transcript), degraded: true, degradeReason: 'GROQ_API_KEY is not configured' };
   }
 
   // This function's own maxDuration is 60s, but when called from the
@@ -461,6 +461,7 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
   // all — see deepgram_webhook_logs entries with outcome
   // 'completed_without_summary' and error containing "responded 504").
   const deadline = Date.now() + 35000;
+  let degradeReason = 'unknown';
 
   try {
     // Step 1: Split transcript into chunks
@@ -486,7 +487,8 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
     console.log('Extracted content length:', extractedContent.length);
 
     if (Date.now() >= deadline) {
-      console.warn('Time budget exhausted after map step — skipping reduce, falling back');
+      degradeReason = `time budget exhausted after map step (${successfulChunks}/${chunks.length} chunks succeeded)`;
+      console.warn(degradeReason + ' — skipping reduce, falling back');
     } else if (extractedContent.length > 0) {
       // Reduce the extracted, tagged content. callGroq now retries with
       // rate-limit-aware backoff (up to 5 attempts per call, waiting out an
@@ -502,7 +504,8 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
         console.log('Summary preview:', summary.substring(0, 200));
         return { summary, degraded: false };
       } catch (reduceError) {
-        console.error('Reduce step failed on extracted content after all retries:', reduceError);
+        degradeReason = `reduce step failed: ${reduceError instanceof Error ? reduceError.message : String(reduceError)}`;
+        console.error(degradeReason);
       }
     } else {
       // Map step produced nothing usable from any chunk (rare — e.g. a very
@@ -514,7 +517,8 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
         console.log('Generated summary from raw transcript, length:', summary.length);
         return { summary, degraded: false };
       } catch (rawError) {
-        console.error('Raw-transcript attempt also failed:', rawError);
+        degradeReason = `map step produced nothing, and raw-transcript attempt also failed: ${rawError instanceof Error ? rawError.message : String(rawError)}`;
+        console.error(degradeReason);
       }
     }
 
@@ -523,11 +527,11 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
     // minimally-structured, clearly-flagged summary so the page still has
     // Key Concepts / Full Lecture Notes sections to render instead of a
     // blank or malformed page.
-    return { summary: generateFallbackSummary(transcript), degraded: true };
+    return { summary: generateFallbackSummary(transcript), degraded: true, degradeReason };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('Summary generation failed entirely, using last-resort fallback:', message);
-    return { summary: generateFallbackSummary(transcript), degraded: true };
+    return { summary: generateFallbackSummary(transcript), degraded: true, degradeReason: `unhandled exception: ${message}` };
   }
 }
 
@@ -656,12 +660,13 @@ export async function POST(request: NextRequest) {
       console.warn(`Transcript truncated from ${transcript.length} to ${MAX_TRANSCRIPT_CHARS} chars`);
     }
 
-    const { summary, degraded } = await generateSummary(truncatedTranscript);
+    const { summary, degraded, degradeReason } = await generateSummary(truncatedTranscript);
 
     return NextResponse.json({
       success: true,
       summary: summary,
       degraded, // true if this is the last-resort fallback, not real AI-generated notes
+      degradeReason, // present only when degraded — the actual underlying cause, for diagnosis
       truncated: transcript.length > MAX_TRANSCRIPT_CHARS,
       transcriptChars: transcript.length
     });

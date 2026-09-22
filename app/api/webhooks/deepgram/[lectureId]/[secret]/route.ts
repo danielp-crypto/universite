@@ -106,6 +106,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const isGenericTitle = /^Lecture \d+$/.test(claimedLecture.title || '');
     let summary = '';
     let summaryDegraded = false;
+    let summaryDegradeReason: string | null = null;
     let summaryError: string | null = null;
     try {
       const summaryResponse = await fetch(`${NEXT_PUBLIC_SITE_URL}/api/generate-summary`, {
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const summaryData = await summaryResponse.json();
         summary = summaryData.summary || '';
         summaryDegraded = !!summaryData.degraded;
+        summaryDegradeReason = summaryData.degradeReason || null;
       } else summaryError = `generate-summary responded ${summaryResponse.status}`;
     } catch (err: any) { summaryError = `generate-summary threw: ${err?.message || 'unknown error'}`; }
 
@@ -145,7 +147,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    await logWebhookEvent({ lectureId, outcome: summaryError ? 'completed_without_summary' : 'completed', transcriptLength: transcriptForAI.length, error: summaryError });
+    // summaryDegradeReason is the piece that used to be invisible: a
+    // degraded summary from a clean 200 response (generate-summary itself
+    // falling back internally, not the fetch failing) previously logged as
+    // plain 'completed' with no error text at all, making it indistinguishable
+    // from a real success without manually inspecting the summary content.
+    const logOutcome = summaryError ? 'completed_without_summary' : (summaryDegraded ? 'completed_with_degraded_summary' : 'completed');
+    await logWebhookEvent({ lectureId, outcome: logOutcome, transcriptLength: transcriptForAI.length, error: summaryError || summaryDegradeReason });
     await notifyStudent(lectureId, 'completed', !!summaryError);
     await cleanupStorageFile(lectureId);
     return NextResponse.json({ success: true });

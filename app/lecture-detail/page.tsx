@@ -897,7 +897,7 @@ function LectureDetailPageContent() {
     }
   };
 
-  const generateSummary = async (transcript: string): Promise<{ summary: string | null; degraded: boolean }> => {
+  const generateSummary = async (transcript: string): Promise<{ summary: string | null; degraded: boolean; degradeReason?: string }> => {
     try {
       const result = await apiPost('/api/generate-summary', {
         transcript: transcript
@@ -909,6 +909,7 @@ function LectureDetailPageContent() {
       return {
         summary: result.success ? result.summary : null,
         degraded: !!result.degraded,
+        degradeReason: result.degradeReason,
       };
     } catch (e) {
       return { summary: null, degraded: false };
@@ -934,7 +935,10 @@ function LectureDetailPageContent() {
       }
 
       // Generate new summary
-      const { summary, degraded } = await generateSummary(transcript);
+      const { summary, degraded, degradeReason } = await generateSummary(transcript);
+      if (degraded && degradeReason) {
+        console.warn('Summary regeneration fell back to simplified notes:', degradeReason);
+      }
       
       if (summary) {
         // Update processing results
