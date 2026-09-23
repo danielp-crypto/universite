@@ -83,7 +83,21 @@ CONTEXT: Student is at a South African university. May be at contact or distance
 
 Extracted content:\n\n`;
 
-const REDUCE_PROMPT_CONCEPTS_GLOSSARY = REDUCE_PREAMBLE + `Produce exactly these two sections, in this order:
+// A single combined reduce prompt, not three parallel ones. The 3-way split
+// (still visible in git history) was tuned for Gemini, where output token
+// count driving call duration was the bottleneck to optimize around — see
+// the now-removed comment that said exactly that. On Groq that reasoning is
+// backwards: openai/gpt-oss-20b generates around 1,000 tokens/sec, so
+// generation speed was never the constraint here. The real constraint is
+// Groq's free-tier rate limit for this model — confirmed directly from
+// https://console.groq.com/docs/rate-limits: 8,000 TPM (tokens per minute,
+// input AND output combined). Three concurrent calls each independently
+// paying the full input-token cost of the extracted content, with two of
+// them requesting up to 16,384 output tokens each, was requesting several
+// times the entire per-minute budget in one burst — a near-guaranteed 429
+// regardless of retry logic. One sequential call pays that input cost once
+// and keeps output capped well under the ceiling.
+const REDUCE_PROMPT = REDUCE_PREAMBLE + `Produce exactly these seven sections, in this order:
 
 ## Key Concepts [5-8 one-word terms]
 Pick which [DEF]/[FORMULA] items to keep using this priority order, in this order:
@@ -116,9 +130,6 @@ List every term the lecture actually used or relied on that a student would need
 There is no target count — a technical, jargon-heavy lecture might warrant 15+ terms, while a short or conversational one might genuinely only have 4 or 5. Do NOT add generic subject-area terms just to pad toward a round number — every term here must trace back to something the lecture actually said or used. Under-filling is always better than inventing filler entries.
 - **Term**: Definition
 - **Term**: Definition
-` + REDUCE_FOOTER;
-
-const REDUCE_PROMPT_NOTES_SUMMARY = REDUCE_PREAMBLE + `Produce exactly these three sections, in this order:
 
 ## Full Lecture Notes
 Provide comprehensive notes organized by topics. ALWAYS include slide numbers/references when mentioned — this helps students who may not have recorded the visuals. Use bullet points for key information. Include examples and explanations from the lecturer.
@@ -154,35 +165,32 @@ If you only study these, you'll cover what matters. Each point = 1 sentence, no 
 2. [Second key point]
 3. [Third key point]
 ...continue for as many points as are genuinely warranted, up to 10.
-` + REDUCE_FOOTER;
-
-const REDUCE_PROMPT_TESTS_QUIZ = REDUCE_PREAMBLE + `Produce exactly these two sections, in this order:
 
 ## Test Predictor: Exam-Style Questions + Memo
-Create 5-10 exam-style questions using Bloom's taxonomy — as many as the lecture's content genuinely supports, not padded to reach 10. Base ONLY on transcript facts. Include a memo/model answer for each question. These are "Test Predictor" questions designed to predict what will appear on actual exams. If the lecture only has enough distinct testable content for 5 or 6 solid questions, stop there — never invent a scenario or fact not grounded in the transcript just to reach a higher count.
+Create 5-8 exam-style questions using Bloom's taxonomy — as many as the lecture's content genuinely supports, not padded to reach 8. Base ONLY on transcript facts. Include a memo/model answer for each question. These are "Test Predictor" questions designed to predict what will appear on actual exams. If the lecture only has enough distinct testable content for 5 or 6 solid questions, stop there — never invent a scenario or fact not grounded in the transcript just to reach a higher count.
 
 Format:
 Q1 [Recall]: What is ___?
-A1: [Detailed model answer based on transcript]
+A1: [Concise model answer based on transcript]
 
 Q2 [Understand]: Explain why ___ happens
-A2: [Detailed model answer based on transcript]
+A2: [Concise model answer based on transcript]
 
 Q3 [Apply]: If ___, calculate ___
-A3: [Detailed model answer based on transcript]
+A3: [Concise model answer based on transcript]
 
 Q4 [Analyze]: Compare X vs Y from lecture
-A4: [Detailed model answer based on transcript]
+A4: [Concise model answer based on transcript]
 
 Q5 [Evaluate]: Which is better for ___ and why?
-A5: [Detailed model answer based on transcript]
+A5: [Concise model answer based on transcript]
 
-...continue in this pattern, cycling through Recall/Understand/Apply/Analyze/Evaluate question types, for as many questions as the lecture's content genuinely supports — up to 10, but stop earlier if the material runs out rather than padding.
+...continue in this pattern, cycling through Recall/Understand/Apply/Analyze/Evaluate question types, for as many questions as the lecture's content genuinely supports — up to 8, but stop earlier if the material runs out rather than padding. Keep each model answer to 1-2 sentences — this section shares a token budget with the rest of the notes, so concise, correct answers matter more than long ones.
 
-## Quiz Bank: 10 Multiple Choice Questions
-Create exactly 10 multiple-choice questions testing concepts from the lecture, so students can self-test with clickable options instead of only reading model answers. Unlike the Test Predictor above, this section keeps a fixed count of 10 regardless of lecture length, since it powers a scored self-test in the app — pull from the full scope of what was covered (including material beyond the Test Predictor questions if needed) to reach 10 distinct, non-repetitive questions. Base ONLY on transcript facts — never invent facts to fill a slot; if the lecture is genuinely thin, it's fine for some questions to test the same concept from a different angle rather than inventing new facts. Each question needs exactly 4 options (A-D) and exactly one correct answer. Wrong options must be plausible and topic-relevant — things a student who half-understood the lecture might pick — never silly, joke, or obviously-wrong answers.
+## Quiz Bank: 8 Multiple Choice Questions
+Create exactly 8 multiple-choice questions testing concepts from the lecture, so students can self-test with clickable options instead of only reading model answers. Unlike the Test Predictor above, this section keeps a fixed count regardless of lecture length, since it powers a scored self-test in the app — pull from the full scope of what was covered (including material beyond the Test Predictor questions if needed) to reach 8 distinct, non-repetitive questions. Base ONLY on transcript facts — never invent facts to fill a slot; if the lecture is genuinely thin, it's fine for some questions to test the same concept from a different angle rather than inventing new facts. Each question needs exactly 4 options (A-D) and exactly one correct answer. Wrong options must be plausible and topic-relevant — things a student who half-understood the lecture might pick — never silly, joke, or obviously-wrong answers.
 
-Format exactly like this for all 10 questions, with no extra commentary before, between, or after them:
+Format exactly like this for all 8 questions, with no extra commentary before, between, or after them:
 MCQ1: [question text]
 A) [option text]
 B) [option text]
@@ -197,61 +205,7 @@ C) [option text]
 D) [option text]
 CORRECT: [A, B, C, or D]
 
-MCQ3: [question text]
-A) [option text]
-B) [option text]
-C) [option text]
-D) [option text]
-CORRECT: [A, B, C, or D]
-
-MCQ4: [question text]
-A) [option text]
-B) [option text]
-C) [option text]
-D) [option text]
-CORRECT: [A, B, C, or D]
-
-MCQ5: [question text]
-A) [option text]
-B) [option text]
-C) [option text]
-D) [option text]
-CORRECT: [A, B, C, or D]
-
-MCQ6: [question text]
-A) [option text]
-B) [option text]
-C) [option text]
-D) [option text]
-CORRECT: [A, B, C, or D]
-
-MCQ7: [question text]
-A) [option text]
-B) [option text]
-C) [option text]
-D) [option text]
-CORRECT: [A, B, C, or D]
-
-MCQ8: [question text]
-A) [option text]
-B) [option text]
-C) [option text]
-D) [option text]
-CORRECT: [A, B, C, or D]
-
-MCQ9: [question text]
-A) [option text]
-B) [option text]
-C) [option text]
-D) [option text]
-CORRECT: [A, B, C, or D]
-
-MCQ10: [question text]
-A) [option text]
-B) [option text]
-C) [option text]
-D) [option text]
-CORRECT: [A, B, C, or D]
+...continue this pattern through MCQ8.
 ` + REDUCE_FOOTER;
 
 // Shared Groq call with retry + backoff. Rate limiting (HTTP 429) needs a
@@ -418,28 +372,21 @@ async function mapChunk(chunk: string, index: number, deadline: number): Promise
 // sections and gets its own (smaller) max_tokens budget — total wall-clock
 // time becomes roughly the slowest of the three, not the sum of all of them.
 async function reduceSummary(extractedContent: string, deadline: number): Promise<string> {
-  const calls: { prompt: string; context: string; maxTokens: number }[] = [
-    { prompt: REDUCE_PROMPT_CONCEPTS_GLOSSARY, context: 'Reduce: Key Concepts + Glossary', maxTokens: 4096 },
-    { prompt: REDUCE_PROMPT_NOTES_SUMMARY, context: 'Reduce: Full Notes + Assessment Hints + 10-Bullet Summary', maxTokens: 16384 },
-    { prompt: REDUCE_PROMPT_TESTS_QUIZ, context: 'Reduce: Test Predictor + Quiz Bank', maxTokens: 16384 },
-  ];
-
-  const results = await Promise.all(
-    calls.map(({ prompt, context, maxTokens }) =>
-      callGroq(
-        [{ role: 'user', content: prompt + extractedContent }],
-        context,
-        5,
-        maxTokens,
-        deadline
-      )
-    )
+  // 6500 leaves real margin under Groq's 8,000 TPM ceiling for this model
+  // once input tokens (this prompt template + the extracted content) are
+  // also counted against the same per-minute budget — see the note on
+  // REDUCE_PROMPT above for the full reasoning. Groq's own speed for this
+  // model (~1,000 tokens/sec) means even a full 6500-token response only
+  // takes a few seconds to generate — the deadline exists as a safety net
+  // for retries/rate-limit backoff, not because generation itself is slow.
+  const { text } = await callGroq(
+    [{ role: 'user', content: REDUCE_PROMPT + extractedContent }],
+    'Reduce: full notes',
+    5,
+    6500,
+    deadline
   );
-
-  // Joined in the same order the original single-call REDUCE_PROMPT produced
-  // them, so downstream section-parsing (##(?!#) splits, parseKeyConcepts,
-  // etc.) sees an identically structured document.
-  return results.map((r) => r.text.trim()).join('\n\n');
+  return text.trim();
 }
 
 async function generateSummary(transcript: string): Promise<{ summary: string; degraded: boolean; degradeReason?: string }> {
@@ -465,18 +412,22 @@ async function generateSummary(transcript: string): Promise<{ summary: string; d
 
   try {
     // Step 1: Split transcript into chunks
-    const chunks = splitIntoChunks(transcript);
+    const chunks = splitIntoChunks(transcript, 1000);
     console.log(`Transcript length: ${transcript.length} chars, ${transcript.split(/\s+/).length} words`);
     console.log(`Split transcript into ${chunks.length} chunks`);
 
     // Step 2: Map - Extract key info from each chunk (with index for debugging).
-    // Limited to 3 concurrent requests — kept modest specifically because the
-    // reduce step right after this fires 3 more parallel Groq calls of its
-    // own, and both draw from the same per-minute quota. A larger
-    // map burst was leaving no headroom for the reduce step that follows it.
+    // Limited to 2 concurrent requests. At ~1000 words (~1,335 tokens) per
+    // chunk, 2 concurrent calls run up to roughly 2,670 input tokens plus
+    // 1,200 output tokens (600 max_tokens each) — comfortably under Groq's
+    // 8,000 TPM ceiling for openai/gpt-oss-20b on the free tier (see the
+    // note on REDUCE_PROMPT above). The previous 1,400-word/concurrency-3
+    // setting could burst to ~5,600 input tokens alone in a single batch —
+    // already most of the entire per-minute budget before output or the
+    // reduce step that follows even entered the picture.
     const mapResults = await runWithConcurrencyLimit(
       chunks.map((chunk, index) => () => mapChunk(chunk, index, deadline)),
-      3
+      2
     );
 
     const successfulChunks = mapResults.filter(result => result.length > 0).length;
