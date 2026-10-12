@@ -4,16 +4,58 @@ import { groq } from '@/lib/groq';
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
 
-// Map-reduce over many chunks (long lectures) plus the Groq reduce call
-// can take a while. Vercel Hobby hard-caps function duration at 60s (a
-// higher value fails to deploy at all, not just gets silently clamped),
-// so this is the max we can set until/unless the project moves to Pro.
+// Vercel Hobby hard-caps function duration at 60s (a higher value fails to
+// deploy at all, not just gets silently clamped), so this is the max we can
+// set until/unless the project moves to Pro.
 export const maxDuration = 60;
 
 // Safety cap to avoid runaway cost/quota usage on pathological inputs.
 // This is generous on purpose — a 90min lecture transcript is typically
 // 60k-100k characters. Raise further if you expect longer lectures.
 const MAX_TRANSCRIPT_CHARS = 200000;
+
+// ---------------------------------------------------------------------------
+// Groq budget configuration
+// ---------------------------------------------------------------------------
+// GROQ_TPM_LIMIT must match the "tokens per minute" shown for openai/gpt-oss-20b
+// on https://console.groq.com/settings/limits (it is also returned on every
+// API response as the x-ratelimit-limit-tokens header, which callGroq logs if
+// it disagrees with this value). It defaults to 8000, the documented free-tier
+// limit. All request sizing below is derived from it, so moving to a higher
+// tier only needs this env var changed — no code edits.
+const GROQ_TPM_LIMIT = (() => {
+  const parsed = Number(process.env.GROQ_TPM_LIMIT);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 8000;
+})();
+
+// Groq checks a request's input tokens PLUS its max_completion_tokens against
+// the per-minute limit up front, so we plan against 90% of it.
+const TPM_SAFETY_FACTOR = 0.9;
+const CHARS_PER_TOKEN = 3.5; // conservative for spoken English + markdown
+const estimateTokens = (text: string): number => Math.ceil(text.length / CHARS_PER_TOKEN);
+
+// Whole-pipeline wall-clock budget. When called from the Deepgram webhook this
+// fetch counts against the WEBHOOK's 60s clock too (its own DB work, title
+// generation and cold start all share it), so we stop at 35s and fall back
+// cleanly rather than letting Vercel kill the function and the webhook see a
+// raw 504 (which used to leave lectures completed with no summary at all).
+const TOTAL_BUDGET_MS = 35000;
+// The map phase gets its OWN deadline so it can never starve the reduce step.
+// Previously both shared one deadline: a slow/rate-limited map phase left no
+// time for reduce, which then threw away every chunk it HAD extracted and
+// returned the generic fallback.
+const MAP_PHASE_MS = 18000;
+const MIN_REDUCE_MS = 8000;
+
+const MAP_MAX_TOKENS = 800;
+const MAP_MAX_TOKENS_CEILING = 1600;
+const REDUCE_MAX_OUTPUT_TOKENS = 7000;
+const REDUCE_MIN_OUTPUT_TOKENS = 3500;
+const REDUCE_MAX_CONTENT_TOKENS = 40000;
+const REDUCE_MIN_CONTENT_TOKENS = 1000;
+// Short transcripts skip the map step entirely: one call over the raw text is
+// faster and better than extract-then-summarize for ~10 minutes of speech.
+const SINGLE_PASS_MAX_TOKENS = 3000;
 
 const MAP_PROMPT = `You are a content extractor for South African university lecture transcripts. Your ONLY job: extract key academic content that will help students prepare for assessments. Ignore everything else.
 
@@ -55,12 +97,7 @@ Example output:
 
 Transcript chunk:\n\n`;
 
-// Shared preamble/footer used by all three reduce prompts below. Splitting the
-// original single REDUCE_PROMPT into independent sections lets them run as
-// parallel Gemini calls (Promise.all) instead of one giant sequential call —
-// generation time becomes "the slowest section" instead of "the sum of all
-// sections", which is the single biggest latency win available in this
-// pipeline given Gemini's output token count directly drives call duration.
+// Shared preamble/footer used by the reduce prompt below.
 const REDUCE_PREAMBLE = `You are "Exam Buddy", a South African university tutor with 10 years experience. Your only job: turn 90min rambly lectures (with slides) into notes that help students pass their assessments — whether that's in-class tests, assignments, exams, or presentations.
 
 INPUT: Extracted key content from a South African university lecture, already tagged by type ([DEF], [FORMULA], [SLIDE], [LIST], [CAUSE], [COMPARE], [FLAG], [EXAMPLE]) and cleaned of fluff.
@@ -208,30 +245,116 @@ CORRECT: [A, B, C, or D]
 ...continue this pattern through MCQ8.
 ` + REDUCE_FOOTER;
 
-// Shared Groq call with retry + backoff. Rate limiting (HTTP 429) needs a
-// fundamentally different backoff strategy than other transient failures:
-// Groq's rate limit resets on a per-minute window, so a 1-4 second
-// exponential backoff is pointless against it — by the time you retry,
-// you're still in the same rate-limited window. This waits long enough to
-// actually clear it.
+// Compact variant of REDUCE_PROMPT (~1/3 the size) with the SAME seven "##"
+// headings and the same Key Concepts / MCQ formats the page parses. It exists
+// for one reason: on a small TPM limit (Groq free tier = 8,000/min) the full
+// ~2,700-token prompt leaves room for only ~1,000 tokens of transcript. This
+// one leaves room for roughly 12-13 minutes of speech in a single call.
+const REDUCE_PROMPT_COMPACT = `You are "Exam Buddy", a South African university tutor. Turn the lecture transcript below into concise exam-prep notes. Output ONLY the seven sections below, in this order, with these exact "##" headings. No preamble, no timestamps. Clear, direct English, short sentences. Use only facts from the transcript; if something is not in it, write "Not covered in this lecture". Keep ZAR and South African examples. Include slide references if mentioned.
+
+## Key Concepts
+5-8 lines, format exactly: **Term**: one-sentence definition using the lecturer's own wording or example. Term = ONE word, the glossary name of the concept, never a phrase.
+
+## Glossary
+### Formulas
+One line per formula: "- Formula: when to use it". If there are none, write exactly: No formulas covered in this lecture
+### Definitions
+"- **Term**: Definition" for every technical term the lecture used. Prefer the lecturer's own wording; a concise standard definition is allowed for a term the lecture used but did not define. Only terms that appear in the lecture.
+
+## Full Lecture Notes
+Notes by topic. For each: "### Topic [Slide X if mentioned]", then "**Slide Content:**" bullets (only if slides were mentioned), then "**Key Points from Lecture:**" bullets including the lecturer's examples.
+
+## Assessment Hints Detected
+Bullets for anything the lecturer said would be tested or stressed as important.
+
+## Summary: Pass Guarantee
+Numbered list of 5-10 one-sentence points covering what matters most.
+
+## Test Predictor: Exam-Style Questions + Memo
+4-6 questions cycling through Bloom levels, format:
+Q1 [Recall]: question
+A1: 1-2 sentence model answer
+
+## Quiz Bank: 8 Multiple Choice Questions
+Exactly 8 questions and no other text, in exactly this format:
+MCQ1: question text
+A) option
+B) option
+C) option
+D) option
+CORRECT: [A, B, C, or D]
+
+Exactly one correct answer each; wrong options must be plausible and on-topic. Base everything only on the transcript.
+
+Transcript:\n\n`;
+
+// ---------------------------------------------------------------------------
+// Budget planning
+// ---------------------------------------------------------------------------
+interface ReduceBudget {
+  cap: number; // usable tokens per minute
+  promptTokens: number; // fixed cost of the reduce prompt template
+  outputTokens: number; // max_completion_tokens for the reduce call (includes reasoning tokens)
+  contentTokens: number; // how much extracted content the reduce call may carry
+}
+
+// Sizes the reduce call so promptTokens + contentTokens + outputTokens fits
+// inside one minute of TPM. The old code requested a fixed 6,500 output tokens
+// on top of a ~2,400-token prompt and an unbounded extracted-content payload:
+// on an 8,000 TPM limit that is rejected up front (HTTP 413, which the retry
+// loop then retried 5 more times) no matter how long it waits.
+function planReduceBudget(prompt: string = REDUCE_PROMPT, fixedOutputTokens?: number): ReduceBudget {
+  const cap = Math.floor(GROQ_TPM_LIMIT * TPM_SAFETY_FACTOR);
+  const promptTokens = estimateTokens(prompt);
+  const room = Math.max(0, cap - promptTokens);
+  const outputTokens =
+    fixedOutputTokens ??
+    Math.min(REDUCE_MAX_OUTPUT_TOKENS, Math.max(REDUCE_MIN_OUTPUT_TOKENS, room - REDUCE_MIN_CONTENT_TOKENS));
+  const contentTokens = Math.max(
+    REDUCE_MIN_CONTENT_TOKENS,
+    Math.min(REDUCE_MAX_CONTENT_TOKENS, room - outputTokens)
+  );
+  return { cap, promptTokens, outputTokens, contentTokens };
+}
+
+// ---------------------------------------------------------------------------
+// Groq call with retry + backoff
+// ---------------------------------------------------------------------------
+interface CallGroqOptions {
+  context: string;
+  maxRetries: number;
+  maxTokens: number;
+  // If a response comes back empty because reasoning ate the whole token
+  // budget (finish_reason 'length'), retries raise max tokens up to this.
+  maxTokensCeiling?: number;
+  deadline?: number;
+}
+
+let warnedAboutTpmMismatch = false;
+
+// openai/gpt-oss-20b is a REASONING model: its hidden reasoning tokens count
+// against max_completion_tokens. At the default reasoning effort ('medium') a
+// 600-token budget can be consumed entirely by reasoning, returning empty
+// content with finish_reason 'length' — which the old loop retried three times
+// with the same budget before dropping the chunk. reasoning_effort 'low' keeps
+// reasoning short for these extraction/formatting tasks.
 //
-// `deadline` (a Date.now()-style timestamp) is optional but important when
-// this is called from generateSummary's own budget-aware flow: rate-limit
-// backoff can legitimately want to wait 20s+ per retry, and stacking
-// several of those across map+reduce calls can quietly exceed Vercel's
-// hard 60s function cap. When that happens Vercel kills the function
-// outright and the caller (e.g. the Deepgram webhook, which has its own
-// clock already ticking from the nested fetch) sees a raw 504 instead of
-// a clean response — which is exactly the failure this deadline exists to
-// avoid. Once the deadline is reached, this stops retrying and throws
-// immediately so the caller can fall back gracefully instead.
+// Rate limiting (HTTP 429) needs a different backoff than other transient
+// failures: Groq's limit resets on a per-minute window, so we honour the
+// retry-after header. NOTE: groq-sdk errors expose headers as a web `Headers`
+// object, so it must be read with .get() — the old `headers['retry-after']`
+// was always undefined and every 429 slept a flat 20s regardless of what
+// Groq asked for.
+//
+// `deadline` (a Date.now()-style timestamp) stops retries once the caller's
+// time budget is spent so we fall back gracefully instead of Vercel killing
+// the function.
 async function callGroq(
-  messages: any[],
-  context: string,
-  maxRetries: number,
-  maxTokens: number,
-  deadline?: number
+  messages: { role: 'user'; content: string }[],
+  options: CallGroqOptions
 ): Promise<{ text: string; finishReason?: string }> {
+  const { context, maxRetries, deadline } = options;
+  let maxTokens = options.maxTokens;
   let retryDelay = 2000;
   let lastError = '';
 
@@ -243,55 +366,74 @@ async function callGroq(
     let wasRateLimited = false;
 
     try {
-      // maxRetries: 0 disables the Groq SDK's OWN internal retry (defaults
-      // to 2) — without this, a single call in our loop could silently
-      // turn into up to 3 real HTTP attempts with their own backoff,
-      // invisible to and uncounted by our deadline logic entirely. timeout
-      // hard-caps this one call to whatever's actually left before our
-      // deadline, so a single slow generation (this model can be asked for
-      // up to 16k output tokens in the reduce step, which can genuinely
-      // take a while) can't quietly consume the whole remaining budget on
-      // its own — it gets cut off and treated as a retry-worthy failure
-      // like any other, same as a 429 would be.
+      // maxRetries: 0 disables the Groq SDK's OWN internal retry (defaults to
+      // 2), which would otherwise be invisible to our deadline logic. timeout
+      // hard-caps this one call to what's left of the budget.
       const remainingMs = deadline ? Math.max(1000, deadline - Date.now()) : 55000;
-      const completion = await groq.chat.completions.create(
-        {
-          model: 'openai/gpt-oss-20b',
-          messages,
-          temperature: 0.2,
-          max_tokens: maxTokens,
-        },
-        { timeout: remainingMs, maxRetries: 0 }
-      );
+      const { data: completion, response } = await groq.chat.completions
+        .create(
+          {
+            model: 'openai/gpt-oss-20b',
+            messages,
+            temperature: 0.2,
+            max_completion_tokens: maxTokens,
+            reasoning_effort: 'low',
+            include_reasoning: false,
+          },
+          { timeout: remainingMs, maxRetries: 0 }
+        )
+        .withResponse();
+
+      if (!warnedAboutTpmMismatch) {
+        const headerLimit = Number(response.headers.get('x-ratelimit-limit-tokens'));
+        if (Number.isFinite(headerLimit) && headerLimit > 0 && headerLimit !== GROQ_TPM_LIMIT) {
+          warnedAboutTpmMismatch = true;
+          console.warn(
+            `Groq reports a ${headerLimit} TPM limit but GROQ_TPM_LIMIT is ${GROQ_TPM_LIMIT}. ` +
+              `Set GROQ_TPM_LIMIT=${headerLimit} so request sizes are planned correctly.`
+          );
+        }
+      }
 
       const text = completion.choices[0]?.message?.content || '';
       const finishReason = completion.choices[0]?.finish_reason;
 
       if (text) {
         if (finishReason === 'length') {
-          console.warn(`${context}: response was cut off by max_tokens.`);
+          console.warn(`${context}: response was cut off by max tokens (${maxTokens}).`);
         }
         return { text, finishReason };
       }
 
-      // Empty text — worth retrying rather than treating as valid
+      // Empty text — usually reasoning consumed the whole budget. Give the
+      // next attempt more room if the caller allowed any.
       lastError = `empty response (finishReason: ${finishReason || 'unknown'})`;
-    } catch (error: any) {
-      if (error?.status === 429) {
+      if (finishReason === 'length' && options.maxTokensCeiling && maxTokens < options.maxTokensCeiling) {
+        maxTokens = Math.min(Math.ceil(maxTokens * 1.5), options.maxTokensCeiling);
+      }
+    } catch (caught: unknown) {
+      const error = caught as { status?: number; message?: string; headers?: Headers } | null;
+      const status = error?.status;
+      if (status === 429) {
         wasRateLimited = true;
-        const retryAfterMs = error?.headers?.['retry-after'] ? parseInt(error.headers['retry-after'], 10) * 1000 : NaN;
-        retryDelay = !isNaN(retryAfterMs) ? retryAfterMs : Math.max(retryDelay, 20000);
-        lastError = `HTTP 429 (rate limited): ${error.message || 'Unknown error'}`;
+        const retryAfterHeader =
+          typeof error?.headers?.get === 'function' ? error.headers.get('retry-after') : null;
+        const retryAfterMs = retryAfterHeader ? Math.ceil(parseFloat(retryAfterHeader) * 1000) : NaN;
+        retryDelay = !isNaN(retryAfterMs) && retryAfterMs > 0 ? retryAfterMs : Math.max(retryDelay, 10000);
+        lastError = `HTTP 429 (rate limited): ${error?.message || 'Unknown error'}`;
+      } else if (status && status >= 400 && status < 500 && status !== 408) {
+        // 400/401/403/413/422: the same request will fail identically every
+        // time (413 = "request too large" for the TPM limit). Retrying only
+        // burns the time budget, so fail immediately with the real reason.
+        throw new Error(`${context}: non-retryable HTTP ${status}: ${error?.message || 'Unknown error'}`);
       } else {
-        lastError = error?.message || String(error);
+        lastError = error?.message || String(caught);
       }
     }
 
     console.warn(`${context} attempt ${attempt + 1}/${maxRetries} failed: ${lastError}`);
 
     if (attempt < maxRetries - 1) {
-      // Don't wait past the deadline just to make a retry we know we won't
-      // have time to use — cap the sleep to whatever's actually left.
       let sleepMs = retryDelay;
       if (deadline) {
         const remaining = deadline - Date.now();
@@ -311,10 +453,9 @@ async function callGroq(
 }
 
 // Split transcript into chunks by WORD COUNT (~10 minutes of speech each).
-// Average spoken English is roughly 130-150 words/minute, so ~1300-1500
-// words covers a 10-minute chunk. Bumped default from 2000 to a more
-// accurate ~1400, but exposed as a param so it's easy to tune.
-function splitIntoChunks(transcript: string, wordsPerChunk: number = 1400): string[] {
+// Average spoken English is roughly 130-150 words/minute, so ~1000-1500 words
+// covers a 10-minute chunk.
+function splitIntoChunks(transcript: string, wordsPerChunk: number = 1000): string[] {
   const words = transcript.split(/\s+/).filter(Boolean);
   const chunks: string[] = [];
 
@@ -326,10 +467,8 @@ function splitIntoChunks(transcript: string, wordsPerChunk: number = 1400): stri
   return chunks;
 }
 
-// Runs async tasks with limited concurrency so we don't blow past the
-// Groq API's requests-per-minute limit on longer transcripts (which can
-// produce 15-20+ chunks). Failed/rate-limited calls are handled by the
-// caller (mapChunk already catches and returns '' on failure).
+// Runs async tasks with limited concurrency so we don't blow past Groq's
+// per-minute limits on longer transcripts (which can produce 15-20+ chunks).
 async function runWithConcurrencyLimit<T>(
   tasks: (() => Promise<T>)[],
   limit: number
@@ -349,16 +488,21 @@ async function runWithConcurrencyLimit<T>(
   return results;
 }
 
-// Map step: Extract key info from each chunk
-async function mapChunk(chunk: string, index: number, deadline: number): Promise<string> {
+// Map step: extract key info from one chunk. Returns '' on failure or when the
+// map-phase deadline has passed (the caller counts how many chunks succeeded).
+async function mapChunk(chunk: string, index: number, mapDeadline: number): Promise<string> {
+  if (Date.now() >= mapDeadline) {
+    console.warn(`mapChunk[${index}] skipped: map-phase time budget exhausted`);
+    return '';
+  }
   try {
-    const { text } = await callGroq(
-      [{ role: 'user', content: MAP_PROMPT + chunk }],
-      `Map chunk ${index}`,
-      3,
-      600,
-      deadline
-    );
+    const { text } = await callGroq([{ role: 'user', content: MAP_PROMPT + chunk }], {
+      context: `Map chunk ${index}`,
+      maxRetries: 3,
+      maxTokens: MAP_MAX_TOKENS,
+      maxTokensCeiling: MAP_MAX_TOKENS_CEILING,
+      deadline: mapDeadline,
+    });
     return text;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -367,118 +511,191 @@ async function mapChunk(chunk: string, index: number, deadline: number): Promise
   }
 }
 
-// Reduce step: Generate the final summary as THREE independent parallel Groq
-// calls instead of one giant sequential one. Each covers a disjoint set of
-// sections and gets its own (smaller) max_tokens budget — total wall-clock
-// time becomes roughly the slowest of the three, not the sum of all of them.
-async function reduceSummary(extractedContent: string, deadline: number): Promise<string> {
-  // 6500 leaves real margin under Groq's 8,000 TPM ceiling for this model
-  // once input tokens (this prompt template + the extracted content) are
-  // also counted against the same per-minute budget — see the note on
-  // REDUCE_PROMPT above for the full reasoning. Groq's own speed for this
-  // model (~1,000 tokens/sec) means even a full 6500-token response only
-  // takes a few seconds to generate — the deadline exists as a safety net
-  // for retries/rate-limit backoff, not because generation itself is slow.
-  const { text } = await callGroq(
-    [{ role: 'user', content: REDUCE_PROMPT + extractedContent }],
-    'Reduce: full notes',
-    5,
-    6500,
-    deadline
-  );
-  return text.trim();
+// Lower number = more valuable to a student, kept first when content has to be
+// trimmed to fit the token budget.
+const TAG_PRIORITY: Record<string, number> = {
+  FLAG: 0,
+  DEF: 1,
+  FORMULA: 2,
+  LIST: 3,
+  CAUSE: 4,
+  COMPARE: 5,
+  EXAMPLE: 6,
+  SLIDE: 7,
+};
+
+// Trims extracted map output to maxTokens by dropping the lowest-priority
+// tagged bullets first (SLIDE/EXAMPLE before FLAG/DEF/FORMULA), keeping the
+// survivors in their original lecture order.
+function trimExtractedContent(content: string, maxTokens: number): string {
+  if (estimateTokens(content) <= maxTokens) return content;
+
+  const lines = content.split('\n').filter(line => line.trim().length > 0);
+  let currentPriority = Object.keys(TAG_PRIORITY).length;
+  const ranked = lines.map((line, index) => {
+    const tag = line.match(/^\s*[-*•]?\s*\[([A-Z]+)\]/)?.[1];
+    if (tag && tag in TAG_PRIORITY) currentPriority = TAG_PRIORITY[tag];
+    return { index, priority: currentPriority, tokens: estimateTokens(line) + 1 };
+  });
+
+  ranked.sort((a, b) => a.priority - b.priority || a.index - b.index);
+
+  const keep = new Set<number>();
+  let used = 0;
+  for (const item of ranked) {
+    if (used + item.tokens > maxTokens) continue;
+    keep.add(item.index);
+    used += item.tokens;
+  }
+
+  if (keep.size === 0) return content.slice(0, Math.floor(maxTokens * CHARS_PER_TOKEN));
+  return lines.filter((_, index) => keep.has(index)).join('\n');
 }
 
-async function generateSummary(transcript: string): Promise<{ summary: string; degraded: boolean; degradeReason?: string }> {
+// Reduce step: ONE call that turns the extracted (or raw, for short
+// transcripts) content into the full seven-section notes. Output budget comes
+// from planReduceBudget() so the request actually fits the TPM limit.
+async function reduceSummary(
+  prompt: string,
+  content: string,
+  outputTokens: number,
+  deadline: number
+): Promise<{ text: string; finishReason?: string }> {
+  const { text, finishReason } = await callGroq(
+    [{ role: 'user', content: prompt + content }],
+    {
+      context: 'Reduce: full notes',
+      maxRetries: 4,
+      maxTokens: outputTokens,
+      deadline,
+    }
+  );
+  return { text: text.trim(), finishReason };
+}
+
+interface SummaryResult {
+  summary: string;
+  degraded: boolean;
+  degradeReason?: string;
+  // The model hit its output limit, so trailing sections (usually the Quiz
+  // Bank) may be shortened or missing.
+  incomplete?: boolean;
+  // Present on the map-reduce path: how many transcript chunks made it into
+  // the notes. processed < total means some of the lecture is not covered.
+  chunksProcessed?: number;
+  chunksTotal?: number;
+}
+
+async function generateSummary(transcript: string): Promise<SummaryResult> {
   if (!process.env.GROQ_API_KEY) {
     console.warn('GROQ_API_KEY is not set — using minimally-structured fallback');
     return { summary: generateFallbackSummary(transcript), degraded: true, degradeReason: 'GROQ_API_KEY is not configured' };
   }
 
-  // This function's own maxDuration is 60s, but when called from the
-  // Deepgram webhook (the normal path), that nested fetch counts against
-  // the WEBHOOK's clock too — its own DB reads/writes and title generation
-  // eat into the same budget before this even starts, and neither of us
-  // can see Vercel's own cold-start overhead from inside our code. 35s
-  // (not 45s — the first version of this fix still hit real 504s, likely
-  // from cold start eating the difference) leaves real margin for all of
-  // that, so we hit a clean internal fallback instead of Vercel
-  // force-killing the function and the webhook seeing a raw 504 (which
-  // used to be exactly what left lectures completed with no summary at
-  // all — see deepgram_webhook_logs entries with outcome
-  // 'completed_without_summary' and error containing "responded 504").
-  const deadline = Date.now() + 35000;
+  const startedAt = Date.now();
+  const deadline = startedAt + TOTAL_BUDGET_MS;
+  const mapDeadline = startedAt + MAP_PHASE_MS;
+  const budget = planReduceBudget();
   let degradeReason = 'unknown';
 
   try {
-    // Step 1: Split transcript into chunks
-    const chunks = splitIntoChunks(transcript, 1000);
-    console.log(`Transcript length: ${transcript.length} chars, ${transcript.split(/\s+/).length} words`);
-    console.log(`Split transcript into ${chunks.length} chunks`);
-
-    // Step 2: Map - Extract key info from each chunk (with index for debugging).
-    // Limited to 2 concurrent requests. At ~1000 words (~1,335 tokens) per
-    // chunk, 2 concurrent calls run up to roughly 2,670 input tokens plus
-    // 1,200 output tokens (600 max_tokens each) — comfortably under Groq's
-    // 8,000 TPM ceiling for openai/gpt-oss-20b on the free tier (see the
-    // note on REDUCE_PROMPT above). The previous 1,400-word/concurrency-3
-    // setting could burst to ~5,600 input tokens alone in a single batch —
-    // already most of the entire per-minute budget before output or the
-    // reduce step that follows even entered the picture.
-    const mapResults = await runWithConcurrencyLimit(
-      chunks.map((chunk, index) => () => mapChunk(chunk, index, deadline)),
-      2
+    const transcriptTokens = estimateTokens(transcript);
+    console.log(
+      `Transcript: ${transcript.length} chars (~${transcriptTokens} tokens). ` +
+        `Budget @ ${GROQ_TPM_LIMIT} TPM: reduce prompt ~${budget.promptTokens}, ` +
+        `content <= ${budget.contentTokens}, output <= ${budget.outputTokens}`
     );
 
-    const successfulChunks = mapResults.filter(result => result.length > 0).length;
-    console.log(`${successfulChunks}/${chunks.length} chunks produced content`);
+    let reduceInput: string;
+    let reducePrompt = REDUCE_PROMPT;
+    let reduceOutputTokens = budget.outputTokens;
+    let chunksProcessed: number | undefined;
+    let chunksTotal: number | undefined;
 
-    const extractedContent = mapResults.filter(result => result.length > 0).join('\n\n');
+    // The compact notes need ~3,000 output tokens plus low-effort reasoning, so
+    // pin the output at 3,800 and give the transcript everything that's left.
+    const compactBudget = planReduceBudget(REDUCE_PROMPT_COMPACT, 3800);
 
-    console.log('Extracted content length:', extractedContent.length);
-
-    if (Date.now() >= deadline) {
-      degradeReason = `time budget exhausted after map step (${successfulChunks}/${chunks.length} chunks succeeded)`;
-      console.warn(degradeReason + ' — skipping reduce, falling back');
-    } else if (extractedContent.length > 0) {
-      // Reduce the extracted, tagged content. callGroq now retries with
-      // rate-limit-aware backoff (up to 5 attempts per call, waiting out an
-      // actual per-minute quota window instead of a token 1-4s delay), so a
-      // transient failure here is handled by that retry logic directly rather
-      // than by falling through to a second attempt. A second full attempt
-      // used to fire 3 more parallel Groq calls immediately after the first
-      // 3 had already failed — almost always into the same still-rate-limited
-      // window, which made failures worse, not better.
-      try {
-        const summary = await reduceSummary(extractedContent, deadline);
-        console.log('Generated summary length:', summary.length);
-        console.log('Summary preview:', summary.substring(0, 200));
-        return { summary, degraded: false };
-      } catch (reduceError) {
-        degradeReason = `reduce step failed: ${reduceError instanceof Error ? reduceError.message : String(reduceError)}`;
-        console.error(degradeReason);
-      }
+    if (transcriptTokens <= Math.min(budget.contentTokens, SINGLE_PASS_MAX_TOKENS)) {
+      // Short lecture: skip map-reduce, summarize the transcript directly.
+      reduceInput = transcript;
+    } else if (budget.cap < 40000 && transcriptTokens <= compactBudget.contentTokens) {
+      // Small TPM limit and a short lecture: map-reduce can't fit in one
+      // minute, but a single call with the compact prompt can.
+      console.log('Using single-pass compact prompt (small TPM limit, short lecture)');
+      reducePrompt = REDUCE_PROMPT_COMPACT;
+      reduceOutputTokens = compactBudget.outputTokens;
+      reduceInput = transcript;
     } else {
-      // Map step produced nothing usable from any chunk (rare — e.g. a very
-      // short/off-topic-heavy transcript). Try once against the raw
-      // transcript directly, since there's no extracted content to retry.
-      console.warn('No content extracted from any chunk — attempting the raw transcript directly');
-      try {
-        const summary = await reduceSummary(transcript, deadline);
-        console.log('Generated summary from raw transcript, length:', summary.length);
-        return { summary, degraded: false };
-      } catch (rawError) {
-        degradeReason = `map step produced nothing, and raw-transcript attempt also failed: ${rawError instanceof Error ? rawError.message : String(rawError)}`;
-        console.error(degradeReason);
+      // Step 1: split, then Step 2: map (extract key info from each chunk).
+      const chunks = splitIntoChunks(transcript, 1000);
+      chunksTotal = chunks.length;
+      console.log(`Split transcript into ${chunks.length} chunks`);
+
+      // 2 concurrent calls on small TPM limits; more when the limit is large.
+      const concurrency = budget.cap >= 40000 ? 4 : 2;
+      const mapResults = await runWithConcurrencyLimit(
+        chunks.map((chunk, index) => () => mapChunk(chunk, index, mapDeadline)),
+        concurrency
+      );
+
+      const extractedChunks = mapResults.filter(result => result.length > 0);
+      chunksProcessed = extractedChunks.length;
+      console.log(`${chunksProcessed}/${chunks.length} chunks produced content`);
+
+      if (extractedChunks.length > 0) {
+        // Even if the map phase ran out of time or some chunks failed, keep
+        // what we extracted and reduce it — partial notes beat the fallback.
+        reduceInput = trimExtractedContent(extractedChunks.join('\n\n'), budget.contentTokens);
+        if (chunksProcessed < chunksTotal) {
+          reduceInput =
+            `COVERAGE NOTE: only ${chunksProcessed} of ${chunksTotal} parts of this lecture could be processed in time. ` +
+            `Work only from the content below and do not write "Not covered in this lecture" for topics that may simply be in the missing parts.\n\n` +
+            reduceInput;
+        }
+      } else {
+        // Map produced nothing usable. Try once against the start of the raw
+        // transcript (capped to the budget so the request is valid).
+        console.warn('No content extracted from any chunk — attempting the raw transcript directly');
+        const maxChars = Math.floor(budget.contentTokens * CHARS_PER_TOKEN);
+        reduceInput = transcript.length > maxChars ? transcript.slice(0, maxChars) : transcript;
+        if (transcript.length > maxChars) {
+          reduceInput =
+            `COVERAGE NOTE: only the first part of this lecture is included below. ` +
+            `Do not write "Not covered in this lecture" for topics that may simply be in the missing part.\n\n` +
+            reduceInput;
+        }
       }
     }
 
-    // Last resort: the structured attempt failed even after retries (e.g. a
-    // persistent Groq outage, not just a transient rate limit). Return a
+    if (deadline - Date.now() < MIN_REDUCE_MS) {
+      degradeReason = `time budget exhausted before reduce step (${chunksProcessed ?? 0}/${chunksTotal ?? 0} chunks succeeded)`;
+      console.warn(degradeReason + ' — falling back');
+      return { summary: generateFallbackSummary(transcript), degraded: true, degradeReason, chunksProcessed, chunksTotal };
+    }
+
+    try {
+      const { text, finishReason } = await reduceSummary(reducePrompt, reduceInput, reduceOutputTokens, deadline);
+      if (!/##\s*Key Concepts/i.test(text)) {
+        console.warn('Reduce output is missing the "## Key Concepts" heading — the page may render empty sections');
+      }
+      console.log('Generated summary length:', text.length);
+      return {
+        summary: text,
+        degraded: false,
+        incomplete: finishReason === 'length',
+        chunksProcessed,
+        chunksTotal,
+      };
+    } catch (reduceError) {
+      degradeReason = `reduce step failed: ${reduceError instanceof Error ? reduceError.message : String(reduceError)}`;
+      console.error(degradeReason);
+    }
+
+    // Last resort: the structured attempt failed even after retries. Return a
     // minimally-structured, clearly-flagged summary so the page still has
-    // Key Concepts / Full Lecture Notes sections to render instead of a
-    // blank or malformed page.
-    return { summary: generateFallbackSummary(transcript), degraded: true, degradeReason };
+    // Key Concepts / Full Lecture Notes sections to render.
+    return { summary: generateFallbackSummary(transcript), degraded: true, degradeReason, chunksProcessed, chunksTotal };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('Summary generation failed entirely, using last-resort fallback:', message);
@@ -531,7 +748,7 @@ function extractNaiveKeywords(transcript: string, count = 5): string[] {
     .map(([word]) => word.charAt(0).toUpperCase() + word.slice(1));
 }
 
-// Last-resort summary used only when both real Groq attempts fail (e.g. a
+// Last-resort summary used only when the Groq reduce step fails (e.g. a
 // persistent outage). Kept in the same "## Heading" / "### Subheading"
 // structure the app's section-parsing regex expects, so the page renders
 // Key Concepts bubbles and a Full Lecture Notes card instead of blank
@@ -568,7 +785,7 @@ ${bullets}
 ## Test Predictor: Exam-Style Questions + Memo
 Not covered in this lecture.
 
-## Quiz Bank: 10 Multiple Choice Questions
+## Quiz Bank: 8 Multiple Choice Questions
 Not covered in this lecture.
 `;
 }
@@ -611,13 +828,17 @@ export async function POST(request: NextRequest) {
       console.warn(`Transcript truncated from ${transcript.length} to ${MAX_TRANSCRIPT_CHARS} chars`);
     }
 
-    const { summary, degraded, degradeReason } = await generateSummary(truncatedTranscript);
+    const { summary, degraded, degradeReason, incomplete, chunksProcessed, chunksTotal } =
+      await generateSummary(truncatedTranscript);
 
     return NextResponse.json({
       success: true,
       summary: summary,
       degraded, // true if this is the last-resort fallback, not real AI-generated notes
       degradeReason, // present only when degraded — the actual underlying cause, for diagnosis
+      incomplete: !!incomplete, // true if the model hit its output limit (trailing sections may be short/missing)
+      chunksProcessed, // map-reduce only: chunks that made it into the notes
+      chunksTotal, // map-reduce only: total chunks; processed < total means partial coverage
       truncated: transcript.length > MAX_TRANSCRIPT_CHARS,
       transcriptChars: transcript.length
     });
