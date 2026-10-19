@@ -3,163 +3,203 @@ import { supabaseAdmin } from "@/lib/supabase/client";
 import { groq } from "@/lib/groq";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+// Keeps the request inside Groq's per-minute token limit (the free tier is
+// 8,000 tokens/min): ~10,000 characters is roughly 2,900 tokens of
+// instructions, plus the prompt and the analysis we ask for.
+const MAX_BRIEF_CHARS = 10000;
+const MAX_TITLE_CHARS = 150;
+const MAX_CODE_CHARS = 40;
 
 const SYSTEM_PROMPT = `
 You are Universite Assignment Coach.
 
-You are an academic support tutor for university students,
-especially UNISA students.
+You help university students, especially UNISA students, understand
+and complete their own assignments.
 
-Your purpose is to HELP THE STUDENT DO THEIR OWN WORK.
+ACADEMIC INTEGRITY RULE:
 
-==================================================
-ACADEMIC INTEGRITY
-==================================================
+You MUST NOT write the student's assignment for them.
 
-NEVER write or complete an assignment for the student.
+You MUST NOT:
+- write a submission-ready essay
+- write paragraphs they can submit
+- generate a complete assignment
+- provide a finished answer to an assignment question
+- fabricate references or sources
+- disguise generated writing as student work
 
-NEVER provide:
-- a submission-ready essay
-- a submission-ready paragraph
-- a completed assignment
-- a finished discussion answer
-- a finished reflective answer
-- a finished case study
-- a finished report
-- answers intended to be copied into the student's submission
+You MAY:
+- explain what an assignment question is asking
+- identify command words
+- explain difficult terminology
+- identify concepts the student needs to understand
+- convert requirements into a checklist
+- suggest a high-level structure
+- suggest possible areas to investigate
+- ask guiding questions
+- explain how to approach a problem
+- identify gaps in the student's own reasoning
+- review a student's own draft
+- explain concepts from their course material
 
-Do not rewrite the student's draft into polished submission-ready
-language.
+The goal is to help the student learn and produce their own work.
 
-Do not pretend AI-generated writing is the student's own work.
+Return valid JSON only. No markdown, no code fences, no commentary.
 
-==================================================
-WHAT YOU CAN DO
-==================================================
+The JSON must have exactly this structure:
 
-You CAN:
+{
+  "what_the_question_is_asking": "2-4 plain sentences",
+  "command_words": ["Word: what it asks the student to do in THIS question"],
+  "requirements": ["one concrete, checkable requirement per item"],
+  "key_concepts": ["short concept names the student must understand"],
+  "recommended_approach": ["ordered steps for how to tackle it"],
+  "questions_for_the_student": ["guiding questions that make the student think"],
+  "common_mistakes": ["mistakes students typically make on this kind of task"],
+  "self_check": ["questions the student can use to check their own work"]
+}
 
-1. Explain the assignment question.
+Rules for the lists:
+- At most 8 items per list, each one or two sentences.
+- "requirements" must include anything the brief states about marks,
+  word count, referencing style, structure or due dates.
+- Every "command_words" item must start with the command word, then a colon.
+- Use only information from the brief. If something is not stated, do not invent it.
 
-2. Explain command words such as:
-   - discuss
-   - evaluate
-   - critically analyze
-   - compare
-   - contrast
-   - explain
-   - describe
-   - justify
-   - assess
-
-3. Help the student brainstorm ideas.
-
-4. Help the student identify relevant concepts.
-
-5. Help the student create a HIGH-LEVEL outline.
-
-6. Ask Socratic questions.
-
-7. Break difficult concepts into simpler explanations.
-
-8. Explain calculations and problem-solving methods.
-
-9. Give a similar worked example when appropriate.
-
-10. Review the student's own work.
-
-11. Identify:
-   - missing arguments
-   - weak reasoning
-   - unsupported claims
-   - logical gaps
-   - unclear structure
-   - misunderstanding of the question
-   - citation problems
-
-12. Suggest what the student should investigate next.
-
-13. Point the student toward concepts in their course material.
-
-==================================================
-WHEN THE STUDENT ASKS FOR THE ANSWER
-==================================================
-
-If the student says:
-
-"Write this for me"
-
-"Give me the answer"
-
-"Do my assignment"
-
-"Write my essay"
-
-"Give me a paragraph I can submit"
-
-Respond by refusing the completion request briefly.
-
-Then immediately offer useful help.
-
-For example:
-
-"I can't write the submission for you, but I can help you build
-the answer yourself. Let's start by identifying the main argument
-you want to make."
-
-Then ask a useful question.
-
-==================================================
-REVIEW MODE
-==================================================
-
-When reviewing student work:
-
-DO NOT rewrite it.
-
-Instead provide:
-
-- What is working
-- What is unclear
-- What is missing
-- What needs evidence
-- What concept needs clarification
-- Questions the student should answer
-- Specific improvements the student can make
-
-==================================================
-STYLE
-==================================================
-
-Be encouraging but not overly casual.
-
-Use clear university-level language.
-
-Do not shame the student.
-
-Prefer teaching over answering.
-
-When appropriate, use Socratic questions.
-
-Never invent sources.
-
-If you don't know something, say so.
-
-==================================================
-CONTEXT
-==================================================
-
-You will receive:
-
-- the assignment instructions
-- the student's own work
-- the selected coaching mode
-- recent conversation history
-
-Use these to help the student.
-
-Never turn this context into a finished assignment.
+Do not include a completed answer.
 `;
+
+type Analysis = {
+  what_the_question_is_asking: string;
+  command_words: string[];
+  requirements: string[];
+  key_concepts: string[];
+  recommended_approach: string[];
+  questions_for_the_student: string[];
+  common_mistakes: string[];
+  self_check: string[];
+};
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Models sometimes wrap JSON in code fences or add a sentence around it, so
+// a plain JSON.parse() on the raw text fails more often than it should.
+function extractJson(raw: string): unknown {
+  const cleaned = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+    throw new Error("No JSON object found in the model response.");
+  }
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
+function normalizeAnalysis(parsed: unknown): Analysis | null {
+  if (!parsed || typeof parsed !== "object") return null;
+  const source = parsed as Record<string, unknown>;
+
+  const analysis: Analysis = {
+    what_the_question_is_asking:
+      typeof source.what_the_question_is_asking === "string"
+        ? source.what_the_question_is_asking.trim()
+        : "",
+    command_words: asStringArray(source.command_words),
+    requirements: asStringArray(source.requirements),
+    key_concepts: asStringArray(source.key_concepts),
+    recommended_approach: asStringArray(source.recommended_approach),
+    questions_for_the_student: asStringArray(source.questions_for_the_student),
+    common_mistakes: asStringArray(source.common_mistakes),
+    self_check: asStringArray(source.self_check),
+  };
+
+  const hasContent =
+    analysis.what_the_question_is_asking ||
+    analysis.requirements.length ||
+    analysis.recommended_approach.length;
+
+  return hasContent ? analysis : null;
+}
+
+function describeAiError(error: unknown): { status: number; message: string } {
+  const status = (error as { status?: number } | null)?.status;
+
+  if (status === 429) {
+    return {
+      status: 503,
+      message: "The AI is busy right now. Please wait a minute and try again.",
+    };
+  }
+  if (status === 413) {
+    return {
+      status: 413,
+      message:
+        "This assignment is too long to analyse in one go. Try pasting just the question and the key instructions.",
+    };
+  }
+  return {
+    status: 500,
+    message:
+      "Something went wrong while analysing the assignment. Please try again.",
+  };
+}
+
+// reasoning_effort "low" matters here: gpt-oss-20b is a reasoning model and
+// its hidden reasoning tokens count against the output limit, so at the
+// default effort a long JSON answer can be cut off mid-object.
+async function runAnalysis(userPrompt: string): Promise<Analysis> {
+  let lastProblem = "";
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-20b",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.3,
+      max_completion_tokens: attempt === 0 ? 3000 : 4000,
+      reasoning_effort: "low",
+      include_reasoning: false,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() || "";
+
+    if (!raw) {
+      lastProblem = `empty response (finish_reason: ${completion.choices[0]?.finish_reason})`;
+      continue;
+    }
+
+    try {
+      const analysis = normalizeAnalysis(extractJson(raw));
+      if (analysis) return analysis;
+      lastProblem = "JSON was valid but had no usable content";
+    } catch {
+      lastProblem = "response was not valid JSON";
+      console.error("Invalid JSON returned by Groq:", raw.slice(0, 500));
+    }
+  }
+
+  throw new Error(`Assignment analysis failed: ${lastProblem}`);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -188,230 +228,163 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const {
-      assignmentId,
-      message,
-      mode = "coach",
-      studentWork = "",
-    } = body;
+    const title =
+      typeof body.title === "string" ? body.title.trim() : "";
+    const assignmentBrief =
+      typeof body.assignmentBrief === "string"
+        ? body.assignmentBrief.trim()
+        : "";
+    const moduleId =
+      typeof body.moduleId === "string" ? body.moduleId.trim() : "";
 
-    if (!assignmentId || !message?.trim()) {
+    // A plain-text module code (e.g. "ILW1501") is optional. Older versions
+    // of the page sent the module's database id in this field, so anything
+    // shaped like an id is ignored rather than stored as a "code".
+    const rawModuleCode =
+      typeof body.moduleCode === "string" ? body.moduleCode.trim() : "";
+    const moduleCode =
+      rawModuleCode &&
+      !UUID_PATTERN.test(rawModuleCode) &&
+      rawModuleCode.length <= MAX_CODE_CHARS
+        ? rawModuleCode
+        : null;
+
+    if (!assignmentBrief) {
       return NextResponse.json(
         {
           success: false,
-          error: "Assignment and message are required.",
+          error: "Please provide the assignment instructions.",
         },
         { status: 400 }
       );
     }
 
-    const { data: assignment, error: assignmentError } =
-      await supabaseAdmin
-        .from("assignments")
-        .select("*")
-        .eq("id", assignmentId)
-        .eq("user_id", user.id)
-        .single();
-
-    if (assignmentError || !assignment) {
+    if (assignmentBrief.length > MAX_BRIEF_CHARS) {
       return NextResponse.json(
         {
           success: false,
-          error: "Assignment not found.",
+          error: `The instructions are too long (${assignmentBrief.length.toLocaleString()} characters). The limit is ${MAX_BRIEF_CHARS.toLocaleString()}. Paste just the question and key instructions.`,
         },
-        { status: 404 }
+        { status: 400 }
       );
     }
 
-    const { data: previousMessages } =
-      await supabaseAdmin
-        .from("assignment_messages")
-        .select("sender, content, mode")
-        .eq("assignment_id", assignmentId)
+    if (title.length > MAX_TITLE_CHARS) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Please keep the title under ${MAX_TITLE_CHARS} characters.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json(
+        { success: false, error: "The AI service is not configured." },
+        { status: 500 }
+      );
+    }
+
+    // The module name comes from the database, not from the client, and the
+    // module must belong to this user.
+    let linkedModuleId: string | null = null;
+    let linkedModuleName: string | null = null;
+
+    if (moduleId) {
+      const { data: moduleRow } = await supabaseAdmin
+        .from("modules")
+        .select("id, name")
+        .eq("id", moduleId)
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
+        .maybeSingle();
 
-    const history = (previousMessages || [])
-      .reverse()
-      .map((msg) => ({
-        role:
-          msg.sender === "user"
-            ? ("user" as const)
-            : ("assistant" as const),
-        content: msg.content,
-      }));
+      if (!moduleRow) {
+        return NextResponse.json(
+          { success: false, error: "That module could not be found." },
+          { status: 404 }
+        );
+      }
 
-    const modeInstructions: Record<string, string> = {
-      understand: `
-The student wants to UNDERSTAND the assignment.
+      linkedModuleId = moduleRow.id;
+      linkedModuleName = moduleRow.name;
+    }
 
-Focus on:
-- what the question means
-- command words
-- requirements
-- concepts
-- what the student needs to research
-`,
+    const assignmentTitle = title || "Untitled Assignment";
+    const moduleLine =
+      [moduleCode, linkedModuleName].filter(Boolean).join(" ") ||
+      "Not provided";
 
-      plan: `
-The student wants help PLANNING their assignment.
+    let analysis: Analysis;
 
-Help them create:
-- a high-level structure
-- sections
-- arguments they could investigate
-- evidence they should look for
-- questions each section should answer
-
-Do not write the sections for them.
-`,
-
-      coach: `
-The student wants COACHING.
-
-Ask useful questions and guide their reasoning.
-
-Do not immediately give them the final answer.
-`,
-
-      review: `
-The student wants you to REVIEW THEIR WORK.
-
-Analyze their own work.
-
-Identify:
-- strengths
-- gaps
-- unclear reasoning
-- unsupported claims
-- missing concepts
-- structure problems
-
-Do NOT rewrite it.
-`,
-
-      brainstorm: `
-The student wants to BRAINSTORM.
-
-Help them generate possible:
-- angles
-- arguments
-- examples
-- concepts
-- questions to investigate
-
-Keep these as ideas rather than finished prose.
-`,
-    };
-
-    const modeInstruction =
-      modeInstructions[mode] || modeInstructions.coach;
-
-    const conversation = [
-      {
-        role: "system" as const,
-        content: `
-${SYSTEM_PROMPT}
-
-CURRENT MODE:
-${modeInstruction}
-
-ASSIGNMENT:
-
-Title:
-${assignment.title}
+    try {
+      analysis = await runAnalysis(`
+Assignment title:
+${assignmentTitle}
 
 Module:
-${assignment.module_code || ""}
-${assignment.module_name || ""}
+${moduleLine}
 
 Assignment instructions:
-${assignment.assignment_brief}
 
-AI analysis:
-${JSON.stringify(assignment.analysis || {}, null, 2)}
+${assignmentBrief}
 
-STUDENT'S CURRENT WORK:
+Analyze these instructions for the student.
 
-${studentWork || "(The student has not written anything yet.)"}
-`,
-      },
+Do NOT answer the assignment.
 
-      ...history,
-
-      {
-        role: "user" as const,
-        content: message.trim(),
-      },
-    ];
-
-    const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-20b",
-      messages: conversation,
-      temperature: 0.5,
-      max_tokens: 1800,
-    });
-
-    const response =
-      completion.choices[0]?.message?.content?.trim();
-
-    if (!response) {
+Help the student understand exactly what they need to do.
+`);
+    } catch (aiError) {
+      console.error("Assignment analysis error:", aiError);
+      const { status, message } = describeAiError(aiError);
       return NextResponse.json(
         {
           success: false,
-          error: "No response was generated.",
+          error:
+            status === 500
+              ? "The AI couldn't produce a usable breakdown this time. Please try again."
+              : message,
         },
-        { status: 502 }
+        { status: status === 500 ? 502 : status }
       );
     }
 
-    await supabaseAdmin
-      .from("assignment_messages")
+    const { data: assignment, error: insertError } = await supabaseAdmin
+      .from("assignments")
       .insert({
-        assignment_id: assignmentId,
         user_id: user.id,
-        sender: "user",
-        mode,
-        content: message.trim(),
-      });
+        title: assignmentTitle,
+        module_id: linkedModuleId,
+        module_code: moduleCode,
+        module_name: linkedModuleName,
+        assignment_brief: assignmentBrief,
+        analysis,
+      })
+      .select()
+      .single();
 
-    await supabaseAdmin
-      .from("assignment_messages")
-      .insert({
-        assignment_id: assignmentId,
-        user_id: user.id,
-        sender: "assistant",
-        mode,
-        content: response,
-      });
+    if (insertError) {
+      console.error("Assignment insert error:", insertError);
 
-    if (studentWork !== undefined) {
-      await supabaseAdmin
-        .from("assignments")
-        .update({
-          student_work: studentWork,
-        })
-        .eq("id", assignmentId)
-        .eq("user_id", user.id);
+      return NextResponse.json(
+        { success: false, error: "Could not save assignment." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       success: true,
-      response,
+      assignment,
+      analysis,
     });
   } catch (error) {
-    console.error("Assignment chat error:", error);
+    console.error("Assignment analysis error:", error);
+    const { status, message } = describeAiError(error);
 
     return NextResponse.json(
-      {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Assignment coaching failed.",
-      },
-      { status: 500 }
+      { success: false, error: message },
+      { status }
     );
   }
 }
