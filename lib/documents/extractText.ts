@@ -10,6 +10,17 @@ export async function extractPdfText(buffer: Buffer): Promise<string> {
   runtimeGlobals.ImageData ||= class ImageData {};
   runtimeGlobals.Path2D ||= class Path2D {};
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  // pdf.js runs "in the main thread" on the server and normally loads its
+  // worker file with a dynamic import of './pdf.worker.mjs' next to itself.
+  // Once Next bundles pdf.mjs into a server chunk, that sibling file no longer
+  // exists ("Setting up fake worker failed: Cannot find module .../chunks/
+  // pdf.worker.mjs"), so every PDF failed. Importing the worker explicitly
+  // makes the bundler include it, and pdf.js uses a worker already present on
+  // globalThis.pdfjsWorker instead of trying to load one from disk.
+  if (!runtimeGlobals.pdfjsWorker) {
+    // @ts-expect-error -- pdfjs-dist ships no type declarations for the worker entry
+    runtimeGlobals.pdfjsWorker = await import('pdfjs-dist/legacy/build/pdf.worker.mjs');
+  }
   const document = await getDocument({
     data: new Uint8Array(buffer),
     disableWorker: true,
