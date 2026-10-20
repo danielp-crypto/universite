@@ -55,6 +55,10 @@ const MAX_BRIEF_CHARS = 10000;
 const MAX_MESSAGE_CHARS = 3000;
 const MAX_WORK_CHARS = 50000;
 
+// Assignment file upload. 4 MB is just under Vercel's 4.5 MB request limit.
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".pptx", ".txt", ".md"];
+
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -147,6 +151,16 @@ function formatDate(iso: string): string {
   });
 }
 
+// "Assignment_2_Contract_Law.pdf" -> "Assignment 2 Contract Law"
+function titleFromFilename(name: string): string {
+  return name
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 150);
+}
+
 function splitCommandWord(item: string): { word: string; meaning: string } {
   const index = item.indexOf(":");
   if (index > 0 && index <= 30) {
@@ -229,6 +243,15 @@ export default function AssignmentsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<{
+    name: string;
+    words: number;
+    truncated: boolean;
+  } | null>(null);
+
   const [studentWork, setStudentWork] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [workTruncated, setWorkTruncated] = useState(false);
@@ -245,6 +268,7 @@ export default function AssignmentsPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState("");
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const lastSavedWork = useRef("");
   const studentWorkRef = useRef("");
   const activeIdRef = useRef<string | null>(null);
@@ -461,11 +485,106 @@ export default function AssignmentsPage() {
       setAssignments((prev) => [created, ...prev.filter((a) => a.id !== created.id)]);
       setTitle("");
       setBrief("");
+      setUploadedFile(null);
+      setUploadError("");
       await openAssignment(created);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleFile(file: File) {
+    setUploadError("");
+
+    const lowerName = file.name.toLowerCase();
+    const extension = lowerName.includes(".")
+      ? lowerName.slice(lowerName.lastIndexOf("."))
+      : "";
+
+    if (extension === ".doc") {
+      setUploadError(
+        "Old Word (.doc) files aren't supported. Save the file as .docx or PDF and try again."
+      );
+      return;
+    }
+    if (!ACCEPTED_EXTENSIONS.includes(extension)) {
+      setUploadError(
+        "That file type isn't supported. Upload a PDF, Word (.docx), PowerPoint (.pptx) or text file, or paste the instructions instead."
+      );
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setUploadError(
+        `That file is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). The limit is 4 MB.`
+      );
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error("Please sign in again.");
+      }
+
+      const body = new FormData();
+      body.append("file", file);
+
+      const response = await fetch("/api/assignments/extract", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      });
+
+      // A size rejection from the hosting platform is not JSON.
+      let data: {
+        success?: boolean;
+        error?: string;
+        text?: string;
+        wordCount?: number;
+        truncated?: boolean;
+      } | null = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok || !data?.success) {
+        throw new Error(
+          data?.error ||
+            (response.status === 413
+              ? "That file is too large. The limit is 4 MB."
+              : "We couldn't read that file. Please try again, or paste the instructions instead.")
+        );
+      }
+
+      const extracted = data.text || "";
+
+      // Text that is already in the box is kept, with the file added after it.
+      setBrief((previous) =>
+        previous.trim() ? `${previous.trim()}\n\n${extracted}` : extracted
+      );
+      setTitle((previous) =>
+        previous.trim() ? previous : titleFromFilename(file.name)
+      );
+      setUploadedFile({
+        name: file.name,
+        words: data.wordCount ?? wordCount(extracted),
+        truncated: Boolean(data.truncated),
+      });
+      setError("");
+    } catch (err) {
+      setUploadError(
+        err instanceof Error ? err.message : "Something went wrong reading that file."
+      );
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -710,10 +829,100 @@ export default function AssignmentsPage() {
                       >
                         Assignment instructions
                       </label>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept={ACCEPTED_EXTENSIONS.join(",")}
+                        className="sr-only"
+                        tabIndex={-1}
+                        aria-hidden="true"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void handleFile(file);
+                        }}
+                      />
+
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragActive(true);
+                        }}
+                        onDragLeave={() => setDragActive(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragActive(false);
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) void handleFile(file);
+                        }}
+                        className={`mb-3 flex flex-col items-start gap-3 rounded-xl border-2 border-dashed p-4 sm:flex-row sm:items-center ${
+                          dragActive
+                            ? "border-indigo-500 bg-indigo-50"
+                            : "border-slate-300 bg-slate-50"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-slate-800">
+                            Have the assignment as a file?
+                          </p>
+                          <p className="mt-0.5 text-xs leading-5 text-slate-500">
+                            Upload a PDF, Word, PowerPoint or text file (up to 4 MB) and we&apos;ll
+                            read the text for you. You can check and edit it before continuing.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                          className={`flex shrink-0 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 ${focusRing}`}
+                        >
+                          {uploading && <Spinner />}
+                          {uploading ? "Reading file..." : "Choose file"}
+                        </button>
+                      </div>
+
+                      {uploadError && (
+                        <div
+                          role="alert"
+                          className="mb-3 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700"
+                        >
+                          {uploadError}
+                        </div>
+                      )}
+
+                      {uploadedFile && (
+                        <div
+                          role="status"
+                          className="mb-3 flex items-start justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
+                        >
+                          <p className="min-w-0">
+                            <span className="font-medium break-words">
+                              Loaded from {uploadedFile.name}
+                            </span>{" "}
+                            ({uploadedFile.words.toLocaleString()} words).{" "}
+                            {uploadedFile.truncated
+                              ? "The file was very long, so only the first part was read. "
+                              : ""}
+                            Remove anything that isn&apos;t part of the question, like cover pages.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setUploadedFile(null)}
+                            aria-label="Dismiss"
+                            className={`shrink-0 rounded px-1 text-emerald-700 hover:bg-emerald-100 ${focusRing}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+
                       <textarea
                         id="assignment-brief"
                         value={brief}
-                        onChange={(e) => setBrief(e.target.value)}
+                        onChange={(e) => {
+                          setBrief(e.target.value);
+                          if (!e.target.value.trim()) setUploadedFile(null);
+                        }}
                         placeholder="Paste your assignment question and instructions here..."
                         rows={10}
                         className={`w-full resize-y rounded-lg border bg-white p-4 ${
@@ -730,6 +939,27 @@ export default function AssignmentsPage() {
                           {brief.length.toLocaleString()} / {MAX_BRIEF_CHARS.toLocaleString()}
                         </span>
                       </div>
+
+                      {brief.length > MAX_BRIEF_CHARS && (
+                        <div
+                          role="alert"
+                          className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
+                        >
+                          <p>
+                            This is {(brief.length - MAX_BRIEF_CHARS).toLocaleString()} characters
+                            over the limit. Delete what isn&apos;t needed (cover pages, rubrics and
+                            admin notes are common), or keep only the first{" "}
+                            {MAX_BRIEF_CHARS.toLocaleString()} characters.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setBrief((previous) => previous.slice(0, MAX_BRIEF_CHARS))}
+                            className={`mt-2 rounded-md border border-amber-400 bg-white px-3 py-1.5 font-medium hover:bg-amber-100 ${focusRing}`}
+                          >
+                            Keep the first {MAX_BRIEF_CHARS.toLocaleString()} characters
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {error && (
