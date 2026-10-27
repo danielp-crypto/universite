@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { groq } from '@/lib/groq';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
@@ -807,8 +809,39 @@ function formatAsBulletPoints(text: string): string {
     .join('\n');
 }
 
+// This endpoint spends Groq tokens, and until now it did not check who was
+// calling it, so anyone who found the URL could use up the daily token budget.
+// It now accepts exactly two kinds of caller:
+//   1. the Deepgram webhook, which runs on the server and sends the shared
+//      webhook secret in x-internal-secret;
+//   2. a signed-in student, who sends their access token (the lecture page
+//      uses this to regenerate notes).
+function isInternalCall(request: NextRequest): boolean {
+  const expected = process.env.DEEPGRAM_WEBHOOK_SECRET || '';
+  const provided = request.headers.get('x-internal-secret') || '';
+  if (!expected || provided.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+}
+
 export async function POST(request: NextRequest) {
   try {
+    if (!isInternalCall(request)) {
+      const authHeader = request.headers.get('authorization');
+
+      if (!authHeader?.startsWith('Bearer ')) {
+        return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
+      }
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabaseAdmin.auth.getUser(authHeader.substring(7));
+
+      if (authError || !user) {
+        return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
+      }
+    }
+
     const { transcript } = await request.json();
 
     if (!transcript || typeof transcript !== 'string') {

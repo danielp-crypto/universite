@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 import { embedQuery } from '@/lib/documents/embeddings';
 import { groq } from '@/lib/groq';
+import { getPlanAccess, limitReachedResponse } from '@/lib/quota/plan';
+import { releaseMessageSlot, reserveMessageSlot } from '@/lib/quota/messageLimit';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
@@ -92,22 +94,61 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Persist the student's message right away, before calling Groq, so it's
-    // saved even if generation fails downstream. Only possible when chatting
-    // in the context of a specific lecture — there's nothing to key it to otherwise.
+    // Entitlement check. The 10-messages-per-lecture rule used to live only in
+    // the browser, so anyone calling this endpoint directly had no limit. The
+    // student's message is saved here, before the AI call, so the slot is
+    // reserved atomically (see lib/quota/messageLimit.ts) and is still saved if
+    // generation fails downstream.
+    const access = await getPlanAccess(user.id);
+    let reservedMessageId: string | null = null;
+
     if (currentLecture?.id) {
-      const { error: insertUserMsgError } = await supabaseAdmin
-        .from('chat_messages')
-        .insert({
+      const { data: ownedLecture } = await supabaseAdmin
+        .from('lectures')
+        .select('id')
+        .eq('id', currentLecture.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!ownedLecture) {
+        return NextResponse.json(
+          { success: false, error: 'lecture_not_found' },
+          { status: 404 }
+        );
+      }
+
+      const slot = await reserveMessageSlot({
+        table: 'chat_messages',
+        scopeColumn: 'lecture_id',
+        scopeId: currentLecture.id,
+        userId: user.id,
+        limit: access.policy.lectureChatMessages,
+        row: {
           user_id: user.id,
           lecture_id: currentLecture.id,
           sender: 'user',
           content: message,
-        });
+        },
+      });
 
-      if (insertUserMsgError) {
-        console.error('Error saving user chat message:', insertUserMsgError);
+      if (!slot.allowed) {
+        const limit = access.policy.lectureChatMessages;
+        return limitReachedResponse(
+          'message_limit_reached',
+          `Free accounts get ${limit} tutor messages per lecture. Upgrade to Premium for unlimited tutoring.`,
+          { limit, used: slot.used }
+        );
       }
+
+      reservedMessageId = slot.messageId;
+    } else if (!access.isPremium) {
+      // Without a lecture there is nothing to count messages against, which
+      // would be an unlimited free chat. The tutor only answers about a
+      // lecture anyway, so free accounts need to open one first.
+      return limitReachedResponse(
+        'lecture_required',
+        'Open one of your lectures to chat with the AI Tutor.'
+      );
     }
 
     const extraLectures: any[] = Array.isArray(additionalLectures)
@@ -210,18 +251,28 @@ No lecture context is available right now. Ask the student to select a lecture f
         content: msg.content
       }));
 
-    const completion = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-20b',
-      messages: [
-        { role: 'system', content: context },
-        ...conversationHistory,
-        { role: 'user', content: message }
-      ],
-      temperature: 0.7,
-      max_tokens: 2048,
-    });
+    let aiResponse: string;
+    try {
+      const completion = await groq.chat.completions.create({
+        model: 'openai/gpt-oss-20b',
+        messages: [
+          { role: 'system', content: context },
+          ...conversationHistory,
+          { role: 'user', content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
 
-    const aiResponse = completion.choices[0]?.message?.content || 'No response generated';
+      aiResponse = completion.choices[0]?.message?.content || 'No response generated';
+    } catch (aiError) {
+      // A reply that never arrived must not use up one of the student's
+      // limited messages.
+      if (reservedMessageId) {
+        await releaseMessageSlot('chat_messages', reservedMessageId);
+      }
+      throw aiError;
+    }
 
     if (currentLecture?.id) {
       const { error: insertBotMsgError } = await supabaseAdmin

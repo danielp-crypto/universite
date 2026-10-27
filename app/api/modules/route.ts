@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
+import { getPlanAccess } from '@/lib/quota/plan';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
@@ -39,14 +40,9 @@ export async function GET(request: NextRequest) {
       .neq('used_for', 'free_tier_credit');
 
     const globalCreditsUsed = globalCreditsData?.length || 0;
-    const { data: subscription } = await supabaseAdmin
-      .from('user_subscriptions')
-      .select('status, plan_slug, plans(monthly_lecture_uploads)')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    const isPremium = subscription?.status === 'active' && subscription.plan_slug !== 'free';
-    const paidLimit = (subscription?.plans as any)?.monthly_lecture_uploads;
-    const globalCreditsAllocated = isPremium ? (paidLimit || 999999) : 4;
+    const access = await getPlanAccess(user.id);
+    const isPremium = access.isPremium;
+    const globalCreditsAllocated = access.policy.lifetimeLectures ?? 999999;
 
     // Add global credit info to each module
     const modulesWithCredits = (modules || []).map(module => ({

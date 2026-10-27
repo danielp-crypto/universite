@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/client";
 import { embedQuery } from "@/lib/documents/embeddings";
 import { groq } from "@/lib/groq";
+import { getPlanAccess, limitReachedResponse } from "@/lib/quota/plan";
+import { releaseMessageSlot, reserveMessageSlot } from "@/lib/quota/messageLimit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -518,6 +520,35 @@ Keep these as ideas rather than finished prose.
     const safeMode = mode in modeInstructions ? mode : "coach";
     const modeInstruction = modeInstructions[safeMode];
 
+    // Entitlement check. The student's message is saved before the AI is
+    // called so the slot is reserved atomically (see
+    // lib/quota/messageLimit.ts); it is released again if no reply comes back,
+    // so a failed reply never costs a message.
+    const access = await getPlanAccess(user.id);
+    const slot = await reserveMessageSlot({
+      table: "assignment_messages",
+      scopeColumn: "assignment_id",
+      scopeId: assignmentId,
+      userId: user.id,
+      limit: access.policy.assignmentChatMessages,
+      row: {
+        assignment_id: assignmentId,
+        user_id: user.id,
+        sender: "user",
+        mode: safeMode,
+        content: message,
+      },
+    });
+
+    if (!slot.allowed) {
+      const limit = access.policy.assignmentChatMessages;
+      return limitReachedResponse(
+        "assignment_message_limit_reached",
+        `Free accounts get ${limit} coach messages per assignment. Upgrade to Premium for unlimited coaching.`,
+        { limit, used: slot.used }
+      );
+    }
+
     // Course material is only available when the assignment is linked to a
     // module (older assignments created before module linking are not).
     let courseBlock = "";
@@ -612,6 +643,7 @@ ${workText}
       }
     } catch (aiError) {
       console.error("Assignment chat AI error:", aiError);
+      if (slot.messageId) await releaseMessageSlot("assignment_messages", slot.messageId);
       const { status, message: friendly } = describeAiError(aiError);
       return NextResponse.json(
         { success: false, error: friendly },
@@ -620,6 +652,7 @@ ${workText}
     }
 
     if (!response) {
+      if (slot.messageId) await releaseMessageSlot("assignment_messages", slot.messageId);
       return NextResponse.json(
         {
           success: false,
@@ -629,24 +662,16 @@ ${workText}
       );
     }
 
+    // The student's message was already saved when its slot was reserved.
     const { error: saveMessagesError } = await supabaseAdmin
       .from("assignment_messages")
-      .insert([
-        {
-          assignment_id: assignmentId,
-          user_id: user.id,
-          sender: "user",
-          mode: safeMode,
-          content: message,
-        },
-        {
-          assignment_id: assignmentId,
-          user_id: user.id,
-          sender: "assistant",
-          mode: safeMode,
-          content: response,
-        },
-      ]);
+      .insert({
+        assignment_id: assignmentId,
+        user_id: user.id,
+        sender: "assistant",
+        mode: safeMode,
+        content: response,
+      });
 
     if (saveMessagesError) {
       console.error("Error saving assignment messages:", saveMessagesError);
