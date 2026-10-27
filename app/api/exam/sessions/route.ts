@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getPlanAccess } from '@/lib/quota/plan';
 
 // Force dynamic rendering for API routes with static export
 export const dynamic = 'force-dynamic';
@@ -31,10 +30,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { module_id, duration_minutes, questions_count } = body;
 
-    const access = await getPlanAccess(user.id);
-    const examLimit = access.policy.exams; // null = unlimited
+    const { data: subscription } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('status, plan_slug')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const isPremium = subscription?.status === 'active' && subscription.plan_slug !== 'free';
 
-    if (examLimit !== null) {
+    if (!isPremium) {
       const { count: examCount, error: countError } = await supabaseAdmin
         .from('exam_sessions')
         .select('id', { count: 'exact', head: true })
@@ -45,9 +48,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unable to check exam limit' }, { status: 500 });
       }
 
-      if ((examCount || 0) >= examLimit) {
+      if ((examCount || 0) >= 2) {
         return NextResponse.json({
-          error: `Free users can generate up to ${examLimit} exams. Upgrade to Premium for unlimited exams.`,
+          error: 'Free users can generate up to 2 exams. Upgrade to Premium for unlimited exams.',
           code: 'FREE_EXAM_LIMIT_REACHED'
         }, { status: 403 });
       }

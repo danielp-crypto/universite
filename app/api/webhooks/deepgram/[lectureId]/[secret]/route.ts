@@ -110,7 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     let summaryError: string | null = null;
     try {
       const summaryResponse = await fetch(`${NEXT_PUBLIC_SITE_URL}/api/generate-summary`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-internal-secret': DEEPGRAM_WEBHOOK_SECRET }, body: JSON.stringify({ transcript: transcriptForAI }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript: transcriptForAI }),
       });
       if (summaryResponse.ok) {
         const summaryData = await summaryResponse.json();

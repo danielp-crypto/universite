@@ -29,31 +29,6 @@ function getExtensionForMimeType(mimeType: string): string {
   }
 }
 
-// start-processing refuses uploads for plan reasons (credits used up, lecture
-// too long, another lecture still processing). The page used to show the same
-// generic failure for all of them, so students could not tell what to do.
-async function describeStartProcessingError(response: Response): Promise<string> {
-  const body = await response.json().catch(() => null);
-  const code = body?.error;
-
-  if (code === 'credit_limit_reached') {
-    return body?.message || "You've used all your free lecture credits. Upgrade to Premium to keep uploading.";
-  }
-  if (code === 'lecture_too_long') {
-    return body?.message || 'That lecture is longer than the maximum allowed length.';
-  }
-  if (code === 'processing_limit_reached') {
-    return 'Another lecture is still being processed. Please wait for it to finish, then try again.';
-  }
-  if (code === 'file_too_large') {
-    return 'That file is too large. The maximum size is 300 MB.';
-  }
-  if (code === 'unsupported_media_type') {
-    return 'That file type is not supported. Please upload an audio or video file.';
-  }
-  return 'Failed to start processing. Please try again.';
-}
-
 function HomePageContent() {
   const router = useRouter();
   const [lectures, setLectures] = useState<any[]>([]);
@@ -638,7 +613,7 @@ function HomePageContent() {
       });
 
       if (!startResponse.ok) {
-        setProcessingError(await describeStartProcessingError(startResponse));
+        setProcessingError('Failed to start processing. Please try again.');
         setRecordingState('idle');
         return;
       }
@@ -929,7 +904,7 @@ function HomePageContent() {
       });
 
       if (!startResponse.ok) {
-        setProcessingError(await describeStartProcessingError(startResponse));
+        setProcessingError('Failed to start processing. Please try again.');
         setRecordingState('idle');
         return;
       }

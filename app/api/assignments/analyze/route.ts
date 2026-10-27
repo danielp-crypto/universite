@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/client";
 import { groq } from "@/lib/groq";
-import { getPlanAccess, limitReachedResponse } from "@/lib/quota/plan";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -285,29 +284,6 @@ export async function POST(request: NextRequest) {
         { success: false, error: "The AI service is not configured." },
         { status: 500 }
       );
-    }
-
-    // Entitlement check: Free accounts can keep a limited number of
-    // assignments at a time. Checked before the AI runs, so a refused request
-    // costs nothing.
-    const access = await getPlanAccess(user.id);
-    const assignmentLimit = access.policy.assignments;
-
-    if (assignmentLimit !== null) {
-      const { count: existingAssignments, error: countError } = await supabaseAdmin
-        .from("assignments")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
-
-      if (countError) {
-        console.error("Could not count assignments:", countError);
-      } else if ((existingAssignments ?? 0) >= assignmentLimit) {
-        return limitReachedResponse(
-          "assignment_limit_reached",
-          `Free accounts can have ${assignmentLimit} assignments at a time. Delete one you've finished, or upgrade to Premium for unlimited assignments.`,
-          { limit: assignmentLimit, used: existingAssignments ?? 0 }
-        );
-      }
     }
 
     // The module name comes from the database, not from the client, and the

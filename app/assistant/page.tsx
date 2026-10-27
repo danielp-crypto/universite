@@ -218,19 +218,6 @@ function AssistantPageContent(): React.ReactNode {
           "Free beta accounts get 10 tutor messages per lecture. Upgrade to Premium for unlimited tutoring across all your lectures.",
           'warning'
         );
-      } else if (error?.message === 'lecture_required') {
-        // Free accounts chat about one of their lectures; there is nothing to
-        // count messages against otherwise. Same handling as the limit above.
-        setMessages((prev) => prev.slice(0, -1));
-        setInputValue(query);
-        if (isFreeTier) {
-          setUserMessageCount(prev => prev - 1);
-        }
-        showAlert(
-          'Open a lecture first',
-          error?.body?.message || 'Open one of your lectures to chat with the AI Tutor.',
-          'warning'
-        );
       } else {
         setMessages((prev) => [
           ...prev,

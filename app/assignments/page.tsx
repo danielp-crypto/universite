@@ -478,7 +478,7 @@ export default function AssignmentsPage() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || data.error || "Could not analyze assignment.");
+        throw new Error(data.error || "Could not analyze assignment.");
       }
 
       const created = data.assignment as Assignment;
@@ -631,7 +631,7 @@ export default function AssignmentsPage() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || data.error || "The coach couldn't reply this time.");
+        throw new Error(data.error || "The coach couldn't reply this time.");
       }
 
       setMessages((prev) => [
@@ -967,12 +967,7 @@ export default function AssignmentsPage() {
                         role="alert"
                         className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700"
                       >
-                        {error}{" "}
-                        {/Premium/.test(error) && (
-                          <Link href="/pricing" className="font-medium underline">
-                            See plans
-                          </Link>
-                        )}
+                        {error}
                       </div>
                     )}
 
@@ -1561,14 +1556,7 @@ export default function AssignmentsPage() {
                     role="alert"
                     className="mx-4 mb-2 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700"
                   >
-                    {chatError}{" "}
-                    {/Premium/.test(chatError) ? (
-                      <Link href="/pricing" className="font-medium underline">
-                        See plans
-                      </Link>
-                    ) : (
-                      "Your message is back in the box."
-                    )}
+                    {chatError} Your message is back in the box.
                   </div>
                 )}
 

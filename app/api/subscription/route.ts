@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { isSubscriptionExpired } from '@/lib/quota/plan';
 import { cancelPayfastSubscription } from '@/lib/payfast/api';
 
 // Force dynamic rendering for API routes with static export
@@ -64,9 +63,7 @@ export async function GET(request: NextRequest) {
     // subscription — otherwise a click on "Subscribe" that never actually
     // completes payment leaves the user looking premium indefinitely, since
     // this table only ever holds one row per user_id.
-    // An active row whose expiry date has passed (beyond the renewal grace
-    // period) is also reported as Free, matching what the server enforces.
-    if (subscription.status !== 'active' || isSubscriptionExpired(subscription.expires_at)) {
+    if (subscription.status !== 'active') {
       const { data: freePlan } = await supabaseAdmin
         .from('plans')
         .select('*')
