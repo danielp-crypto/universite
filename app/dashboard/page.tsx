@@ -1213,13 +1213,13 @@ function HomePageContent() {
           {/* Main Content */}
           <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-5xl lg:px-8 px-4 py-6">
             {/* Module Selector */}
-            <div className="mb-4">
+            <div className="mb-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
               <label className="block text-sm font-medium text-slate-700 mb-2">Select a Module first before recording/uploading a lecture (Required)</label>
               <div className="flex gap-2">
                 <select
                   value={selectedModule || ''}
                   onChange={(e) => setSelectedModule(e.target.value || null)}
-                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm hover:shadow-md transition-all"
                 >
                   <option value="">Select a module...</option>
                   {modules.map((module) => (
@@ -1228,7 +1228,7 @@ function HomePageContent() {
                 </select>
                 <button
                   onClick={() => setShowCreateModuleModal(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all active:scale-95"
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-95"
                 >
                   + New
                 </button>
@@ -1236,7 +1236,7 @@ function HomePageContent() {
             </div>
 
             {/* Study Materials */}
-            <div className="mb-6 bg-white border border-slate-200 rounded-2xl p-4">
+            <div className="mb-6 bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">Study Materials</h2>
@@ -1245,7 +1245,7 @@ function HomePageContent() {
                 <button
                   onClick={handleStudyMaterialUpload}
                   disabled={!selectedModule || uploadingStudyMaterial}
-                  className="flex-shrink-0 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                  className="flex-shrink-0 px-3 py-2 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-lg text-xs font-medium hover:from-slate-700 hover:to-slate-800 hover:shadow-lg hover:shadow-slate-500/30 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:shadow-none"
                 >
                   {uploadingStudyMaterial
                     ? (studyMaterialUploadProgress !== null ? `Uploading... ${studyMaterialUploadProgress}%` : 'Processing...')
@@ -1285,14 +1285,14 @@ function HomePageContent() {
             </div>
 
             {/* Quick Actions */}
-            <div className="mb-6">
+            <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={startRecording}
-                  className="block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-md active:scale-95 transition-transform"
+                  className="group block p-4 bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 active:scale-95 transition-all"
                 >
                   <div className="flex flex-col items-center text-center text-white">
-                    <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-10 h-10 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                     </svg>
                     <span className="font-semibold text-sm">Record Lecture</span>
@@ -1303,12 +1303,12 @@ function HomePageContent() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  className={`block p-4 bg-white border-2 rounded-2xl active:scale-95 transition-transform cursor-pointer ${
-                    isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200'
+                  className={`group block p-4 bg-gradient-to-br from-white to-slate-50 border-2 rounded-2xl active:scale-95 transition-all cursor-pointer ${
+                    isDragging ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/20' : 'border-slate-200 hover:border-indigo-300 hover:shadow-md'
                   }`}
                 >
                   <div className="flex flex-col items-center text-center text-slate-700">
-                    <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-10 h-10 mb-2 transition-transform ${isDragging ? 'scale-110' : 'group-hover:scale-110'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     <span className="font-semibold text-sm">{isDragging ? 'Drop file here' : 'Upload Audio or Video'}</span>
@@ -1359,10 +1359,10 @@ function HomePageContent() {
             )}
 
             {/* Recent Lectures */}
-            <div className="mb-6">
+            <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-slate-800">Recent Lectures</h2>
-                <Link href="/lectures" className="text-sm text-indigo-600 font-medium">View All</Link>
+                <Link href="/lectures" className="text-sm text-indigo-600 font-medium hover:text-indigo-700 transition-colors">View All</Link>
               </div>
 
               {lectures.length > 0 ? (
@@ -1373,24 +1373,24 @@ function HomePageContent() {
 
                     if (isLocal) {
                       return (
-                        <div key={lecture.id} className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                        <div key={lecture.id} className="group bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
-                              <h3 className="text-base font-semibold text-slate-800 mb-1">{lecture.title}</h3>
+                              <h3 className="text-base font-semibold text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors">{lecture.title}</h3>
                               <div className="flex items-center gap-2 text-xs text-slate-500">
                                 <span>{dateStr}</span>
                                 <span>•</span>
                                 <span>{lecture.duration || 'N/A'}</span>
-                                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Local</span>
+                                <span className="px-2 py-0.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-full text-xs font-medium border border-green-200">Local</span>
                               </div>
                             </div>
                           </div>
                           <AudioPlayer src={lecture.audioUrl} className="mb-3" />
                           <div className="flex gap-2">
-                            <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
+                            <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-all hover:bg-slate-200 hover:shadow-sm">
                               Review
                             </Link>
-                            <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
+                            <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-all hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg hover:shadow-indigo-500/30">
                               Ask Lecture
                             </Link>
                           </div>
@@ -1400,7 +1400,7 @@ function HomePageContent() {
                       return (
                         <div
                           key={lecture.id}
-                          className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                          className="group bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <Link
@@ -1410,19 +1410,19 @@ function HomePageContent() {
                               <h3 className="text-base font-semibold text-slate-800 hover:text-indigo-600 transition-colors truncate">{lecture.title}</h3>
                             </Link>
                             {lecture.status === 'processing' && (
-                              <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
+                              <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 rounded-full text-xs font-medium border border-amber-200">
                                 <span className="inline-block w-2 h-2 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></span>
                                 Processing
                               </span>
                             )}
                             {lecture.status === 'failed' && (
-                              <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 rounded-full text-xs font-medium">
+                              <span className="ml-2 flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 rounded-full text-xs font-medium border border-red-200">
                                 Failed
                               </span>
                             )}
                             <button
                               onClick={(e) => deleteSupabaseLecture(lecture.id, e)}
-                              className="ml-2 p-1 text-slate-400 hover:text-red-600 transition-colors flex-shrink-0"
+                              className="ml-2 p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all flex-shrink-0"
                               title="Delete"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1449,7 +1449,7 @@ function HomePageContent() {
                           {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 mb-3">
                               {lecture.keyConcepts.slice(0, 5).map((concept: string, idx: number) => (
-                                <span key={idx} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{concept}</span>
+                                <span key={idx} className="px-2 py-1 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-full text-xs font-medium border border-indigo-100 hover:border-indigo-200 transition-colors">{concept}</span>
                               ))}
                             </div>
                           )}
@@ -1458,31 +1458,31 @@ function HomePageContent() {
                               <button
                                 onClick={(e) => retryLecture(lecture.id, e)}
                                 disabled={retryingLectureId === lecture.id}
-                                className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+                                className="flex-1 px-3 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-all hover:from-red-700 hover:to-rose-700 hover:shadow-lg hover:shadow-red-500/30 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:shadow-none"
                               >
                                 {retryingLectureId === lecture.id ? 'Retrying…' : 'Retry Processing'}
                               </button>
                             ) : lecture.status === 'processing' ? (
                               <span
-                                className="flex-1 px-3 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
+                                className="flex-1 px-3 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
                                 title="Available once transcription and notes are ready"
                               >
                                 Review
                               </span>
                             ) : (
-                              <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
+                              <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-all hover:bg-slate-200 hover:shadow-sm">
                                 Review
                               </Link>
                             )}
                             {lecture.status === 'failed' ? null : lecture.status === 'processing' ? (
                               <span
-                                className="flex-1 px-3 py-2 bg-indigo-200 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
+                                className="flex-1 px-3 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
                                 title="Available once transcription and notes are ready"
                               >
                                 Ask Lecture
                               </span>
                             ) : (
-                              <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
+                              <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-all hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg hover:shadow-indigo-500/30">
                                 Ask Lecture
                               </Link>
                             )}

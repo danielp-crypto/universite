@@ -46,7 +46,7 @@ function NotesPageContent() {
     <div className="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
       <div id="app" className="flex-1 flex flex-col pb-20">
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
+        <div className="bg-gradient-to-b from-white to-slate-50 border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] flex items-center gap-3">
             <Link href="/dashboard" className="p-1 text-slate-600">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,13 +63,13 @@ function NotesPageContent() {
         {/* Main Content */}
         <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
           {notes.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📝</div>
+            <div className="text-center py-12 bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="text-6xl mb-4 animate-float">📝</div>
               <h2 className="text-xl font-semibold text-slate-800 mb-2">No notes yet</h2>
               <p className="text-slate-600 mb-6">Generate notes from your lectures to start studying.</p>
               <Link
                 href="/dashboard"
-                className="px-6 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl font-semibold inline-block"
+                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-semibold inline-block hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
               >
                 Go to Dashboard
               </Link>
@@ -77,8 +77,8 @@ function NotesPageContent() {
           ) : (
             <div className="space-y-4">
               {notes.map((note: any, index: number) => (
-                <div key={index} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                  <h3 className="font-semibold text-slate-800 mb-2">{note.title || 'Untitled Note'}</h3>
+                <div key={index} className="group bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300 animate-fade-in-up" style={{ animationDelay: `${0.2 + index * 0.05}s` }}>
+                  <h3 className="font-semibold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">{note.title || 'Untitled Note'}</h3>
                   <p className="text-sm text-slate-600 line-clamp-3">{note.content || 'No content'}</p>
                   <div className="mt-3 text-xs text-slate-400">
                     {new Date(note.created_at || note.createdAt).toLocaleDateString()}

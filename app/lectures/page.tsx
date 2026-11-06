@@ -293,37 +293,37 @@ function LecturesPageContent() {
           </div>
 
           {/* Filter Tabs */}
-        <div className="bg-white border-b border-slate-200 px-4 sticky top-[57px] md:top-[61px] z-10">
+        <div className="bg-gradient-to-b from-white to-slate-50 border-b border-slate-200 px-4 sticky top-[57px] md:top-[61px] z-10 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
             <div className="flex gap-4 overflow-x-auto pb-2 pt-2 scrollbar-none">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  filter === 'all' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                  filter === 'all' ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:shadow-sm'
                 }`}
               >
                 All ({counts.all})
               </button>
               <button
                 onClick={() => setFilter('today')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  filter === 'today' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                  filter === 'today' ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:shadow-sm'
                 }`}
               >
                 Today ({counts.today})
               </button>
               <button
                 onClick={() => setFilter('week')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  filter === 'week' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                  filter === 'week' ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:shadow-sm'
                 }`}
               >
                 This Week ({counts.week})
               </button>
               <button
                 onClick={() => setFilter('favorites')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  filter === 'favorites' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                  filter === 'favorites' ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:shadow-sm'
                 }`}
               >
                 Favorites ({counts.favorites})
@@ -336,8 +336,8 @@ function LecturesPageContent() {
                       setSelectedModule(e.target.value || null);
                       setFilter(e.target.value ? 'module' : 'all');
                     }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                      filter === 'module' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 shadow-sm ${
+                      filter === 'module' ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     <option value="">Modules</option>
@@ -355,17 +355,17 @@ function LecturesPageContent() {
         <div className="flex-1 mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px] px-4 py-4">
           {filtered.length > 0 ? (
             <div className="space-y-3">
-              {filtered.map((lecture) => {
+              {filtered.map((lecture, index) => {
                 const dateStr = formatDate(new Date(lecture.created_at || lecture.createdAt));
 
                 return (
-                  <div key={lecture.id} className="bg-white border border-slate-200 rounded-2xl p-4">
+                  <div key={lecture.id} className="group bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300 animate-fade-in-up" style={{ animationDelay: `${0.2 + index * 0.05}s` }}>
                     <div className="flex items-start justify-between mb-2">
                       {lecture.status === 'processing' ? (
                         <div className="flex-1 min-w-0 cursor-not-allowed" title="Available once transcription and notes are ready">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-base font-semibold text-slate-400 truncate">{lecture.title}</h3>
-                            <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-[11px] font-medium">
+                            <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 rounded-full text-[11px] font-medium border border-amber-200">
                               <span className="inline-block w-1.5 h-1.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></span>
                               Processing
                             </span>
@@ -390,9 +390,9 @@ function LecturesPageContent() {
                       ) : (
                         <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-base font-semibold text-slate-800 truncate">{lecture.title}</h3>
+                            <h3 className="text-base font-semibold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">{lecture.title}</h3>
                             {lecture.status === 'failed' && (
-                              <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 bg-red-50 text-red-700 rounded-full text-[11px] font-medium">
+                              <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 rounded-full text-[11px] font-medium border border-red-200">
                                 Failed
                               </span>
                             )}
@@ -418,7 +418,7 @@ function LecturesPageContent() {
                       <div className="flex gap-1">
                         <button
                           onClick={() => toggleFavorite(lecture.id)}
-                          className={`p-1 ${lecture.favorite ? 'text-amber-400' : 'text-slate-400'} hover:text-amber-500 transition-colors flex-shrink-0`}
+                          className={`p-1 ${lecture.favorite ? 'text-amber-400' : 'text-slate-400'} hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all flex-shrink-0`}
                         >
                           <svg className="w-5 h-5" fill={lecture.favorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -426,7 +426,7 @@ function LecturesPageContent() {
                         </button>
                         <button
                           onClick={() => deleteSupabaseLecture(lecture.id)}
-                          className="p-1 text-slate-400 hover:text-red-600 transition-colors flex-shrink-0"
+                          className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all flex-shrink-0"
                           title="Delete"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -438,7 +438,7 @@ function LecturesPageContent() {
                     {lecture.keyConcepts && lecture.keyConcepts.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {lecture.keyConcepts.slice(0, 5).map((concept: string, idx: number) => (
-                          <span key={idx} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{concept}</span>
+                          <span key={idx} className="px-2 py-0.5 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-full text-xs font-medium border border-indigo-100 hover:border-indigo-200 transition-colors">{concept}</span>
                         ))}
                       </div>
                     )}
@@ -447,31 +447,31 @@ function LecturesPageContent() {
                         <button
                           onClick={() => retryLecture(lecture.id)}
                           disabled={retryingLectureId === lecture.id}
-                          className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+                          className="flex-1 px-3 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-all hover:from-red-700 hover:to-rose-700 hover:shadow-lg hover:shadow-red-500/30 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:shadow-none"
                         >
                           {retryingLectureId === lecture.id ? 'Retrying…' : 'Retry Processing'}
                         </button>
                       ) : lecture.status === 'processing' ? (
                         <span
-                          className="flex-1 px-3 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
+                          className="flex-1 px-3 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
                           title="Available once transcription and notes are ready"
                         >
                           Review
                         </span>
                       ) : (
-                        <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-slate-200">
+                        <Link href={`/lecture-detail?id=${lecture.id}`} className="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium text-center active:scale-95 transition-all hover:bg-slate-200 hover:shadow-sm">
                           Review
                         </Link>
                       )}
                       {lecture.status === 'failed' ? null : lecture.status === 'processing' ? (
                         <span
-                          className="flex-1 px-3 py-2 bg-indigo-200 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
+                          className="flex-1 px-3 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-400 rounded-lg text-sm font-medium text-center cursor-not-allowed select-none"
                           title="Available once transcription and notes are ready"
                         >
                           Ask Lecture
                         </span>
                       ) : (
-                        <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-transform hover:bg-indigo-700">
+                        <Link href={`/assistant?lecture=${lecture.id}`} className="flex-1 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium text-center active:scale-95 transition-all hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg hover:shadow-indigo-500/30">
                           Ask Lecture
                         </Link>
                       )}
@@ -481,9 +481,9 @@ function LecturesPageContent() {
               })}
             </div>
           ) : (
-            <div id="empty-state" className="text-center py-12 bg-white border border-slate-200 rounded-2xl">
+            <div id="empty-state" className="text-center py-12 bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl animate-fade-in-up">
               <p className="text-slate-500 mb-4 text-sm">No lectures found</p>
-              <Link href="/dashboard" className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium">
+              <Link href="/dashboard" className="inline-block px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-indigo-500/30 transition-all">
                 Record or Upload Your First Lecture
               </Link>
             </div>
