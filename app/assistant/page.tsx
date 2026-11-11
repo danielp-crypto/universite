@@ -270,17 +270,7 @@ function AssistantPageContent(): React.ReactNode {
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                 <img alt="Universite logo" className="w-6 h-6 object-contain" src="/assets/images/icon-white-removebg.png" />
               </div>
-              <h1 className="text-2xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Tutor
-              </h1>
-              <div className="ml-auto flex items-center gap-3">
-                {subscription?.plan_slug === 'free' && (
-                  <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                    Upgrade
-                  </Link>
-                )}
-                <Notifications />
-              </div>
+              
             </div>
           </div>
 
