@@ -170,7 +170,7 @@ function AssistantPageContent(): React.ReactNode {
     if (isFreeTier && userMessageCount >= messageLimit) {
       showAlert(
         "You've reached this lecture's message limit",
-        "Free beta accounts get 10 tutor messages per lecture. Upgrade to Premium for unlimited tutoring across all your lectures.",
+        "Free tier accounts get 10 tutor messages per lecture. Upgrade to Premium for unlimited tutoring across all your lectures.",
         'warning'
       );
       return;
