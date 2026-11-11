@@ -353,7 +353,7 @@ function AssistantPageContent(): React.ReactNode {
                 <img src="/assets/images/icon-white-removebg.png" alt="Universite logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">
-                {currentLecture ? 'Ask your AI Tutor' : 'No lecture selected'}
+                {currentLecture ? 'Ask your Lecture' : 'No lecture selected'}
               </h2>
               {currentLecture && currentLecture.keyConcepts && currentLecture.keyConcepts.length > 0 && (
                 <div className="flex flex-wrap gap-2 justify-center mb-4">

@@ -381,7 +381,7 @@ export default function Home() {
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-6">About Universite</h2>
               <p className="text-base sm:text-lg text-slate-600 mb-4">
-                Universite is the AI study companion built for university and college students.We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
+                Universite is the AI tutor built for university and college students.We understand the challenges of keeping up with lectures, understanding complex concepts, and preparing for exams.
               </p>
               <p className="text-base sm:text-lg text-slate-600 mb-4">
                 Our mission is to make education more accessible and efficient by leveraging cutting-edge AI technology. With Universite, you can focus on learning rather than worrying about note-taking or finding study materials.
@@ -422,7 +422,7 @@ export default function Home() {
             {[
               {
                 question: "What is Universite?",
-                answer: "Universite is an AI-powered learning assistant for university students. It helps you record lectures, automatically generates transcripts, notes, exam questions, and provides 24/7 AI tutoring to help you understand difficult concepts."
+                answer: "Universite is an AI tutor for university and college students. It helps you record lectures, automatically generates transcripts, notes, exam questions, and provides 24/7 AI tutoring to help you understand difficult concepts."
               },
               {
                 question: "How does the free account work?",
@@ -512,7 +512,7 @@ export default function Home() {
                 <img src="/assets/images/icon-white-removebg.png" alt="Universite logo" className="h-8 w-8 mr-2" />
                 <span className="text-xl font-bold text-white">Universite</span>
               </div>
-              <p className="text-sm text-slate-400">AI-powered learning assistant for university/college students.</p>
+              <p className="text-sm text-slate-400">AI Tutor for university/college students.</p>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Product</h4>
