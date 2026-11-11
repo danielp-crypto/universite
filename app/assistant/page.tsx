@@ -252,27 +252,9 @@ function AssistantPageContent(): React.ReactNode {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col lg:ml-0">
         <div id="app" className="flex-1 flex flex-col mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
-          {/* Header - Mobile Only */}
-          <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 md:py-4 sticky top-0 z-10">
-          <div className="mx-auto w-full max-w-[430px] md:max-w-[680px] lg:max-w-[800px]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <img alt="Universite logo" className="w-6 h-6 md:w-7 md:h-7 object-contain" src="/assets/images/icon-white-removebg.png" />
-              </div>
-              
-            </div>
-          </div>
-          </div>
+          
 
-          {/* Desktop Header */}
-          <div className="hidden lg:block bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <img alt="Universite logo" className="w-6 h-6 object-contain" src="/assets/images/icon-white-removebg.png" />
-              </div>
-              
-            </div>
-          </div>
+          
 
           {/* Context Bar */}
         {currentLecture && (
