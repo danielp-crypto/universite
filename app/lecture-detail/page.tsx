@@ -1013,10 +1013,31 @@ function LectureDetailPageContent() {
     return parsed;
   };
 
-  const startQuiz = () => {
+  const startQuiz = async () => {
     if (!processingResults?.summaryText) {
       showAlert('Error', 'No lecture summary available. Please generate notes first.', 'error');
       return;
+    }
+
+    // Check if user can generate quiz for this lecture (free tier limit)
+    try {
+      const session = await getSession();
+      if (session) {
+        const response = await fetch(`/api/quiz-can-generate?lectureId=${currentLecture?.id}`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        const data = await response.json();
+        
+        if (!data.can_generate) {
+          showAlert('Quiz Limit Reached', data.message, 'warning');
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking quiz generation permission:', error);
+      // Continue anyway if check fails
     }
 
     const parsedQuestions = parseQuizBankQuestions(processingResults.summaryText);
@@ -1031,6 +1052,18 @@ function LectureDetailPageContent() {
     setQuizSubmitted(false);
     setQuizScore(0);
     setQuizOpen(true);
+
+    // Record quiz generation
+    try {
+      const session = await getSession();
+      if (session && currentLecture?.id) {
+        await supabase.rpc('record_quiz_generation', {
+          p_lecture_id: currentLecture.id
+        });
+      }
+    } catch (error) {
+      console.error('Error recording quiz generation:', error);
+    }
   };
 
   const selectQuizAnswer = (optionIndex: number) => {
