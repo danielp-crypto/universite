@@ -1028,10 +1028,18 @@ function LectureDetailPageContent() {
             'Authorization': `Bearer ${session.access_token}`
           }
         });
-        const data = await response.json();
-        
-        if (!data.can_generate) {
-          showAlert('Quiz Limit Reached', data.message, 'warning');
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data) {
+          // The check itself failed (for example an expired session). That
+          // says nothing about the student's quota, so do not tell them they
+          // hit a limit: carry on, as the catch below already does.
+          console.error('Quiz permission check failed:', response.status, data);
+        } else if (data.can_generate === false) {
+          // A real plan answer carries plan_slug. Without it the database is
+          // saying something else (not signed in, lecture not found).
+          const isPlanLimit = typeof data.plan_slug === 'string';
+          showAlert(isPlanLimit ? 'Quiz Limit Reached' : 'Unable to start quiz', data.message, 'warning');
           return;
         }
       }

@@ -22,3 +22,18 @@ export const supabaseAdmin = supabaseServiceRoleKey
       },
     })
   : supabase
+
+// A client that acts as the signed-in student. It forwards their access token,
+// so database functions that call auth.uid() (and row-level security) can see
+// who is asking. The admin client above has no user attached, so inside the
+// database auth.uid() is NULL there; calling a function like can_generate_quiz
+// with it always answered "Not authenticated".
+export function createUserClient(accessToken: string) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  })
+}

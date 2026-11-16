@@ -25,14 +25,14 @@ ON public.quiz_generations FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
 -- Function to check if user can generate quiz for a lecture
-CREATE OR REPLACE FUNCTION public.can_generate_quiz(p_lecture_id text)
+CREATE OR REPLACE FUNCTION public.can_generate_quiz(p_user_id uuid, p_lecture_id text)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_uid uuid := auth.uid();
+  v_uid uuid := p_user_id;
   v_plan public.plans%rowtype;
   v_existing_count int;
   v_can_generate boolean := false;
@@ -86,14 +86,14 @@ END;
 $$;
 
 -- Function to record quiz generation
-CREATE OR REPLACE FUNCTION public.record_quiz_generation(p_lecture_id text)
+CREATE OR REPLACE FUNCTION public.record_quiz_generation(p_user_id uuid, p_lecture_id text)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_uid uuid := auth.uid();
+  v_uid uuid := p_user_id;
 BEGIN
   IF v_uid IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'message', 'Not authenticated');
