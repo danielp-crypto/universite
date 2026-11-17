@@ -30,32 +30,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { module_id, duration_minutes, questions_count } = body;
 
-    const { data: subscription } = await supabaseAdmin
-      .from('user_subscriptions')
-      .select('status, plan_slug')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    const isPremium = subscription?.status === 'active' && subscription.plan_slug !== 'free';
-
-    if (!isPremium) {
-      const { count: examCount, error: countError } = await supabaseAdmin
-        .from('exam_sessions')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-      if (countError) {
-        console.error('Error checking free exam limit:', countError);
-        return NextResponse.json({ error: 'Unable to check exam limit' }, { status: 500 });
-      }
-
-      if ((examCount || 0) >= 2) {
-        return NextResponse.json({
-          error: 'Free users can generate up to 2 exams. Upgrade to Premium for unlimited exams.',
-          code: 'FREE_EXAM_LIMIT_REACHED'
-        }, { status: 403 });
-      }
-    }
-
     if (!module_id || duration_minutes === undefined || !questions_count) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -68,6 +42,65 @@ export async function POST(request: NextRequest) {
     // Validate questions count
     if (![5, 10, 20].includes(questions_count)) {
       return NextResponse.json({ error: 'Invalid questions count. Must be 5, 10, or 20' }, { status: 400 });
+    }
+
+    // The module must belong to this student. Exams are limited per module,
+    // and the question generator reads the module's lectures, so a module id
+    // that is not theirs must never get as far as creating a session.
+    const { data: ownedModule } = await supabaseAdmin
+      .from('modules')
+      .select('id')
+      .eq('id', module_id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!ownedModule) {
+      return NextResponse.json({ error: 'Module not found' }, { status: 404 });
+    }
+
+    const { data: subscription } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('status, plan_slug')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const isPremium = subscription?.status === 'active' && subscription.plan_slug !== 'free';
+
+    // Free accounts get ONE exam per module. Any session that exists for the
+    // module counts, whether it was finished or abandoned, because the
+    // questions were generated either way. (A session whose question
+    // generation failed is deleted again by /api/exam/questions/generate, so a
+    // failure does not use up the exam.)
+    const limitReached = (existingSessionId: string | null) =>
+      NextResponse.json({
+        error: 'Free accounts can generate one exam per module. Upgrade to Premium for unlimited exams.',
+        code: 'FREE_EXAM_LIMIT_REACHED',
+        existing_session_id: existingSessionId
+      }, { status: 403 });
+
+    const earliestExistingSession = async () => {
+      const { data, error } = await supabaseAdmin
+        .from('exam_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('module_id', module_id)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return { id: (data?.id as string | undefined) ?? null, error };
+    };
+
+    if (!isPremium) {
+      const existing = await earliestExistingSession();
+
+      if (existing.error) {
+        console.error('Error checking free exam limit:', existing.error);
+        return NextResponse.json({ error: 'Unable to check exam limit' }, { status: 500 });
+      }
+
+      if (existing.id) {
+        return limitReached(existing.id);
+      }
     }
 
     // Create exam session
@@ -91,6 +124,41 @@ export async function POST(request: NextRequest) {
         code: sessionError.code,
         hint: sessionError.hint,
       }, { status: 500 });
+    }
+
+    // Two requests sent at the same moment (a double-click, or someone
+    // scripting the endpoint) can both pass the check above before either
+    // session exists. So the new session is ranked against the student's other
+    // sessions for this module, ordered by (created_at, id). Only the first
+    // one is kept; any other is removed again and refused.
+    if (!isPremium) {
+      const [{ count: earlier, error: earlierError }, { count: sameInstantEarlierId, error: tieError }] = await Promise.all([
+        supabaseAdmin
+          .from('exam_sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('module_id', module_id)
+          .lt('created_at', examSession.created_at),
+        supabaseAdmin
+          .from('exam_sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('module_id', module_id)
+          .eq('created_at', examSession.created_at)
+          .lt('id', examSession.id),
+      ]);
+
+      if (earlierError || tieError) {
+        console.error('Error verifying free exam limit:', earlierError || tieError);
+        await supabaseAdmin.from('exam_sessions').delete().eq('id', examSession.id);
+        return NextResponse.json({ error: 'Unable to check exam limit' }, { status: 500 });
+      }
+
+      if ((earlier || 0) + (sameInstantEarlierId || 0) > 0) {
+        await supabaseAdmin.from('exam_sessions').delete().eq('id', examSession.id);
+        const existing = await earliestExistingSession();
+        return limitReached(existing.id);
+      }
     }
 
     return NextResponse.json({

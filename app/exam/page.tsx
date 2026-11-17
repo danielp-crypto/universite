@@ -27,6 +27,8 @@ function ExamModePageContent() {
   const [starting, setStarting] = useState(false);
   const [startingStep, setStartingStep] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // Set when a free account has already used its one exam for this module.
+  const [limitInfo, setLimitInfo] = useState<{ existingSessionId: string | null } | null>(null);
 
   useEffect(() => {
     loadInitialState();
@@ -57,6 +59,7 @@ function ExamModePageContent() {
 
     setStarting(true);
     setError(null);
+    setLimitInfo(null);
 
     try {
       setStartingStep('Setting up your exam...');
@@ -91,6 +94,9 @@ function ExamModePageContent() {
     } catch (err: any) {
       console.error('Error starting exam:', err);
       const apiError = err?.body;
+      if (apiError?.code === 'FREE_EXAM_LIMIT_REACHED') {
+        setLimitInfo({ existingSessionId: apiError.existing_session_id ?? null });
+      }
       setError(apiError?.details || apiError?.error || err?.message || 'Something went wrong starting your exam. Please try again.');
       setStarting(false);
     }
@@ -213,6 +219,18 @@ function ExamModePageContent() {
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-3 mb-4">
                   {error}
+                  {limitInfo && (
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-medium">
+                      {limitInfo.existingSessionId && (
+                        <Link href={`/exam/${limitInfo.existingSessionId}`} className="underline">
+                          Open your exam for this module
+                        </Link>
+                      )}
+                      <Link href="/pricing" className="underline">
+                        See Premium plans
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 

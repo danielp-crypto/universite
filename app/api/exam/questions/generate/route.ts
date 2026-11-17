@@ -14,7 +14,48 @@ export const dynamic = 'force-dynamic';
 const CHUNKS_PER_FOCUS_TOPIC = 4;
 const MAX_UNTARGETED_CHUNKS = 20;
 
+// Free accounts get one exam per module, counted from the exam session that is
+// created BEFORE the questions are generated. If generation then fails (the
+// module has no transcribed lectures yet, the AI is rate limited, ...), the
+// student never received an exam, so the empty session is deleted. Without
+// this, one failed attempt would use up their only exam for that module.
+async function releaseEmptyExamSession(sessionId: string, userId: string) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !supabaseServiceKey) return;
+
+    const admin = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { count, error } = await admin
+      .from('exam_questions')
+      .select('id', { count: 'exact', head: true })
+      .eq('exam_session_id', sessionId);
+
+    // Only an exam with no questions at all is removed.
+    if (error || (count ?? 0) > 0) return;
+
+    await admin.from('exam_sessions').delete().eq('id', sessionId).eq('user_id', userId);
+  } catch (cleanupError) {
+    console.error('Could not remove the empty exam session:', cleanupError);
+  }
+}
+
 export async function POST(request: NextRequest) {
+  const context: { userId?: string; sessionId?: string } = {};
+  const response = await generateQuestions(request, context);
+
+  if (response.status >= 400 && context.userId && context.sessionId) {
+    await releaseEmptyExamSession(context.sessionId, context.userId);
+  }
+
+  return response;
+}
+
+async function generateQuestions(
+  request: NextRequest,
+  context: { userId?: string; sessionId?: string }
+): Promise<NextResponse> {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -36,6 +77,8 @@ export async function POST(request: NextRequest) {
     if (userError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
+
+    context.userId = user.id;
 
     const body = await request.json();
     const { exam_session_id, question_type, difficulty, count, focus_topics } = body;
@@ -59,6 +102,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Exam session not found' }, { status: 404 });
     }
 
+    context.sessionId = examSession.id;
+
     console.log('Exam session found:', examSession.id, 'Module:', examSession.module_id);
 
     // Get lectures from the module
@@ -66,6 +111,7 @@ export async function POST(request: NextRequest) {
       .from('lectures')
       .select('id, title, transcription, summary, slides_text')
       .eq('module_id', examSession.module_id)
+      .eq('user_id', user.id)
       .not('transcription', 'is', null);
 
     if (lecturesError) {
